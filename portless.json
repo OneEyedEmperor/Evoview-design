@@ -1,0 +1,6 @@
+{
+  "name": "evoview-design-library",
+  "appPort": 37499,
+  "hostname": "evoview-library.said.bet",
+  "script": "vite dev --port 37499 --host"
+}

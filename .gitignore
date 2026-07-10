@@ -1,0 +1,23 @@
+# Dependencies
+node_modules
+
+# Build
+dist
+dist-ssr
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Misc
+*.local
