@@ -27,6 +27,9 @@
   --nav-logo-w-desktop: 7.5em;
   --nav-logo-h-mobile: 1.125em;
   --nav-logo-w-mobile: 6.5em;
+  /* Applied to the wordmark on the dark tone. `none` for artwork that is
+     already light or coloured. */
+  --nav-logo-dark-filter: invert(1);
   --nav-tray-w: 34em;
   /* Brand colours that are not derived from the ink scale. */
   --nav-focus-ring: #3f51b5;
@@ -192,7 +195,7 @@
 
 /* The wordmark is black artwork, so it flips rather than recolours. */
 .ev-navbar[data-tone="dark"] .nav-logo {
-  filter: invert(1);
+  filter: var(--nav-logo-dark-filter);
 }
 
 .ev-navbar[data-tone="dark"] .nav-control-focus:focus-visible {
@@ -929,6 +932,8 @@
   padding: 0 0.75em;
 }
 .nav-deck--mobile .nav-deck-pill--cta { margin-left: 0; }
+/* An odd deck ending in the CTA: the CTA takes the whole last row. */
+.nav-deck--mobile .nav-deck-pill--cta:last-child:nth-child(odd) { grid-column: 1 / -1; }
 /* Rows arrive top-down, so the stagger displaces vertically. */
 .nav-finder--mobile .nav-deck-pill { translate: 0 -0.375em; }
 .nav-finder--mobile[data-open="true"] .nav-deck-pill { translate: 0 0; }

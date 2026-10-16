@@ -70,6 +70,12 @@ import { navbarConfig } from "@/components/navbar/navbar.config";
   `scroll-margin-top` on sections if the site has neither.
 - Desktop/mobile swap at `768px`, defined twice: `navbar.css` (`@media`) and
   `DESKTOP_QUERY` in `NavFinderMobile.tsx`. Change both or neither.
+- Server rendering works (`renderToString` / prerender). The bar renders
+  `initialTone` until the first client probe; the deck is `<a href>` only, so
+  a client-side router must intercept those clicks itself (see the
+  resto-tchin adaptation: a document click listener scoped to `.ev-navbar`).
+- Five entries where the last is the CTA: on mobile the CTA spans the whole
+  last row of the 2-column deck.
 
 ## Config reference
 
@@ -77,10 +83,11 @@ See `src/types.ts` (every field is commented). Summary:
 
 | Field | What it controls |
 | --- | --- |
-| `logo` | Wordmark node. Black artwork; the dark tone applies `filter: invert(1)`. Sized by `--nav-logo-*` tokens. |
+| `logo` | Wordmark node. Black artwork; the dark tone applies `--nav-logo-dark-filter` (`invert(1)`; set `none` for coloured artwork). Sized by `--nav-logo-*` tokens. |
 | `homeHref` | Wordmark link. |
 | `labels` | `menu`, `close` (mobile morph), `sectionLink`, aria strings, `loading`. |
 | `sections` | `{ id, color }[]` in document order. `color` = REC dot colour. |
+| `initialTone` | Tone before the first scroll probe (server render / hydration). `"dark"` for a dark first screen. |
 | `deck` | Pills. `key` also keys `trays`. `section` marks the live pill. `href` → `<a>`, no `href` → `<button>`. `cta: true` on at most one. `icon` is a built-in key or any 1em node. |
 | `trays` | Per deck key. `items` (static array or `() => Promise<…>`) with `unit` for the "04 dossiers" counter, or `cta` with `copy`/`label`/`note`. A deck entry without a tray navigates on first interaction. |
 | `onSection` | Intercept a pill click (`event.preventDefault()` to replace the anchor jump with a modal etc.). |
@@ -99,7 +106,8 @@ cancelable `CustomEvent`s that the owning sections answer
   4 is the designed count), which pill is the CTA, tray contents, icons.
 - `--nav-focus-ring`, `--nav-cta-glow`, `--nav-cta-hover-dark` (brand accents).
 - `--nav-font-*`, `--nav-radius-*`, `--nav-max-width`, `--nav-tray-w`,
-  `--nav-logo-*`, `--nav-font-cap` (desktop finder size ceiling).
+  `--nav-logo-*` (incl. `--nav-logo-dark-filter`), `--nav-font-cap` (desktop
+  finder size ceiling).
 - Ink scale (`#151515`, the `rgba(21,21,21,…)` ramp) — a global replace in
   `navbar.css` if the client's ink is not near-black. Keep the light/dark
   pairs symmetrical.

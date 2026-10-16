@@ -75,6 +75,9 @@ export type NavbarConfig = {
   labels: NavbarLabels;
   /** Must be a module-level constant: the scroll store is cached by reference. */
   sections: NavSection[];
+  /** Tone rendered before the first scroll probe (server render, hydration).
+      Set "dark" on a site whose first screen is dark. Default "light". */
+  initialTone?: "light" | "dark";
   deck: NavDeckEntry[];
   /** Keyed by deck `key`. A deck entry without a tray navigates directly. */
   trays: Partial<Record<string, NavTray>>;

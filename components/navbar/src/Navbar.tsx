@@ -13,7 +13,7 @@ export default function Navbar({ config }: { config: NavbarConfig }) {
   const prefersReducedMotion = usePrefersReducedMotion();
   // Light glass over the light sections, dark glass over the dark ones; the
   // section under the bar also colours the reticle's dot and lights its pill.
-  const { tone, section, color } = useNavState(config.sections);
+  const { tone, section, color } = useNavState(config.sections, config.initialTone);
   useIdleTrayPreload(config);
 
   return (

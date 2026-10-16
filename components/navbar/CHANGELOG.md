@@ -1,5 +1,17 @@
 # navbar changelog
 
+## 1.1.0
+
+Additive; no config change required.
+
+- SSR: `useNavState` no longer calls `CSS.escape` unguarded (crashed
+  `renderToString`).
+- `config.initialTone` (`"light" | "dark"`): tone before the first probe, so a
+  prerendered dark site does not flash light glass.
+- `--nav-logo-dark-filter` token (default `invert(1)`): set `none` for a
+  coloured wordmark.
+- Mobile deck: a trailing CTA in an odd-count deck spans the last row.
+
 ## 1.0.0
 
 Extracted from evoview.be (`src/components/nav/*`, `SiteHeader.tsx`, the
