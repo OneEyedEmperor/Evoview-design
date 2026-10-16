@@ -1,0 +1,1052 @@
+/* ============================================================
+   EVOVIEW NAVBAR — self-contained stylesheet
+   Everything is scoped under `.ev-navbar` (the <header>). The block
+   below maps the few host tokens the bar reads to `--nav-*` names
+   with fallbacks, so the bar renders identically in a host that
+   defines none of them. Override the `--nav-*` values on `.ev-navbar`
+   to adapt: never edit the choreography rules further down.
+   ============================================================ */
+
+.ev-navbar {
+  --nav-ease-standard: var(--ease-standard, cubic-bezier(0.2, 0.8, 0.2, 1));
+  --nav-ease-cinematic: var(--ease-cinematic, cubic-bezier(0.23, 1, 0.32, 1));
+  --nav-duration-control: var(--duration-control, 280ms);
+  --nav-radius-sm: var(--vs-radius-sm, 0.5rem);
+  --nav-radius-md: var(--vs-radius-md, 0.75rem);
+  --nav-radius-lg: var(--vs-radius-lg, 1rem);
+  --nav-radius-round: var(--vs-radius-round, 62.4375rem);
+  --nav-font-heading: var(--font-heading, "Overused Grotesk", sans-serif);
+  --nav-font-body: var(--font-body, "Montserrat", sans-serif);
+  --nav-font-technical: var(--font-technical, "Satoshi", sans-serif);
+  /* Rail width the capsule centres in. */
+  --nav-max-width: var(--container-nav, 62.5rem);
+  /* The desktop finder is sized in em against a capped base: it follows the
+     root scale up to this cap and stops growing beyond it. */
+  --nav-font-cap: 13.754px;
+  --nav-logo-h-desktop: 1.375em;
+  --nav-logo-w-desktop: 7.5em;
+  --nav-logo-h-mobile: 1.125em;
+  --nav-logo-w-mobile: 6.5em;
+  --nav-tray-w: 34em;
+  /* Brand colours that are not derived from the ink scale. */
+  --nav-focus-ring: #3f51b5;
+  --nav-cta-glow: rgba(63, 81, 181, 0.7);
+  --nav-cta-hover-dark: #c8a6d9;
+}
+
+.nav-rail { max-width: var(--nav-max-width); }
+
+/* Breakpoint between the two finders. Must match DESKTOP_QUERY in
+   NavFinderMobile.tsx. */
+.nav-finder-anchor { display: none; }
+@media (min-width: 768px) {
+  .nav-finder-anchor { display: block; }
+  .nav-finder-m-root { display: none; }
+}
+
+.nav-font-body { font-family: var(--nav-font-body); }
+.nav-label-technical {
+  font-family: var(--nav-font-technical);
+  font-size: 0.625rem;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.nav-logo > * { width: auto; display: block; }
+.nav-logo--desktop > * { height: var(--nav-logo-h-desktop); max-width: var(--nav-logo-w-desktop); }
+.nav-logo--mobile > * { height: var(--nav-logo-h-mobile); max-width: var(--nav-logo-w-mobile); }
+.nav-deck-icon--custom { display: inline-flex; }
+.nav-deck-icon--custom > * { width: 100%; height: 100%; }
+
+.nav-control-focus:focus-visible {
+  outline: 2px solid var(--nav-focus-ring);
+  outline-offset: 3px;
+}
+
+/* ============================================================
+   GLASS SHELLS
+   Glass is a *control* treatment only: frosted shells for the
+   capsule and the flyout, never for content surfaces.
+   ============================================================ */
+
+.nav-capsule {
+  background: rgba(255, 255, 255, 0.34);
+  -webkit-backdrop-filter: blur(24px) saturate(1.55);
+  backdrop-filter: blur(24px) saturate(1.55);
+  border: 1px solid rgba(21, 21, 21, 0.055);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.48),
+    0 12px 28px -20px rgba(0, 0, 0, 0.4);
+  transition:
+    background 320ms var(--nav-ease-standard),
+    border-color 320ms var(--nav-ease-standard),
+    box-shadow 420ms var(--nav-ease-cinematic),
+    transform 420ms var(--nav-ease-cinematic);
+}
+
+.nav-mobile-backdrop {
+  visibility: hidden;
+  opacity: 0;
+  background: rgba(10, 10, 12, 0.035);
+  -webkit-backdrop-filter: blur(0);
+  backdrop-filter: blur(0);
+  transition:
+    opacity 360ms var(--nav-ease-standard),
+    visibility 360ms var(--nav-ease-standard),
+    backdrop-filter 420ms var(--nav-ease-cinematic),
+    -webkit-backdrop-filter 420ms var(--nav-ease-cinematic);
+}
+
+.nav-mobile-backdrop[data-open="true"] {
+  visibility: visible;
+  opacity: 1;
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
+/* Only the hovered entry's eye blinks; the surrounding HUD stays still. */
+.nav-blinking-eye {
+  transform-box: view-box;
+  transform-origin: 12px 12px;
+}
+/* Start after 120ms, not at the tail of the cycle: short visits still get
+   feedback. Two soft 288ms blinks, 144ms apart, then 1.56s of quiet.
+   Morph the vector lid instead of scaling the group: its stroke retains its
+   weight and the iris/signal bars are occluded, not compressed into pixels. */
+@keyframes nav-eye-double-blink {
+  0%, 5%, 17%, 23%, 35%, 100% { d: path("M3 12Q12 1 21 12Q12 23 3 12Z"); }
+  11%, 29% { d: path("M3 12Q12 11.34 21 12Q12 12.66 3 12Z"); }
+}
+@keyframes nav-eye-double-blink-content {
+  0%, 5%, 17%, 23%, 35%, 100% {
+    clip-path: polygon(0px 0px, 24px 0px, 24px 24px, 0px 24px);
+  }
+  11%, 29% {
+    clip-path: polygon(0px 11.67px, 24px 11.67px, 24px 12.33px, 0px 12.33px);
+  }
+}
+/* Same double-blink timing for the spiral eye, which has no closed lid path to morph. */
+@keyframes nav-eye-double-blink-scale {
+  0%, 5%, 17%, 23%, 35%, 100% { transform: scaleY(1); }
+  11%, 29% { transform: scaleY(0.06); }
+}
+@keyframes nav-rec-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.15; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-deck-pill .nav-blinking-eye,
+  .nav-deck-pill .nav-blinking-eye > * { animation: none !important; }
+}
+.reduced-motion .nav-blinking-eye,
+.reduced-motion .nav-blinking-eye > * { animation: none !important; }
+
+/* The flyout stays markedly denser than the shells: it carries reading
+   copy over the page. */
+.nav-glass-panel {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 255, 255, 0.91) 100%
+  );
+  -webkit-backdrop-filter: blur(32px) saturate(1.6);
+  backdrop-filter: blur(32px) saturate(1.6);
+  border: 1px solid rgba(21, 21, 21, 0.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 1px 2px rgba(0, 0, 0, 0.03),
+    0 26px 64px -28px rgba(0, 0, 0, 0.3);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .nav-glass-panel { background: rgba(255, 255, 255, 0.97); }
+}
+
+/* ============================================================
+   DARK TONE
+   The bar re-tones to whatever is behind it: useNavState probes
+   the pill row's own axis against sections that declare
+   `data-nav-tone="dark"`, and the header carries the result.
+   ============================================================ */
+
+/* The wordmark changes tone through a filter; switching it atomically
+   avoids running a full-image filter interpolation while scrolling. */
+.ev-navbar .nav-logo {
+  transition: none;
+}
+
+.ev-navbar[data-tone="dark"] .nav-capsule {
+  background: rgba(17, 17, 19, 0.4);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 12px 28px -20px rgba(0, 0, 0, 0.85);
+}
+
+/* The wordmark is black artwork, so it flips rather than recolours. */
+.ev-navbar[data-tone="dark"] .nav-logo {
+  filter: invert(1);
+}
+
+.ev-navbar[data-tone="dark"] .nav-control-focus:focus-visible {
+  outline-color: rgba(255, 255, 255, 0.9);
+}
+
+.ev-navbar.reduced-motion *,
+.ev-navbar.reduced-motion *::before,
+.ev-navbar.reduced-motion *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ev-navbar *,
+  .ev-navbar *::before,
+  .ev-navbar *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ============================================================
+   TRAY ROWS — TONE
+   Row typography and fills read from these classes instead of
+   hard ink values; the per-entry accents get a light-on-dark
+   variant (mixed toward the row fill) because accents chosen
+   against white fail on ink.
+   ============================================================ */
+
+.nav-row-title { color: #151515; }
+.nav-row-title-quiet { color: rgba(21, 21, 21, 0.72); }
+.nav-row-meta { color: rgba(21, 21, 21, 0.4); }
+
+.nav-simple-menu-rail {
+  padding: 18px 16px 18px 24px;
+  background: #e9e8eb;
+  border: 1px solid rgba(21, 21, 21, 0.09);
+  border-radius: var(--nav-radius-lg);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    0 16px 34px -26px rgba(0, 0, 0, 0.38);
+}
+
+.nav-simple-menu-item {
+  color: rgba(21, 21, 21, 0.74);
+  background: #f1f0f2;
+  border: 1px solid rgba(21, 21, 21, 0.09);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  transition:
+    color var(--nav-duration-control) var(--nav-ease-standard),
+    background var(--nav-duration-control) var(--nav-ease-standard),
+    border-color var(--nav-duration-control) var(--nav-ease-standard),
+    transform var(--nav-duration-control) var(--nav-ease-cinematic);
+}
+
+.nav-simple-menu-item:hover,
+.nav-simple-menu-item:focus-visible {
+  color: #151515;
+  background: color-mix(in srgb, var(--nav-orb-accent) 10%, #f4f3f5);
+  border-color: color-mix(in srgb, var(--nav-orb-accent) 35%, transparent);
+  transform: translate3d(3px, 0, 0);
+}
+
+.nav-simple-menu-orb {
+  color: rgba(21, 21, 21, 0.76);
+  background: #fff;
+  border: 1.5px solid color-mix(in srgb, var(--nav-orb-accent) 62%, transparent);
+  box-shadow:
+    inset 0 0 0 1px rgba(21, 21, 21, 0.045),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 7px 16px -11px rgba(0, 0, 0, 0.5);
+  transition:
+    color var(--nav-duration-control) var(--nav-ease-standard),
+    background var(--nav-duration-control) var(--nav-ease-standard),
+    transform var(--nav-duration-control) var(--nav-ease-cinematic);
+}
+
+.nav-simple-menu-number {
+  color: var(--nav-orb-accent);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  transition: color var(--nav-duration-control) var(--nav-ease-standard);
+}
+
+.nav-simple-menu-item:hover .nav-simple-menu-orb,
+.nav-simple-menu-item:focus-visible .nav-simple-menu-orb {
+  color: #fff;
+  background: #151515;
+  transform: scale(1.08);
+}
+
+.nav-simple-menu-item:hover .nav-simple-menu-number,
+.nav-simple-menu-item:focus-visible .nav-simple-menu-number {
+  color: #fff;
+}
+
+.ev-navbar[data-tone="dark"] .nav-glass-panel {
+  background: linear-gradient(
+    180deg,
+    rgba(23, 23, 25, 0.95) 0%,
+    rgba(14, 14, 16, 0.92) 100%
+  );
+  border-color: rgba(255, 255, 255, 0.09);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 26px 64px -28px rgba(0, 0, 0, 0.85);
+}
+
+.ev-navbar[data-tone="dark"] .nav-row-title { color: #fff; }
+.ev-navbar[data-tone="dark"] .nav-row-title-quiet { color: rgba(255, 255, 255, 0.66); }
+.ev-navbar[data-tone="dark"] .nav-row-meta { color: rgba(255, 255, 255, 0.4); }
+.ev-navbar[data-tone="dark"] .nav-simple-menu-rail {
+  background: #111113;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 16px 34px -22px rgba(0, 0, 0, 0.82);
+}
+.ev-navbar[data-tone="dark"] .nav-simple-menu-item {
+  color: rgba(255, 255, 255, 0.72);
+  background: #19191c;
+  border-color: rgba(255, 255, 255, 0.11);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+.ev-navbar[data-tone="dark"] .nav-simple-menu-item:hover,
+.ev-navbar[data-tone="dark"] .nav-simple-menu-item:focus-visible {
+  color: #fff;
+  background: color-mix(in srgb, var(--nav-orb-accent) 20%, #19191c);
+  border-color: color-mix(in srgb, var(--nav-orb-accent) 52%, rgba(255, 255, 255, 0.14));
+}
+.ev-navbar[data-tone="dark"] .nav-simple-menu-orb {
+  color: rgba(255, 255, 255, 0.88);
+  background: #121214;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 7px 16px -11px rgba(0, 0, 0, 0.9);
+}
+.ev-navbar[data-tone="dark"] .nav-simple-menu-item:hover .nav-simple-menu-orb,
+.ev-navbar[data-tone="dark"] .nav-simple-menu-item:focus-visible .nav-simple-menu-orb {
+  color: #151515;
+  background: #fff;
+}
+.ev-navbar[data-tone="dark"] .nav-simple-menu-item:hover .nav-simple-menu-number,
+.ev-navbar[data-tone="dark"] .nav-simple-menu-item:focus-visible .nav-simple-menu-number {
+  color: var(--nav-orb-accent);
+}
+
+/* ============================================================
+   FINDER (desktop)
+   One capsule: wordmark + finder pill. Hovering the finder unfolds
+   the capsule rightward into the deck; a tray slides under the
+   hovered pill with that destination's entries.
+   ============================================================ */
+
+.nav-finder-anchor { font-size: min(1rem, var(--nav-font-cap)); }
+
+.nav-finder {
+  --nav-finder-duration: 460ms;
+  --nav-finder-duration-close: 380ms;
+  /* The open is an expo-out; the close eases in and out so it folds rather
+     than snaps. */
+  --nav-finder-ease-close: cubic-bezier(0.45, 0.05, 0.25, 1);
+  /* Soft clip edge, and the stagger the pills arrive with. */
+  --nav-finder-feather: 1.5em;
+  --nav-finder-stagger: 35ms;
+  --nav-pill-ink: rgba(21, 21, 21, 0.78);
+  --nav-pill-ink-strong: #151515;
+  --nav-pill-rest: rgba(21, 21, 21, 0.05);
+  --nav-cta-ink: #fff;
+  --nav-gloss-body: linear-gradient(180deg, #ffffff 0%, #ececef 100%);
+  --nav-gloss-highlight: rgba(255, 255, 255, 0.9);
+  --nav-gloss-sheen: rgba(255, 255, 255, 0.75);
+  --nav-gloss-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.07),
+    inset 0 0 0 0.5px rgba(0, 0, 0, 0.06),
+    0 1px 1px rgba(0, 0, 0, 0.05),
+    0 6px 14px -8px rgba(0, 0, 0, 0.28);
+  --nav-gloss-body-inverse: linear-gradient(180deg, #2b2b2f 0%, #111113 100%);
+  --nav-gloss-highlight-inverse: rgba(255, 255, 255, 0.16);
+  --nav-gloss-sheen-inverse: rgba(255, 255, 255, 0.22);
+  --nav-gloss-shadow-inverse:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.08),
+    0 8px 18px -8px rgba(0, 0, 0, 0.55);
+  /* Everything on the capsule body moves with the morph: one duration per
+     direction, so it opens and closes as a single object. */
+  transition:
+    background var(--nav-finder-duration-close) var(--nav-ease-standard),
+    border-color var(--nav-finder-duration-close) var(--nav-ease-standard),
+    box-shadow var(--nav-finder-duration-close) var(--nav-finder-ease-close);
+}
+.nav-finder[data-open="true"] {
+  transition-duration: var(--nav-finder-duration);
+  transition-timing-function: var(--nav-ease-standard), var(--nav-ease-standard), var(--nav-ease-cinematic);
+}
+.ev-navbar[data-tone="dark"] .nav-finder {
+  --nav-pill-ink: rgba(255, 255, 255, 0.86);
+  --nav-pill-ink-strong: #fff;
+  --nav-pill-rest: rgba(255, 255, 255, 0.08);
+  --nav-cta-ink: #151515;
+  --nav-gloss-body: linear-gradient(180deg, #2b2b2f 0%, #111113 100%);
+  --nav-gloss-highlight: rgba(255, 255, 255, 0.16);
+  --nav-gloss-sheen: rgba(255, 255, 255, 0.22);
+  --nav-gloss-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.08),
+    0 6px 14px -8px rgba(0, 0, 0, 0.75);
+  --nav-gloss-body-inverse: linear-gradient(180deg, #ffffff 0%, #ececef 100%);
+  --nav-gloss-highlight-inverse: rgba(255, 255, 255, 0.9);
+  --nav-gloss-sheen-inverse: rgba(255, 255, 255, 0.75);
+  --nav-gloss-shadow-inverse:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.07),
+    inset 0 0 0 0.5px rgba(0, 0, 0, 0.06),
+    0 8px 18px -8px rgba(0, 0, 0, 0.6);
+}
+.nav-finder[data-open="true"] {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.58),
+    0 18px 38px -24px rgba(0, 0, 0, 0.5);
+}
+.ev-navbar[data-tone="dark"] .nav-finder[data-open="true"] {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 18px 38px -24px rgba(0, 0, 0, 0.9);
+}
+
+/* The morph. Each cell is a one-column grid whose track goes 0fr ⇄ 1fr, so
+   the capsule's width interpolates between two intrinsic widths without a
+   measurement. The inner wrapper clips, with vertical slack for the gloss
+   shadows. */
+.nav-finder-cell {
+  display: grid;
+  min-width: 0;
+  transition: grid-template-columns var(--nav-finder-duration-close) var(--nav-finder-ease-close);
+}
+.nav-finder[data-open="true"] .nav-finder-cell {
+  transition-duration: var(--nav-finder-duration);
+  transition-timing-function: var(--nav-ease-cinematic);
+}
+.nav-finder-cell--trigger { grid-template-columns: 1fr; }
+.nav-finder-cell--deck { grid-template-columns: 0fr; }
+.nav-finder[data-open="true"] .nav-finder-cell--trigger { grid-template-columns: 0fr; }
+.nav-finder[data-open="true"] .nav-finder-cell--deck { grid-template-columns: 1fr; }
+/* The clip edge is feathered while a cell is in motion and sharp at rest:
+   the mask's fade lives in the last 1.5em of the mask image, and the image
+   is sized 1.5em wider than the box whenever the cell is at its open width,
+   which pushes the fade off the content. Animating mask-size carries the
+   feather in and out with the morph. */
+.nav-finder-cell-inner {
+  min-width: 0;
+  overflow: hidden;
+  padding-block: 0.75em;
+  margin-block: -0.75em;
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - var(--nav-finder-feather)), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - var(--nav-finder-feather)), transparent);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  transition: mask-size var(--nav-finder-duration-close) var(--nav-finder-ease-close), -webkit-mask-size var(--nav-finder-duration-close) var(--nav-finder-ease-close);
+}
+.nav-finder[data-open="true"] .nav-finder-cell-inner {
+  transition-duration: var(--nav-finder-duration);
+  transition-timing-function: var(--nav-ease-cinematic);
+}
+.nav-finder-cell--trigger .nav-finder-cell-inner,
+.nav-finder[data-open="true"] .nav-finder-cell--deck .nav-finder-cell-inner {
+  -webkit-mask-size: calc(100% + var(--nav-finder-feather)) 100%;
+  mask-size: calc(100% + var(--nav-finder-feather)) 100%;
+}
+.nav-finder[data-open="true"] .nav-finder-cell--trigger .nav-finder-cell-inner {
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+}
+
+/* Shared gloss layer: the lit, raised capsule with one specular sweep. */
+.nav-finder-trigger::after,
+.nav-deck-pill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    linear-gradient(105deg, transparent 38%, var(--nav-gloss-sheen) 50%, transparent 62%),
+    radial-gradient(120% 70% at 50% 0%, var(--nav-gloss-highlight) 0%, transparent 70%),
+    var(--nav-gloss-body);
+  background-size: 250% 100%, 100% 100%, 100% 100%;
+  background-position: 100% 0, 0 0, 0 0;
+  background-repeat: no-repeat;
+  box-shadow: var(--nav-gloss-shadow);
+  opacity: 0;
+  transition: opacity 220ms ease, background-position 0s linear 220ms;
+}
+.nav-finder-trigger:is(:hover, :focus-visible)::after,
+.nav-deck-pill:is(:hover, :focus-visible, [aria-expanded="true"], [data-current="true"])::after {
+  opacity: 1;
+  background-position: 0% 0, 0 0, 0 0;
+  transition: opacity 220ms ease, background-position 750ms cubic-bezier(0.4, 0, 0.2, 1) 60ms;
+}
+
+/* Finder pill: the reticle and the word. Rests as a quiet tinted pill so it
+   reads as a control, lights up on hover, dissolves as the deck unfolds. */
+.nav-finder-trigger {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  height: 2.375em;
+  width: max-content;
+  padding: 0 1em 0 0.75em;
+  border-radius: var(--nav-radius-round);
+  color: var(--nav-pill-ink);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color 160ms ease,
+    opacity calc(var(--nav-finder-duration-close) * 0.7) ease-out calc(var(--nav-finder-duration-close) * 0.3),
+    translate var(--nav-finder-duration-close) var(--nav-finder-ease-close);
+}
+.nav-finder-trigger::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  border-radius: inherit;
+  background: var(--nav-pill-rest);
+  transition: background 220ms var(--nav-ease-standard);
+}
+.nav-finder-trigger:is(:hover, :focus-visible) { color: var(--nav-pill-ink-strong); }
+/* The finder hands off to the deck: it stays legible under the feathered clip
+   and dissolves over the whole morph rather than vanishing ahead of its cell. */
+.nav-finder[data-open="true"] .nav-finder-trigger {
+  opacity: 0;
+  translate: -0.375em 0;
+  pointer-events: none;
+  transition:
+    color 160ms ease,
+    opacity calc(var(--nav-finder-duration) * 0.7) var(--nav-ease-standard),
+    translate var(--nav-finder-duration) var(--nav-ease-cinematic);
+}
+.nav-finder-word {
+  font-family: var(--nav-font-heading);
+  font-size: 0.75em;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.nav-reticle {
+  display: block;
+  width: 1.25em;
+  height: 1.25em;
+}
+.nav-reticle svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.nav-reticle-corners {
+  transform-box: view-box;
+  transform-origin: 12px 12px;
+  transition: transform 360ms var(--nav-ease-cinematic);
+}
+.nav-finder-trigger:is(:hover, :focus-visible) .nav-reticle-corners { transform: scale(0.9); }
+/* Eyelids inside the HUD. On hover they double-blink like the deck eyes:
+   the lids flatten to the centre line and the dot is occluded, not scaled. */
+.nav-finder-trigger:is(:hover, :focus-visible) .nav-reticle-lid--top {
+  animation: nav-reticle-blink-top 2.4s ease-in-out infinite;
+}
+.nav-finder-trigger:is(:hover, :focus-visible) .nav-reticle-lid--bottom {
+  animation: nav-reticle-blink-bottom 2.4s ease-in-out infinite;
+}
+.nav-finder-trigger:is(:hover, :focus-visible) .nav-reticle-dot {
+  animation: nav-eye-double-blink-content 2.4s ease-in-out infinite;
+}
+@keyframes nav-reticle-blink-top {
+  0%, 5%, 17%, 23%, 35%, 100% { d: path("M5 12Q12 4.6 19 12"); }
+  11%, 29% { d: path("M5 12Q12 11.7 19 12"); }
+}
+@keyframes nav-reticle-blink-bottom {
+  0%, 5%, 17%, 23%, 35%, 100% { d: path("M5 12Q12 19.4 19 12"); }
+  11%, 29% { d: path("M5 12Q12 12.3 19 12"); }
+}
+.reduced-motion .nav-reticle-lid,
+.reduced-motion .nav-reticle-dot { animation: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .nav-reticle-lid,
+  .nav-reticle-dot { animation: none !important; }
+}
+/* The dot is the REC mark: it blinks in the accent of the section under the bar. */
+.nav-reticle-dot {
+  animation: nav-rec-blink 1.6s ease-in-out infinite;
+  transition: fill 220ms var(--nav-ease-standard);
+}
+
+/* The deck. Pills are laid out at their final positions behind the clip and
+   arrive with a short stagger as the cell opens. */
+.nav-deck {
+  display: flex;
+  align-items: center;
+  gap: 0.25em;
+  width: max-content;
+  padding: 0 2px;
+}
+.nav-deck-pill {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  height: 2.375em;
+  padding: 0 1em 0 0.75em;
+  border-radius: var(--nav-radius-round);
+  color: var(--nav-pill-ink);
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  opacity: 0;
+  translate: -0.3em 0;
+  /* Closing: the clip sweeps right-to-left, so pills leave in reverse order,
+     each just ahead of the edge, and the capsule never contracts empty. */
+  transition:
+    color 160ms ease,
+    opacity 220ms ease-in-out calc((3 - var(--nav-entry-index, 0)) * 32ms),
+    translate var(--nav-finder-duration-close) var(--nav-finder-ease-close) calc((3 - var(--nav-entry-index, 0)) * 32ms);
+}
+/* Opening: the clip does the revealing; the pills only settle into place with
+   a short drift. The last one lands as the capsule reaches its width. */
+.nav-finder[data-open="true"] .nav-deck-pill {
+  opacity: 1;
+  translate: 0 0;
+  transition:
+    color 160ms ease,
+    opacity 200ms ease calc(30ms + var(--nav-entry-index, 0) * var(--nav-finder-stagger)),
+    translate 320ms var(--nav-ease-cinematic) calc(30ms + var(--nav-entry-index, 0) * var(--nav-finder-stagger));
+}
+.nav-deck-pill:is(:hover, :focus-visible, [aria-expanded="true"], [data-current="true"]) {
+  color: var(--nav-pill-ink-strong);
+}
+.nav-deck-icon {
+  width: 1.25em;
+  height: 1.25em;
+  flex-shrink: 0;
+}
+.nav-deck-label {
+  font-family: var(--nav-font-heading);
+  font-size: 0.75em;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+/* The CTA is the one filled pill: the inverse gloss of its bar, always lit. */
+.nav-deck-pill--cta {
+  --nav-gloss-body: var(--nav-gloss-body-inverse);
+  --nav-gloss-highlight: var(--nav-gloss-highlight-inverse);
+  --nav-gloss-sheen: var(--nav-gloss-sheen-inverse);
+  --nav-gloss-shadow: var(--nav-gloss-shadow-inverse);
+  margin-left: 0.25em;
+  color: var(--nav-cta-ink);
+}
+.nav-deck-pill--cta::after { opacity: 1; }
+.nav-deck-pill--cta:is(:hover, :focus-visible, [aria-expanded="true"], [data-current="true"]) {
+  color: var(--nav-cta-ink);
+}
+
+/* Only the hovered (or keyboard-focused) pill's eye blinks; the live section
+   is already marked by its lit gloss. The lid morph belongs to the eyelid
+   icons; the spiral eye has no closed lid and scales instead. */
+.nav-deck-pill:not([data-icon="method"]):is(:hover, :focus-visible) .nav-blinking-eye > :first-child {
+  animation: nav-eye-double-blink 2.4s ease-in-out infinite;
+}
+.nav-deck-pill:not([data-icon="method"]):is(:hover, :focus-visible) .nav-blinking-eye > :last-child {
+  animation: nav-eye-double-blink-content 2.4s ease-in-out infinite;
+}
+.nav-deck-pill[data-icon="method"]:is(:hover, :focus-visible) .nav-blinking-eye {
+  animation: nav-eye-double-blink-scale 2.4s ease-in-out infinite;
+}
+
+/* The tray: one panel that slides between pills and swaps its contents. The
+   top padding bridges the gap so the pointer never leaves the group. */
+.nav-tray-anchor {
+  --nav-tray-x: 0px;
+  translate: var(--nav-tray-x) 0;
+  transform-origin: var(--nav-tray-origin, 2.5em) 0;
+  transform: translateY(-6px) scale(0.975);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 200ms ease-in-out,
+    transform 260ms var(--nav-finder-ease-close),
+    translate 320ms var(--nav-ease-cinematic),
+    visibility 0s linear 260ms;
+}
+.nav-tray-anchor[data-open="true"] {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: none;
+  transition-duration: 200ms, 280ms, 320ms, 0s;
+  transition-delay: 0s;
+}
+.nav-tray { width: var(--nav-tray-w); }
+.nav-tray-swap { animation: navTrayFade 200ms var(--nav-ease-standard) both; }
+.nav-tray-swap .nav-sub-pill,
+.nav-tray-swap .nav-tray-contact > * {
+  animation: navTrayItemIn 320ms var(--nav-ease-cinematic) both;
+  animation-delay: calc(40ms + var(--nav-entry-index, 0) * 36ms);
+}
+.nav-tray-contact > :nth-child(2) { --nav-entry-index: 1; }
+.nav-tray-contact > :nth-child(3) { --nav-entry-index: 2; }
+@keyframes navTrayFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes navTrayItemIn {
+  from { opacity: 0; translate: 0 -6px; }
+  to { opacity: 1; translate: 0 0; }
+}
+.nav-sub-pill-arrow {
+  color: var(--nav-orb-accent);
+  opacity: 0;
+  transform: translate(-4px, -50%);
+  transition: opacity 180ms ease, transform 280ms var(--nav-ease-cinematic);
+}
+.nav-sub-pill:is(:hover, :focus-visible) .nav-sub-pill-arrow {
+  opacity: 1;
+  transform: translate(0, -50%);
+}
+.nav-sub-pill-skeleton {
+  background: rgba(21, 21, 21, 0.06);
+  animation: navTrayPulse 1.2s ease-in-out infinite;
+}
+.ev-navbar[data-tone="dark"] .nav-sub-pill-skeleton { background: rgba(255, 255, 255, 0.06); }
+@keyframes navTrayPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+/* CTA tray: white plate on ink and the reverse. */
+.nav-tray-cta {
+  background: #151515;
+  color: #fff;
+  box-shadow: 0 14px 30px -20px var(--nav-cta-glow);
+  transition: background 220ms var(--nav-ease-standard), transform 180ms var(--nav-ease-standard);
+}
+.nav-tray-cta:hover { background: #2a2a2e; }
+.nav-tray-cta:active { transform: scale(0.99); }
+.nav-tray-cta-arrow {
+  background: #fff;
+  color: #151515;
+  transition: transform 300ms var(--nav-ease-cinematic);
+}
+.nav-tray-cta:hover .nav-tray-cta-arrow { transform: translateX(3px); }
+.ev-navbar[data-tone="dark"] .nav-tray-cta {
+  background: #fff;
+  color: #101011;
+}
+.ev-navbar[data-tone="dark"] .nav-tray-cta:hover { background: var(--nav-cta-hover-dark); }
+.ev-navbar[data-tone="dark"] .nav-tray-cta-arrow {
+  background: #101011;
+  color: #fff;
+}
+
+/* ------------------------------------------------------------
+   Mobile finder: the same capsule unfolding downward. The body row
+   interpolates 0fr ⇄ 1fr exactly like the desktop columns, with the
+   same open/close pairing (expo-out open, eased fold close), the
+   same feathered clip edge while in motion, and the same stagger.
+   ------------------------------------------------------------ */
+.nav-finder--mobile {
+  border-radius: 1.5em;
+  /* Never taller than the viewport: the body scrolls inside the capsule. */
+  max-height: calc(100dvh - max(0.75rem, env(safe-area-inset-top)) - 1rem);
+}
+.nav-finder--mobile .nav-finder-trigger {
+  height: 2.5em;
+  padding: 0 0.875em 0 0.625em;
+}
+.nav-finder--mobile .nav-finder-trigger,
+.nav-finder--mobile[data-open="true"] .nav-finder-trigger {
+  opacity: 1;
+  translate: none;
+  pointer-events: auto;
+  transition-property: color, scale;
+  transition-duration: 160ms, 140ms;
+  transition-timing-function: ease;
+  transition-delay: 0s;
+}
+.nav-finder--mobile[data-open="true"] .nav-finder-trigger { color: var(--nav-pill-ink-strong); }
+.nav-finder--mobile .nav-finder-trigger:active { scale: 0.97; }
+/* The open finder is the lit close control: gloss on, reticle tightened,
+   eye blinking — the desktop hover state held for as long as the menu is. */
+.nav-finder--mobile .nav-finder-trigger[aria-expanded="true"]::after {
+  opacity: 1;
+  background-position: 0% 0, 0 0, 0 0;
+  transition: opacity 220ms ease, background-position 750ms cubic-bezier(0.4, 0, 0.2, 1) 60ms;
+}
+.nav-finder--mobile .nav-finder-trigger[aria-expanded="true"] .nav-reticle-corners { transform: scale(0.9); }
+.nav-finder--mobile .nav-finder-trigger[aria-expanded="true"] .nav-reticle-lid--top { animation: nav-reticle-blink-top 2.4s ease-in-out infinite; }
+.nav-finder--mobile .nav-finder-trigger[aria-expanded="true"] .nav-reticle-lid--bottom { animation: nav-reticle-blink-bottom 2.4s ease-in-out infinite; }
+.nav-finder--mobile .nav-finder-trigger[aria-expanded="true"] .nav-reticle-dot { animation: nav-eye-double-blink-content 2.4s ease-in-out infinite; }
+
+/* MENU ⇄ CLOSE: two words in a 1fr 0fr ⇄ 0fr 1fr grid, so the pill's width
+   morphs between the two intrinsic widths while the words crossfade. */
+.nav-finder-words {
+  display: grid;
+  grid-template-columns: 1fr 0fr;
+  align-items: center;
+  transition: grid-template-columns var(--nav-finder-duration-close) var(--nav-finder-ease-close);
+}
+.nav-finder-trigger[aria-expanded="true"] .nav-finder-words {
+  grid-template-columns: 0fr 1fr;
+  transition-duration: var(--nav-finder-duration);
+  transition-timing-function: var(--nav-ease-cinematic);
+}
+.nav-finder-word-cell {
+  display: flex;
+  min-width: 0;
+  overflow: hidden;
+}
+.nav-finder-word-cell .nav-finder-word {
+  transition:
+    opacity 200ms ease,
+    translate var(--nav-finder-duration-close) var(--nav-finder-ease-close);
+}
+.nav-finder-word-cell--close .nav-finder-word {
+  opacity: 0;
+  translate: 0 0.35em;
+}
+.nav-finder-trigger[aria-expanded="true"] .nav-finder-word-cell .nav-finder-word {
+  transition-duration: 200ms, var(--nav-finder-duration);
+  transition-timing-function: ease, var(--nav-ease-cinematic);
+}
+.nav-finder-trigger[aria-expanded="true"] .nav-finder-word-cell--open .nav-finder-word {
+  opacity: 0;
+  translate: 0 -0.35em;
+}
+.nav-finder-trigger[aria-expanded="true"] .nav-finder-word-cell--close .nav-finder-word {
+  opacity: 1;
+  translate: 0 0;
+  transition-delay: 60ms, 0s;
+}
+
+/* The body row. Closing uses the fold timing so the capsule contracts as one
+   object with the pills leaving ahead of the edge. */
+.nav-finder-m-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  min-height: 0;
+  transition: grid-template-rows var(--nav-finder-duration-close) var(--nav-finder-ease-close);
+}
+.nav-finder--mobile[data-open="true"] .nav-finder-m-body {
+  grid-template-rows: 1fr;
+  transition-duration: var(--nav-finder-duration);
+  transition-timing-function: var(--nav-ease-cinematic);
+}
+/* Same feathered clip as the desktop cells, turned downward: the fade lives
+   in the last 1.5em of the mask image and is pushed off the box at rest. */
+.nav-finder-m-body-inner {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - var(--nav-finder-feather)), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - var(--nav-finder-feather)), transparent);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  transition: mask-size var(--nav-finder-duration-close) var(--nav-finder-ease-close), -webkit-mask-size var(--nav-finder-duration-close) var(--nav-finder-ease-close);
+}
+.nav-finder-m-body-inner::-webkit-scrollbar { display: none; }
+/* Padding lives one level down so it adds nothing to the collapsed track. */
+.nav-finder-m-body-pad { padding: 0 0.75em 0.75em; }
+.nav-finder--mobile[data-open="true"] .nav-finder-m-body-inner {
+  -webkit-mask-size: 100% calc(100% + var(--nav-finder-feather));
+  mask-size: 100% calc(100% + var(--nav-finder-feather));
+  transition-duration: var(--nav-finder-duration);
+  transition-timing-function: var(--nav-ease-cinematic);
+}
+
+/* The tray: an explicit, measured height (set by the component) so a switch
+   between two trays glides, and a scale-in from under the tapped pill. */
+.nav-finder-m-tray {
+  --nav-tray-h: 0px;
+  height: 0;
+  overflow: hidden;
+  transition: height var(--nav-finder-duration-close) var(--nav-finder-ease-close);
+}
+.nav-finder-m-tray[data-open="true"] {
+  height: var(--nav-tray-h);
+  transition-duration: var(--nav-finder-duration);
+  transition-timing-function: var(--nav-ease-cinematic);
+}
+.nav-finder-m-tray-inner {
+  padding-top: 0.5em;
+  transform-origin: var(--nav-tray-origin, 50%) 0;
+  transform: translateY(-6px) scale(0.975);
+  opacity: 0;
+  transition:
+    opacity 200ms ease-in-out,
+    transform 260ms var(--nav-finder-ease-close);
+}
+.nav-finder-m-tray[data-open="true"] .nav-finder-m-tray-inner {
+  opacity: 1;
+  transform: none;
+  transition-duration: 200ms, 320ms;
+  transition-timing-function: ease-in-out, var(--nav-ease-cinematic);
+}
+
+.nav-deck--mobile {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5em;
+  width: auto;
+  padding: 0.25em 0 0;
+}
+.nav-deck--mobile .nav-deck-pill {
+  justify-content: center;
+  height: auto;
+  min-height: 2.75em;
+  padding: 0 0.75em;
+}
+.nav-deck--mobile .nav-deck-pill--cta { margin-left: 0; }
+/* Rows arrive top-down, so the stagger displaces vertically. */
+.nav-finder--mobile .nav-deck-pill { translate: 0 -0.375em; }
+.nav-finder--mobile[data-open="true"] .nav-deck-pill { translate: 0 0; }
+/* Touch has no hover: the press is the feedback, and the expanded pill's eye
+   blinks the way a hovered one does on desktop. */
+.nav-finder--mobile .nav-deck-pill:active { scale: 0.97; }
+/* Longhands only: the base rules' per-index delays and easings stay. */
+.nav-finder--mobile .nav-deck-pill {
+  transition-property: color, opacity, translate, scale;
+  transition-duration: 160ms, 220ms, var(--nav-finder-duration-close), 140ms;
+}
+.nav-finder--mobile[data-open="true"] .nav-deck-pill {
+  transition-property: color, opacity, translate, scale;
+  transition-duration: 160ms, 200ms, 320ms, 140ms;
+}
+.nav-finder--mobile .nav-deck-pill:not([data-icon="method"])[aria-expanded="true"] .nav-blinking-eye > :first-child {
+  animation: nav-eye-double-blink 2.4s ease-in-out infinite;
+}
+.nav-finder--mobile .nav-deck-pill:not([data-icon="method"])[aria-expanded="true"] .nav-blinking-eye > :last-child {
+  animation: nav-eye-double-blink-content 2.4s ease-in-out infinite;
+}
+.nav-finder--mobile .nav-deck-pill[data-icon="method"][aria-expanded="true"] .nav-blinking-eye {
+  animation: nav-eye-double-blink-scale 2.4s ease-in-out infinite;
+}
+
+.nav-simple-menu-rail--mobile { padding: 0.875em 0.75em 0.875em 1.375em; }
+/* Rows: the arrow rests visible (nothing hovers it in), and the press takes
+   the role of the hover state. */
+.nav-finder--mobile .nav-sub-pill-arrow {
+  opacity: 0.5;
+  transform: translate(0, -50%);
+}
+.nav-finder--mobile .nav-sub-pill:active .nav-sub-pill-arrow { opacity: 1; }
+.nav-finder--mobile .nav-simple-menu-item:active {
+  color: #151515;
+  background: color-mix(in srgb, var(--nav-orb-accent) 10%, #f4f3f5);
+  border-color: color-mix(in srgb, var(--nav-orb-accent) 35%, transparent);
+  transform: translate3d(3px, 0, 0);
+}
+.nav-finder--mobile .nav-simple-menu-item:active .nav-simple-menu-orb {
+  color: #fff;
+  background: #151515;
+  transform: scale(1.08);
+}
+.nav-finder--mobile .nav-simple-menu-item:active .nav-simple-menu-number { color: #fff; }
+.ev-navbar[data-tone="dark"] .nav-finder--mobile .nav-simple-menu-item:active {
+  color: #fff;
+  background: color-mix(in srgb, var(--nav-orb-accent) 20%, #19191c);
+  border-color: color-mix(in srgb, var(--nav-orb-accent) 52%, rgba(255, 255, 255, 0.14));
+}
+.ev-navbar[data-tone="dark"] .nav-finder--mobile .nav-simple-menu-item:active .nav-simple-menu-orb {
+  color: #151515;
+  background: #fff;
+}
+.ev-navbar[data-tone="dark"] .nav-finder--mobile .nav-simple-menu-item:active .nav-simple-menu-number { color: var(--nav-orb-accent); }
+.nav-finder--mobile .nav-tray-cta:active { transform: scale(0.99); }
+
+.nav-tray-link {
+  color: rgba(21, 21, 21, 0.55);
+  transition: color 160ms ease;
+}
+.nav-tray-link:hover,
+.nav-tray-link:focus-visible,
+.nav-tray-link:active { color: #151515; }
+.ev-navbar[data-tone="dark"] .nav-tray-link { color: rgba(255, 255, 255, 0.55); }
+.ev-navbar[data-tone="dark"] .nav-tray-link:hover,
+.ev-navbar[data-tone="dark"] .nav-tray-link:focus-visible,
+.ev-navbar[data-tone="dark"] .nav-tray-link:active { color: #fff; }
+
+/* Reduced motion: the capsule snaps between its two widths and the pills
+   crossfade in place; nothing slides or staggers. */
+.reduced-motion .nav-reticle-dot,
+.reduced-motion .nav-tray-swap,
+.reduced-motion .nav-tray-swap .nav-sub-pill,
+.reduced-motion .nav-tray-swap .nav-tray-contact > * {
+  animation: none;
+}
+.reduced-motion .nav-finder {
+  --nav-finder-duration: 0ms;
+  --nav-finder-duration-close: 0ms;
+  --nav-finder-stagger: 0ms;
+}
+.reduced-motion .nav-finder-trigger,
+.reduced-motion .nav-deck-pill {
+  translate: 0 0 !important;
+  transition-duration: 120ms !important;
+  transition-delay: 0s !important;
+}
+.reduced-motion .nav-tray-anchor {
+  transform: none !important;
+  transition-duration: 120ms !important;
+  transition-delay: 0s !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-reticle-dot,
+  .nav-tray-swap,
+  .nav-tray-swap .nav-sub-pill,
+  .nav-tray-swap .nav-tray-contact > * {
+    animation: none;
+  }
+  .nav-finder-trigger::after,
+  .nav-deck-pill::after {
+    background-position: 100% 0, 0 0, 0 0 !important;
+  }
+  .nav-finder {
+    --nav-finder-duration: 0ms;
+    --nav-finder-duration-close: 0ms;
+    --nav-finder-stagger: 0ms;
+  }
+  .nav-finder-trigger,
+  .nav-deck-pill {
+    translate: 0 0 !important;
+    transition-duration: 120ms !important;
+    transition-delay: 0s !important;
+  }
+  .nav-tray-anchor {
+    transform: none !important;
+    transition-duration: 120ms !important;
+    transition-delay: 0s !important;
+  }
+}
