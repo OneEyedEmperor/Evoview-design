@@ -1,5 +1,22 @@
 # navbar changelog
 
+## 2.1.0
+
+- Restore the eye's 3.2s opacity pulse on a separate, stacked lids SVG with
+  `will-change: opacity`. Corners and pupil remain in the upper SVG; paths
+  themselves do not pulse. HUD hover/open choreography is unchanged, and
+  both reduced-motion mechanisms disable the pulse.
+- Chrome profiling (4s steady idle windows): 2.0.1 static **0 Paint**,
+  reproduced old single-SVG/path pulse **0 Paint**, split-SVG pulse **0 Paint**.
+  Respectively, UpdateLayer counts were 0 / 0 / 6 and CompositeLayers counts
+  were 0 / 0 / 0. Chrome already composites the old SVG-child animation;
+  these measurements do not demonstrate a before/after paint improvement.
+- The separate SVG box is retained for cross-engine compositing: Safari and
+  Firefox do not share Chrome's SVG-child animation compositing support.
+  Element-level opacity provides the independent layer boundary instead.
+  Safari/Firefox performance was not measured in this verification.
+- Config changes: none.
+
 ## 2.0.1
 
 - `eye` reticle no longer pulses. The infinite opacity loop on an SVG path

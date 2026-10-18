@@ -8,13 +8,15 @@ import { getTrayItems, useTrayVersion } from "./useNavTrays";
 export function ReticleMark() {
   return (
     <span aria-hidden="true" className="nav-reticle">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <svg className="nav-reticle-lids" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path className="nav-reticle-lid nav-reticle-lid--top" d="M5 12Q12 4.6 19 12" />
+        <path className="nav-reticle-lid nav-reticle-lid--bottom" d="M5 12Q12 19.4 19 12" />
+      </svg>
+      <svg className="nav-reticle-frame" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <g className="nav-reticle-corners">
           <path d="M8.5 4H4v4.5M15.5 4H20v4.5M4 15.5V20h4.5M20 15.5V20h-4.5" />
         </g>
         <g className="nav-reticle-eye">
-          <path className="nav-reticle-lid nav-reticle-lid--top" d="M5 12Q12 4.6 19 12" />
-          <path className="nav-reticle-lid nav-reticle-lid--bottom" d="M5 12Q12 19.4 19 12" />
           <circle className="nav-reticle-dot" cx="12" cy="12" r="2.1" fill="var(--nav-section-accent, currentColor)" stroke="none" />
         </g>
       </svg>
