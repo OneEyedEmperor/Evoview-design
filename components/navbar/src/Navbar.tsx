@@ -12,22 +12,27 @@ import "./navbar.css";
 export default function Navbar({ config }: { config: NavbarConfig }) {
   const prefersReducedMotion = usePrefersReducedMotion();
   // Light glass over the light sections, dark glass over the dark ones; the
-  // section under the bar also colours the reticle's dot and lights its pill.
-  const { tone, section, color } = useNavState(config.sections, config.initialTone);
+  // section under the bar also colours the reticle's pupil and lights its pill.
+  const { tone, section, color } = useNavState(config.sections, config.initialTone, config.accent);
   useIdleTrayPreload(config);
+
+  const activeKey = config.activeKey ?? config.deck.find((entry) => entry.section === section)?.key;
 
   return (
     <header
       data-tone={tone}
+      data-reticle={config.reticle ?? "eye"}
       className={`ev-navbar fixed top-0 left-0 right-0 z-50 flex justify-center px-4${prefersReducedMotion ? " reduced-motion" : ""}`}
       style={{
         paddingTop: "max(0.75rem, env(safe-area-inset-top))",
         "--nav-orb-accent": "currentColor",
+        ...(config.accent ? { "--nav-accent": config.accent } : null),
+        ...config.vars,
       } as CSSProperties}
     >
       <div className="nav-rail relative z-20 flex w-full items-center justify-center">
         <NavFinderMobile config={config} accent={color} />
-        <NavFinder config={config} activeSection={section} accent={color} />
+        <NavFinder config={config} activeKey={activeKey} accent={color} />
       </div>
     </header>
   );

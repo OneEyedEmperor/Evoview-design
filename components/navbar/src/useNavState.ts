@@ -40,14 +40,14 @@ const stores = new WeakMap<NavSection[], Store>();
 // The store is created during render, which also runs on the server.
 const escapeId = (id: string) => (typeof CSS !== "undefined" && typeof CSS.escape === "function" ? CSS.escape(id) : id);
 
-function createStore(sections: NavSection[], initialTone: NavTone): Store {
+function createStore(sections: NavSection[], initialTone: NavTone, fallbackColor: string): Store {
   const colors = Object.fromEntries(sections.map(({ id, color }) => [id, color])) as Record<string, string>;
   const ids = new Set(sections.map(({ id }) => id));
   const first = sections[0];
   const DEFAULT_STATE: NavState = {
     tone: initialTone,
     section: first?.id ?? "",
-    color: first?.color ?? "currentColor",
+    color: first?.color ?? fallbackColor,
   };
   const selector = [...sections.map(({ id }) => `#${escapeId(id)}`), '[data-nav-tone="dark"]'].join(",");
 
@@ -184,10 +184,10 @@ function createStore(sections: NavSection[], initialTone: NavTone): Store {
   };
 }
 
-export function useNavState(sections: NavSection[], initialTone: NavTone = "light"): NavState {
+export function useNavState(sections: NavSection[], initialTone: NavTone = "light", fallbackColor = "currentColor"): NavState {
   let store = stores.get(sections);
   if (!store) {
-    store = createStore(sections, initialTone);
+    store = createStore(sections, initialTone, fallbackColor);
     stores.set(sections, store);
   }
   return useSyncExternalStore(store.subscribe, store.getSnapshot, store.getServerSnapshot);

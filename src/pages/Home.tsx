@@ -1,53 +1,39 @@
-import { useEffect, useState } from "react";
-import { Navbar } from "../../components/navbar/src";
-import { navbarConfig } from "../../components/navbar/src/navbar.config";
+import { useCallback, useMemo, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Navbar, useNavbarLinks } from "../../components/navbar/src";
+import { buildNavbarConfig, withRoute, type Locale } from "../../components/navbar/src/navbar.config";
 
-/* Showcase for components/navbar. The page is a stack of tall sections whose
-   ids and tones match the reference config, so the bar can be watched
-   re-toning and re-colouring its REC dot while scrolling. Tray selections
-   are echoed in the readout at the bottom. */
+/* Showcase of the reference navbar (multi-page shape): the deck's routes all
+   render this page, the live pill follows the route, the language pill flips
+   the copy in place, and internal links go through react-router. */
 
-const SECTIONS: { id: string; title: string; dark: boolean; accent: string }[] = [
-  { id: "hero", title: "Hero", dark: true, accent: "#c84a4a" },
-  { id: "processus", title: "Processus", dark: false, accent: "#151515" },
-  { id: "services", title: "Services", dark: false, accent: "#3f51b5" },
-  { id: "intro", title: "Méthode", dark: true, accent: "#ffffff" },
-  { id: "partners", title: "Portfolio", dark: false, accent: "#a94f16" },
-  { id: "contact", title: "Contact", dark: true, accent: "#3f51b5" },
-];
+const PAGES: Record<string, { fr: string; en: string }> = {
+  "/": { fr: "Accueil", en: "Home" },
+  "/menu": { fr: "Carte", en: "Dining" },
+  "/karaoke": { fr: "Karaoké", en: "Karaoke" },
+  "/reservation": { fr: "Réserver", en: "Book" },
+};
 
 export default function Home() {
-  const [last, setLast] = useState<string>("—");
+  const [locale, setLocale] = useState<Locale>("fr");
+  const location = useLocation();
+  const navigate = useNavigate();
+  useNavbarLinks(useCallback((to: string) => navigate(to), [navigate]));
 
-  useEffect(() => {
-    const onSelect = (event: Event) => setLast(JSON.stringify((event as CustomEvent).detail));
-    window.addEventListener("navbar:select", onSelect);
-    return () => window.removeEventListener("navbar:select", onSelect);
-  }, []);
+  const config = useMemo(() => withRoute(buildNavbarConfig(locale, setLocale), location.pathname), [locale, location.pathname]);
+  const page = PAGES[location.pathname.replace(/\/+$/, "") || "/"];
 
   return (
-    <>
-      <Navbar config={navbarConfig} />
-      <main>
-        {SECTIONS.map((section) => (
-          <section
-            key={section.id}
-            id={section.id}
-            data-nav-tone={section.dark ? "dark" : undefined}
-            className="flex min-h-screen flex-col items-center justify-center gap-4 px-6"
-            style={{ background: section.dark ? "#101011" : "#efefef", color: section.dark ? "#fff" : "#151515" }}
-          >
-            <span className="h-3 w-3 rounded-full" style={{ background: section.accent, boxShadow: section.accent === "#ffffff" ? "0 0 0 1px rgba(0,0,0,.2)" : undefined }} />
-            <h2 className="text-4xl font-bold tracking-tight">{section.title}</h2>
-            <p className="text-sm opacity-60">
-              #{section.id} · {section.dark ? "data-nav-tone=\"dark\"" : "light"}
-            </p>
-          </section>
-        ))}
+    <div data-nav-tone="dark" className="min-h-screen" style={{ background: "#141210", color: "#fff" }}>
+      <Navbar config={config} />
+      <main className="flex min-h-screen flex-col items-center justify-center gap-4 px-6">
+        <span className="h-3 w-3 rounded-full" style={{ background: "#f6c60a" }} />
+        <h1 className="text-4xl font-bold tracking-tight">{page ? page[locale] : location.pathname}</h1>
+        <p className="text-sm opacity-60">{location.pathname} · {locale}</p>
+        <Link to="/evoview" className="mt-8 text-xs uppercase tracking-widest opacity-50 hover:opacity-100">
+          one-page example with trays →
+        </Link>
       </main>
-      <div className="fixed bottom-4 left-1/2 z-40 -translate-x-1/2 rounded-full bg-black/80 px-4 py-2 text-xs text-white backdrop-blur">
-        last navbar:select → {last}
-      </div>
-    </>
+    </div>
   );
 }

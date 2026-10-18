@@ -1,81 +1,117 @@
-import EvoviewLogo from "./brand/EvoviewLogo";
-import type { NavbarConfig, NavSection } from "./types";
+import type { ReactNode } from "react";
+import { CalendarDays, House, Languages, Mic, Soup, type LucideIcon } from "lucide-react";
+import logoUrl from "./brand/tchin-logo.svg";
+import { NavLangSwitch } from "./NavLangSwitch";
+import type { NavbarConfig, NavbarLabels, NavSection } from "./types";
 
 /* THE ONE FILE TO EDIT PER SITE.
 
-   This is the reference configuration: it reproduces the evoview.be navbar.
-   To adapt the bar to a client site, change the values here (logo, labels,
-   sections, deck, trays, actions) and leave every other file in this folder
-   untouched. See README.md → "Adapting" for which values are safe to change
-   and what each one controls. */
+   Reference configuration: the Tchin Tchin restaurant (resto-tchin), a
+   typical client shape — a multi-page site, five pills with a booking CTA,
+   lucide marks, a language switch, no trays. Change the values here (brand,
+   copy, deck, actions) and leave every other file in this folder untouched.
+   README.md → "Adapting" lists what each value controls.
 
-/* Sections in document order. `id` must match the section element's id in
-   the page; `color` is the REC dot colour while the reader is inside it.
-   Module-level constant: the scroll store is cached by this reference. */
-const sections: NavSection[] = [
-  { id: "hero", color: "#c84a4a" },
-  { id: "processus", color: "#151515" },
-  { id: "services", color: "#3f51b5" },
-  { id: "intro", color: "#ffffff" },
-  { id: "partners", color: "#a94f16" },
-  { id: "contact", color: "#3f51b5" },
-];
+   One-page sites: fill `sections` (ids present in the page, document order)
+   and give each pill a `section`; drop `withRoute`. Trays: see
+   ../examples/evoview.config.tsx. */
 
-/* Tray contents are loaded on idle (see useNavTrays.ts). Static arrays are
-   fine for short lists: `items: [...]`. */
-const trays = () => import("./brand/evoview-trays");
+export type Locale = "fr" | "en";
+export const LOCALES: readonly Locale[] = ["fr", "en"];
 
-export const navbarConfig: NavbarConfig = {
-  logo: <EvoviewLogo alt="" />,
-  homeHref: "#hero",
+const ACCENT = "#f6c60a";
+const CHILI = "#d8573f";
+const VIOLET = "#c08cf0";
 
-  labels: {
-    menu: "Menu",
-    close: "Fermer",
-    sectionLink: "Aller à la section",
-    navAria: "Navigation principale",
-    openAria: "Ouvrir le menu",
-    closeAria: "Fermer le menu",
-    homeAria: "Evoview — accueil",
-    loading: "Chargement de la navigation",
-  },
+/* Marks are always in the brand accent; the per-entry accent still drives
+   the rest of the pill (desktop tray rows, hairlines). */
+const mark = (Icon: LucideIcon): ReactNode => <Icon strokeWidth={1.6} aria-hidden="true" style={{ color: ACCENT }} />;
 
-  sections,
+type Copy = {
+  labels: NavbarLabels;
+  deck: { home: string; dining: string; karaoke: string; book: string; lang: string };
+};
 
-  /* Four pills is the designed count; three to five fit the capsule. One
-     entry may be the CTA (filled inverse pill); it needs no href when its
-     action is a modal. */
-  deck: [
-    { key: "services", label: "Services", icon: "services", href: "#services", section: "services", accent: "#634b72" },
-    { key: "portfolio", label: "Portfolio", icon: "portfolio", href: "#partners", section: "partners", accent: "#a94f16" },
-    { key: "method", label: "Méthode", icon: "method", href: "#intro", section: "intro", accent: "#634b72" },
-    { key: "contact", label: "Contact", icon: "envelope", href: "#contact", section: "contact", accent: "#c8a6d9", cta: true },
-  ],
-
-  trays: {
-    services: { kind: "items", unit: "dossiers", items: () => trays().then((m) => m.services) },
-    portfolio: { kind: "items", unit: "projets", items: () => trays().then((m) => m.portfolio) },
-    method: { kind: "items", unit: "phases", items: () => trays().then((m) => m.method) },
-    contact: {
-      kind: "cta",
-      copy: "Un nombre volontairement limité de partenaires. Chaque candidature est étudiée par notre équipe.",
-      label: "Soumettre votre candidature",
-      note: "Environ 2 minutes · Sans engagement",
-      onSelect: () => window.dispatchEvent(new CustomEvent("navbar:select", { detail: { type: "qualification" } })),
+const COPY: Record<Locale, Copy> = {
+  fr: {
+    labels: {
+      menu: "Menu",
+      close: "Fermer",
+      sectionLink: "Voir",
+      navAria: "Navigation principale",
+      openAria: "Ouvrir le menu",
+      closeAria: "Fermer le menu",
+      homeAria: "Tchin Tchin — accueil",
+      loading: "Chargement de la navigation",
     },
+    deck: { home: "Accueil", dining: "Carte", karaoke: "Karaoké", book: "Réserver", lang: "Langue : français. Passer en anglais" },
   },
-
-  /* On evoview.be the Contact pill opens the qualification modal instead of
-     scrolling. Delete this if every pill should simply follow its anchor. */
-  onSection: (entry, event) => {
-    if (entry.key === "contact") {
-      event.preventDefault();
-      window.dispatchEvent(new CustomEvent("navbar:select", { detail: { type: "qualification" } }));
-    }
-  },
-
-  /* Wire to the site's analytics (`trackEvent`), or delete. */
-  track: (name, payload) => {
-    if (import.meta.env.DEV) console.info(`[navbar] ${name}`, payload);
+  en: {
+    labels: {
+      menu: "Menu",
+      close: "Close",
+      sectionLink: "View",
+      navAria: "Main navigation",
+      openAria: "Open menu",
+      closeAria: "Close menu",
+      homeAria: "Tchin Tchin — home",
+      loading: "Loading navigation",
+    },
+    deck: { home: "Home", dining: "Dining", karaoke: "Karaoke", book: "Book", lang: "Language: English. Switch to French" },
   },
 };
+
+/* Multi-page site: no scroll-probed sections. Module-level so the scroll
+   store is created once. */
+const SECTIONS: NavSection[] = [];
+
+export function buildNavbarConfig(locale: Locale, onLocaleChange: (locale: Locale) => void): NavbarConfig {
+  const c = COPY[locale];
+  const other: Locale = locale === "fr" ? "en" : "fr";
+
+  return {
+    logo: <img src={logoUrl} alt="" width={898} height={567} />,
+    homeHref: "/",
+    labels: c.labels,
+    accent: ACCENT,
+    vars: {
+      /* Two-line wordmark (≈1.58:1): sized by height, shown as is on dark. */
+      "--nav-logo-h-desktop": "2.1em",
+      "--nav-logo-w-desktop": "4em",
+      "--nav-logo-h-mobile": "1.9em",
+      "--nav-logo-w-mobile": "3.6em",
+      "--nav-logo-dark-filter": "none",
+      /* Red pupil in the gold eye. */
+      "--nav-eye-pupil": "#e5252a",
+    },
+    sections: SECTIONS,
+    initialTone: "dark",
+
+    /* Five pills: four destinations and the CTA. On mobile the CTA spans the
+       last row. The language entry replaces its body with the switch and
+       keeps the menu open. */
+    deck: [
+      { key: "home", label: c.deck.home, icon: mark(House), href: "/", accent: ACCENT },
+      { key: "dining", label: c.deck.dining, icon: mark(Soup), href: "/menu", accent: CHILI },
+      { key: "karaoke", label: c.deck.karaoke, icon: mark(Mic), href: "/karaoke", accent: VIOLET },
+      { key: "lang", label: c.deck.lang, icon: mark(Languages), content: <NavLangSwitch locale={locale} locales={LOCALES} icon={mark(Languages)} />, keepOpen: true, accent: ACCENT },
+      { key: "book", label: c.deck.book, icon: mark(CalendarDays), href: "/reservation", accent: ACCENT, cta: true },
+    ],
+
+    trays: {},
+
+    onSection: (entry, event) => {
+      if (entry.key === "lang") {
+        event.preventDefault();
+        onLocaleChange(other);
+      }
+    },
+  };
+}
+
+/* Multi-page sites: the live pill is the one whose href is the current route.
+   Call from the layout: `withRoute(config, location.pathname)`. */
+export function withRoute(config: NavbarConfig, pathname: string): NavbarConfig {
+  const path = pathname.replace(/\/+$/, "") || "/";
+  return { ...config, activeKey: config.deck.find((entry) => entry.href === path)?.key };
+}

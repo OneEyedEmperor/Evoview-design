@@ -1,0 +1,54 @@
+/* Language switch (NavLangSwitch). Colours come from the navbar tokens. */
+.nav-lang {
+  --nav-lang-pad: 0.1875em;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+.nav-lang-track {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--nav-lang-count, 2), 1fr);
+  padding: var(--nav-lang-pad);
+  border-radius: var(--nav-radius-round);
+  background: rgba(21, 21, 21, 0.06);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--nav-accent) 26%, transparent);
+}
+.ev-navbar[data-tone="dark"] .nav-lang-track { background: rgba(0, 0, 0, 0.32); }
+.nav-lang-thumb {
+  position: absolute;
+  inset-block: var(--nav-lang-pad);
+  left: var(--nav-lang-pad);
+  width: calc((100% - 2 * var(--nav-lang-pad)) / var(--nav-lang-count, 2));
+  border-radius: inherit;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--nav-accent) 80%, #fff), var(--nav-accent));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 0 12px -3px color-mix(in srgb, var(--nav-accent) 70%, transparent);
+  translate: calc(var(--nav-lang-index, 0) * 100%) 0;
+  transition: translate 340ms var(--nav-ease-cinematic);
+}
+.nav-lang-opt {
+  position: relative;
+  width: 3em;
+  padding: 0.45em 0;
+  font-family: var(--nav-font-heading);
+  font-size: 0.6875em;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  text-indent: 0.12em;
+  text-align: center;
+  color: var(--nav-pill-ink);
+  opacity: 0.6;
+  transition: color 240ms ease, opacity 240ms ease;
+}
+.nav-lang-opt[data-active] {
+  color: var(--nav-accent-ink);
+  opacity: 1;
+}
+
+.reduced-motion .nav-lang-thumb { transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  .nav-lang-thumb { transition: none; }
+}

@@ -1,3 +1,5 @@
 export { default as Navbar } from "./Navbar";
-export { NavIcon, NAV_ICONS, type NavIconKey } from "./NavIcons";
-export type { NavbarConfig, NavbarLabels, NavDeckEntry, NavSection, NavTray, NavTrayItem, NavTrackPayload } from "./types";
+export { NavLangSwitch } from "./NavLangSwitch";
+export { useNavbarLinks } from "./useNavbarLinks";
+export { NavIcon, NAV_ICONS, DeckIcon, type NavIconKey } from "./NavIcons";
+export type { NavbarConfig, NavbarLabels, NavbarVars, NavDeckEntry, NavSection, NavTray, NavTrayItem, NavTrackPayload } from "./types";

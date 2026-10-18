@@ -88,7 +88,7 @@ export function useNavActions(config: NavbarConfig, close: () => void, location:
   const section = useCallback((entry: NavDeckEntry, event: MouseEvent<HTMLElement>) => {
     track?.("nav_click", { location, label: entry.label, target: entry.href ?? null });
     onSection?.(entry, event);
-    close();
+    if (!entry.keepOpen) close();
   }, [close, location, onSection, track]);
 
   return useMemo(() => ({ item, cta, section }), [item, cta, section]);

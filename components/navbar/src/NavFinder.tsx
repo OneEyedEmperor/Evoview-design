@@ -71,9 +71,18 @@ function useFinderState() {
     commitOpen(true);
   }, [clear, commitOpen]);
 
+  // After a click closes the menu, the collapsing capsule slides the trigger
+  // under a still pointer: hover may only reopen once the pointer has left.
+  const hoverLockedRef = useRef(false);
+  const closeFromAction = useCallback(() => {
+    hoverLockedRef.current = true;
+    close();
+  }, [close]);
+  const releaseHover = useCallback(() => { hoverLockedRef.current = false; }, []);
+
   const hoverOpen = useCallback(() => {
     clear("open", "close");
-    if (openRef.current) return;
+    if (openRef.current || hoverLockedRef.current) return;
     timers.current.open = window.setTimeout(() => commitOpen(true), OPEN_DELAY);
   }, [clear, commitOpen]);
 
@@ -100,22 +109,32 @@ function useFinderState() {
 
   useEffect(() => () => clear("open", "close", "tray"), [clear]);
 
+  // An in-place toggle (keepOpen) can reflow the page, and the browser then
+  // clamps or anchors the scroll position: that scroll is not the reader's.
+  const scrollHoldUntil = useRef(0);
+  const holdScrollClose = useCallback(() => {
+    scrollHoldUntil.current = performance.now() + 500;
+  }, []);
+
   // A scroll or a viewport change dismisses the menu rather than letting it
   // drift over the page.
   useEffect(() => {
-    window.addEventListener("scroll", close, { passive: true });
+    const onScroll = () => {
+      if (performance.now() > scrollHoldUntil.current) close();
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", close);
     return () => {
-      window.removeEventListener("scroll", close);
+      window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", close);
     };
   }, [close]);
 
-  return { open, tray, openNow, hoverOpen, close, scheduleClose, cancelClose, showTray, hideTray };
+  return { open, tray, openNow, hoverOpen, close, closeFromAction, releaseHover, scheduleClose, cancelClose, showTray, hideTray, holdScrollClose };
 }
 
-export default function NavFinder({ config, activeSection, accent }: { config: NavbarConfig; activeSection: string; accent: string }) {
-  const { open, tray, openNow, hoverOpen, close, scheduleClose, cancelClose, showTray, hideTray } = useFinderState();
+export default function NavFinder({ config, activeKey, accent }: { config: NavbarConfig; activeKey: string | undefined; accent: string }) {
+  const { open, tray, openNow, hoverOpen, close, closeFromAction, releaseHover, scheduleClose, cancelClose, showTray, hideTray, holdScrollClose } = useFinderState();
   const anchorRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -132,9 +151,8 @@ export default function NavFinder({ config, activeSection, accent }: { config: N
   const trayId = `${baseId}-tray`;
 
   const { deck, trays, labels } = config;
-  const liveKey = deck.find((entry) => entry.section === activeSection)?.key;
   const preload = useCallback(() => preloadTrays(config), [config]);
-  const actions = useNavActions(config, close, "navbar");
+  const actions = useNavActions(config, closeFromAction, "navbar");
 
   // Hovering a pill without a tray closes whichever tray is open.
   const revealTray = useCallback((entry: NavDeckEntry, immediate = false) => {
@@ -237,8 +255,9 @@ export default function NavFinder({ config, activeSection, accent }: { config: N
       revealTray(entry, true);
       return;
     }
+    if (entry.keepOpen) holdScrollClose();
     actions.section(entry, event);
-  }, [actions, revealTray, tray, trays]);
+  }, [actions, holdScrollClose, revealTray, tray, trays]);
 
   const handleBlur = useCallback((event: React.FocusEvent<HTMLDivElement>) => {
     if (!anchorRef.current?.contains(event.relatedTarget as Node | null)) close();
@@ -312,7 +331,7 @@ export default function NavFinder({ config, activeSection, accent }: { config: N
     <div
       ref={anchorRef}
       className="nav-finder-anchor relative h-[3.5em]"
-      onPointerLeave={scheduleClose}
+      onPointerLeave={() => { releaseHover(); scheduleClose(); }}
       onPointerEnter={cancelClose}
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
@@ -361,9 +380,10 @@ export default function NavFinder({ config, activeSection, accent }: { config: N
                   const shared = {
                     "data-deck-pill": entry.key,
                     "data-icon": typeof entry.icon === "string" ? entry.icon : "custom",
-                    "data-current": liveKey === entry.key || undefined,
+                    "data-current": activeKey === entry.key || undefined,
                     "aria-expanded": hasTray ? tray === entry.key : undefined,
                     "aria-controls": hasTray ? trayId : undefined,
+                    "aria-label": entry.content ? entry.label : undefined,
                     className: `nav-deck-pill nav-control-focus${entry.cta ? " nav-deck-pill--cta" : ""}`,
                     style: { "--nav-orb-accent": entry.accent, "--nav-entry-index": index } as CSSProperties,
                     onPointerEnter: (event: ReactPointerEvent) => { if (event.pointerType !== "touch") revealTray(entry); },
@@ -372,7 +392,7 @@ export default function NavFinder({ config, activeSection, accent }: { config: N
                       revealTray(entry, true);
                     },
                   };
-                  const content = (
+                  const content = entry.content ?? (
                     <>
                       <DeckIcon icon={entry.icon} />
                       <span className="nav-deck-label">{entry.label}</span>

@@ -15,14 +15,18 @@
   --nav-radius-md: var(--vs-radius-md, 0.75rem);
   --nav-radius-lg: var(--vs-radius-lg, 1rem);
   --nav-radius-round: var(--vs-radius-round, 62.4375rem);
-  --nav-font-heading: var(--font-heading, "Overused Grotesk", sans-serif);
-  --nav-font-body: var(--font-body, "Montserrat", sans-serif);
-  --nav-font-technical: var(--font-technical, "Satoshi", sans-serif);
+  --nav-font-heading: var(--font-heading, "Overused Grotesk", "Inter", sans-serif);
+  --nav-font-body: var(--font-body, "Inter", sans-serif);
+  /* Small caps captions (tray meta, counters). Falls back to the body font;
+     a site with a dedicated technical face sets --font-technical. */
+  --nav-font-technical: var(--font-technical, var(--nav-font-body));
   /* Rail width the capsule centres in. */
   --nav-max-width: var(--container-nav, 62.5rem);
   /* The desktop finder is sized in em against a capped base: it follows the
      root scale up to this cap and stops growing beyond it. */
   --nav-font-cap: 13.754px;
+  /* Wordmark box. A wide one-line mark: ~1.4em × 7.5em; a square or two-line
+     mark: ~2.1em × 4em. */
   --nav-logo-h-desktop: 1.375em;
   --nav-logo-w-desktop: 7.5em;
   --nav-logo-h-mobile: 1.125em;
@@ -31,10 +35,23 @@
      already light or coloured. */
   --nav-logo-dark-filter: invert(1);
   --nav-tray-w: 34em;
-  /* Brand colours that are not derived from the ink scale. */
-  --nav-focus-ring: #3f51b5;
-  --nav-cta-glow: rgba(63, 81, 181, 0.7);
-  --nav-cta-hover-dark: #c8a6d9;
+  /* Brand accent (config.accent sets it inline). Everything below derives
+     from it unless overridden. */
+  --nav-accent: #3f51b5;
+  /* Ink for text sitting on the accent (language thumb). */
+  --nav-accent-ink: #151515;
+  --nav-focus-ring: var(--nav-accent);
+  --nav-cta-glow: color-mix(in srgb, var(--nav-accent) 60%, transparent);
+  --nav-cta-hover-dark: var(--nav-accent);
+  /* One accent for every mobile deck tile (wash, hairline). */
+  --nav-mobile-pill-accent: var(--nav-accent);
+  /* Reticle "eye" style: the pupil and its iris ring. The pupil defaults to
+     the section colour; set a fixed colour for a brand mark. */
+  --nav-eye-pupil: var(--nav-section-accent, var(--nav-accent));
+  --nav-eye-iris: #fff;
+}
+@media (max-width: 767px) {
+  .ev-navbar { --nav-max-width: calc(100% - 1.5rem); }
 }
 
 .nav-rail { max-width: var(--nav-max-width); }
@@ -601,6 +618,36 @@
   transition: fill 220ms var(--nav-ease-standard);
 }
 
+/* Reticle "eye" (default): the whole eye is one solid accent almond with a
+   pupil inside a white iris; the HUD corners stay. Each lid arc closes on
+   the centre line when filled, so the two fills tile the almond; stroke and
+   fill share the accent so no outline ring remains. Where `d` is styleable,
+   one closed almond replaces the two halves, whose anti-aliased edges would
+   otherwise leave a hairline on the centre line. */
+.ev-navbar[data-reticle="eye"] .nav-reticle-lid {
+  fill: var(--nav-section-accent, var(--nav-accent));
+  stroke: var(--nav-section-accent, var(--nav-accent));
+  animation: nav-eye-pulse 3.2s ease-in-out infinite !important;
+}
+@supports (d: path("M0 0")) {
+  .ev-navbar[data-reticle="eye"] .nav-reticle-lid--top { d: path("M5 12Q12 4.6 19 12Q12 19.4 5 12Z"); }
+  .ev-navbar[data-reticle="eye"] .nav-reticle-lid--bottom { display: none; }
+}
+/* The stroke straddles the circle's edge, so it paints the iris ring around
+   the pupil (outer radius = r + 0.5). */
+.ev-navbar[data-reticle="eye"] .nav-reticle-dot {
+  r: 1.8px;
+  fill: var(--nav-eye-pupil);
+  stroke: var(--nav-eye-iris);
+  stroke-width: 1px;
+  animation: none !important;
+}
+@keyframes nav-eye-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.72; }
+}
+.reduced-motion .nav-reticle-lid { animation: none !important; }
+
 /* The deck. Pills are laid out at their final positions behind the clip and
    arrive with a short stagger as the cell opens. */
 .nav-deck {
@@ -782,9 +829,12 @@
   /* Never taller than the viewport: the body scrolls inside the capsule. */
   max-height: calc(100dvh - max(0.75rem, env(safe-area-inset-top)) - 1rem);
 }
+/* The capsule row is 3em with a 2.5em trigger (0.25em above/below) but 0.5em
+   right padding; pull the trigger in so all three gaps match. */
 .nav-finder--mobile .nav-finder-trigger {
   height: 2.5em;
   padding: 0 0.875em 0 0.625em;
+  margin-right: -0.25em;
 }
 .nav-finder--mobile .nav-finder-trigger,
 .nav-finder--mobile[data-open="true"] .nav-finder-trigger {
@@ -810,23 +860,27 @@
 .nav-finder--mobile .nav-finder-trigger[aria-expanded="true"] .nav-reticle-lid--bottom { animation: nav-reticle-blink-bottom 2.4s ease-in-out infinite; }
 .nav-finder--mobile .nav-finder-trigger[aria-expanded="true"] .nav-reticle-dot { animation: nav-eye-double-blink-content 2.4s ease-in-out infinite; }
 
-/* MENU ⇄ CLOSE: two words in a 1fr 0fr ⇄ 0fr 1fr grid, so the pill's width
-   morphs between the two intrinsic widths while the words crossfade. */
+/* MENU ⇄ CLOSE: both words share one grid cell and crossfade, while the
+   container's width transitions between their measured widths (set as
+   --nav-word-w-open/-close by NavFinderMobile). fr tracks can't do this: the
+   pill's intrinsic width ignores the interpolated fractions and snaps when
+   the transition ends. */
 .nav-finder-words {
   display: grid;
-  grid-template-columns: 1fr 0fr;
   align-items: center;
-  transition: grid-template-columns var(--nav-finder-duration-close) var(--nav-finder-ease-close);
+  overflow: hidden;
+  width: var(--nav-word-w-open, auto);
+  transition: width var(--nav-finder-duration-close) var(--nav-finder-ease-close);
 }
 .nav-finder-trigger[aria-expanded="true"] .nav-finder-words {
-  grid-template-columns: 0fr 1fr;
+  width: var(--nav-word-w-close, auto);
   transition-duration: var(--nav-finder-duration);
   transition-timing-function: var(--nav-ease-cinematic);
 }
 .nav-finder-word-cell {
+  grid-area: 1 / 1;
   display: flex;
   min-width: 0;
-  overflow: hidden;
 }
 .nav-finder-word-cell .nav-finder-word {
   transition:
@@ -934,9 +988,12 @@
 .nav-deck--mobile .nav-deck-pill--cta { margin-left: 0; }
 /* An odd deck ending in the CTA: the CTA takes the whole last row. */
 .nav-deck--mobile .nav-deck-pill--cta:last-child:nth-child(odd) { grid-column: 1 / -1; }
-/* Rows arrive top-down, so the stagger displaces vertically. */
-.nav-finder--mobile .nav-deck-pill { translate: 0 -0.375em; }
-.nav-finder--mobile[data-open="true"] .nav-deck-pill { translate: 0 0; }
+/* Columns slide in from their own edge (left → right, right → left), rows
+   staggered top-down; a full-width CTA row drops in instead. translate +
+   opacity only, so it stays on the compositor. */
+.nav-finder--mobile .nav-deck-pill { translate: -1.25em 0; }
+.nav-finder--mobile .nav-deck-pill:nth-child(even) { translate: 1.25em 0; }
+.nav-finder--mobile .nav-deck-pill--cta:last-child:nth-child(odd) { translate: 0 -0.375em; }
 /* Touch has no hover: the press is the feedback, and the expanded pill's eye
    blinks the way a hovered one does on desktop. */
 .nav-finder--mobile .nav-deck-pill:active { scale: 0.97; }
@@ -945,10 +1002,42 @@
   transition-property: color, opacity, translate, scale;
   transition-duration: 160ms, 220ms, var(--nav-finder-duration-close), 140ms;
 }
-.nav-finder--mobile[data-open="true"] .nav-deck-pill {
+.nav-finder--mobile[data-open="true"] .nav-deck-pill.nav-deck-pill {
+  translate: 0 0;
   transition-property: color, opacity, translate, scale;
-  transition-duration: 160ms, 200ms, 320ms, 140ms;
+  transition-duration: 160ms, 180ms, 300ms, 140ms;
+  transition-timing-function: ease, ease-out, var(--nav-ease-cinematic), ease;
+  transition-delay: 0s, var(--nav-row-delay), var(--nav-row-delay), 0s;
 }
+.nav-finder--mobile .nav-deck-pill { --nav-row-delay: 40ms; }
+.nav-finder--mobile .nav-deck-pill:nth-child(n + 3) { --nav-row-delay: 85ms; }
+.nav-finder--mobile .nav-deck-pill:nth-child(n + 5) { --nav-row-delay: 130ms; }
+/* No hover on touch, so the resting pill is already a finished tile: a faint
+   wash and hairline in the mobile accent, the label at full ink. The CTA
+   stays the one filled pill; the gloss is reserved for it. Press brightens
+   the hairline and wash instead of lighting the gloss. */
+.nav-finder--mobile .nav-deck-pill:not(.nav-deck-pill--cta) { color: var(--nav-pill-ink-strong); }
+/* !important beats the per-entry inline accent, which desktop keeps. */
+.nav-finder--mobile .nav-deck-pill { --nav-orb-accent: var(--nav-mobile-pill-accent) !important; }
+.nav-finder--mobile .nav-deck-pill:not(.nav-deck-pill--cta)::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  border-radius: inherit;
+  pointer-events: none;
+  background-color: color-mix(in srgb, var(--nav-orb-accent) 7%, transparent);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 60%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--nav-orb-accent) 26%, transparent);
+  transition: background-color 160ms ease, box-shadow 160ms ease;
+}
+.nav-finder--mobile .nav-deck-pill:not(.nav-deck-pill--cta):is(:active, [aria-expanded="true"])::before {
+  background-color: color-mix(in srgb, var(--nav-orb-accent) 14%, transparent);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--nav-orb-accent) 70%, transparent),
+    0 0 14px -4px color-mix(in srgb, var(--nav-orb-accent) 55%, transparent);
+}
+.nav-finder--mobile .nav-deck-pill:not(.nav-deck-pill--cta)::after { display: none; }
 .nav-finder--mobile .nav-deck-pill:not([data-icon="method"])[aria-expanded="true"] .nav-blinking-eye > :first-child {
   animation: nav-eye-double-blink 2.4s ease-in-out infinite;
 }

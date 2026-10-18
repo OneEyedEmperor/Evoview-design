@@ -1,36 +1,41 @@
 # navbar
 
-The Evoview finder navigation: one glass capsule (wordmark + reticle/MENU
-pill) that unfolds into a deck of pills with a sliding tray under each.
+The Evoview finder navigation: one glass capsule (wordmark + eye/MENU pill)
+that unfolds into a deck of pills, each with an optional sliding tray.
 Sideways on desktop, downward on mobile. Re-tones (light/dark glass) to the
-section under it; the reticle's dot blinks in that section's accent.
+surface under it; the eye's pupil carries the section accent on one-page sites.
 
-Reference: `https://evoview.said.bet` (live site) · `https://evoview-library.said.bet` (this package, showcase).
+Reference: `https://evoview-library.said.bet` (multi-page shape, the Tchin Tchin
+restaurant) · `/evoview` there (one-page shape with trays) · live clients:
+`https://resto-tchin.said.bet`, `https://evoview.said.bet`.
 
 ```
-desktop   [ logo  (◎ MENU) ]  →hover→  [ logo  (◎ SERVICES)(◎ PORTFOLIO)(◎ MÉTHODE)(✉ CONTACT) ]
-                                                     └── tray: 2×2 numbered rows, or the CTA block
-mobile    [ logo        (◎ MENU) ]  →tap→  [ logo (◎ FERMER) ]
-                                           [ (◎ SERVICES)(◎ PORTFOLIO) ]
-                                           [ (◎ MÉTHODE) (✉ CONTACT)  ]
-                                           [ tray of the tapped pill   ]
+desktop   [ logo  (◉ MENU) ]  →hover→  [ logo  (⌂ ACCUEIL)(♨ CARTE)(🎤 KARAOKÉ)(⇄ FR EN)(▣ RÉSERVER) ]
+                                                   └── optional tray under a pill: 2×2 numbered rows, or a CTA block
+mobile    [ logo        (◉ MENU) ]  →tap→  [ logo      (◉ FERMER) ]
+                                           [ (⌂ ACCUEIL)(♨ CARTE)  ]   ← resting tiles, slide in from their edge
+                                           [ (🎤 KARAOKÉ)(⇄ FR EN) ]
+                                           [ (▣ RÉSERVER)          ]   ← CTA spans the last row
 ```
 
 ## Files
 
 | File | Role | Edit per site? |
 | --- | --- | --- |
-| `src/navbar.config.tsx` | Every label, destination, colour and action. | **yes — the only one** |
-| `src/brand/` | Reference logo + tray data (evoview.be). Replace or delete. | yes |
-| `src/types.ts` | `NavbarConfig` contract. | no |
-| `src/Navbar.tsx` | Root: tone/section probe, mounts both finders. | no |
+| `src/navbar.config.tsx` | Every label, destination, colour, token and action. | **yes — the only one** |
+| `src/brand/` | Reference logo. Replace. | yes |
+| `src/types.ts` | `NavbarConfig` contract (every field commented). | no |
+| `src/Navbar.tsx` | Root: tone/section probe, `accent`/`vars` → CSS, mounts both finders. | no |
 | `src/NavFinder.tsx` | Desktop finder (hover state machine, tray positioning, keyboard). | no |
-| `src/NavFinderMobile.tsx` | Mobile finder (fold, scroll lock, focus trap). | no |
+| `src/NavFinderMobile.tsx` | Mobile finder (fold, word morph, scroll lock, focus trap). | no |
 | `src/finderShared.tsx` | Reticle, tray rows, action handlers. | no |
-| `src/NavIcons.tsx` | Built-in marks: `services`, `portfolio`, `method`, `envelope`. | no |
+| `src/NavIcons.tsx` | Built-in marks (`services`, `portfolio`, `method`, `envelope`) + `DeckIcon`. | no |
+| `src/NavLangSwitch.tsx` + `navbar.lang.css` | Language toggle for a deck entry's `content`. | no |
+| `src/useNavbarLinks.ts` | Hands internal deck clicks to a client-side router. | no |
 | `src/useNavState.ts` | Scroll probe → `{ tone, section, color }`. | no |
 | `src/useNavTrays.ts` | Idle loader + cache for lazy tray contents. | no |
-| `src/navbar.css` | All styles, scoped under `.ev-navbar`. Tokens block at the top. | tokens only |
+| `src/navbar.css` | All styles, scoped under `.ev-navbar`. Tokens block at the top. | tokens only (prefer `config.vars`) |
+| `examples/evoview.config.tsx` | One-page config with sections and trays. Not installed. | — |
 
 ## Install
 
@@ -41,95 +46,99 @@ mobile    [ logo        (◎ MENU) ]  →tap→  [ logo (◎ FERMER) ]
 Copies `src/` to `<client>/src/components/navbar/`. Re-running upgrades the
 components and preserves `navbar.config.tsx` + `brand/`.
 
-Mount once in the page shell, before `<main>`:
+Mount once in the page shell, before `<main>`.
+
+Multi-page site (react-router):
 
 ```tsx
-import { Navbar } from "@/components/navbar";
-import { navbarConfig } from "@/components/navbar/navbar.config";
+import { Navbar, useNavbarLinks } from "@/components/navbar";
+import { buildNavbarConfig, withRoute } from "@/components/navbar/navbar.config";
 
-<Navbar config={navbarConfig} />
+const navigate = useNavigate();
+useNavbarLinks(useCallback((to: string) => navigate(to), [navigate]));
+const config = useMemo(() => withRoute(buildNavbarConfig(locale, setLocale), pathname), [locale, pathname]);
+<Navbar config={config} />
 ```
 
-`Navbar.tsx` imports `navbar.css` itself; nothing to add to `index.css`.
+One-page site: export a constant `navbarConfig` with `sections` filled and
+`section` on each pill (see `examples/evoview.config.tsx`), then
+`<Navbar config={navbarConfig} />`.
+
+`Navbar.tsx` imports its CSS itself; nothing to add to `index.css`.
 
 ## Host contract
 
 - React 19 (uses the `inert` prop), Vite, TypeScript strict, Tailwind v4 (the
   JSX uses utility classes for layout; the breakpoint is **not** Tailwind's,
-  see below).
-- Every `config.sections[].id` exists as an element id in the page. Sections
-  that are dark declare `data-nav-tone="dark"` on their own element.
-  The bar renders light glass over anything else.
-- `config.sections` and `config` itself are module-level constants (the scroll
-  store and the tray cache are keyed by reference).
-- Fonts: the bar reads `--font-heading`, `--font-body`, `--font-technical`
-  from `:root` if present, else falls back to Overused Grotesk / Montserrat /
-  Satoshi — which the host must then load (see `index.html` here for the
-  links). A different brand font: set those `:root` variables.
-- Anchors scroll natively. Add `html { scroll-behavior: smooth }` and
-  `scroll-margin-top` on sections if the site has neither.
+  see below). `lucide-react` only if the config uses lucide marks.
+- The element behind the bar on load is dark → `initialTone: "dark"` and
+  `data-nav-tone="dark"` on the page wrapper (or on each dark section). The
+  bar renders light glass over anything else.
+- One-page sites: every `config.sections[].id` exists as an element id in the
+  page. Multi-page sites: `sections: []` + `activeKey` (via `withRoute`).
+- `config.sections` must be a module-level constant (the scroll store is keyed
+  by reference). The config object itself may be rebuilt per locale/route.
+- Fonts: reads `--font-heading`, `--font-body`, `--font-technical` from
+  `:root`; falls back to Overused Grotesk / Inter / body. Load whatever the
+  fallback resolves to, or set the variables.
+- Anchors and routes are plain `<a href>`. A client router must intercept
+  them: `useNavbarLinks(navigate)`. Server rendering works (`renderToString`).
 - Desktop/mobile swap at `768px`, defined twice: `navbar.css` (`@media`) and
   `DESKTOP_QUERY` in `NavFinderMobile.tsx`. Change both or neither.
-- Server rendering works (`renderToString` / prerender). The bar renders
-  `initialTone` until the first client probe; the deck is `<a href>` only, so
-  a client-side router must intercept those clicks itself (see the
-  resto-tchin adaptation: a document click listener scoped to `.ev-navbar`).
-- Five entries where the last is the CTA: on mobile the CTA spans the whole
-  last row of the 2-column deck.
+- Deck of 3–5 entries; five with a trailing CTA is the reference. The CTA
+  spans the last mobile row when the count is odd.
 
 ## Config reference
 
-See `src/types.ts` (every field is commented). Summary:
+`src/types.ts` is the source of truth. Summary:
 
 | Field | What it controls |
 | --- | --- |
-| `logo` | Wordmark node. Black artwork; the dark tone applies `--nav-logo-dark-filter` (`invert(1)`; set `none` for coloured artwork). Sized by `--nav-logo-*` tokens. |
+| `logo` | Wordmark node, sized by `--nav-logo-*`. Black artwork is inverted on dark; coloured artwork → `vars["--nav-logo-dark-filter"] = "none"`. |
 | `homeHref` | Wordmark link. |
 | `labels` | `menu`, `close` (mobile morph), `sectionLink`, aria strings, `loading`. |
-| `sections` | `{ id, color }[]` in document order. `color` = REC dot colour. |
-| `initialTone` | Tone before the first scroll probe (server render / hydration). `"dark"` for a dark first screen. |
-| `deck` | Pills. `key` also keys `trays`. `section` marks the live pill. `href` → `<a>`, no `href` → `<button>`. `cta: true` on at most one. `icon` is a built-in key or any 1em node. |
-| `trays` | Per deck key. `items` (static array or `() => Promise<…>`) with `unit` for the "04 dossiers" counter, or `cta` with `copy`/`label`/`note`. A deck entry without a tray navigates on first interaction. |
-| `onSection` | Intercept a pill click (`event.preventDefault()` to replace the anchor jump with a modal etc.). |
-| `track` | Receives `nav_click`, `nav_modal_open`, `cta_click` with payloads. |
+| `accent` | Brand accent → focus ring, CTA glow/hover, mobile tiles, language thumb, pupil fallback. |
+| `vars` | Any `--nav-*` token (logo box, fonts, radii, tray width, `--nav-eye-pupil`, …). |
+| `reticle` | `eye` (default: solid accent almond + pupil, quiet pulse) or `hud` (outlined lids that blink on hover). |
+| `sections` | `{ id, color }[]` in document order, or `[]`. `color` = pupil colour. |
+| `activeKey` | Live pill on multi-page sites. `withRoute()` derives it from the pathname. |
+| `initialTone` | Tone before the first probe. `"dark"` for a dark first screen. |
+| `deck` | Pills: `key`, `label`, `icon` (built-in key or node), `href` (`<a>`; omit → `<button>`), `section`, `accent`, `cta`, `content` (replaces icon+label, e.g. `<NavLangSwitch>`), `keepOpen` (click leaves the menu open). |
+| `trays` | Per deck key, optional. `items` (array or loader) + `unit`, or `cta` block. No tray → the pill navigates on first interaction. |
+| `onSection` | Intercept a pill click; `event.preventDefault()` to replace the navigation (locale flip, modal). |
+| `track` | `nav_click`, `nav_modal_open`, `cta_click` with payloads. |
 
-Tray `onSelect` is where a client site opens its own modal, routes, or
-scrolls. The navbar never owns a modal. On evoview.be the handlers dispatch
-cancelable `CustomEvent`s that the owning sections answer
-(`src/lib/navIntents.ts` there); replicate that if sections are lazy-loaded.
+Tray `onSelect` is where a site opens its own modal, routes, or scrolls. The
+navbar never owns a modal.
 
 ## Adapting
 
-**Change freely** (config + the tokens block at the top of `navbar.css`):
+**Change freely** (config only):
 
-- Labels, language, anchors, section list and accents, deck count (3–5 fit;
-  4 is the designed count), which pill is the CTA, tray contents, icons.
-- `--nav-focus-ring`, `--nav-cta-glow`, `--nav-cta-hover-dark` (brand accents).
-- `--nav-font-*`, `--nav-radius-*`, `--nav-max-width`, `--nav-tray-w`,
-  `--nav-logo-*` (incl. `--nav-logo-dark-filter`), `--nav-font-cap` (desktop
-  finder size ceiling).
-- Ink scale (`#151515`, the `rgba(21,21,21,…)` ramp) — a global replace in
-  `navbar.css` if the client's ink is not near-black. Keep the light/dark
-  pairs symmetrical.
+- Copy, language, routes/anchors, deck count and order, which pill is the
+  CTA, icons (lucide or custom nodes), `accent`, every `vars` token, logo,
+  `reticle`, tray contents.
 
-**Change with care** (the pieces that make it feel like this component):
+**Change with care** (in `navbar.css`; these make it feel like this component):
 
+- Ink scale (`#151515`, the `rgba(21,21,21,…)` ramp) — a global replace if
+  the client's ink is not near-black. Keep the light/dark pairs symmetrical.
 - Timings in `.nav-finder` (`460ms` open / `380ms` close, `35ms` stagger)
-  and the `OPEN/CLOSE/TRAY_DELAY` constants in `NavFinder.tsx`. Keep the
-  open faster-out than the close eases-in-out.
-- The blink keyframes. They are the signature; retune rather than replace.
-- Gloss gradients (`--nav-gloss-*`). Adjust lightness, keep the single
-  specular sweep.
+  and `OPEN/CLOSE/TRAY_DELAY` in `NavFinder.tsx`. Keep the open faster-out
+  than the close eases-in-out.
+- Gloss gradients (`--nav-gloss-*`): adjust lightness, keep the single sweep.
+- Mobile tile wash/hairline percentages (7 % / 26 % resting, 14 % / 70 % pressed).
 
-**Do not change** (structural; breaking any of these needs a redesign, not an
-edit):
+**Do not change** (structural; breaking any of these needs a redesign):
 
-- The 0fr⇄1fr grid-track morph and the mask feathering: the only way the
-  capsule animates between intrinsic widths without measuring.
-- The resting-width anchor (desktop) and the measured tray height (mobile).
-- Panels stay mounted and are hidden with `visibility`/`inert`; never
-  conditionally render them.
-- Mouse click never closes a hover-opened menu (`pointerType` branches).
+- The 0fr⇄1fr grid-track morph and the mask feathering (desktop cells, mobile
+  body); the measured-width word morph; the measured tray height.
+- The resting-width anchor on desktop.
+- Panels stay mounted, hidden with `visibility`/`inert`; never conditionally
+  render them.
+- Mouse click never closes a hover-opened menu; hover never reopens a menu a
+  click just closed until the pointer leaves; `keepOpen` clicks hold off the
+  scroll-dismiss for 500 ms.
 - Scroll lock + focus trap + Escape + focus restore on mobile; Escape/blur/
   scroll/resize dismissal on desktop; arrow-key navigation in deck and tray.
 - Reduced motion resolves to the same end states with no slide or stagger.
@@ -138,27 +147,32 @@ edit):
 ## Verification (do all of it before reporting done)
 
 ```bash
-pnpm build                       # tsc -b && vite build, must be green
+pnpm build                       # must be green
 ```
 
 In the browser (agent-browser or browser-bridge), at the client dev URL:
 
-1. **1440×900**: hover MENU → capsule unfolds right, wordmark does not move.
-   Hover each pill → tray slides under it and stays inside the capsule span.
-   Click a tray row → the site's own action fires, menu closes.
-2. **1024×800**: same; pills must not wrap.
-3. **390×844**: tap MENU → capsule unfolds down, MENU morphs to the close
-   word, page dims and does not scroll. Tap a pill → tray unfolds; tap again
-   or the section link → navigates. Escape/backdrop closes.
-4. Scroll through every section: glass flips exactly when a dark section
-   reaches the bar; the reticle dot takes each section's `color`; the live
-   pill is the lit one.
-5. Keyboard: Tab to MENU, Enter → focus lands on first pill; ←/→ cycle; ↓
-   enters the tray; Esc closes the tray then the menu, focus returns.
-6. `prefers-reduced-motion: reduce`: everything still opens/closes, nothing
+1. **1440×900**: hover MENU → capsule unfolds right, wordmark does not move;
+   the live pill is lit. Click a pill → route/anchor changes, menu closes,
+   and it does **not** reopen under the still pointer. Hover each pill with
+   a tray → tray slides under it inside the capsule span; a row click fires
+   the site action.
+2. **1024×800**: same; five pills must not wrap.
+3. **390×844**: tap MENU → capsule unfolds down, pills slide in from their
+   edges, MENU morphs smoothly to the close word (no snap at the end), page
+   dims and does not scroll. CTA fills the last row. Tap a pill → navigates
+   (or its tray unfolds). Escape/backdrop closes; page position unchanged.
+4. Language pill (if any): flips copy in place, menu stays open, thumb
+   slides, page does not jump.
+5. Tone: dark first screen renders dark glass on first paint (no light
+   flash). One-page sites: glass flips exactly when a dark section reaches
+   the bar; pupil takes each section's `color`.
+6. Keyboard: Tab to MENU, Enter → first pill; ←/→ cycle; ↓ enters a tray;
+   Esc closes the tray then the menu, focus returns.
+7. `prefers-reduced-motion: reduce`: everything still opens/closes, nothing
    slides.
-7. If the client's brand fonts differ: check the pill labels (0.75em, 700,
-   0.14em tracking) still fit at the deck's natural width.
+8. Brand fonts: pill labels (0.75em, 700, 0.14em tracking) fit at the deck's
+   natural width; the logo box (`--nav-logo-*`) matches the artwork ratio.
 
 ## Upgrading a client
 

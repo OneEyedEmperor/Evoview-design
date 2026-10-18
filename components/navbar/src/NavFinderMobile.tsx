@@ -27,6 +27,7 @@ export default function NavFinderMobile({ config, accent }: { config: NavbarConf
   const navRef = useRef<HTMLElement>(null);
   const trayRef = useRef<HTMLDivElement>(null);
   const trayInnerRef = useRef<HTMLDivElement>(null);
+  const wordsRef = useRef<HTMLSpanElement>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
   const baseId = useId();
   const bodyId = `${baseId}-body`;
@@ -64,6 +65,23 @@ export default function NavFinderMobile({ config, accent }: { config: NavbarConf
     const sync = () => outer.style.setProperty("--nav-tray-h", `${inner.getBoundingClientRect().height}px`);
     const observer = new ResizeObserver(sync);
     observer.observe(inner);
+    sync();
+    return () => observer.disconnect();
+  }, []);
+
+  // MENU ⇄ CLOSE width morph needs both words' widths as explicit lengths.
+  useLayoutEffect(() => {
+    const words = wordsRef.current;
+    if (!words) return;
+    const [openWord, closeWord] = words.querySelectorAll<HTMLElement>(".nav-finder-word");
+    if (!openWord || !closeWord) return;
+    const sync = () => {
+      words.style.setProperty("--nav-word-w-open", `${openWord.getBoundingClientRect().width}px`);
+      words.style.setProperty("--nav-word-w-close", `${closeWord.getBoundingClientRect().width}px`);
+    };
+    const observer = new ResizeObserver(sync);
+    observer.observe(openWord);
+    observer.observe(closeWord);
     sync();
     return () => observer.disconnect();
   }, []);
@@ -134,7 +152,8 @@ export default function NavFinderMobile({ config, accent }: { config: NavbarConf
       document.removeEventListener("keydown", handleKeyDown);
       if (previousBodyStyle === null) document.body.removeAttribute("style");
       else document.body.setAttribute("style", previousBodyStyle);
-      window.scrollTo({ top: scrollY, behavior: "auto" });
+      // "auto" would defer to a page-level `scroll-behavior: smooth`.
+      window.scrollTo({ top: scrollY, behavior: "instant" });
       restoreFocusRef.current?.focus({ preventScroll: true });
       restoreFocusRef.current = null;
     };
@@ -190,7 +209,7 @@ export default function NavFinderMobile({ config, accent }: { config: NavbarConf
             onClick={toggle}
           >
             <ReticleMark />
-            <span className="nav-finder-words" aria-hidden="true">
+            <span ref={wordsRef} className="nav-finder-words" aria-hidden="true">
               <span className="nav-finder-word-cell nav-finder-word-cell--open">
                 <span className="nav-finder-word">{labels.menu}</span>
               </span>
@@ -212,10 +231,11 @@ export default function NavFinderMobile({ config, accent }: { config: NavbarConf
                     "data-icon": typeof entry.icon === "string" ? entry.icon : "custom",
                     "aria-expanded": hasTray ? tray === entry.key : undefined,
                     "aria-controls": hasTray ? trayId : undefined,
+                    "aria-label": entry.content ? entry.label : undefined,
                     className: `nav-deck-pill nav-control-focus${entry.cta ? " nav-deck-pill--cta" : ""}`,
                     style: { "--nav-orb-accent": entry.accent, "--nav-entry-index": index } as CSSProperties,
                   };
-                  const content = (
+                  const content = entry.content ?? (
                     <>
                       <DeckIcon icon={entry.icon} />
                       <span className="nav-deck-label">{entry.label}</span>

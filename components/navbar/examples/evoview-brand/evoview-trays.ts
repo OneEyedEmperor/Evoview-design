@@ -1,10 +1,9 @@
-import type { NavTrayItem } from "../types";
+import type { NavTrayItem } from "../../src/types";
 
-/* Reference tray contents (the evoview.be site). Loaded lazily by the
-   config so this copy stays off the critical path. On the real site these
-   arrays are projected from the data modules the sections themselves
-   consume; keep that pattern on a client site so the navbar can never drift
-   from the page. */
+/* Tray contents of the evoview.be example. Loaded lazily by the config so
+   this copy stays off the critical path. On the real site these arrays are
+   projected from the data modules the sections themselves consume; keep that
+   pattern on a client site so the navbar can never drift from the page. */
 
 export function select(detail: Record<string, string | number>) {
   window.dispatchEvent(new CustomEvent("navbar:select", { detail }));

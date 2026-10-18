@@ -7,23 +7,30 @@ import type { NavIconKey } from "./NavIcons";
    means editing `navbar.config.tsx` and nothing else. */
 
 /** A page section the bar can sit over, in document order. `color` drives the
-    reticle's REC dot while the reader is inside that section. */
+    reticle's pupil while the reader is inside that section. */
 export type NavSection = { id: string; color: string };
 
 export type NavDeckEntry = {
   /** Stable identifier; also the key into `NavbarConfig.trays`. */
   key: string;
   label: string;
-  /** One of the built-in marks, or any inline SVG/element sized 1em. */
+  /** One of the built-in marks, or any inline SVG/element sized 1em
+      (a lucide icon works as is). */
   icon: NavIconKey | ReactNode;
-  /** Anchor the pill navigates to (`#services`). Omit to render a button. */
+  /** Anchor or route the pill navigates to. Omit to render a button. */
   href?: string;
-  /** Section id (see `sections`) that marks this pill as the live one. */
+  /** Section id (see `sections`) that marks this pill as the live one on a
+      one-page site. Multi-page sites use `NavbarConfig.activeKey` instead. */
   section?: string;
   /** Accent used by the pill's own marks and its tray rows. */
   accent: string;
   /** The one filled pill (inverse gloss). At most one entry. */
   cta?: boolean;
+  /** Replaces the icon + label body (e.g. `<NavLangSwitch>`); `label` then
+      becomes the aria-label. */
+  content?: ReactNode;
+  /** Clicking leaves the menu open (in-place toggles such as a language switch). */
+  keepOpen?: boolean;
 };
 
 export type NavTrayItem = {
@@ -68,13 +75,30 @@ export type NavbarLabels = {
 
 export type NavTrackPayload = Record<string, string | number | boolean | null | undefined>;
 
+/** CSS custom properties from the tokens block at the top of navbar.css,
+    settable per site without touching the stylesheet. */
+export type NavbarVars = Partial<Record<`--nav-${string}`, string>>;
+
 export type NavbarConfig = {
-  /** Wordmark element. Must be black artwork: the dark tone inverts it. */
+  /** Wordmark element. Black artwork is inverted on the dark tone unless
+      `vars["--nav-logo-dark-filter"]` is `none`. */
   logo: ReactNode;
   homeHref: string;
   labels: NavbarLabels;
-  /** Must be a module-level constant: the scroll store is cached by reference. */
+  /** Brand accent: focus ring, CTA glow, mobile pill tiles, language switch,
+      and the reticle pupil when no section colour applies. */
+  accent?: string;
+  /** Token overrides, e.g. `{ "--nav-logo-h-desktop": "2.1em" }`. */
+  vars?: NavbarVars;
+  /** Reticle style on the finder pill: `eye` = one solid accent almond with a
+      pupil (default); `hud` = outlined eyelids that blink on hover. */
+  reticle?: "eye" | "hud";
+  /** One-page sites: sections in document order (ids must exist in the page).
+      Multi-page sites: `[]`. Must be a module-level constant: the scroll
+      store is cached by reference. */
   sections: NavSection[];
+  /** Live pill on a multi-page site (by deck key). Overrides `sections`. */
+  activeKey?: string;
   /** Tone rendered before the first scroll probe (server render, hydration).
       Set "dark" on a site whose first screen is dark. Default "light". */
   initialTone?: "light" | "dark";
