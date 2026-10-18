@@ -1,5 +1,13 @@
 # navbar changelog
 
+## 2.0.1
+
+- `eye` reticle no longer pulses. The infinite opacity loop on an SVG path
+  forced a full header repaint (backdrop blur included) every frame while the
+  page sat idle. The eye is now static at rest; nothing animates until hover.
+  Known remaining idle loop: `hud` mode's REC dot blink (`nav-rec-blink`),
+  used only by the evoview example.
+
 ## 2.0.0 — the Tchin Tchin refinements become the baseline
 
 The reference is now a typical client shape (resto-tchin): multi-page site,

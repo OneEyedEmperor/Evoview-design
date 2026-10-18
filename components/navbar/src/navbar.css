@@ -619,7 +619,7 @@
 }
 
 /* Reticle "eye" (default): the whole eye is one solid accent almond with a
-   pupil inside a white iris; the HUD corners stay. Each lid arc closes on
+   pupil inside a white iris; the HUD corners stay. It is static at rest. Each lid arc closes on
    the centre line when filled, so the two fills tile the almond; stroke and
    fill share the accent so no outline ring remains. Where `d` is styleable,
    one closed almond replaces the two halves, whose anti-aliased edges would
@@ -627,7 +627,9 @@
 .ev-navbar[data-reticle="eye"] .nav-reticle-lid {
   fill: var(--nav-section-accent, var(--nav-accent));
   stroke: var(--nav-section-accent, var(--nav-accent));
-  animation: nav-eye-pulse 3.2s ease-in-out infinite !important;
+  /* No idle animation: a looping opacity on an SVG path repaints the whole
+     header, backdrop blur included, every frame. */
+  animation: none !important;
 }
 @supports (d: path("M0 0")) {
   .ev-navbar[data-reticle="eye"] .nav-reticle-lid--top { d: path("M5 12Q12 4.6 19 12Q12 19.4 5 12Z"); }
@@ -641,10 +643,6 @@
   stroke: var(--nav-eye-iris);
   stroke-width: 1px;
   animation: none !important;
-}
-@keyframes nav-eye-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.72; }
 }
 .reduced-motion .nav-reticle-lid { animation: none !important; }
 
