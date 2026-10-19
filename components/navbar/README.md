@@ -5,25 +5,31 @@ that unfolds into a deck of pills, each with an optional sliding tray.
 Sideways on desktop, downward on mobile. Re-tones (light/dark glass) to the
 surface under it; the eye's pupil carries the section accent on one-page sites.
 
-Reference: `https://evoview-library.said.bet` (multi-page shape, the Tchin Tchin
-restaurant) · `/evoview` there (one-page shape with trays) · live clients:
-`https://resto-tchin.said.bet`, `https://evoview.said.bet`.
+Reference: `https://evoview-library.said.bet` — Evoview-branded, multi-page
+shape (the baseline every client starts from) · `/evoview` there: the
+evoview.be one-page shape with sections and trays. Live client example:
+`https://resto-tchin.said.bet` (same component, restaurant branding via config).
 
 ```
-desktop   [ logo  (◉ MENU) ]  →hover→  [ logo  (⌂ ACCUEIL)(♨ CARTE)(🎤 KARAOKÉ)(⇄ FR EN)(▣ RÉSERVER) ]
+desktop   [ logo  (◉ MENU) ]  →hover→  [ logo  (⌂ ACCUEIL)(◎ SERVICES)(◎ PORTFOLIO)(◎ MÉTHODE)(⇄ FR EN)(✉ CONTACT) ]
                                                    └── optional tray under a pill: 2×2 numbered rows, or a CTA block
-mobile    [ logo        (◉ MENU) ]  →tap→  [ logo      (◉ FERMER) ]
-                                           [ (⌂ ACCUEIL)(♨ CARTE)  ]   ← resting tiles, slide in from their edge
-                                           [ (🎤 KARAOKÉ)(⇄ FR EN) ]
-                                           [ (▣ RÉSERVER)          ]   ← CTA spans the last row
+mobile    [ logo        (◉ MENU) ]  →tap→  [ logo        (◉ FERMER) ]
+                                           [ (⌂ ACCUEIL)(◎ SERVICES) ]   ← resting tiles, slide in from their edge
+                                           [ (◎ PORTFOLIO)(◎ MÉTHODE)]
+                                           [ (⇄ FR EN)(✉ CONTACT)    ]   ← an odd count would give the CTA the whole last row
 ```
+
+What stays recognizably Evoview on every client (the signature, see
+`STRATEGY.md`): the glass capsule, the eye reticle, the unfold choreography,
+the mobile tiles and the pill typography. What a client changes: logo, accent,
+copy, destinations, icons (config only).
 
 ## Files
 
 | File | Role | Edit per site? |
 | --- | --- | --- |
 | `src/navbar.config.tsx` | Every label, destination, colour, token and action. | **yes — the only one** |
-| `src/brand/` | Reference logo. Replace. | yes |
+| `src/brand/` | Evoview wordmark (reference). Replace with the client's. | yes |
 | `src/types.ts` | `NavbarConfig` contract (every field commented). | no |
 | `src/Navbar.tsx` | Root: tone/section probe, `accent`/`vars` → CSS, mounts both finders. | no |
 | `src/NavFinder.tsx` | Desktop finder (hover state machine, tray positioning, keyboard). | no |
@@ -85,8 +91,8 @@ One-page site: export a constant `navbarConfig` with `sections` filled and
   them: `useNavbarLinks(navigate)`. Server rendering works (`renderToString`).
 - Desktop/mobile swap at `768px`, defined twice: `navbar.css` (`@media`) and
   `DESKTOP_QUERY` in `NavFinderMobile.tsx`. Change both or neither.
-- Deck of 3–5 entries; five with a trailing CTA is the reference. The CTA
-  spans the last mobile row when the count is odd.
+- Deck of 3–6 entries; the reference has six (four destinations, language
+  switch, CTA). The CTA spans the last mobile row when the count is odd.
 
 ## Config reference
 

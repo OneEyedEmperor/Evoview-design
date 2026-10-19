@@ -1,5 +1,16 @@
 # navbar changelog
 
+## 2.2.0 — reference rebranded to Evoview
+
+The 2.0.0 reference config carried Tchin Tchin branding (gold, restaurant
+logo, Carte/Karaoké/Réserver). The library is Evoview's: the reference now
+uses the Evoview wordmark (`src/brand/EvoviewLogo.tsx`), brand indigo
+`#3f51b5` with the Méthode/Portfolio/Contact accents, the built-in eye marks,
+and Accueil / Services / Portfolio / Méthode / FR·EN / Contact over routes.
+Mechanics are unchanged from 2.1.0 (multi-page shape, language switch, eye
+reticle, tiles). No config contract change; `install.sh` upgrades leave client
+configs and `brand/` untouched. `tchin-logo.svg` removed from the package.
+
 ## 2.1.0
 
 - Restore the eye's 3.2s opacity pulse on a separate, stacked lids SVG with

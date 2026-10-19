@@ -3,6 +3,12 @@
 Portable Evoview components for client websites, plus a Vite showcase that
 renders each one so an agent can see the reference before adapting it.
 
+## Purpose — read before packaging or adapting
+
+Read `STRATEGY.md` for the business model and brand obligations. This is not
+just a code-reuse library: its signature components are premium, useful client
+experiences and long-lived Evoview publicity assets. Preserve both roles.
+
 - Showcase URL: `https://evoview-library.said.bet` (vhdev-managed; `vhdev up`
   from this dir if it 502s, never `pnpm dev` directly).
 - Source of the originals: `/root/.vibehub/projects/evoview` (the live site).
@@ -42,3 +48,8 @@ Copy the `navbar` folder shape. Decouple all site data behind a single
 block that maps host tokens with fallbacks, write the SKILL/README pair, add
 a showcase page, symlink the skill:
 `ln -sfn $PWD/components/<name>/SKILL.md ~/.vibehub/skills/evoview-<name>/SKILL.md`.
+
+Each package's README and SKILL must carry the relevant strategy requirements
+into client handoffs: what makes the component recognizably Evoview, which
+client-facing values are adaptable, and how its approved Evoview attribution
+and destination work. Do not leave this context only in the library repo.

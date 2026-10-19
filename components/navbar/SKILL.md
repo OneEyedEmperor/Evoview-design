@@ -11,6 +11,11 @@ Showcase: `https://evoview-library.said.bet` (reference, multi-page) · `/evovie
 Read `README.md` in the package before touching anything. It is the contract;
 this file is the procedure.
 
+Before adapting, read `/root/.vibehub/projects/evoview-design-library/STRATEGY.md`.
+The library combines client utility with recognizable Evoview authorship and
+approved referral opportunities. Preserve existing signatures; this strategy
+alone does not authorize adding attribution or changing client link destinations.
+
 ## Procedure
 
 1. **Look at the reference first.** Open the showcase at 1440 and 390 wide
@@ -46,8 +51,9 @@ this file is the procedure.
   or from another client; the package is the portable version.
 - Never fork the component to fix a client issue. If the package is wrong or
   a refinement is generic, fix it in the library, bump `VERSION`, note it in
-  `CHANGELOG.md`, re-run `install.sh` in the client. That is how the Tchin
-  Tchin refinements became 2.0.0.
+  `CHANGELOG.md`, re-run `install.sh` in the client. Client refinements
+  flow back into the library as generic behaviour; client branding never
+  does — the reference stays Evoview-branded.
 - Do not reintroduce a conventional full-width navbar, extra header accents,
   or labels revealed by resizing the capsule. The capsule, the eye, the
   unfold and the tiles are the component.

@@ -1,4 +1,4 @@
-import EvoviewLogo from "./evoview-brand/EvoviewLogo";
+import EvoviewLogo from "../src/brand/EvoviewLogo";
 import type { NavbarConfig, NavSection } from "../src/types";
 
 /* Example: the evoview.be navbar — a one-page site with scroll-probed
