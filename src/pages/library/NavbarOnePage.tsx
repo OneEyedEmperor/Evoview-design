@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Navbar } from "../../components/navbar/src";
-import { navbarConfig } from "../../components/navbar/examples/evoview.config";
+import { Navbar } from "../../../components/navbar/src";
+import { navbarConfig } from "../../../components/navbar/examples/evoview.config";
 
 /* The one-page example: tall sections whose ids and tones match the config,
    so the bar can be watched re-toning and recolouring its pupil while
@@ -47,7 +47,7 @@ export default function Evoview() {
       </main>
       <div className="fixed bottom-4 left-1/2 z-40 flex -translate-x-1/2 items-center gap-4 rounded-full bg-black/80 px-4 py-2 text-xs text-white backdrop-blur">
         <span>last navbar:select → {last}</span>
-        <Link to="/" className="opacity-60 hover:opacity-100">← reference</Link>
+        <Link to="/navbar" className="opacity-60 hover:opacity-100">← library · navbar</Link>
       </div>
     </>
   );

@@ -1,7 +1,8 @@
-import { useRef, type KeyboardEvent } from "react";
-import "./accent-picker.css";
+import { useId, useRef, type KeyboardEvent } from "react";
 
 export type Swatch = { id: string; color: string; label: string };
+
+export const CUSTOM_SWATCH = "custom";
 
 const INK_DARK = "#101011";
 const INK_LIGHT = "#fafafa";
@@ -10,6 +11,7 @@ let ctx: CanvasRenderingContext2D | null | undefined;
 
 /* Any CSS colour (hex, oklch…) → sRGB through a 1px canvas, then the ink with the better WCAG contrast. */
 export function inkFor(color: string): string {
+  if (typeof document === "undefined") return INK_DARK;
   if (ctx === undefined) {
     const canvas = document.createElement("canvas");
     canvas.width = canvas.height = 1;
@@ -29,8 +31,6 @@ export function inkFor(color: string): string {
   return (L + 0.05) / 0.0552 >= 1.005 / (L + 0.05) ? INK_DARK : INK_LIGHT;
 }
 
-const CUSTOM = "custom";
-
 type Props = {
   swatches: Swatch[];
   value: string;
@@ -41,10 +41,13 @@ type Props = {
   onCustom: (hex: string) => void;
 };
 
-export default function AccentPicker({ swatches, value, custom, caption, customLabel, onChange, onCustom }: Props) {
+/* Radiogroup of accent swatches plus a native colour input. Roving
+   tabindex; arrows/Home/End select and move focus. */
+export default function AccentPalette({ swatches, value, custom, caption, customLabel, onChange, onCustom }: Props) {
+  const captionId = useId();
   const group = useRef<HTMLDivElement>(null);
   const picker = useRef<HTMLInputElement>(null);
-  const ids = [...swatches.map((s) => s.id), CUSTOM];
+  const ids = [...swatches.map((s) => s.id), CUSTOM_SWATCH];
 
   const openPicker = () => {
     const input = picker.current;
@@ -57,7 +60,7 @@ export default function AccentPicker({ swatches, value, custom, caption, customL
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    const i = ids.indexOf(value);
+    const i = Math.max(0, ids.indexOf(value));
     const next =
       e.key === "ArrowRight" || e.key === "ArrowDown" ? (i + 1) % ids.length
       : e.key === "ArrowLeft" || e.key === "ArrowUp" ? (i - 1 + ids.length) % ids.length
@@ -71,11 +74,11 @@ export default function AccentPicker({ swatches, value, custom, caption, customL
   };
 
   return (
-    <div className="accent-picker">
-      <p id="accent-picker-caption" className="accent-picker__caption">
+    <div className="lib-palette">
+      <p id={captionId} className="lib-palette__caption">
         <span>{caption.strong}</span> — {caption.rest}
       </p>
-      <div ref={group} role="radiogroup" aria-labelledby="accent-picker-caption" className="accent-picker__row" onKeyDown={onKeyDown}>
+      <div ref={group} role="radiogroup" aria-labelledby={captionId} className="lib-palette__row" onKeyDown={onKeyDown}>
         {swatches.map((s) => {
           const checked = value === s.id;
           return (
@@ -88,7 +91,7 @@ export default function AccentPicker({ swatches, value, custom, caption, customL
               title={s.label}
               tabIndex={checked ? 0 : -1}
               onClick={() => onChange(s.id)}
-              className="accent-picker__swatch"
+              className="lib-palette__swatch"
             >
               <span style={{ background: s.color, color: inkFor(s.color) }}>
                 <Check />
@@ -99,17 +102,17 @@ export default function AccentPicker({ swatches, value, custom, caption, customL
         <button
           type="button"
           role="radio"
-          aria-checked={value === CUSTOM}
+          aria-checked={value === CUSTOM_SWATCH}
           aria-label={customLabel}
           title={customLabel}
-          tabIndex={value === CUSTOM ? 0 : -1}
+          tabIndex={value === CUSTOM_SWATCH ? 0 : -1}
           onClick={() => {
-            onChange(CUSTOM);
+            onChange(CUSTOM_SWATCH);
             openPicker();
           }}
-          className="accent-picker__swatch accent-picker__swatch--custom"
+          className="lib-palette__swatch lib-palette__swatch--custom"
         >
-          <span style={value === CUSTOM ? { background: custom, color: inkFor(custom) } : undefined}>
+          <span style={value === CUSTOM_SWATCH ? { background: custom, color: inkFor(custom) } : undefined}>
             <Check />
           </span>
         </button>
@@ -119,10 +122,10 @@ export default function AccentPicker({ swatches, value, custom, caption, customL
           value={custom}
           tabIndex={-1}
           aria-hidden="true"
-          className="accent-picker__input"
+          className="lib-palette__input"
           onInput={(e) => {
             onCustom(e.currentTarget.value);
-            onChange(CUSTOM);
+            onChange(CUSTOM_SWATCH);
           }}
           onChange={(e) => onCustom(e.currentTarget.value)}
         />

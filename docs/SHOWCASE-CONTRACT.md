@@ -20,6 +20,19 @@ not edit `src/App.tsx`, `src/library/*` or `CLAUDE.md` (the orchestrator does).
 Each page file default-exports a component. Placeholders exist until the
 package agent replaces them.
 
+Shell-owned (not package pages): `/` index (`Home.tsx`); `/layouts`,
+`/components` render the index scrolled to that chapter (the pill hrefs);
+`/navbar/reference/*` (`NavbarReference.tsx`) and `/navbar/one-page`
+(`NavbarOnePage.tsx`) render full-screen without the library chrome;
+`/reservation` → `/components/reservation`, `/evoview` → `/navbar/one-page`.
+Pages are lazy-loaded inside `LibraryLayout` (library navbar + footer with
+the evoview.be attribution); a page must not mount its own `<Navbar>`.
+
+Registry (`src/library/registry.ts`): `{ id, category, route, title, meta,
+status: "ready" | "building", version? }`. `version` is read from
+`components/<id>/VERSION` (glob, so new packages appear automatically);
+`status` is set by hand in the registry when a showcase goes live.
+
 ## `ShowcasePage` (`src/library/ShowcasePage.tsx`)
 
 ```tsx
@@ -36,6 +49,12 @@ import ShowcasePage from "../../library/ShowcasePage";
   {({ locale, accent, ink }) => <SelectorStage config={buildSelectorStageConfig(locale)} />}
 </ShowcasePage>
 ```
+
+`tone` defaults to `"dark"`. `children` is either a node or a render
+function; omit it for the "in construction" state. Prefer a child component
+that reads `useLibraryLocale()` over the render function when the component
+is expensive: a node child is not re-rendered on colour change.
+Default accent: `defaultAccent` ?? near-white (dark tone) / near-ink (light).
 
 The frame renders the header (kicker, title, intro, FR/EN toggle, accent
 palette) and wraps children in an element that sets `--primary`,
