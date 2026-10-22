@@ -1,3 +1,4 @@
+import { Mic, Soup } from "lucide-react";
 import { buildReservationConfig, type Locale } from "../src/reservation.config";
 import type { ReservationConfig } from "../src/types";
 
@@ -5,6 +6,10 @@ import type { ReservationConfig } from "../src/types";
    asks for an end time, closed Sundays, Saturday dinner only, up to 15.
    Showcase copy; the live site builds this from its i18n and posts to its
    booking API. Not installed. */
+
+// The navbar deck marks: Carte (Soup, chili orange) and Karaoké (Mic, violet).
+const dining = <Soup strokeWidth={1.6} style={{ color: "#f97316" }} />;
+const karaoke = <Mic strokeWidth={1.6} style={{ color: "#c08cf0" }} />;
 
 export function buildTchinReservationConfig(locale: Locale): ReservationConfig {
   const base = buildReservationConfig(locale);
@@ -32,9 +37,9 @@ export function buildTchinReservationConfig(locale: Locale): ReservationConfig {
         : "Your request has been received. The owner will contact you to confirm availability and details. This is not yet a confirmed booking.",
     },
     experiences: [
-      { value: "restaurant_only", label: isFr ? "Restaurant uniquement" : "Restaurant only", desc: isFr ? "Une table pour dîner" : "A table for dinner" },
-      { value: "karaoke_only", label: isFr ? "Karaoké uniquement" : "Karaoke only", desc: isFr ? "Une salle privée pour chanter" : "A private room to sing", hours: { options: [1, 2, 3], withinWindow: true }, timeNote: karaokePrice },
-      { value: "restaurant_then_karaoke", label: isFr ? "Restaurant puis karaoké" : "Restaurant then karaoke", desc: isFr ? "Dînez, puis chantez" : "Dine, then sing", hours: { options: [1, 2, 3] }, timeNote: karaokePrice },
+      { value: "restaurant_only", label: isFr ? "Restaurant uniquement" : "Restaurant only", desc: isFr ? "Une table pour dîner" : "A table for dinner", icon: dining },
+      { value: "karaoke_only", label: isFr ? "Karaoké uniquement" : "Karaoke only", desc: isFr ? "Une salle privée pour chanter" : "A private room to sing", icon: karaoke, hours: { options: [1, 2, 3], withinWindow: true }, timeNote: karaokePrice },
+      { value: "restaurant_then_karaoke", label: isFr ? "Restaurant puis karaoké" : "Restaurant then karaoke", desc: isFr ? "Dînez, puis chantez" : "Dine, then sing", icon: <>{dining}{karaoke}</>, hours: { options: [1, 2, 3] }, timeNote: karaokePrice },
     ],
     guests: { min: 1, max: 15, overflow: true },
   };

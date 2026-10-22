@@ -56,6 +56,7 @@ only the fallback when the host defines no `--primary`. `config.accent` /
 black primary).
 
 Client-adaptable (config only): venue, all copy, experiences (label, meta,
+icon(s) — reuse the client's navbar marks and colours, eye glyph by default —
 duration, note), opening windows and their labels, guests range, horizon,
 submit/toast wiring.
 

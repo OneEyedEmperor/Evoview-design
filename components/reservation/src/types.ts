@@ -1,4 +1,4 @@
-import type { ComponentType, CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import type { Locale } from "date-fns";
 
 /** Opening window, "HH:MM" local time. Start slots run from `open` to `close - slotMinutes`. */
@@ -10,8 +10,9 @@ export type ReservationExperience = {
   label: string;
   /** Short meta line under the label, rendered as an uppercase readout ("Table · Dîner"). */
   desc: string;
-  /** Overrides the Evoview eye glyph of this row. Prefer the default. */
-  icon?: ComponentType<{ className?: string }>;
+  /** Replaces the Evoview eye glyph of this row: one or more icons (rendered side by side),
+      carrying their own colour, e.g. the client's navbar marks. */
+  icon?: ReactNode;
   /** Ask for an end time after the start time. */
   requiresEndTime?: boolean;
   /** Ask for a duration in hours after the start time (e.g. a room rented by the hour).

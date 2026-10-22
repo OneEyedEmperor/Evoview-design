@@ -1,5 +1,14 @@
 # reservation changelog
 
+## 2.5.0 — client icons on experience rows
+
+- `experiences[].icon` is now a `ReactNode` (was a component): one or more
+  icons in their own colours, side by side, replacing the Evoview eye glyph.
+  Use the client's navbar marks so the form speaks the site's language.
+- Tchin: Carte (`Soup`, #f97316), Karaoké (`Mic`, #c08cf0), combo shows both.
+- Config changes: `icon` type `ComponentType` → `ReactNode` (breaking for
+  configs that passed a component: pass `<Icon />` instead).
+
 ## 2.4.0 — durations instead of end times
 
 - New `experiences[].hours: { options, withinWindow? }`: after the start

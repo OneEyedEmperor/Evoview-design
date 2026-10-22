@@ -306,11 +306,10 @@ export function Reservation({ config }: { config: ReservationConfig }) {
     body = (
       <div className="evo-resa-choices" role="group" aria-label={stepCopy.short}>
         {experiences.map((exp, i) => {
-          const Icon = exp.icon;
           return (
             <button key={exp.value} type="button" className="evo-resa-choice" aria-pressed={experience === exp.value} onClick={() => selectExperience(exp.value)}>
               <span className="evo-resa-readout evo-resa-choice__index">{pad(i + 1)}</span>
-              {Icon ? <Icon className="evo-resa-choice__eye" /> : <EyeGlyph className="evo-resa-choice__eye" variant={i === experiences.length - 1 && i > 0 ? 4 : i} />}
+              {exp.icon ? <span className="evo-resa-choice__icon" aria-hidden="true">{exp.icon}</span> : <EyeGlyph className="evo-resa-choice__eye" variant={i === experiences.length - 1 && i > 0 ? 4 : i} />}
               <span className="evo-resa-choice__label">{exp.label}</span>
               <span className="evo-resa-readout evo-resa-choice__hint">{exp.desc}</span>
               <span className="evo-resa-choice__check" aria-hidden="true"><Check /></span>

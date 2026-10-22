@@ -209,6 +209,11 @@
 .evo-resa-choice__index { position: absolute; top: 9px; left: 12px; color: rgba(255, 255, 255, 0.35); font-size: 8px; }
 .evo-resa-choice__eye { position: absolute; top: 50%; left: 26px; width: 40px; height: 40px; translate: 0 -50%; color: rgba(255, 255, 255, 0.75); transition: color 220ms ease; }
 .evo-resa-choice[aria-pressed="true"] .evo-resa-choice__eye { color: #fff; }
+/* Client icons: keep their own colours; two or more sit side by side. */
+.evo-resa-choice__icon { position: absolute; top: 50%; left: 18px; display: flex; width: 56px; translate: 0 -50%; align-items: center; justify-content: center; gap: 2px; opacity: 0.9; transition: opacity 220ms ease, transform 220ms var(--resa-ease); }
+.evo-resa-choice__icon > svg { width: 28px; height: 28px; flex: 0 0 auto; }
+.evo-resa-choice__icon:has(> svg + svg) > svg { width: 24px; height: 24px; }
+.evo-resa-choice:hover .evo-resa-choice__icon, .evo-resa-choice[aria-pressed="true"] .evo-resa-choice__icon { opacity: 1; transform: scale(1.06); }
 .evo-resa-choice__label { color: #fff; font-family: var(--resa-font-display); font-size: clamp(15px, 2.4cqi, 19px); font-weight: 800; letter-spacing: -0.01em; line-height: 1.05; }
 .evo-resa-choice__hint { color: rgba(255, 255, 255, 0.5); }
 .evo-resa-choice__check {
@@ -502,6 +507,9 @@
   .evo-resa-guests .evo-resa-pill[aria-pressed="true"] .evo-resa-pill__mark { background: none; color: var(--resa-accent-ink); }
   .evo-resa-choice { min-height: 76px; padding-left: 70px; }
   .evo-resa-choice__eye { left: 18px; width: 34px; height: 34px; }
+  .evo-resa-choice__icon { left: 10px; width: 50px; }
+  .evo-resa-choice__icon > svg { width: 24px; height: 24px; }
+  .evo-resa-choice__icon:has(> svg + svg) > svg { width: 21px; height: 21px; }
   .evo-resa-top__divider, .evo-resa-top__kicker { display: none; }
   .evo-resa-top { gap: 12px; }
   .evo-resa-top__logo { width: 66px; }
