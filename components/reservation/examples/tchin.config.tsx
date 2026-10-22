@@ -12,7 +12,7 @@ export function buildTchinReservationConfig(locale: Locale): ReservationConfig {
   const karaokePrice = isFr ? "Karaoké : 12 € par personne, par heure" : "Karaoke: €12 per person, per hour";
   return {
     ...base,
-    venue: { name: "Tchin Tchin", place: "Bruxelles" },
+    venue: { name: "Tchin Tchin" },
     copy: {
       ...base.copy,
       steps: {

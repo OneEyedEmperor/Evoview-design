@@ -16,7 +16,7 @@ const COPY: Record<Locale, ReservationCopy> = {
       date: { short: "Date", title: "Quel jour vous attend-on ?", hint: "Les jours grisés sont complets ou fermés." },
       guests: { short: "Convives", title: "Combien serez-vous ?", hint: "Au-delà, écrivez-nous dans la dernière étape." },
       time: { short: "Horaire", title: "À quelle heure ?", hint: "Votre heure d'arrivée souhaitée." },
-      contact: { short: "Contact", title: "Où vous confirmer ?", hint: "Nous vous recontactons pour valider la réservation." },
+      contact: { short: "Contact", title: "On confirme ?", hint: "Nous vous recontactons pour valider la réservation." },
     },
     closedNote: "Fermé le dimanche",
     guestsUnit: { one: "personne", many: "personnes" },
@@ -51,7 +51,7 @@ const COPY: Record<Locale, ReservationCopy> = {
       date: { short: "Date", title: "Which day should we expect you?", hint: "Greyed-out days are full or closed." },
       guests: { short: "Guests", title: "How many of you?", hint: "Larger group? Tell us in the last step." },
       time: { short: "Time", title: "What time?", hint: "Your preferred arrival time." },
-      contact: { short: "Contact", title: "Where do we confirm?", hint: "We will get back to you to confirm the booking." },
+      contact: { short: "Contact", title: "Shall we confirm?", hint: "We will get back to you to confirm the booking." },
     },
     closedNote: "Closed on Sundays",
     guestsUnit: { one: "guest", many: "guests" },
@@ -106,7 +106,7 @@ export function buildReservationConfig(locale: Locale): ReservationConfig {
   const dinner = { open: "18:00", close: "22:30", label: locale === "fr" ? "Soir" : "Dinner" };
   return {
     copy: COPY[locale],
-    venue: { name: "Maison Exemple", place: "Bruxelles" },
+    venue: { name: "Maison Exemple" },
     dateLocale: locale === "fr" ? fr : undefined,
     experiences: EXPERIENCES[locale],
     windows: (date) => (isSunday(date) ? [] : isSaturday(date) ? [dinner] : [lunch, dinner]),

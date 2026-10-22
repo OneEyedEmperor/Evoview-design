@@ -82,8 +82,8 @@ export type ReservationCopy = {
 
 export type ReservationConfig = {
   copy: ReservationCopy;
-  /** The client's venue, printed on the ticket. */
-  venue: { name: string; place?: string };
+  /** The client's venue, printed on the header kicker and the recap ticket. */
+  venue: { name: string };
   /** date-fns locale for the calendar and ticket date. Omit for en-US. */
   dateLocale?: Locale;
   experiences: ReservationExperience[];

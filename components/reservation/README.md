@@ -40,9 +40,10 @@ the surfaces to the client's palette or swap them for client equivalents
   700 uppercase readouts. Fonts ship in `brand/fonts/` (no host fonts needed).
 - **Marks**: circled step mark with halo, Evoview eye glyphs on the
   experience rows (index `01…`, check orb), pill chips with numbered orbs,
-  white primary plate with dark arrow orb, `← RETOUR` ghost, HUD corners,
-  REC dots, ring-eye emblem on the confirmation, CRT recap ticket with
-  Evoview watermark.
+  white primary plate with dark arrow orb, `← RETOUR` ghost, REC dots,
+  ring-eye emblem on the confirmation, recap ticket (status + venue on the
+  right edge, big date, four fields, Evoview watermark; no texture overlay
+  or HUD corners).
 - **Choreography**: auto-advance 340 ms after a choice, blur-rise step
   entrance, emblem reveal.
 

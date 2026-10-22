@@ -54,11 +54,3 @@ export function Chevron({ className, dir }: { className?: string; dir: "left" | 
     </svg>
   );
 }
-
-export function Hud() {
-  return (
-    <span className="evo-resa-hud" aria-hidden="true">
-      <i /><i /><i /><i />
-    </span>
-  );
-}

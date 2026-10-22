@@ -3,7 +3,7 @@ import { DayPicker } from "react-day-picker";
 import { addDays, format, isBefore, startOfDay } from "date-fns";
 import EvoviewLogo from "./brand/EvoviewLogo";
 import ringEyeSvg from "./brand/eye-4-ring.svg?raw";
-import { ArrowLeft, ArrowRight, Check, Chevron, EyeGlyph, Hud } from "./marks";
+import { ArrowLeft, ArrowRight, Check, Chevron, EyeGlyph } from "./marks";
 import type { ReservationConfig, ReservationRequest, ReservationWindow } from "./types";
 import "./reservation.css";
 
@@ -241,12 +241,9 @@ export function Reservation({ config }: { config: ReservationConfig }) {
 
   const ticket = (
     <div className="evo-resa-ticket" data-sent={confirmed || undefined}>
-      <span className="evo-resa-ticket__phosphor" aria-hidden="true" />
-      <span className="evo-resa-ticket__scan" aria-hidden="true" />
-      <Hud />
       <div className="evo-resa-ticket__head">
-        <span className="evo-resa-readout"><i className="evo-resa-rec" aria-hidden="true" />{confirmed ? c.statusSent : c.statusDraft}</span>
-        <span className="evo-resa-readout evo-resa-ticket__venue">{venue.name}{venue.place ? ` · ${venue.place}` : ""}</span>
+        <span className="evo-resa-readout evo-resa-ticket__status"><i className="evo-resa-rec" aria-hidden="true" />{confirmed ? c.statusSent : c.statusDraft}</span>
+        <span className="evo-resa-readout evo-resa-ticket__venue">{venue.name}</span>
       </div>
       <div className={`evo-resa-ticket__date${date ? "" : " is-empty"}`} aria-hidden={!date}>
         {date ? (

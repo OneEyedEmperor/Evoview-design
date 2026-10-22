@@ -444,7 +444,7 @@
 .evo-resa-done .evo-resa-inline-ticket { width: 100%; max-width: 460px; margin-bottom: 18px; text-align: left; }
 .evo-resa-done .evo-resa-ghost { margin-right: 0; }
 
-/* Recap ticket: the live booking on an Evoview CRT screen (contact step, confirmation) */
+/* Recap ticket: the live booking (contact step, confirmation) */
 .evo-resa-inline-ticket { margin-bottom: 26px; }
 .evo-resa-ticket {
   position: relative;
@@ -461,26 +461,10 @@
     radial-gradient(70% 45% at 100% 105%, color-mix(in srgb, var(--resa-iris) 30%, transparent) 0%, transparent 70%),
     #0c0d15;
 }
-.evo-resa-ticket__phosphor {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  opacity: 0.6;
-  background-image: radial-gradient(rgba(206, 210, 236, 0.09) 0.55px, transparent 0.75px);
-  background-size: 3px 3px;
-  -webkit-mask-image: radial-gradient(95% 70% at 50% 20%, #000 0%, rgba(0, 0, 0, 0.35) 55%, transparent 95%);
-  mask-image: radial-gradient(95% 70% at 50% 20%, #000 0%, rgba(0, 0, 0, 0.35) 55%, transparent 95%);
-}
-.evo-resa-ticket__scan { position: absolute; inset: 0; z-index: -1; background-image: repeating-linear-gradient(0deg, transparent 0 2px, rgba(220, 222, 255, 0.02) 2px 3px); }
-.evo-resa-hud { position: absolute; inset: 10px; z-index: 0; pointer-events: none; }
-.evo-resa-hud > i { position: absolute; width: 12px; height: 12px; border: 0 solid rgba(255, 255, 255, 0.5); }
-.evo-resa-hud > i:nth-child(1) { top: 0; left: 0; border-top-width: 1.5px; border-left-width: 1.5px; }
-.evo-resa-hud > i:nth-child(2) { top: 0; right: 0; border-top-width: 1.5px; border-right-width: 1.5px; }
-.evo-resa-hud > i:nth-child(3) { bottom: 0; left: 0; border-bottom-width: 1.5px; border-left-width: 1.5px; }
-.evo-resa-hud > i:nth-child(4) { bottom: 0; right: 0; border-bottom-width: 1.5px; border-right-width: 1.5px; }
-.evo-resa-ticket__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 14px; color: var(--resa-accent); }
-.evo-resa-ticket__head > span { display: inline-flex; align-items: center; }
-.evo-resa-ticket__venue { color: var(--resa-faint); }
+/* Status pinned to the right edge, venue under it. */
+.evo-resa-ticket__head { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; margin-bottom: -8px; text-align: right; }
+.evo-resa-ticket__status { display: inline-flex; align-items: center; color: var(--resa-accent); }
+.evo-resa-ticket__venue { color: rgba(255, 255, 255, 0.7); }
 .evo-resa-ticket__date { display: flex; align-items: flex-end; gap: 12px; color: #fff; font-family: var(--resa-font-display); text-transform: uppercase; }
 .evo-resa-ticket__date strong { font-size: 44px; font-weight: 900; letter-spacing: -0.05em; line-height: 0.8; }
 .evo-resa-ticket__date.is-empty, .evo-resa-ticket__date.is-empty span:first-child { color: rgba(255, 255, 255, 0.13); }
@@ -493,7 +477,7 @@
 .evo-resa-ticket__rows [data-filled] dd { color: #fff; }
 .evo-resa-ticket__rows [data-filled] dt { color: var(--resa-accent); }
 .evo-resa-ticket__mark { position: absolute; right: 22px; bottom: 18px; width: 70px; height: auto; filter: brightness(0) invert(1); opacity: 0.07; pointer-events: none; }
-.evo-resa-ticket[data-sent] .evo-resa-ticket__head { color: #a7f3c4; }
+.evo-resa-ticket[data-sent] .evo-resa-ticket__status { color: #a7f3c4; }
 .evo-resa-ticket[data-sent] .evo-resa-ticket__head .evo-resa-rec { background: #4ade80; box-shadow: 0 0 10px rgba(74, 222, 128, 0.8); }
 
 /* ── Responsive (container) ─────────────────────────────────────────── */

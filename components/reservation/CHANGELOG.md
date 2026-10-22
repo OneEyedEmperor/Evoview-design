@@ -1,5 +1,12 @@
 # reservation changelog
 
+## 2.2.0 — cleaner recap ticket
+
+- Ticket: phosphor/scanline overlays and HUD corners removed; status and
+  venue name stacked on the right edge (venue under the status).
+- Reference/Tchin contact step titled "On confirme ?" / "Shall we confirm?".
+- Config changes: `venue.place` removed (no longer displayed).
+
 ## 2.1.0 — client accent, single column
 
 - Accent now comes from the host's `--primary` / `--primary-foreground`
