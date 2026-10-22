@@ -1,4 +1,4 @@
-import { isSaturday, isSunday } from "date-fns";
+import { isSunday } from "date-fns";
 import { fr } from "date-fns/locale";
 import { DoorOpen, UtensilsCrossed } from "lucide-react";
 import type { ReservationConfig, ReservationCopy, ReservationRequest, ReservationResult } from "./types";
@@ -103,8 +103,9 @@ async function submitRequest(request: ReservationRequest): Promise<ReservationRe
 
 export function buildReservationConfig(locale: Locale): ReservationConfig {
   const isFr = locale === "fr";
-  const lunch = { open: "12:00", close: "14:30", label: isFr ? "Midi" : "Lunch" };
-  const dinner = { open: "18:00", close: "22:30", label: isFr ? "Soir" : "Evening" };
+  // One continuous service: all start times in a single list. Clients with split
+  // services return several windows, each with a `label` ("Midi", "Soir").
+  const service = { open: "12:00", close: "22:30" };
   const roomPrice = isFr ? "Salon privé : 15 € par personne, par heure" : "Private room: €15 per person, per hour";
   return {
     copy: COPY[locale],
@@ -115,7 +116,7 @@ export function buildReservationConfig(locale: Locale): ReservationConfig {
       { value: "room", label: isFr ? "Salon privé uniquement" : "Private room only", desc: isFr ? "Un espace rien que pour vous" : "A space just for you", icon: room, hours: { options: ROOM_HOURS, withinWindow: true }, timeNote: roomPrice },
       { value: "table_then_room", label: isFr ? "Table puis salon" : "Table then room", desc: isFr ? "Dînez, puis prolongez" : "Dine, then stay on", icon: <>{table}{room}</>, hours: { options: ROOM_HOURS }, timeNote: roomPrice },
     ],
-    windows: (date) => (isSunday(date) ? [] : isSaturday(date) ? [dinner] : [lunch, dinner]),
+    windows: (date) => (isSunday(date) ? [] : [service]),
     slotMinutes: 30,
     guests: { min: 1, max: 12, overflow: true },
     submit: submitRequest,

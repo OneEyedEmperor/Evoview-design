@@ -1,5 +1,11 @@
 # reservation changelog
 
+## 2.8.1
+
+- Reference config: one continuous service (12:00–22:30, closed Sundays), so
+  the time step shows a single list instead of Midi / Soir groups. Split
+  services remain supported (several labelled windows). Config changes: none.
+
 ## 2.8.0 — tap-to-validate on mobile
 
 - Narrow containers (≤ 520px): steps 1–4 validate on tap, so the bar drops
