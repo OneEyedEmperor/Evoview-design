@@ -5,8 +5,14 @@ candidature flow of evoview.be): one question per screen in Evoview's
 typography, marks and grading, coloured with the client's accent. Origin:
 Tchin Tchin (`/root/.vibehub/projects/test`, `/reservation`).
 
-Showcase: `https://evoview-library.said.bet/reservation` (Tchin Tchin example
-and reference, FR/EN, mocked submit).
+Showcase: `https://evoview-library.said.bet/reservation` (reference by
+default, Tchin Tchin example, FR/EN, mocked submit).
+
+The reference config is a neutral copy of the Tchin Tchin setup, the
+first client: same flow and choices (table / by-the-hour room / both, icons
+on every row, duration in hours instead of end times, "+max" guests, "On
+confirme ?"). Start every client from it and swap in their venue, copy,
+navbar icons and rules.
 
 ```
 ┌ EVOVIEW │ RÉSERVATION · VENUE / 01 / 05 · EXPÉRIENCE          ▬ ▬ ▬ ▬ ▬ ┐
@@ -100,7 +106,8 @@ heading and background.
 
 - React 19, Vite (asset imports for SVG/fonts, `?raw` for the wordmark),
   TypeScript strict. `react-day-picker` ^9, `date-fns` ^4. No Tailwind,
-  shadcn, lucide or toast dependency; toasts go through `onResult`.
+  shadcn or toast dependency; toasts go through `onResult`. Only the
+  reference config imports `lucide-react` (row icons) — any icon element works.
 - Reads only `--primary` / `--primary-foreground` from the host (accent).
   Resets use zero-specificity `:where()`, so host base styles in
   `@layer base` cannot leak in.

@@ -2,8 +2,8 @@ import { Mic, Soup } from "lucide-react";
 import { buildReservationConfig, type Locale } from "../src/reservation.config";
 import type { ReservationConfig } from "../src/types";
 
-/* Tchin Tchin (resto-tchin, project `test`): three experiences, karaoke-only
-   asks for an end time, closed Sundays, Saturday dinner only, up to 15.
+/* Tchin Tchin (resto-tchin, project `test`): three experiences, karaoke asks a
+   duration in hours (no end times), closed Sundays, Saturday dinner only, +15.
    Showcase copy; the live site builds this from its i18n and posts to its
    booking API. Not installed. */
 
@@ -25,6 +25,12 @@ export function buildTchinReservationConfig(locale: Locale): ReservationConfig {
         experience: isFr
           ? { short: "Expérience", title: "Table, micro, ou les deux ?", hint: "Choisissez votre soirée. Le propriétaire confirme ensuite." }
           : { short: "Experience", title: "Table, mic, or both?", hint: "Pick your night. The owner confirms afterwards." },
+        guests: isFr
+          ? { short: "Personnes", title: "Combien serez-vous ?", hint: "Plus de 15 ? Choisissez +15, le propriétaire s'organise avec vous." }
+          : { short: "Guests", title: "How many of you?", hint: "More than 15? Pick +15, the owner will arrange it with you." },
+        contact: isFr
+          ? { short: "Contact", title: "On confirme ?", hint: "Le propriétaire vous recontacte pour valider la demande." }
+          : { short: "Contact", title: "Shall we confirm?", hint: "The owner will get back to you to confirm the request." },
         time: isFr
           ? { short: "Horaire", title: "À quelle heure ?", hint: "Votre heure d'arrivée souhaitée." }
           : { short: "Time", title: "What time?", hint: "Your preferred arrival time." },

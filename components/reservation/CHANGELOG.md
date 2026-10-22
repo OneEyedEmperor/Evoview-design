@@ -1,5 +1,19 @@
 # reservation changelog
 
+## 2.6.0 — neutral reference = Tchin setup
+
+- Reference config rewritten as a neutral copy of the Tchin Tchin setup:
+  "Maison Exemple", table / private room / table then room, icons on every
+  row (lucide `UtensilsCrossed`, `DoorOpen`, both together for the combo,
+  inheriting the row colour), room duration in hours (no end times), guests
+  1–12 with "+12", Tchin's copy tone ("Table, salon, ou les deux ?",
+  "On confirme ?").
+- Showcase opens on "Référence": same page as Tchin's, neutral (plain dark
+  background, off-white accent standing in for the client colour).
+- Tchin example: own guests/contact copy (+15) on top of the reference.
+- Config changes: none in the contract. The reference config now imports
+  `lucide-react` (replace the icons with the client's navbar marks).
+
 ## 2.5.0 — client icons on experience rows
 
 - `experiences[].icon` is now a `ReactNode` (was a component): one or more

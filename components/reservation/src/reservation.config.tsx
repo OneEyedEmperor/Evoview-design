@@ -1,10 +1,12 @@
 import { isSaturday, isSunday } from "date-fns";
 import { fr } from "date-fns/locale";
+import { DoorOpen, UtensilsCrossed } from "lucide-react";
 import type { ReservationConfig, ReservationCopy, ReservationRequest, ReservationResult } from "./types";
 
-/* Reference config — the only per-site file. Replace venue, copy,
-   experiences, opening windows, guests and `submit`. The chassis, marks,
-   typography and the Evoview wordmark link are the component, not config. */
+/* Reference config — the only per-site file. A neutral copy of the Tchin Tchin
+   setup (the first client): three experiences with the client's icons, a
+   by-the-hour option asking a duration (never an end time), "+max" guests.
+   Replace venue, copy, icons, experiences, windows, guests and `submit`. */
 
 export type Locale = "fr" | "en";
 
@@ -12,22 +14,22 @@ const COPY: Record<Locale, ReservationCopy> = {
   fr: {
     kicker: "Réservation",
     steps: {
-      experience: { short: "Expérience", title: "Quelle expérience vous tente ?", hint: "Choisissez votre moment. Nous l'affinerons ensemble." },
-      date: { short: "Date", title: "Quel jour vous attend-on ?", hint: "Les jours grisés sont complets ou fermés." },
-      guests: { short: "Convives", title: "Combien serez-vous ?", hint: "Plus nombreux ? Choisissez la dernière option." },
+      experience: { short: "Expérience", title: "Table, salon, ou les deux ?", hint: "Choisissez votre moment. L'établissement confirme ensuite." },
+      date: { short: "Date", title: "Quel jour vous attend-on ?", hint: "Les jours grisés sont fermés." },
+      guests: { short: "Personnes", title: "Combien serez-vous ?", hint: "Plus de 12 ? Choisissez +12, l'établissement s'organise avec vous." },
       time: { short: "Horaire", title: "À quelle heure ?", hint: "Votre heure d'arrivée souhaitée." },
-      contact: { short: "Contact", title: "On confirme ?", hint: "Nous vous recontactons pour valider la réservation." },
+      contact: { short: "Contact", title: "On confirme ?", hint: "L'établissement vous recontacte pour valider la demande." },
     },
     closedNote: "Fermé le dimanche",
     guestsUnit: { one: "personne", many: "personnes" },
     startTimeLabel: "Arrivée",
     endTimeLabel: "Fin",
-    hoursLabel: "Durée",
+    hoursLabel: "Durée du salon",
     hoursUnit: { one: "heure", many: "heures" },
     nameLabel: "Nom complet",
     phoneLabel: "Téléphone",
     emailLabel: "Email",
-    notesLabel: "Une précision ?",
+    notesLabel: "Informations complémentaires",
     optional: "facultatif",
     notesPlaceholder: "Anniversaire, allergie, demande particulière…",
     next: "Continuer",
@@ -38,8 +40,8 @@ const COPY: Record<Locale, ReservationCopy> = {
     statusDraft: "Demande en cours",
     statusSent: "Demande transmise",
     confirmationKicker: "Demande transmise",
-    confirmationTitle: "C'est noté.",
-    confirmationMessage: "Nous avons bien reçu votre demande et vous recontactons pour la confirmer. Ce n'est pas encore une réservation confirmée.",
+    confirmationTitle: "Demande envoyée !",
+    confirmationMessage: "Votre demande a bien été reçue. L'établissement vous contactera pour confirmer la disponibilité et les détails. Il ne s'agit pas encore d'une réservation confirmée.",
     submitAnother: "Nouvelle demande",
     errorRequired: "Ce champ est requis.",
     errorInvalidEmail: "Adresse email invalide.",
@@ -49,22 +51,22 @@ const COPY: Record<Locale, ReservationCopy> = {
   en: {
     kicker: "Reservation",
     steps: {
-      experience: { short: "Experience", title: "What are you in the mood for?", hint: "Pick your moment. We will fine-tune it together." },
-      date: { short: "Date", title: "Which day should we expect you?", hint: "Greyed-out days are full or closed." },
-      guests: { short: "Guests", title: "How many of you?", hint: "A larger group? Pick the last option." },
+      experience: { short: "Experience", title: "Table, room, or both?", hint: "Pick your moment. The venue confirms afterwards." },
+      date: { short: "Date", title: "Which day should we expect you?", hint: "Greyed-out days are closed." },
+      guests: { short: "Guests", title: "How many of you?", hint: "More than 12? Pick +12, the venue will arrange it with you." },
       time: { short: "Time", title: "What time?", hint: "Your preferred arrival time." },
-      contact: { short: "Contact", title: "Shall we confirm?", hint: "We will get back to you to confirm the booking." },
+      contact: { short: "Contact", title: "Shall we confirm?", hint: "The venue will get back to you to confirm the request." },
     },
     closedNote: "Closed on Sundays",
     guestsUnit: { one: "guest", many: "guests" },
     startTimeLabel: "Arrival",
     endTimeLabel: "End",
-    hoursLabel: "Duration",
+    hoursLabel: "Room duration",
     hoursUnit: { one: "hour", many: "hours" },
     nameLabel: "Full name",
     phoneLabel: "Phone",
     emailLabel: "Email",
-    notesLabel: "Anything to add?",
+    notesLabel: "Additional information",
     optional: "optional",
     notesPlaceholder: "Birthday, allergy, special request…",
     next: "Continue",
@@ -75,8 +77,8 @@ const COPY: Record<Locale, ReservationCopy> = {
     statusDraft: "Request in progress",
     statusSent: "Request sent",
     confirmationKicker: "Request sent",
-    confirmationTitle: "Noted.",
-    confirmationMessage: "We have received your request and will contact you to confirm it. This is not a confirmed booking yet.",
+    confirmationTitle: "Request sent!",
+    confirmationMessage: "Your request has been received. The venue will contact you to confirm availability and details. This is not yet a confirmed booking.",
     submitAnother: "New request",
     errorRequired: "This field is required.",
     errorInvalidEmail: "Invalid email address.",
@@ -85,20 +87,14 @@ const COPY: Record<Locale, ReservationCopy> = {
   },
 };
 
-const EXPERIENCES: Record<Locale, ReservationConfig["experiences"]> = {
-  fr: [
-    { value: "lunch", label: "Déjeuner", desc: "Table · Midi" },
-    { value: "dinner", label: "Dîner", desc: "Table · Soir" },
-    { value: "private", label: "Salon privé", desc: "Groupe · À l'heure", hours: { options: [1, 2, 3], withinWindow: true }, timeNote: "Salon privé : 15 € par personne et par heure" },
-  ],
-  en: [
-    { value: "lunch", label: "Lunch", desc: "Table · Noon" },
-    { value: "dinner", label: "Dinner", desc: "Table · Evening" },
-    { value: "private", label: "Private room", desc: "Group · By the hour", hours: { options: [1, 2, 3], withinWindow: true }, timeNote: "Private room: €15 per person, per hour" },
-  ],
-};
+/* Use the client's navbar marks here (same icons, same colours). The
+   reference keeps them neutral: they inherit the row's text colour. */
+const table = <UtensilsCrossed strokeWidth={1.6} />;
+const room = <DoorOpen strokeWidth={1.6} />;
+const ROOM_HOURS = [1, 2, 3];
 
-/* Replace with the site's API call. Map server field errors to name/phone/email/notes. */
+/* Replace with the site's API call. Map server field errors to name/phone/email/notes;
+   map `guestsOverflow` and `hours` to whatever the API accepts (fields or notes). */
 async function submitRequest(request: ReservationRequest): Promise<ReservationResult> {
   void request;
   await new Promise((r) => setTimeout(r, 700));
@@ -106,13 +102,19 @@ async function submitRequest(request: ReservationRequest): Promise<ReservationRe
 }
 
 export function buildReservationConfig(locale: Locale): ReservationConfig {
-  const lunch = { open: "12:00", close: "14:30", label: locale === "fr" ? "Midi" : "Lunch" };
-  const dinner = { open: "18:00", close: "22:30", label: locale === "fr" ? "Soir" : "Dinner" };
+  const isFr = locale === "fr";
+  const lunch = { open: "12:00", close: "14:30", label: isFr ? "Midi" : "Lunch" };
+  const dinner = { open: "18:00", close: "22:30", label: isFr ? "Soir" : "Evening" };
+  const roomPrice = isFr ? "Salon privé : 15 € par personne, par heure" : "Private room: €15 per person, per hour";
   return {
     copy: COPY[locale],
     venue: { name: "Maison Exemple" },
-    dateLocale: locale === "fr" ? fr : undefined,
-    experiences: EXPERIENCES[locale],
+    dateLocale: isFr ? fr : undefined,
+    experiences: [
+      { value: "table", label: isFr ? "Table uniquement" : "Table only", desc: isFr ? "Une table pour dîner" : "A table for dinner", icon: table },
+      { value: "room", label: isFr ? "Salon privé uniquement" : "Private room only", desc: isFr ? "Un espace rien que pour vous" : "A space just for you", icon: room, hours: { options: ROOM_HOURS, withinWindow: true }, timeNote: roomPrice },
+      { value: "table_then_room", label: isFr ? "Table puis salon" : "Table then room", desc: isFr ? "Dînez, puis prolongez" : "Dine, then stay on", icon: <>{table}{room}</>, hours: { options: ROOM_HOURS }, timeNote: roomPrice },
+    ],
     windows: (date) => (isSunday(date) ? [] : isSaturday(date) ? [dinner] : [lunch, dinner]),
     slotMinutes: 30,
     guests: { min: 1, max: 12, overflow: true },

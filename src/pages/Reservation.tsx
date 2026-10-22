@@ -6,7 +6,8 @@ import { buildTchinReservationConfig } from "../../components/reservation/exampl
 
 /* Showcase of the reservation package. "Tchin Tchin" reproduces the live
    client page around the component (its --primary accent, page header);
-   "Référence" is the reference config. Submissions are mocked. */
+   "Référence" is the same page, neutral: reference config, off-white accent.
+   Submissions are mocked. */
 
 type Variant = "tchin" | "reference";
 
@@ -16,8 +17,8 @@ const HEAD: Record<Variant, Record<Locale, { kicker: string; title: string; subt
     en: { kicker: "Reservation", title: "Send a Request", subtitle: "Send your request and the owner will contact you to confirm." },
   },
   reference: {
-    fr: { kicker: "Réservation", title: "Réservez votre table", subtitle: "Choisissez votre moment, nous vous recontactons pour confirmer." },
-    en: { kicker: "Reservation", title: "Book your table", subtitle: "Pick your moment, we will contact you to confirm." },
+    fr: { kicker: "Réservation", title: "Envoyez une demande", subtitle: "Envoyez votre demande et l'établissement vous contactera pour confirmer." },
+    en: { kicker: "Reservation", title: "Send a request", subtitle: "Send your request and the venue will contact you to confirm." },
   },
 };
 
@@ -39,7 +40,7 @@ function Toggle<T extends string>({ value, options, onChange }: { value: T; opti
 }
 
 export default function ReservationShowcase() {
-  const [variant, setVariant] = useState<Variant>("tchin");
+  const [variant, setVariant] = useState<Variant>("reference");
   const [locale, setLocale] = useState<Locale>("fr");
   const config = useMemo(() => (variant === "tchin" ? buildTchinReservationConfig(locale) : buildReservationConfig(locale)), [variant, locale]);
   const head = HEAD[variant][locale];
@@ -50,22 +51,20 @@ export default function ReservationShowcase() {
       data-variant={variant}
       className="relative min-h-screen overflow-hidden px-6 py-24 text-white"
       style={{
-        background: tchin ? "oklch(0.115 0.006 75)" : "#0c0c10",
-        fontFamily: tchin ? "Inter, sans-serif" : "Montserrat, sans-serif",
+        background: tchin ? "oklch(0.115 0.006 75)" : "#0b0b0c",
+        fontFamily: "Inter, sans-serif",
         ["--foreground" as string]: "oklch(0.98 0 0)",
-        ["--muted-foreground" as string]: tchin ? "oklch(0.60 0 0)" : "#a3a3a3",
+        ["--muted-foreground" as string]: "oklch(0.60 0 0)",
         ["--font-heading" as string]: "'Overused Grotesk', Inter, sans-serif",
         // The host's accent tokens; the component reads them.
-        ["--primary" as string]: tchin ? "oklch(0.88 0.18 90)" : "#818cf8",
+        // Neutral reference: an off-white accent standing in for the client's colour.
+        ["--primary" as string]: tchin ? "oklch(0.88 0.18 90)" : "#e9e6df",
         ["--primary-foreground" as string]: tchin ? "oklch(0.07 0 0)" : "#101011",
       }}
     >
-      {!tchin && (
-        <div className="absolute inset-0" style={{ background: "radial-gradient(60% 50% at 50% 0%, rgba(63,81,181,.35), transparent 70%), radial-gradient(40% 40% at 80% 90%, rgba(63,81,181,.18), transparent 70%)" }} />
-      )}
 
       <div className="fixed left-1/2 top-4 z-20 flex -translate-x-1/2 gap-2">
-        <Toggle value={variant} options={[["tchin", "Tchin Tchin"], ["reference", "Référence"]]} onChange={setVariant} />
+        <Toggle value={variant} options={[["reference", "Référence"], ["tchin", "Tchin Tchin"]]} onChange={setVariant} />
         <Toggle value={locale} options={[["fr", "FR"], ["en", "EN"]]} onChange={setLocale} />
       </div>
 
