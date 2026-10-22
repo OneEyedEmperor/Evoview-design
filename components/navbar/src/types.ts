@@ -36,11 +36,24 @@ export type NavDeckEntry = {
 export type NavTrayItem = {
   id: string;
   title: string;
-  /** Small technical caption under the title (status, category, phase). */
+  /** Short description: the caption under the title on rows (mobile, and
+      desktop `rows` trays); on desktop cards only when the tray sets
+      `cardMeta`. */
   meta?: string;
-  /** Overrides the deck entry's accent for this row. */
+  /** Overrides the deck entry's accent for this row (card hover grade and
+      edge, row orb). */
   accent?: string;
-  onSelect: () => void;
+  /** Desktop card artwork. An image URL (banner crop, 900×216 ≈ 4.2:1,
+      fades in once decoded) or a rendered node (live preview) filling the
+      card. Shown monochrome at rest, the accent arriving on hover. */
+  cover?: string | ReactNode;
+  /** Route or anchor: the entry renders as `<a href>` (route it with
+      `useNavbarLinks`). */
+  href?: string;
+  /** Action run on selection (open a modal, scroll…). With `href`, runs
+      first; `event.preventDefault()` cancels the navigation. Give every
+      entry an `href`, an `onSelect`, or both. */
+  onSelect?: (event: MouseEvent<HTMLElement>) => void;
 };
 
 export type NavTray =
@@ -50,6 +63,14 @@ export type NavTray =
       unit: string;
       /** Static rows, or a loader so copy stays off the critical path. */
       items: NavTrayItem[] | (() => Promise<NavTrayItem[]>);
+      /** Desktop presentation: `cards` = one full-width cover banner per
+          entry, stacked; `rows` = 2×2 numbered rows. Default: `cards` when
+          any entry has a `cover`, else `rows`. Set it explicitly on a
+          loader tray so the loading skeleton has the right shape. Mobile
+          always shows single-column rows. */
+      layout?: "cards" | "rows";
+      /** Desktop cards also show each entry's `meta` under the title. */
+      cardMeta?: boolean;
     }
   | {
       kind: "cta";
@@ -64,7 +85,8 @@ export type NavbarLabels = {
   menu: string;
   /** Word the mobile finder morphs into while open. */
   close: string;
-  /** Mobile tray header link to the section itself. */
+  /** Mobile tray header link to the pill's own `href` (touch has no
+      hover/click split, so the tray offers it explicitly). */
   sectionLink: string;
   navAria: string;
   openAria: string;

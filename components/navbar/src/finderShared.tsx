@@ -1,6 +1,6 @@
 import { useCallback, useMemo, type CSSProperties, type MouseEvent, type ReactNode } from "react";
-import type { NavDeckEntry, NavTray, NavbarConfig, NavbarLabels } from "./types";
-import { getTrayItems, useTrayVersion } from "./useNavTrays";
+import type { NavDeckEntry, NavTray, NavTrayItem, NavbarConfig, NavbarLabels } from "./types";
+import { getTrayItems, trayLayout, useTrayVersion } from "./useNavTrays";
 
 /* Pieces shared by the desktop finder and its mobile counterpart: the
    reticle mark, the tray rows and the action handlers. */
@@ -32,11 +32,28 @@ export function ArrowIcon() {
   );
 }
 
-function SubPill({ index, title, meta, accent, onClick }: { index: number; title: string; meta?: string; accent: string; onClick: () => void }) {
+type ItemProps = {
+  href?: string;
+  onClick: (event: MouseEvent<HTMLElement>) => void;
+  className: string;
+  style: CSSProperties;
+  children: ReactNode;
+};
+
+/** A tray entry with an `href` is a real link (routable, middle-clickable);
+    one without is a button. */
+function ItemControl({ href, onClick, className, style, children }: ItemProps) {
+  return href ? (
+    <a href={href} data-tray-item onClick={onClick} className={className} style={style}>{children}</a>
+  ) : (
+    <button type="button" data-tray-item onClick={onClick} className={className} style={style}>{children}</button>
+  );
+}
+
+function SubPill({ index, row, accent, onClick }: { index: number; row: NavTrayItem; accent: string; onClick: (event: MouseEvent<HTMLElement>) => void }) {
   return (
-    <button
-      type="button"
-      data-tray-item
+    <ItemControl
+      href={row.href}
       onClick={onClick}
       className="nav-sub-pill nav-simple-menu-item nav-control-focus relative flex min-h-[3em] w-full items-center rounded-[var(--nav-radius-md)] py-[0.5em] pl-[1.75em] pr-[1.5em] text-left"
       style={{ "--nav-orb-accent": accent, "--nav-entry-index": index } as CSSProperties}
@@ -48,19 +65,64 @@ function SubPill({ index, title, meta, accent, onClick }: { index: number; title
         <span className="nav-simple-menu-number nav-font-body text-[0.625em] font-bold tabular-nums">{String(index + 1).padStart(2, "0")}</span>
       </span>
       <span className="min-w-0 flex-1">
-        <span className="nav-row-title block truncate nav-font-body text-[0.78em] font-semibold leading-[1.3]">{title}</span>
-        {meta && <span className="nav-row-meta nav-label-technical mt-1 block truncate">{meta}</span>}
+        <span className="nav-row-title block truncate nav-font-body text-[0.78em] font-semibold leading-[1.3]">{row.title}</span>
+        {row.meta && <span className="nav-row-meta nav-label-technical mt-1 block truncate">{row.meta}</span>}
       </span>
       <span aria-hidden="true" className="nav-sub-pill-arrow absolute right-[0.75em] top-1/2 -translate-y-1/2"><ArrowIcon /></span>
-    </button>
+    </ItemControl>
   );
 }
 
-function TraySkeleton({ columns, label }: { columns: 1 | 2; label: string }) {
+const markLoaded = (image: HTMLImageElement) => { image.dataset.loaded = ""; };
+
+/* Desktop card: the cover edge to edge, monochrome at rest, the title
+   centred over it; the entry's accent grades the artwork and draws the
+   bottom edge on hover/focus. */
+function TrayCard({ index, row, accent, showMeta, onClick }: { index: number; row: NavTrayItem; accent: string; showMeta: boolean; onClick: (event: MouseEvent<HTMLElement>) => void }) {
+  let media: ReactNode = null;
+  if (typeof row.cover === "string") {
+    media = (
+      <img
+        src={row.cover}
+        alt=""
+        width={900}
+        height={216}
+        decoding="async"
+        draggable={false}
+        // A cover decoded before hydration fires no load event.
+        ref={(image) => { if (image?.complete && image.naturalWidth > 0) markLoaded(image); }}
+        onLoad={(event) => markLoaded(event.currentTarget)}
+        className="nav-tray-card-media"
+      />
+    );
+  } else if (row.cover) {
+    media = <span aria-hidden="true" data-loaded="" className="nav-tray-card-media nav-tray-card-media--node">{row.cover}</span>;
+  }
   return (
-    <div role="status" aria-live="polite" aria-label={label} className={`grid gap-[0.625em] ${columns === 2 ? "grid-cols-2" : "grid-cols-1"}`}>
+    <ItemControl
+      href={row.href}
+      onClick={onClick}
+      className="nav-tray-card nav-control-focus"
+      style={{ "--nav-orb-accent": accent, "--nav-entry-index": index } as CSSProperties}
+    >
+      {media}
+      <span aria-hidden="true" className="nav-tray-card-grade" />
+      <span aria-hidden="true" className="nav-tray-card-scrim" />
+      <span aria-hidden="true" className="nav-tray-card-number">{index + 1}</span>
+      <span className="nav-tray-card-text">
+        <span className="nav-tray-card-title">{row.title}</span>
+        {showMeta && row.meta && <span className="nav-tray-card-meta nav-label-technical">{row.meta}</span>}
+      </span>
+      <span aria-hidden="true" className="nav-tray-card-edge" />
+    </ItemControl>
+  );
+}
+
+function TraySkeleton({ columns, cards, label }: { columns: 1 | 2; cards: boolean; label: string }) {
+  return (
+    <div role="status" aria-live="polite" aria-label={label} className={`grid ${cards ? "gap-[0.5em]" : "gap-[0.625em]"} ${columns === 2 ? "grid-cols-2" : "grid-cols-1"}`}>
       {Array.from({ length: 4 }, (_, index) => (
-        <div key={index} className="nav-sub-pill-skeleton min-h-[3em] rounded-[var(--nav-radius-md)]" />
+        <div key={index} className={`nav-sub-pill-skeleton rounded-[var(--nav-radius-md)] ${cards ? "nav-tray-card-skeleton" : "min-h-[3em]"}`} />
       ))}
       <span className="sr-only">{label}</span>
     </div>
@@ -73,10 +135,10 @@ export type NavActions = ReturnType<typeof useNavActions>;
 export function useNavActions(config: NavbarConfig, close: () => void, location: "navbar" | "mobile_menu") {
   const { track, onSection } = config;
 
-  const item = useCallback((entry: NavDeckEntry, id: string, title: string, onSelect: () => void) => {
+  const item = useCallback((entry: NavDeckEntry, row: NavTrayItem, event: MouseEvent<HTMLElement>) => {
     close();
-    track?.("nav_modal_open", { location, deck: entry.key, item: id, label: title });
-    onSelect();
+    track?.(row.href ? "nav_click" : "nav_modal_open", { location, deck: entry.key, item: row.id, label: row.title, target: row.href ?? null });
+    row.onSelect?.(event);
   }, [close, location, track]);
 
   const cta = useCallback((entry: NavDeckEntry, label: string, onSelect: () => void) => {
@@ -103,6 +165,7 @@ export function TrayContent({
   labels,
   columns = 2,
   sectionLink = false,
+  desktop = false,
 }: {
   entry: NavDeckEntry | null;
   tray: NavTray | undefined;
@@ -110,6 +173,8 @@ export function TrayContent({
   labels: NavbarLabels;
   columns?: 1 | 2;
   sectionLink?: boolean;
+  /** Honour the tray's desktop `layout` (cards); mobile always uses rows. */
+  desktop?: boolean;
 }) {
   useTrayVersion();
   if (!entry || !tray) return null;
@@ -137,20 +202,33 @@ export function TrayContent({
     );
   } else {
     const items = getTrayItems(tray);
+    const cards = desktop && trayLayout(tray, items) === "cards";
     if (!items) {
-      body = <TraySkeleton columns={columns} label={labels.loading} />;
+      body = <TraySkeleton columns={cards ? 1 : columns} cards={cards} label={labels.loading} />;
     } else {
       count = `${String(items.length).padStart(2, "0")} ${tray.unit}`;
-      body = (
+      body = cards ? (
+        <div className="grid grid-cols-1 gap-[0.5em]">
+          {items.map((row, index) => (
+            <TrayCard
+              key={row.id}
+              index={index}
+              row={row}
+              accent={row.accent ?? entry.accent}
+              showMeta={Boolean(tray.cardMeta)}
+              onClick={(event) => actions.item(entry, row, event)}
+            />
+          ))}
+        </div>
+      ) : (
         <div className={`grid gap-[0.625em] ${columns === 2 ? "grid-cols-2" : "grid-cols-1"}`}>
           {items.map((row, index) => (
             <SubPill
               key={row.id}
               index={index}
-              title={row.title}
-              meta={row.meta}
+              row={row}
               accent={row.accent ?? entry.accent}
-              onClick={() => actions.item(entry, row.id, row.title, row.onSelect)}
+              onClick={(event) => actions.item(entry, row, event)}
             />
           ))}
         </div>

@@ -12,7 +12,11 @@ export function useNavbarLinks(navigate: (to: string) => void) {
   useEffect(() => {
     const onClick = (event: MouseEvent) => {
       if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-      const anchor = (event.target as Element | null)?.closest<HTMLAnchorElement>(".ev-navbar a[href]");
+      // The dispatch path, not `closest()`: closing the menu can unmount the
+      // clicked tray entry before the click bubbles up to the document.
+      const path = event.composedPath();
+      if (!path.some((node) => node instanceof Element && node.classList.contains("ev-navbar"))) return;
+      const anchor = path.find((node): node is HTMLAnchorElement => node instanceof HTMLAnchorElement && node.hasAttribute("href"));
       if (!anchor || anchor.target === "_blank") return;
       const href = anchor.getAttribute("href") ?? "";
       if (!isInternal(href)) return;

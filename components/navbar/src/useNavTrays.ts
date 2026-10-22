@@ -45,6 +45,32 @@ export function preloadTrays(config: NavbarConfig) {
   for (const tray of Object.values(config.trays)) void ensureTray(tray).catch(() => undefined);
 }
 
+/** Desktop presentation of a tray (see `NavTray.layout`). */
+export function trayLayout(tray: NavTray | undefined, items: NavTrayItem[] | null): "cards" | "rows" {
+  if (!tray || tray.kind !== "items") return "rows";
+  if (tray.layout) return tray.layout;
+  return items?.some((item) => item.cover) ? "cards" : "rows";
+}
+
+const warmed = new Set<string>();
+
+/** Fetches the desktop card covers ahead of the first tray, so a card's
+    artwork is decoded by the time it slides in. */
+export function warmTrayCovers(config: NavbarConfig) {
+  for (const tray of Object.values(config.trays)) {
+    if (!tray || tray.kind !== "items") continue;
+    void ensureTray(tray).then((items) => {
+      for (const item of items ?? []) {
+        if (typeof item.cover !== "string" || warmed.has(item.cover)) continue;
+        warmed.add(item.cover);
+        const image = new Image();
+        image.decoding = "async";
+        image.src = item.cover;
+      }
+    }).catch(() => undefined);
+  }
+}
+
 /** Subscribes the caller to tray loads; the value only matters for re-rendering. */
 export function useTrayVersion(): number {
   return useSyncExternalStore(

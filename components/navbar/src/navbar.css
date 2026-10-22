@@ -20,6 +20,8 @@
   /* Small caps captions (tray meta, counters). Falls back to the body font;
      a site with a dedicated technical face sets --font-technical. */
   --nav-font-technical: var(--font-technical, var(--nav-font-body));
+  /* The large index numeral on desktop tray cards (Evoview: "Gaegu"). */
+  --nav-font-numeral: var(--font-numeral, var(--nav-font-heading));
   /* Rail width the capsule centres in. */
   --nav-max-width: var(--container-nav, 62.5rem);
   /* The desktop finder is sized in em against a capped base: it follows the
@@ -35,6 +37,8 @@
      already light or coloured. */
   --nav-logo-dark-filter: invert(1);
   --nav-tray-w: 34em;
+  /* Height of a desktop tray card (cover banner). */
+  --nav-tray-card-h: 6em;
   /* Brand accent (config.accent sets it inline). Everything below derives
      from it unless overridden. */
   --nav-accent: #3f51b5;
@@ -371,6 +375,16 @@
    ============================================================ */
 
 .nav-finder-anchor { font-size: min(1rem, var(--nav-font-cap)); }
+
+/* Unfold shift: NavFinder sets it only when the open deck would cross the
+   viewport edge. Durations and easings match .nav-finder's morph. */
+.nav-finder-anchor {
+  translate: var(--nav-finder-shift, 0px) 0;
+  transition: translate 380ms cubic-bezier(0.45, 0.05, 0.25, 1);
+}
+.nav-finder-anchor[data-open="true"] {
+  transition: translate 460ms var(--nav-ease-cinematic);
+}
 
 .nav-finder {
   --nav-finder-duration: 460ms;
@@ -799,6 +813,117 @@
   animation: navTrayPulse 1.2s ease-in-out infinite;
 }
 .ev-navbar[data-tone="dark"] .nav-sub-pill-skeleton { background: rgba(255, 255, 255, 0.06); }
+
+/* Card trays (desktop): one full-width banner per entry, artwork edge to
+   edge, the title centred over it. Dark monochrome at rest on either tone;
+   the entry's accent arrives on hover/focus. */
+.nav-tray-card-skeleton { height: var(--nav-tray-card-h); }
+.nav-tray-card {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: var(--nav-tray-card-h);
+  overflow: hidden;
+  border-radius: var(--nav-radius-md);
+  background: #0c0c0d;
+  color: #fff;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  transition: box-shadow 240ms var(--nav-ease-standard), scale 180ms var(--nav-ease-standard);
+}
+.nav-tray-swap .nav-tray-card {
+  animation: navTrayItemIn 320ms var(--nav-ease-cinematic) both;
+  animation-delay: calc(40ms + var(--nav-entry-index, 0) * 36ms);
+}
+.nav-tray-card > * { pointer-events: none; }
+.nav-tray-card-media {
+  position: absolute;
+  inset: 0;
+  z-index: -3;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  user-select: none;
+  opacity: 0;
+  filter: grayscale(1) contrast(1.08) brightness(0.62);
+  transform: scale(1.001);
+  transition: opacity 240ms var(--nav-ease-standard), filter 260ms var(--nav-ease-standard), transform 420ms var(--nav-ease-cinematic);
+}
+.nav-tray-card-media[data-loaded] { opacity: 1; }
+.nav-tray-card-media--node { display: block; overflow: hidden; }
+.nav-tray-card-grade {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  opacity: 0;
+  background: linear-gradient(100deg, color-mix(in srgb, var(--nav-orb-accent) 55%, transparent), transparent 70%);
+  mix-blend-mode: color;
+  transition: opacity 260ms var(--nav-ease-standard);
+}
+.nav-tray-card-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(60% 90% at 50% 50%, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.18) 100%),
+    linear-gradient(to top, rgba(0, 0, 0, 0.45), transparent 60%);
+  transition: opacity 260ms var(--nav-ease-standard);
+}
+.nav-tray-card-number {
+  position: absolute;
+  left: 0.6em;
+  top: 0.3em;
+  font-family: var(--nav-font-numeral);
+  font-size: 1.75em;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0.5;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.6));
+}
+.nav-tray-card-text {
+  display: grid;
+  justify-items: center;
+  gap: 0.5em;
+  min-width: 0;
+  padding-inline: 3em;
+  text-align: center;
+}
+.nav-tray-card-title {
+  font-family: var(--nav-font-heading);
+  font-size: 1.125em;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.7);
+}
+.nav-tray-card-meta {
+  color: rgba(255, 255, 255, 0.66);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.7);
+}
+.nav-tray-card-edge {
+  position: absolute;
+  inset: auto 0 0;
+  height: 2px;
+  background: var(--nav-orb-accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 320ms var(--nav-ease-cinematic);
+}
+.nav-tray-card:is(:hover, :focus-visible) {
+  box-shadow: inset 0 0 0 1.4px color-mix(in srgb, var(--nav-orb-accent) 85%, transparent);
+}
+.nav-tray-card:is(:hover, :focus-visible) .nav-tray-card-media {
+  filter: grayscale(0.6) contrast(1.08) brightness(0.82);
+  transform: scale(1.04);
+}
+.nav-tray-card:is(:hover, :focus-visible) .nav-tray-card-grade { opacity: 1; }
+.nav-tray-card:is(:hover, :focus-visible) .nav-tray-card-scrim { opacity: 0.8; }
+.nav-tray-card:is(:hover, :focus-visible) .nav-tray-card-edge { transform: scaleX(1); }
+.nav-tray-card:active { scale: 0.99; }
 @keyframes navTrayPulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.45; }

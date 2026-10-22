@@ -2,8 +2,9 @@ import EvoviewLogo from "../src/brand/EvoviewLogo";
 import type { NavbarConfig, NavSection } from "../src/types";
 
 /* Example: the evoview.be navbar — a one-page site with scroll-probed
-   sections, four pills with lazy trays (2×2 numbered rows) and a CTA tray,
-   the outlined "hud" reticle. Rendered at /evoview in the showcase.
+   sections, four pills with lazy trays (desktop: stacked cover cards;
+   mobile: numbered rows) and a CTA tray, the outlined "hud" reticle.
+   Rendered at /evoview in the showcase.
 
    Copy into src/navbar.config.tsx (fixing the import paths) to start from
    this shape instead of the default reference. */
@@ -29,6 +30,7 @@ export const navbarConfig: NavbarConfig = {
   reticle: "hud",
   vars: {
     "--nav-font-technical": '"Satoshi", sans-serif',
+    "--nav-font-numeral": '"Gaegu", cursive',
     "--nav-cta-hover-dark": "#c8a6d9",
   },
 
@@ -53,9 +55,11 @@ export const navbarConfig: NavbarConfig = {
   ],
 
   trays: {
-    services: { kind: "items", unit: "dossiers", items: () => trays().then((m) => m.services) },
-    portfolio: { kind: "items", unit: "projets", items: () => trays().then((m) => m.portfolio) },
-    method: { kind: "items", unit: "phases", items: () => trays().then((m) => m.method) },
+    /* `layout` is explicit because the items are loaded lazily: the
+       skeleton takes the card shape before the covers are known. */
+    services: { kind: "items", unit: "dossiers", layout: "cards", items: () => trays().then((m) => m.services) },
+    portfolio: { kind: "items", unit: "projets", layout: "cards", items: () => trays().then((m) => m.portfolio) },
+    method: { kind: "items", unit: "phases", layout: "cards", items: () => trays().then((m) => m.method) },
     contact: {
       kind: "cta",
       copy: "Un nombre volontairement limité de partenaires. Chaque candidature est étudiée par notre équipe.",

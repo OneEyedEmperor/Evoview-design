@@ -6,7 +6,7 @@ description: Install and adapt the Evoview finder navbar (glass capsule that unf
 # Evoview navbar
 
 Package: `/root/.vibehub/projects/evoview-design-library/components/navbar/`
-Showcase: `https://evoview-library.said.bet` (reference, multi-page) · `/evoview` (one-page with trays)
+Showcase: `https://evoview-library.said.bet` (reference, multi-page, route tray under Services) · `/evoview` (one-page with cover-card trays)
 
 Read `README.md` in the package before touching anything. It is the contract;
 this file is the procedure.
@@ -25,8 +25,10 @@ alone does not authorize adding attribution or changing client link destinations
 3. **Gather the client's facts** before editing the config: one-page or
    multi-page; routes (or section ids and which sections are dark); 3–5
    destinations and which is the CTA; locales; brand accent; logo asset
-   (SVG, its aspect ratio); fonts; whether any pill needs a tray and what a
-   tray row does when selected.
+   (SVG, its aspect ratio); fonts; whether any pill needs a tray, what each
+   entry does (`href` route/anchor or `onSelect` action), its one-line
+   description, and its cover (900×216 crop of the entry's own artwork, or
+   a rendered preview node). Never invent covers from unrelated imagery.
 4. **Edit `src/components/navbar/navbar.config.tsx` only.** Put the client
    logo in `brand/`, set `accent` and the `vars` the README lists (logo box,
    `--nav-logo-dark-filter`, `--nav-eye-pupil`), rewrite copy and deck.
@@ -56,5 +58,9 @@ alone does not authorize adding attribution or changing client link destinations
   does — the reference stays Evoview-branded.
 - Do not reintroduce a conventional full-width navbar, extra header accents,
   or labels revealed by resizing the capsule. The capsule, the eye, the
-  unfold and the tiles are the component.
+  unfold, the tiles and the monochrome→accent tray cards are the component.
+- Attribution: the navbar shows the client's logo and carries no Evoview
+  mark or link; authorship is the signature behaviour. Adding an Evoview
+  credit or referral link here needs explicit approval and a supplied
+  destination.
 - Respond in English even when the client interface is French.

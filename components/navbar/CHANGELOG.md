@@ -1,5 +1,43 @@
 # navbar changelog
 
+## 2.3.0 — cover-card trays, route entries (evoview.be finder, 2026-10-22)
+
+Ported from the evoview.be working tree (`src/components/nav/*`) and its
+live behaviour. Mobile is unchanged: the library's 2.x mobile (edge-slide
+tiles, accent wash, eye reticle) was already ahead of the site.
+
+Config (additive; existing configs compile and behave as before):
+
+- `NavTrayItem.cover?: string | ReactNode` — desktop card artwork: image URL
+  (900×216 banner, fades in once decoded) or a rendered preview node.
+- `NavTrayItem.href?: string` — the entry renders as `<a href>`; routed by
+  `useNavbarLinks`; tracked as `nav_click`.
+- `NavTrayItem.onSelect` is now optional and receives the click event
+  (`preventDefault()` cancels the `href`). Give each entry `href`, `onSelect`
+  or both.
+- `NavTray` (`kind: "items"`): `layout?: "cards" | "rows"` (default `cards`
+  when any entry has a cover), `cardMeta?: boolean` (show `meta` on cards).
+- Tokens: `--nav-font-numeral` (card index numeral; falls back to the
+  heading font; Evoview uses Gaegu 700), `--nav-tray-card-h` (6em).
+- Reference config (fresh installs only): a four-entry route tray under
+  Services; `withRoute()` lights a pill on its sub-routes (`/services/x`).
+
+Behaviour:
+
+- Desktop cover trays: entries stack as full-width cards — monochrome cover,
+  centred uppercase title, handwritten index numeral; hover/focus grades the
+  cover with the entry accent, zooms 4 % and draws a 2px accent edge. Items
+  stagger in (36 ms). ↑/↓ step one card. Covers are prefetched when the
+  pointer or focus first reaches the finder.
+- Desktop tray centres on its pill and is clamped to 16px viewport gutters
+  (was: left-aligned and kept inside the capsule span).
+- Narrow desktops: when the unfolded deck would cross the viewport edge, the
+  finder slides left by exactly the overflow, timed with the unfold
+  (`--nav-finder-shift`; 460 ms open / 380 ms close).
+- Fix: `useNavbarLinks` resolves the clicked link from the event's dispatch
+  path. Closing the desktop menu unmounts the tray entry before the click
+  reaches the document, which made every route entry a full page reload.
+
 ## 2.2.0 — reference rebranded to Evoview
 
 The 2.0.0 reference config carried Tchin Tchin branding (gold, restaurant

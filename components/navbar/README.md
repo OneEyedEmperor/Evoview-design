@@ -12,17 +12,25 @@ evoview.be one-page shape with sections and trays. Live client example:
 
 ```
 desktop   [ logo  (◉ MENU) ]  →hover→  [ logo  (⌂ ACCUEIL)(◎ SERVICES)(◎ PORTFOLIO)(◎ MÉTHODE)(⇄ FR EN)(✉ CONTACT) ]
-                                                   └── optional tray under a pill: 2×2 numbered rows, or a CTA block
+                                                   └── optional tray centred under a pill: stacked cover cards,
+                                                       2×2 numbered rows, or a CTA block
 mobile    [ logo        (◉ MENU) ]  →tap→  [ logo        (◉ FERMER) ]
                                            [ (⌂ ACCUEIL)(◎ SERVICES) ]   ← resting tiles, slide in from their edge
                                            [ (◎ PORTFOLIO)(◎ MÉTHODE)]
                                            [ (⇄ FR EN)(✉ CONTACT)    ]   ← an odd count would give the CTA the whole last row
+                                           [ SERVICES        VOIR → ]   ← tapped pill's tray, in the capsule: single-column rows
 ```
 
 What stays recognizably Evoview on every client (the signature, see
 `STRATEGY.md`): the glass capsule, the eye reticle, the unfold choreography,
-the mobile tiles and the pill typography. What a client changes: logo, accent,
-copy, destinations, icons (config only).
+the mobile tiles, the pill typography, and the tray cards (monochrome cover at
+rest, the entry's accent grading it on hover). What a client changes: logo,
+accent, copy, destinations, icons, covers (config only).
+
+Attribution: on a client site the navbar carries the client's logo and no
+Evoview mark or link; Evoview authorship is carried by the signature above.
+Do not add an Evoview mark, credit link or referral destination to the navbar
+without explicit approval and a supplied destination (`STRATEGY.md`).
 
 ## Files
 
@@ -41,7 +49,7 @@ copy, destinations, icons (config only).
 | `src/useNavState.ts` | Scroll probe → `{ tone, section, color }`. | no |
 | `src/useNavTrays.ts` | Idle loader + cache for lazy tray contents. | no |
 | `src/navbar.css` | All styles, scoped under `.ev-navbar`. Tokens block at the top. | tokens only (prefer `config.vars`) |
-| `examples/evoview.config.tsx` | One-page config with sections and trays. Not installed. | — |
+| `examples/evoview.config.tsx` | One-page config with sections and cover-card trays (`examples/evoview-brand/`). Not installed. | — |
 
 ## Install
 
@@ -84,11 +92,16 @@ One-page site: export a constant `navbarConfig` with `sections` filled and
   page. Multi-page sites: `sections: []` + `activeKey` (via `withRoute`).
 - `config.sections` must be a module-level constant (the scroll store is keyed
   by reference). The config object itself may be rebuilt per locale/route.
-- Fonts: reads `--font-heading`, `--font-body`, `--font-technical` from
-  `:root`; falls back to Overused Grotesk / Inter / body. Load whatever the
-  fallback resolves to, or set the variables.
-- Anchors and routes are plain `<a href>`. A client router must intercept
-  them: `useNavbarLinks(navigate)`. Server rendering works (`renderToString`).
+- Fonts: reads `--font-heading`, `--font-body`, `--font-technical`,
+  `--font-numeral` from `:root`; falls back to Overused Grotesk / Inter /
+  body / heading. Load whatever the fallback resolves to, or set the
+  variables (Evoview's card numeral is Gaegu 700).
+- Anchors and routes (deck pills and tray entries with `href`) are plain
+  `<a href>`. A client router must intercept them: `useNavbarLinks(navigate)`.
+  Server rendering works (`renderToString`).
+- Tray covers: 900×216 WebP banner crops of the entry's own artwork
+  (≈5–100 kB each). They are fetched when the pointer first reaches the
+  finder and fade in once decoded; a missing cover leaves the dark card.
 - Desktop/mobile swap at `768px`, defined twice: `navbar.css` (`@media`) and
   `DESKTOP_QUERY` in `NavFinderMobile.tsx`. Change both or neither.
 - Deck of 3–6 entries; the reference has six (four destinations, language
@@ -110,12 +123,15 @@ One-page site: export a constant `navbarConfig` with `sections` filled and
 | `activeKey` | Live pill on multi-page sites. `withRoute()` derives it from the pathname. |
 | `initialTone` | Tone before the first probe. `"dark"` for a dark first screen. |
 | `deck` | Pills: `key`, `label`, `icon` (built-in key or node), `href` (`<a>`; omit → `<button>`), `section`, `accent`, `cta`, `content` (replaces icon+label, e.g. `<NavLangSwitch>`), `keepOpen` (click leaves the menu open). |
-| `trays` | Per deck key, optional. `items` (array or loader) + `unit`, or `cta` block. No tray → the pill navigates on first interaction. |
+| `trays` | Per deck key, optional. `items` (array or loader) + `unit` + optional `layout` (`cards` \| `rows`; default `cards` when any entry has a cover) and `cardMeta`; or a `cta` block. No tray → the pill navigates on first interaction. |
+| tray entry | `id`, `title`, `meta` (short description), `accent`, `cover` (image URL or rendered node; desktop cards only), `href` (route/anchor → `<a>`), `onSelect(event)` (runs first; `preventDefault()` cancels the `href`). |
 | `onSection` | Intercept a pill click; `event.preventDefault()` to replace the navigation (locale flip, modal). |
-| `track` | `nav_click`, `nav_modal_open`, `cta_click` with payloads. |
+| `track` | `nav_click` (pills, `href` entries), `nav_modal_open` (`onSelect`-only entries), `cta_click` with payloads. |
 
-Tray `onSelect` is where a site opens its own modal, routes, or scrolls. The
-navbar never owns a modal.
+Tray entries route with `href`; `onSelect` is where a site opens its own
+modal or scrolls. The navbar never owns a modal. Desktop shows cover cards
+stacked in one column (or 2×2 rows); mobile always shows single-column rows
+with `meta`, plus the `sectionLink` to the pill's own `href`.
 
 ## Adapting
 
@@ -123,7 +139,7 @@ navbar never owns a modal.
 
 - Copy, language, routes/anchors, deck count and order, which pill is the
   CTA, icons (lucide or custom nodes), `accent`, every `vars` token, logo,
-  `reticle`, tray contents.
+  `reticle`, tray contents and covers (`--nav-tray-card-h`, `--nav-tray-w`).
 
 **Change with care** (in `navbar.css`; these make it feel like this component):
 
@@ -134,12 +150,19 @@ navbar never owns a modal.
   than the close eases-in-out.
 - Gloss gradients (`--nav-gloss-*`): adjust lightness, keep the single sweep.
 - Mobile tile wash/hairline percentages (7 % / 26 % resting, 14 % / 70 % pressed).
+- Tray card treatment: `grayscale(1) brightness(.62)` at rest →
+  `grayscale(.6) brightness(.82)` + 4 % zoom + accent grade and 2px edge on
+  hover/focus; dark `#0c0c0d` plate on both tones.
 
 **Do not change** (structural; breaking any of these needs a redesign):
 
 - The 0fr⇄1fr grid-track morph and the mask feathering (desktop cells, mobile
   body); the measured-width word morph; the measured tray height.
-- The resting-width anchor on desktop.
+- The resting-width anchor on desktop, and the unfold shift that slides the
+  finder left by exactly the overflow when the open deck would cross the
+  16px viewport gutter.
+- The tray centres on its pill (from the settled unfold, not the mid-
+  transition position) and only yields to the 16px viewport gutters.
 - Panels stay mounted, hidden with `visibility`/`inert`; never conditionally
   render them.
 - Mouse click never closes a hover-opened menu; hover never reopens a menu a
@@ -161,9 +184,12 @@ In the browser (agent-browser or browser-bridge), at the client dev URL:
 1. **1440×900**: hover MENU → capsule unfolds right, wordmark does not move;
    the live pill is lit. Click a pill → route/anchor changes, menu closes,
    and it does **not** reopen under the still pointer. Hover each pill with
-   a tray → tray slides under it inside the capsule span; a row click fires
-   the site action.
-2. **1024×800**: same; five pills must not wrap.
+   a tray → tray slides in centred under it; covers fade in monochrome and
+   take the entry accent on hover. An entry click fires its action or routes
+   **without a full page reload**, and the menu closes. Keyboard: ↓ from a
+   pill enters the tray, ↑/↓ step one card (two rows in a 2×2 tray).
+2. **1024×800**: same; pills must not wrap, the unfolded capsule slides left
+   to stay 16px inside the viewport, trays stay inside it too.
 3. **390×844**: tap MENU → capsule unfolds down, pills slide in from their
    edges, MENU morphs smoothly to the close word (no snap at the end), page
    dims and does not scroll. CTA fills the last row. Tap a pill → navigates

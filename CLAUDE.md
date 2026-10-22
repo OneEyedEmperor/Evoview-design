@@ -32,7 +32,7 @@ src/pages/       showcase pages, one per component, importing from ../../compone
 
 | Component | Status | Skill |
 | --- | --- | --- |
-| `navbar` — finder capsule, desktop + mobile | 2.2.0 | `evoview-navbar` |
+| `navbar` — finder capsule, desktop + mobile, cover-card trays | 2.3.0 | `evoview-navbar` |
 | `reservation` — Evoview booking application, client accent (`/reservation`) | 2.8.1 | `evoview-reservation` |
 
 ## Rules for changing a component here

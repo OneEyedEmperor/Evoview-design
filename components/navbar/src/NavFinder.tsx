@@ -11,7 +11,7 @@ import {
 } from "react";
 import { DeckIcon } from "./NavIcons";
 import type { NavDeckEntry, NavbarConfig } from "./types";
-import { ensureTray, preloadTrays } from "./useNavTrays";
+import { ensureTray, getTrayItems, preloadTrays, trayLayout, useTrayVersion, warmTrayCovers } from "./useNavTrays";
 import { ReticleMark, TrayContent, useNavActions } from "./finderShared";
 
 /* Desktop navigation — the finder.
@@ -32,6 +32,8 @@ import { ReticleMark, TrayContent, useNavActions } from "./finderShared";
 const OPEN_DELAY = 70;
 const CLOSE_DELAY = 150;
 const TRAY_DELAY = 90;
+/** Closest the unfolded capsule and the tray may come to the viewport edge. */
+const VIEWPORT_GUTTER = 16;
 
 type TimerName = "open" | "close" | "tray";
 
@@ -151,15 +153,20 @@ export default function NavFinder({ config, activeKey, accent }: { config: Navba
   const trayId = `${baseId}-tray`;
 
   const { deck, trays, labels } = config;
-  const preload = useCallback(() => preloadTrays(config), [config]);
+  const trayVersion = useTrayVersion();
+  const preload = useCallback(() => {
+    preloadTrays(config);
+    warmTrayCovers(config);
+  }, [config]);
   const actions = useNavActions(config, closeFromAction, "navbar");
 
   // Hovering a pill without a tray closes whichever tray is open.
   const revealTray = useCallback((entry: NavDeckEntry, immediate = false) => {
     if (!trays[entry.key]) { hideTray(); return; }
     void ensureTray(trays[entry.key]).catch(() => undefined);
+    warmTrayCovers(config);
     showTray(entry.key, immediate);
-  }, [hideTray, showTray, trays]);
+  }, [config, hideTray, showTray, trays]);
 
   // The anchor holds the resting width so the unfold grows away from the
   // wordmark. Measured only while closed; a transition never feeds back.
@@ -187,13 +194,14 @@ export default function NavFinder({ config, activeKey, accent }: { config: Navba
 
   // Tray x is derived from where the pill will be once the unfold has
   // settled, so a tray opened mid-transition still lands under its pill.
+  // The tray centres on its pill and only yields to the viewport gutters.
   const positionTray = useCallback(() => {
+    const finder = anchorRef.current;
     const nav = navRef.current;
     const anchor = trayAnchorRef.current;
     const triggerCell = triggerCellRef.current;
-    const deckCell = deckCellRef.current;
     const deckEl = deckRef.current;
-    if (!tray || !nav || !anchor || !triggerCell || !deckCell || !deckEl) return;
+    if (!tray || !finder || !nav || !anchor || !triggerCell || !deckEl) return;
     const pill = deckEl.querySelector<HTMLElement>(`[data-deck-pill="${tray}"]`);
     const panel = anchor.firstElementChild as HTMLElement | null;
     if (!pill || !panel) return;
@@ -201,17 +209,43 @@ export default function NavFinder({ config, activeKey, accent }: { config: Navba
     const navRect = nav.getBoundingClientRect();
     const pillRect = pill.getBoundingClientRect();
     const triggerWidth = triggerCell.getBoundingClientRect().width;
-    const deckGrowth = deckEl.getBoundingClientRect().width - deckCell.getBoundingClientRect().width;
-    const finalNavWidth = navRect.width - triggerWidth + deckGrowth;
-    const pillLeft = pillRect.left - navRect.left - triggerWidth;
-    const trayWidth = panel.getBoundingClientRect().width;
-    const x = Math.max(0, Math.min(pillLeft, finalNavWidth - trayWidth));
+    const pillCentre = pillRect.left - navRect.left - triggerWidth + pillRect.width / 2;
+    // offsetWidth ignores the tray's own scale-in.
+    const trayWidth = panel.offsetWidth;
+
+    const shift = parseFloat(finder.style.getPropertyValue("--nav-finder-shift")) || 0;
+    const finderLeft = (finder.offsetParent?.getBoundingClientRect().left ?? 0) + finder.offsetLeft + shift;
+    const minX = VIEWPORT_GUTTER - finderLeft;
+    const maxX = document.documentElement.clientWidth - VIEWPORT_GUTTER - finderLeft - trayWidth;
+    const x = Math.max(minX, Math.min(pillCentre - trayWidth / 2, maxX));
 
     anchor.style.setProperty("--nav-tray-x", `${x}px`);
-    anchor.style.setProperty("--nav-tray-origin", `${pillLeft + pillRect.width / 2 - x}px`);
+    anchor.style.setProperty("--nav-tray-origin", `${pillCentre - x}px`);
   }, [tray]);
 
-  useLayoutEffect(() => { positionTray(); }, [positionTray]);
+  // The capsule unfolds rightward from its centred resting width; on narrower
+  // desktops the full deck would cross the viewport edge, so the finder
+  // slides left by exactly the overflow, timed with the unfold.
+  useLayoutEffect(() => {
+    const anchor = anchorRef.current;
+    const trigger = triggerRef.current;
+    const deckEl = deckRef.current;
+    if (!anchor || !trigger || !deckEl) return;
+    if (!open) {
+      anchor.style.setProperty("--nav-finder-shift", "0px");
+      return;
+    }
+    // offsetLeft ignores the (possibly mid-transition) translate.
+    const restLeft = (anchor.offsetParent?.getBoundingClientRect().left ?? 0) + anchor.offsetLeft;
+    // The cells clip, but their contents keep their intrinsic widths.
+    const finalWidth = anchor.offsetWidth - trigger.offsetWidth + deckEl.offsetWidth;
+    const overflow = restLeft + finalWidth - (document.documentElement.clientWidth - VIEWPORT_GUTTER);
+    const shift = overflow > 0 ? -Math.min(overflow, Math.max(0, restLeft - VIEWPORT_GUTTER)) : 0;
+    anchor.style.setProperty("--nav-finder-shift", `${shift}px`);
+  }, [open, deck]);
+
+  // After the shift, which the tray's viewport clamp reads.
+  useLayoutEffect(() => { positionTray(); }, [positionTray, open]);
 
   // Keyboard opens hand focus to the first pill: the finder cell collapses
   // behind the deck and must not keep a hidden focus.
@@ -231,7 +265,7 @@ export default function NavFinder({ config, activeKey, accent }: { config: Navba
       trayAnchorRef.current?.querySelector<HTMLElement>("[data-tray-item]")?.focus({ preventScroll: true });
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [tray]);
+  }, [tray, trayVersion]);
 
   const focusPill = useCallback((key: string | null) => {
     const selector = key ? `[data-deck-pill="${key}"]` : "[data-deck-pill]";
@@ -317,7 +351,8 @@ export default function NavFinder({ config, activeKey, accent }: { config: Navba
       } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
         event.preventDefault();
         const index = items.indexOf(trayItem);
-        const columns = 2;
+        const current = tray ? trays[tray] : undefined;
+        const columns = trayLayout(current, getTrayItems(current)) === "cards" ? 1 : 2;
         const next = index + (event.key === "ArrowDown" ? columns : -columns);
         if (next >= 0 && next < items.length) items[next]?.focus({ preventScroll: true });
         else if (event.key === "ArrowUp") focusPill(tray);
@@ -331,6 +366,7 @@ export default function NavFinder({ config, activeKey, accent }: { config: Navba
     <div
       ref={anchorRef}
       className="nav-finder-anchor relative h-[3.5em]"
+      data-open={open}
       onPointerLeave={() => { releaseHover(); scheduleClose(); }}
       onPointerEnter={cancelClose}
       onBlur={handleBlur}
@@ -428,7 +464,7 @@ export default function NavFinder({ config, activeKey, accent }: { config: Navba
           className="nav-tray nav-glass-panel rounded-[var(--nav-radius-lg)] p-[0.75em]"
         >
           <div key={tray ?? "none"} className="nav-tray-swap nav-simple-menu-rail">
-            <TrayContent entry={trayEntry} tray={trayEntry ? trays[trayEntry.key] : undefined} actions={actions} labels={labels} />
+            <TrayContent entry={trayEntry} tray={trayEntry ? trays[trayEntry.key] : undefined} actions={actions} labels={labels} desktop />
           </div>
         </div>
       </div>

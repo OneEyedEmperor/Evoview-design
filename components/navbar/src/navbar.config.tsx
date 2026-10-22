@@ -7,7 +7,8 @@ import type { NavbarConfig, NavbarLabels, NavSection } from "./types";
 /* THE ONE FILE TO EDIT PER SITE.
 
    Reference configuration, Evoview-branded: a multi-page site, five pills
-   with a contact CTA, the Evoview eye marks, a language switch, no trays.
+   with a contact CTA, the Evoview eye marks, a language switch, and one
+   route tray under Services.
    Change the values here (brand, copy, deck, actions) and leave every other
    file in this folder untouched. README.md → "Adapting" lists what each
    value controls.
@@ -31,6 +32,8 @@ const mark = (Icon: LucideIcon): ReactNode => <Icon strokeWidth={1.6} aria-hidde
 type Copy = {
   labels: NavbarLabels;
   deck: { home: string; services: string; portfolio: string; method: string; contact: string; lang: string };
+  servicesUnit: string;
+  services: { id: string; title: string; meta: string; accent: string }[];
 };
 
 const COPY: Record<Locale, Copy> = {
@@ -46,6 +49,13 @@ const COPY: Record<Locale, Copy> = {
       loading: "Chargement de la navigation",
     },
     deck: { home: "Accueil", services: "Services", portfolio: "Portfolio", method: "Méthode", contact: "Contact", lang: "Langue : français. Passer en anglais" },
+    servicesUnit: "dossiers",
+    services: [
+      { id: "identite-visuelle", title: "Identité visuelle", meta: "Brand system", accent: "#6b4f7e" },
+      { id: "direction-artistique", title: "Direction artistique", meta: "Image direction", accent: "#c84a4a" },
+      { id: "design-creation", title: "Design & création", meta: "Production", accent: "#c8942e" },
+      { id: "strategie-marketing", title: "Stratégie marketing", meta: "Acquisition", accent: "#a94f16" },
+    ],
   },
   en: {
     labels: {
@@ -59,6 +69,13 @@ const COPY: Record<Locale, Copy> = {
       loading: "Loading navigation",
     },
     deck: { home: "Home", services: "Services", portfolio: "Portfolio", method: "Method", contact: "Contact", lang: "Language: English. Switch to French" },
+    servicesUnit: "dossiers",
+    services: [
+      { id: "identite-visuelle", title: "Visual identity", meta: "Brand system", accent: "#6b4f7e" },
+      { id: "direction-artistique", title: "Art direction", meta: "Image direction", accent: "#c84a4a" },
+      { id: "design-creation", title: "Design & production", meta: "Production", accent: "#c8942e" },
+      { id: "strategie-marketing", title: "Marketing strategy", meta: "Acquisition", accent: "#a94f16" },
+    ],
   },
 };
 
@@ -97,7 +114,16 @@ export function buildNavbarConfig(locale: Locale, onLocaleChange: (locale: Local
       { key: "contact", label: c.deck.contact, icon: "envelope", href: "/contact", accent: CONTACT, cta: true },
     ],
 
-    trays: {},
+    /* A route tray: four internal pages under the Services pill, routed by
+       `useNavbarLinks`. No covers, so desktop shows 2×2 numbered rows; add
+       a `cover` per entry for the stacked card banners (see the example). */
+    trays: {
+      services: {
+        kind: "items",
+        unit: c.servicesUnit,
+        items: c.services.map((service) => ({ ...service, href: `/services/${service.id}` })),
+      },
+    },
 
     onSection: (entry, event) => {
       if (entry.key === "lang") {
@@ -108,9 +134,14 @@ export function buildNavbarConfig(locale: Locale, onLocaleChange: (locale: Local
   };
 }
 
-/* Multi-page sites: the live pill is the one whose href is the current route.
-   Call from the layout: `withRoute(config, location.pathname)`. */
+/* Multi-page sites: the live pill is the one whose href is the current route
+   or its closest parent (`/services/x` lights Services). Call from the
+   layout: `withRoute(config, location.pathname)`. */
 export function withRoute(config: NavbarConfig, pathname: string): NavbarConfig {
   const path = pathname.replace(/\/+$/, "") || "/";
-  return { ...config, activeKey: config.deck.find((entry) => entry.href === path)?.key };
+  const matches = (href: string) => href === path || (href !== "/" && path.startsWith(`${href}/`));
+  const live = config.deck
+    .filter((entry) => entry.href && matches(entry.href))
+    .sort((a, b) => (b.href?.length ?? 0) - (a.href?.length ?? 0))[0];
+  return { ...config, activeKey: live?.key };
 }
