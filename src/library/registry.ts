@@ -36,7 +36,7 @@ const DRAFTS: Draft[] = [
     route: "/layouts/card-track",
     title: { fr: "Piste de cartes", en: "Card track" },
     meta: { fr: "Carte média et piste pilotée au défilement", en: "Media card and scroll-scrubbed track" },
-    status: "building",
+    status: "ready",
   },
   {
     id: "process-sequence",
