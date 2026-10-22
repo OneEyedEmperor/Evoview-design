@@ -27,6 +27,14 @@ Single column at every width. The recap ticket appears above the contact
 fields and on the confirmation. The header progress jumps back to answered steps.
 ```
 
+Narrow containers (≤ 520px) keep the same signature, re-laid for phones:
+wordmark + step readout on one row with the 5-segment progress as the strip's
+bottom edge (44px tap targets); calendar tile widened to the chassis edge
+with days filling it; start times in an even grid; `← RETOUR` above a
+full-width white plate. The bar is deliberately not sticky (auto-advance
+covers steps 1–4; a fixed bar would fight the on-screen keyboard and host
+fixed UI, and the chassis clips overflow).
+
 The side dossier of evoview.be's own flow (rail, monitor, journey list) is
 deliberately not part of this package: it is exclusive to Evoview's site and
 adds clutter on client sites.
@@ -133,8 +141,25 @@ heading and background.
   `fieldErrors` map onto fields; other errors show next to the button.
   `submit` throwing → `errorGeneric`.
 - After a user-driven step change the chassis is scrolled into view (96px
-  offset for a fixed navbar) and focus moves to the question heading.
-- Reduced motion: no entrance, emblem or transition animation.
+  offset for a fixed navbar; also when its header sits under that navbar)
+  and focus moves to the question heading. Picking a start time scrolls the
+  revealed duration / end-time group into view on short screens. The root
+  sets `overflow-anchor: none` so browser scroll anchoring doesn't add a
+  second nudge.
+- Contact: `autocomplete`/`inputmode`/`enterkeyhint` per field; Enter on name
+  and phone moves to the next field, Enter on email sends. A failed send
+  focuses the first invalid field (scroll margins keep its label clear of a
+  fixed navbar and the keyboard).
+- Headings use `text-wrap: balance`, never split a hyphenated word, and keep
+  French `? ! : ;` attached (hints and confirmation text too).
+- Touch: hover styles only apply on `(hover: hover)` so a tap never leaves the
+  white plate stuck in the accent; `(pointer: coarse)` enlarges the wide
+  layout's progress and calendar arrows to 44px.
+- Short landscape (`max-height: 520px`): tighter header, heading and spacing.
+- Safe areas: the component never touches the viewport edge; the host page's
+  padding must include `env(safe-area-inset-*)` if it uses `viewport-fit=cover`.
+- Reduced motion: no entrance, emblem or transition animation; programmatic
+  scrolls are instant.
 
 ## Verification
 
@@ -148,4 +173,9 @@ heading and background.
 4. Wordmark link: keyboard-focusable, accessible name in the page language,
    opens `https://evoview.be/` in a new tab.
 5. `prefers-reduced-motion: reduce`: no animation.
-6. Host `tsc`, build and SSR prerender (if any) pass; CSP allows the assets.
+6. Mobile (320, 390, 430 and 844×390 landscape): no horizontal overflow,
+   readout untruncated, no orphaned/split heading words, tap targets ≥ 44px
+   (calendar days are width-bound at 320: ≈ 35px), the chassis lands below the
+   host navbar on each step, the duration group comes into view, errors focus
+   the first field. Mock `fetch` for the submit on a live client.
+7. Host `tsc`, build and SSR prerender (if any) pass; CSP allows the assets.

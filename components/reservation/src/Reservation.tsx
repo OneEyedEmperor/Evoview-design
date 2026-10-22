@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
 import { DayPicker } from "react-day-picker";
 import { addDays, format, isBefore, startOfDay } from "date-fns";
 import EvoviewLogo from "./brand/EvoviewLogo";
@@ -16,12 +16,21 @@ export const EVOVIEW_URL = "https://evoview.be/";
 const STEP_KEYS = ["experience", "date", "guests", "time", "contact"] as const;
 const TOTAL = STEP_KEYS.length;
 const ADVANCE_MS = 340;
+// Room left above the chassis when it scrolls itself into view (host fixed navbar).
+const SCROLL_OFFSET = 96;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const FIELD_ORDER = ["name", "phone", "email"] as const;
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const OVERFLOW = (max: number) => max + 1;
 // French typography: keep "?", "!", ":" and ";" on the line of the word before them.
 const nbsp = (text: string) => text.replace(/ ([?!:;])/g, "\u00a0$1");
+// Headings: also never break a hyphenated word ("serez-vous", "attend-on") across lines.
+const heading = (text: string) =>
+  nbsp(text)
+    .split(/(\S+-\S+)/)
+    .map((part, i) => (i % 2 ? <span key={i} className="evo-resa-nowrap">{part}</span> : part));
+const smooth = (): ScrollBehavior => (window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth");
 const toMinutes = (time: string) => {
   const [h, m] = time.split(":").map(Number);
   return h * 60 + m;
@@ -39,9 +48,9 @@ const endTimesFor = (windows: ReservationWindow[], startTime: string, step: numb
   return window ? range(start + step, toMinutes(window.close), step).map(formatTime) : [];
 };
 
-function Pills<T extends string | number>({ items, selected, onSelect, render, label }: { items: T[]; selected: T | null; onSelect: (v: T) => void; render?: (v: T) => ReactNode; label: string }) {
+function Pills<T extends string | number>({ items, selected, onSelect, render, label, className }: { items: T[]; selected: T | null; onSelect: (v: T) => void; render?: (v: T) => ReactNode; label: string; className?: string }) {
   return (
-    <div className="evo-resa-pills" role="group" aria-label={label}>
+    <div className={`evo-resa-pills${className ? ` ${className}` : ""}`} role="group" aria-label={label}>
       {items.map((item) => (
         <button key={item} type="button" className="evo-resa-pill" aria-pressed={selected === item} onClick={() => onSelect(item)}>
           {render ? render(item) : item}
@@ -60,6 +69,7 @@ export function Reservation({ config }: { config: ReservationConfig }) {
 
   const rootRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const revealRef = useRef<HTMLDivElement>(null);
   const advanceTimer = useRef<number | undefined>(undefined);
   const interacted = useRef(false);
 
@@ -120,13 +130,22 @@ export function Reservation({ config }: { config: ReservationConfig }) {
     const root = rootRef.current;
     if (root) {
       const top = root.getBoundingClientRect().top;
-      if (top < 0 || top > window.innerHeight * 0.6) {
-        const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        window.scrollTo({ top: top + window.scrollY - 96, behavior: reduce ? "auto" : "smooth" });
+      // Also when the header strip sits under the host's fixed navbar.
+      if (top < SCROLL_OFFSET - 8 || top > window.innerHeight * 0.6) {
+        window.scrollTo({ top: top + window.scrollY - SCROLL_OFFSET, behavior: smooth() });
       }
     }
     headingRef.current?.focus({ preventScroll: true });
   }, [step, confirmed]);
+
+  // The duration / end-time group appears below the start times: on short screens bring it into view.
+  useEffect(() => {
+    const el = revealRef.current;
+    if (!startTime || !el) return;
+    const { top, bottom } = el.getBoundingClientRect();
+    const delta = Math.min(bottom + 24 - window.innerHeight, top - SCROLL_OFFSET);
+    if (delta > 0) window.scrollBy({ top: delta, behavior: smooth() });
+  }, [startTime]);
 
   const goTo = (i: number) => {
     window.clearTimeout(advanceTimer.current);
@@ -180,6 +199,18 @@ export function Reservation({ config }: { config: ReservationConfig }) {
     return errs;
   };
 
+  // Errors can sit above the fold (or behind the keyboard) when sending from the bottom of the form.
+  const focusFirstInvalid = (errs: Record<string, string>) => {
+    const key = FIELD_ORDER.find((k) => errs[k]);
+    if (key) document.getElementById(`evo-resa-${key}`)?.focus();
+  };
+  // Enter on name / phone moves on instead of sending a half-filled form.
+  const enterToNext = (next: string) => (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== "Enter" || e.nativeEvent.isComposing) return;
+    e.preventDefault();
+    document.getElementById(next)?.focus();
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (step < TOTAL - 1) {
@@ -193,7 +224,10 @@ export function Reservation({ config }: { config: ReservationConfig }) {
     }
     const errs = validate();
     setFieldErrors(errs);
-    if (Object.keys(errs).length > 0) return;
+    if (Object.keys(errs).length > 0) {
+      focusFirstInvalid(errs);
+      return;
+    }
     setSubmitting(true);
     setFormError("");
 
@@ -226,7 +260,10 @@ export function Reservation({ config }: { config: ReservationConfig }) {
       interacted.current = true;
       setConfirmed(true);
     } else {
-      if (result.fieldErrors) setFieldErrors(result.fieldErrors as Record<string, string>);
+      if (result.fieldErrors) {
+        setFieldErrors(result.fieldErrors as Record<string, string>);
+        focusFirstInvalid(result.fieldErrors as Record<string, string>);
+      }
       setFormError(result.error || c.errorGeneric);
     }
   };
@@ -380,17 +417,17 @@ export function Reservation({ config }: { config: ReservationConfig }) {
         {dayWindows.filter((w) => startSlots(w).length > 0).map((w, wi) => (
           <div key={wi} className="evo-resa-group">
             <span className="evo-resa-readout evo-resa-group__title">{w.label ?? c.startTimeLabel}<span>{w.open} — {w.close}</span></span>
-            <Pills label={w.label ?? c.startTimeLabel} items={startSlots(w)} selected={startTime || null} onSelect={selectStart} />
+            <Pills className="is-slots" label={w.label ?? c.startTimeLabel} items={startSlots(w)} selected={startTime || null} onSelect={selectStart} />
           </div>
         ))}
         {startTime && requiresEndTime && (
-          <div className="evo-resa-group evo-resa-reveal">
+          <div ref={revealRef} className="evo-resa-group evo-resa-reveal">
             <span className="evo-resa-readout evo-resa-group__title">{c.endTimeLabel}<span>{startTime} →</span></span>
-            <Pills label={c.endTimeLabel} items={endTimes} selected={endTime || null} onSelect={selectEnd} />
+            <Pills className="is-slots" label={c.endTimeLabel} items={endTimes} selected={endTime || null} onSelect={selectEnd} />
           </div>
         )}
         {startTime && hoursSpec && (
-          <div className="evo-resa-group evo-resa-reveal">
+          <div ref={revealRef} className="evo-resa-group evo-resa-reveal">
             <span className="evo-resa-readout evo-resa-group__title">{c.hoursLabel ?? "Durée"}<span>{startTime} →</span></span>
             <Pills
               label={c.hoursLabel ?? "Durée"}
@@ -424,9 +461,9 @@ export function Reservation({ config }: { config: ReservationConfig }) {
       <>
         <div className="evo-resa-inline-ticket">{ticket}</div>
         <div className="evo-resa-fields">
-          {field("evo-resa-name", "name", c.nameLabel, <input id="evo-resa-name" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} {...aria("name", "evo-resa-name")} />)}
-          {field("evo-resa-phone", "phone", c.phoneLabel, <input id="evo-resa-phone" type="tel" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} {...aria("phone", "evo-resa-phone")} />)}
-          {field("evo-resa-email", "email", c.emailLabel, <input id="evo-resa-email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} {...aria("email", "evo-resa-email")} />, true)}
+          {field("evo-resa-name", "name", c.nameLabel, <input id="evo-resa-name" autoComplete="name" autoCapitalize="words" enterKeyHint="next" onKeyDown={enterToNext("evo-resa-phone")} value={name} onChange={(e) => setName(e.target.value)} {...aria("name", "evo-resa-name")} />)}
+          {field("evo-resa-phone", "phone", c.phoneLabel, <input id="evo-resa-phone" type="tel" inputMode="tel" autoComplete="tel" enterKeyHint="next" onKeyDown={enterToNext("evo-resa-email")} value={phone} onChange={(e) => setPhone(e.target.value)} {...aria("phone", "evo-resa-phone")} />)}
+          {field("evo-resa-email", "email", c.emailLabel, <input id="evo-resa-email" type="email" inputMode="email" autoComplete="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} enterKeyHint="send" value={email} onChange={(e) => setEmail(e.target.value)} {...aria("email", "evo-resa-email")} />, true)}
           {field("evo-resa-notes", "notes", c.notesLabel, <textarea id="evo-resa-notes" value={notes} placeholder={c.notesPlaceholder} onChange={(e) => setNotes(e.target.value)} />, true, true)}
         </div>
       </>
@@ -475,8 +512,8 @@ export function Reservation({ config }: { config: ReservationConfig }) {
               <div className="evo-resa-scroll evo-resa-done" key="done">
                 <span className="evo-resa-done__emblem" aria-hidden="true" dangerouslySetInnerHTML={{ __html: RING_EYE }} />
                 <span className="evo-resa-readout evo-resa-done__kicker">{c.confirmationKicker}</span>
-                <h3 ref={headingRef} tabIndex={-1} className="evo-resa-done__title">{nbsp(c.confirmationTitle)}</h3>
-                <p className="evo-resa-done__text">{c.confirmationMessage}</p>
+                <h3 ref={headingRef} tabIndex={-1} className="evo-resa-done__title">{heading(c.confirmationTitle)}</h3>
+                <p className="evo-resa-done__text">{nbsp(c.confirmationMessage)}</p>
                 <div className="evo-resa-inline-ticket">{ticket}</div>
                 <button type="button" className="evo-resa-ghost evo-resa-readout" onClick={resetForm}>
                   <ArrowLeft className="evo-resa-ghost__icon" />
@@ -489,9 +526,9 @@ export function Reservation({ config }: { config: ReservationConfig }) {
                   <div className="evo-resa-question">
                     <h3 ref={headingRef} tabIndex={-1}>
                       <span className="evo-resa-mark">{pad(step + 1)}</span>
-                      {nbsp(stepCopy.title)}
+                      {heading(stepCopy.title)}
                     </h3>
-                    <p>{stepCopy.hint}</p>
+                    <p>{nbsp(stepCopy.hint)}</p>
                   </div>
                   {body}
                 </div>

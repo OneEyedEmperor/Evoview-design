@@ -1,5 +1,34 @@
 # reservation changelog
 
+## 2.7.0 — mobile pass
+
+Tested at 320×568, 360×740, 375×667, 390×844, 412×915, 430×932 and 844×390
+on the showcase and the live Tchin page, every experience, to confirmation.
+
+- Narrow header: progress moved to the strip's bottom edge, full width, 44px
+  segments (were 7×18); step readout no longer truncates at 320.
+- Calendar on narrow: tile widened to 8px from the chassis edge, days fill it
+  (≈ 44px at 390, were 32px), centred weekdays, 44px month arrows.
+- Start / end times on narrow: even grid filling the row.
+- Bar on narrow: `← RETOUR` (hidden on step 1) + message above a full-width
+  white plate; no more wrapped, left-stranded "Envoyer la demande". Not sticky
+  (see README).
+- Revealed duration / end-time group scrolls into view on short screens.
+- Step scroll also fires when the header sits under the host navbar;
+  `overflow-anchor: none` removes anchoring drift.
+- Contact: `inputmode`, `autocapitalize`, `enterkeyhint`, Enter → next field,
+  failed send focuses the first invalid field, scroll margins for navbar and
+  keyboard.
+- Recap ticket values wrap instead of ellipsis ("Restaurant puis karaoké",
+  "+15 personnes", long names).
+- Headings balanced, hyphenated words kept whole ("serez-vous"); FR
+  punctuation spacing also in hints and the confirmation text.
+- Hover styles only on hover-capable pointers (no stuck accent plate after a
+  tap); coarse pointers get 44px progress / calendar arrows on the wide
+  layout; `touch-action: manipulation`; wordmark hit area 44px tall.
+- Short landscape: tighter header, heading and spacing.
+- Config changes: none.
+
 ## 2.6.0 — neutral reference = Tchin setup
 
 - Reference config rewritten as a neutral copy of the Tchin Tchin setup:

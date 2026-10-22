@@ -31,6 +31,8 @@
   --resa-font-display: "Evoview Grotesk", "Overused Grotesk", var(--resa-font-body);
 
   container-type: inline-size;
+  /* The component scrolls itself on step changes; browser scroll anchoring would nudge it again. */
+  overflow-anchor: none;
   color: var(--resa-ink);
   font-family: var(--resa-font-body);
   font-size: 14px;
@@ -40,7 +42,7 @@
 }
 .evo-resa *, .evo-resa *::before, .evo-resa *::after { box-sizing: border-box; }
 :where(.evo-resa) :where(button, input, textarea) { margin: 0; font: inherit; color: inherit; letter-spacing: inherit; }
-:where(.evo-resa) :where(button) { padding: 0; border: 0; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+:where(.evo-resa) :where(button) { padding: 0; border: 0; background: none; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 :where(.evo-resa) :where(button:disabled) { cursor: default; }
 :where(.evo-resa) :where(h3, p, dl, dd, ol) { margin: 0; padding: 0; }
 
@@ -100,14 +102,15 @@
 .evo-resa-top__brand {
   display: inline-flex;
   flex: 0 0 auto;
-  padding: 6px 4px;
-  margin: -6px -4px;
+  /* ≥ 44px hit area around the wordmark without moving it. */
+  padding: 15px 8px;
+  margin: -15px -8px;
   border-radius: 6px;
   color: #fff;
   opacity: 0.94;
   transition: opacity 200ms ease;
 }
-.evo-resa-top__brand:hover { opacity: 1; }
+@media (hover: hover) { .evo-resa-top__brand:hover { opacity: 1; } }
 .evo-resa-top__brand:focus-visible { outline: 2px solid var(--resa-accent); outline-offset: 2px; }
 .evo-resa-top__logo { display: block; width: 76px; height: auto; filter: brightness(0) invert(1); }
 .evo-resa-top__divider { width: 1px; height: 24px; flex: 0 0 auto; background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.22), transparent); }
@@ -118,9 +121,16 @@
 .evo-resa-top__progress > button { display: flex; padding: 8px 0; }
 .evo-resa-top__progress > button:focus-visible { outline: 2px solid var(--resa-accent); outline-offset: 2px; border-radius: 2px; }
 .evo-resa-top__progress i { width: 100%; height: 2px; border-radius: 999px; background: rgba(255, 255, 255, 0.13); transition: background-color 260ms ease, transform 260ms var(--resa-ease); }
+/* Touch on the wide layout (landscape phones, tablets): 44px-tall segments, same look and strip height. */
+@media (pointer: coarse) {
+  .evo-resa-top__progress { width: 170px; }
+  .evo-resa-top__progress > button { margin-block: -13px; padding-block: 21px; }
+  .evo-cal__navbtn { width: 44px; height: 44px; }
+  .evo-cal__caption { height: 44px; }
+}
 .evo-resa-top__progress > .is-done i { background: color-mix(in srgb, var(--resa-accent) 60%, transparent); }
 .evo-resa-top__progress > .is-current i { background: var(--resa-accent); transform: scaleY(1.5); }
-.evo-resa-top__progress > button:not(:disabled):hover i { transform: scaleY(2); background: var(--resa-accent); }
+@media (hover: hover) { .evo-resa-top__progress > button:not(:disabled):hover i { transform: scaleY(2); background: var(--resa-accent); } }
 
 .evo-resa__body { position: relative; }
 
@@ -160,8 +170,10 @@
   font-weight: 900;
   letter-spacing: -0.035em;
   line-height: 0.98;
+  text-wrap: balance;
   outline: none;
 }
+.evo-resa-nowrap { white-space: nowrap; }
 .evo-resa-mark {
   display: inline-flex;
   width: 34px;
@@ -198,7 +210,7 @@
   text-align: left;
   transition: border-color 220ms ease, transform 160ms ease, box-shadow 300ms ease;
 }
-.evo-resa-choice:hover { border-color: rgba(255, 255, 255, 0.3); }
+@media (hover: hover) { .evo-resa-choice:hover { border-color: rgba(255, 255, 255, 0.3); } }
 .evo-resa-choice:active { transform: scale(0.985); }
 .evo-resa-choice:focus-visible { outline: 2px solid var(--resa-accent); outline-offset: 3px; }
 .evo-resa-choice[aria-pressed="true"] {
@@ -213,7 +225,8 @@
 .evo-resa-choice__icon { position: absolute; top: 50%; left: 18px; display: flex; width: 56px; translate: 0 -50%; align-items: center; justify-content: center; gap: 2px; opacity: 0.9; transition: opacity 220ms ease, transform 220ms var(--resa-ease); }
 .evo-resa-choice__icon > svg { width: 28px; height: 28px; flex: 0 0 auto; }
 .evo-resa-choice__icon:has(> svg + svg) > svg { width: 24px; height: 24px; }
-.evo-resa-choice:hover .evo-resa-choice__icon, .evo-resa-choice[aria-pressed="true"] .evo-resa-choice__icon { opacity: 1; transform: scale(1.06); }
+.evo-resa-choice[aria-pressed="true"] .evo-resa-choice__icon { opacity: 1; transform: scale(1.06); }
+@media (hover: hover) { .evo-resa-choice:hover .evo-resa-choice__icon { opacity: 1; transform: scale(1.06); } }
 .evo-resa-choice__label { color: #fff; font-family: var(--resa-font-display); font-size: clamp(15px, 2.4cqi, 19px); font-weight: 800; letter-spacing: -0.01em; line-height: 1.05; }
 .evo-resa-choice__hint { color: rgba(255, 255, 255, 0.5); }
 .evo-resa-choice__check {
@@ -254,7 +267,7 @@
   transition: border-color 200ms ease, background-color 200ms ease, color 200ms ease, transform 140ms ease;
 }
 .evo-resa-pill:has(.evo-resa-pill__mark) { padding-left: 10px; }
-.evo-resa-pill:hover { border-color: rgba(255, 255, 255, 0.34); color: #fff; }
+@media (hover: hover) { .evo-resa-pill:hover { border-color: rgba(255, 255, 255, 0.34); color: #fff; } }
 .evo-resa-pill:active { transform: scale(0.97); }
 .evo-resa-pill:focus-visible { outline: 2px solid var(--resa-accent); outline-offset: 3px; }
 .evo-resa-pill[aria-pressed="true"] { border-color: var(--resa-accent); background: color-mix(in srgb, var(--resa-accent) 14%, transparent); color: #fff; }
@@ -313,7 +326,7 @@
   color: #fff;
   transition: border-color 200ms ease, background-color 200ms ease;
 }
-.evo-cal__navbtn:hover { border-color: rgba(255, 255, 255, 0.34); background: rgba(255, 255, 255, 0.05); }
+@media (hover: hover) { .evo-cal__navbtn:hover { border-color: rgba(255, 255, 255, 0.34); background: rgba(255, 255, 255, 0.05); } }
 .evo-cal__navbtn:focus-visible { outline: 2px solid var(--resa-accent); outline-offset: 2px; }
 .evo-cal__navbtn:disabled, .evo-cal__navbtn[aria-disabled="true"] { opacity: 0.3; }
 .evo-cal__chevron { width: 16px; height: 16px; }
@@ -321,7 +334,7 @@
 .evo-cal__caption-label { color: #fff; font-family: var(--resa-font-display); font-size: 17px; font-weight: 800; letter-spacing: -0.01em; text-transform: uppercase; }
 .evo-cal__grid { border-collapse: collapse; }
 .evo-cal__weekdays { display: flex; }
-.evo-cal__weekday { width: var(--cell); padding-bottom: 6px; color: var(--resa-faint); font-family: var(--resa-font-label); font-size: 8px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; }
+.evo-cal__weekday { width: var(--cell); padding-bottom: 6px; text-align: center; color: var(--resa-faint); font-family: var(--resa-font-label); font-size: 8px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; }
 .evo-cal__week { display: flex; }
 .evo-cal__day { position: relative; width: var(--cell); height: var(--cell); padding: 2px; text-align: center; }
 .evo-cal__daybtn {
@@ -338,7 +351,7 @@
   font-variant-numeric: tabular-nums;
   transition: background-color 180ms ease, color 180ms ease, box-shadow 220ms ease;
 }
-.evo-cal__daybtn:hover { background: rgba(255, 255, 255, 0.07); color: #fff; }
+@media (hover: hover) { .evo-cal__daybtn:hover { background: rgba(255, 255, 255, 0.07); color: #fff; } }
 .evo-cal__daybtn:focus-visible { outline: 2px solid var(--resa-accent); outline-offset: 1px; }
 .evo-cal__day.is-today .evo-cal__daybtn::after { content: ""; position: absolute; bottom: 5px; left: 50%; width: 4px; height: 4px; translate: -50% 0; border-radius: 999px; background: var(--resa-accent); }
 .evo-cal__day.is-selected .evo-cal__daybtn {
@@ -371,6 +384,8 @@
   font-size: 16px;
   outline: none;
   box-shadow: none;
+  /* Focus / keyboard scrolling keeps the label clear of a fixed host navbar. */
+  scroll-margin: 120px 0 24px;
   transition: border-color 200ms ease;
 }
 .evo-resa-field textarea { min-height: 76px; resize: vertical; line-height: 1.55; }
@@ -407,7 +422,8 @@
   box-shadow: 0 18px 40px -24px color-mix(in srgb, var(--resa-accent) 70%, transparent);
   transition: background-color 300ms var(--resa-ease), transform 140ms ease, opacity 200ms ease;
 }
-.evo-resa-primary:hover { background: var(--resa-accent); color: var(--resa-accent-ink); }
+/* Hover only on hover-capable pointers: a tap must not leave the white plate stuck in the accent. */
+@media (hover: hover) { .evo-resa-primary:hover { background: var(--resa-accent); color: var(--resa-accent-ink); } }
 .evo-resa-primary:active { transform: scale(0.985); }
 .evo-resa-primary:focus-visible { outline: 2px solid var(--resa-accent); outline-offset: 4px; }
 .evo-resa-primary[aria-busy="true"] { cursor: wait; opacity: 0.75; }
@@ -423,7 +439,7 @@
   transition: transform 300ms var(--resa-ease);
 }
 .evo-resa-primary__orb svg { width: 16px; height: 16px; }
-.evo-resa-primary:hover .evo-resa-primary__orb { transform: translateX(3px); }
+@media (hover: hover) { .evo-resa-primary:hover .evo-resa-primary__orb { transform: translateX(3px); } }
 .evo-resa-ghost {
   display: inline-flex;
   min-height: 44px;
@@ -434,7 +450,7 @@
   color: rgba(238, 238, 233, 0.55);
   transition: color 180ms ease;
 }
-.evo-resa-ghost:hover { color: #fff; }
+@media (hover: hover) { .evo-resa-ghost:hover { color: #fff; } }
 .evo-resa-ghost:focus-visible { outline: 2px solid var(--resa-accent); outline-offset: 2px; border-radius: 6px; }
 .evo-resa-ghost:disabled { visibility: hidden; }
 .evo-resa-ghost__icon { width: 14px; height: 14px; }
@@ -478,9 +494,10 @@
 .evo-resa-ticket__date span { padding-bottom: 2px; font-size: 15px; font-weight: 800; letter-spacing: 0.02em; line-height: 1; }
 .evo-resa-ticket__date span:first-child { order: -1; color: var(--resa-accent); }
 .evo-resa-ticket__rows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 18px; margin-top: auto; }
-.evo-resa-ticket__rows > div { display: grid; gap: 3px; padding: 9px 0; border-top: 1px solid rgba(255, 255, 255, 0.08); }
+.evo-resa-ticket__rows > div { display: grid; align-content: start; gap: 3px; padding: 9px 0; border-top: 1px solid rgba(255, 255, 255, 0.08); }
 .evo-resa-ticket__rows dt { color: var(--resa-faint); font-size: 8px; }
-.evo-resa-ticket__rows dd { overflow: hidden; color: rgba(255, 255, 255, 0.28); font-size: 13px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; transition: color 300ms ease; }
+/* Values wrap instead of truncating ("Restaurant puis karaoké", long names). */
+.evo-resa-ticket__rows dd { color: rgba(255, 255, 255, 0.28); font-size: 13px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; transition: color 300ms ease; }
 .evo-resa-ticket__rows [data-filled] dd { color: #fff; }
 .evo-resa-ticket__rows [data-filled] dt { color: var(--resa-accent); }
 .evo-resa-ticket__mark { position: absolute; right: 22px; bottom: 18px; width: 70px; height: auto; filter: brightness(0) invert(1); opacity: 0.07; pointer-events: none; }
@@ -510,12 +527,52 @@
   .evo-resa-choice__icon { left: 10px; width: 50px; }
   .evo-resa-choice__icon > svg { width: 24px; height: 24px; }
   .evo-resa-choice__icon:has(> svg + svg) > svg { width: 21px; height: 21px; }
+  /* Header: wordmark + step readout get the whole row; the progress becomes the
+     strip's bottom edge, each segment a full-height (44px) tap target straddling it. */
   .evo-resa-top__divider, .evo-resa-top__kicker { display: none; }
-  .evo-resa-top { gap: 12px; }
+  .evo-resa-top { gap: 12px; min-height: 58px; padding-block: 12px; }
   .evo-resa-top__logo { width: 66px; }
-  .evo-resa-top__progress { width: 48px; gap: 3px; }
-  .evo-resa-bar { justify-content: space-between; }
-  .evo-resa-bar__error { order: 3; max-width: none; width: 100%; text-align: right; }
+  .evo-resa-top__progress { position: absolute; right: var(--resa-gutter); bottom: -22px; left: var(--resa-gutter); width: auto; height: 44px; gap: 6px; }
+  .evo-resa-top__progress > button { height: 44px; align-items: center; margin: 0; padding: 0; }
+  .evo-resa-scroll { padding-top: 34px; }
+
+  /* Calendar: the tile widens to 8px from the chassis edge and the days fill it
+     (≈ 44px cells at 390 wide instead of 36px). */
+  .evo-resa-calendar-wrap { max-width: none; }
+  .evo-resa-calendar {
+    --cell: min(52px, calc((100cqi - 28px) / 7));
+    width: auto;
+    max-width: none;
+    margin-inline: calc(8px - var(--resa-gutter));
+    padding: 12px 4px 8px;
+  }
+  .evo-cal__month { align-items: center; }
+  .evo-cal__nav { padding-inline: 6px; }
+  .evo-cal__navbtn { width: 44px; height: 44px; }
+  .evo-cal__caption { height: 44px; }
+  .evo-cal__day { padding: 0; }
+
+  /* Time slots: an even grid that fills the row instead of ragged pills. */
+  .evo-resa-pills.is-slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(68px, 1fr)); gap: 8px; }
+  .evo-resa-pills.is-slots .evo-resa-pill { justify-content: center; padding-inline: 0; }
+
+  /* Bar: back link (and any message) on one line, the plate full width beneath, in thumb reach. */
+  .evo-resa-bar { display: grid; grid-template-columns: auto 1fr; gap: 8px 12px; padding-top: 12px; }
+  .evo-resa-ghost { margin-right: 0; }
+  .evo-resa-ghost:disabled { display: none; }
+  .evo-resa-bar__error { grid-row: 1; grid-column: 2; align-self: center; max-width: none; text-align: right; }
+  .evo-resa-bar .evo-resa-primary { grid-column: 1 / -1; width: 100%; }
+}
+
+/* Short landscape phones: tighten the vertical rhythm so a step fits under the host navbar. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .evo-resa-top { min-height: 56px; padding-block: 10px; }
+  .evo-resa-scroll { padding-top: 24px; padding-bottom: 20px; }
+  .evo-resa-question { margin-bottom: 18px; }
+  .evo-resa-question h3 { font-size: clamp(1.6rem, 3.8cqi, 2.2rem); }
+  .evo-resa-question p { margin-top: 8px; }
+  .evo-resa-choice { min-height: 66px; }
+  .evo-resa-calendar { --cell: 40px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
