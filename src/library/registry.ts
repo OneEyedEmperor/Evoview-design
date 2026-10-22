@@ -44,7 +44,7 @@ const DRAFTS: Draft[] = [
     route: "/layouts/process-sequence",
     title: { fr: "Séquence de processus", en: "Process sequence" },
     meta: { fr: "Tableau d'étapes minuté", en: "Timed step board" },
-    status: "building",
+    status: "ready",
   },
   {
     id: "story-blocks",
