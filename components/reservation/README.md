@@ -56,7 +56,7 @@ only the fallback when the host defines no `--primary`. `config.accent` /
 black primary).
 
 Client-adaptable (config only): venue, all copy, experiences (label, meta,
-end time, note), opening windows and their labels, guests range, horizon,
+duration, note), opening windows and their labels, guests range, horizon,
 submit/toast wiring.
 
 **Attribution**: the header wordmark links to `https://evoview.be/`
@@ -113,8 +113,11 @@ heading and background.
   `guestsOverflow: true`; map it in `submit` (e.g. a notes prefix) if the API
   caps the party size.
 - Step complete → auto-advance; "Continuer" on an unanswered step shows
-  `chooseToContinue`. `requiresEndTime` adds an end-time group bounded by the
-  start's window; `timeNote` shows under the times.
+  `chooseToContinue`. `timeNote` shows under the times.
+- Durations: `hours: { options, withinWindow }` asks how many hours after the
+  start time (preferred over end times: guests found end times confusing at
+  Tchin Tchin). `withinWindow` keeps start + hours inside the opening window.
+  `requiresEndTime` (end-time list) remains for clients that want it.
 - Calendar: past days, days beyond `maxDaysAhead` and days where `windows()`
   is `[]` are disabled. Changing experience clears the end time; changing
   date clears both times (later steps reopen).
@@ -129,7 +132,7 @@ heading and background.
 
 1. 1440 and 390: chassis, header readout untruncated, recap ticket on the
    contact step and confirmation; the accent is the client's (`--primary`).
-2. Walk every experience; end time only where configured; closed days
+2. Walk every experience; durations only where configured; closed days
    disabled; header progress jumps back to answered steps.
 3. Empty send shows three field errors; valid send reaches the confirmation;
    ticket turns "transmise" with a green REC dot. Never send on a live

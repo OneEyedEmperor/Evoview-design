@@ -12,8 +12,11 @@ export type ReservationExperience = {
   desc: string;
   /** Overrides the Evoview eye glyph of this row. Prefer the default. */
   icon?: ComponentType<{ className?: string }>;
-  /** Ask for an end time too (e.g. a room rented by the hour). */
+  /** Ask for an end time after the start time. */
   requiresEndTime?: boolean;
+  /** Ask for a duration in hours after the start time (e.g. a room rented by the hour).
+      `withinWindow` drops durations that would run past the start's opening window. */
+  hours?: { options: number[]; withinWindow?: boolean };
   /** Line shown in the time step when this experience is selected (price, duration…). */
   timeNote?: string;
 };
@@ -25,6 +28,8 @@ export type ReservationRequest = {
   dateISO: string;
   startTime: string;
   endTime?: string;
+  /** Chosen duration when the experience has `hours`. */
+  hours?: number;
   guests: number;
   /** Set when the guest picked "+max": the real party is larger than `guests`. */
   guestsOverflow?: boolean;
@@ -56,6 +61,9 @@ export type ReservationCopy = {
   guestsUnit: { one: string; many: string };
   startTimeLabel: string;
   endTimeLabel: string;
+  /** Duration group title and unit, used by experiences with `hours`. */
+  hoursLabel?: string;
+  hoursUnit?: { one: string; many: string };
   nameLabel: string;
   phoneLabel: string;
   emailLabel: string;

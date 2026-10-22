@@ -1,5 +1,20 @@
 # reservation changelog
 
+## 2.4.0 — durations instead of end times
+
+- New `experiences[].hours: { options, withinWindow? }`: after the start
+  time, asks "how many hours" (pills `01 heure`, `02 heures`…) instead of an
+  end time. `withinWindow` drops durations past the window's close and hides
+  start times that can't fit the shortest one. Submitted as `request.hours`;
+  recap shows `20:00 · 2 h`.
+- Reference private room and the Tchin example use `hours`; Tchin asks no end
+  time anywhere (owner request: end times generated too many questions).
+  Tchin's `submit` derives `preferredEndTime` = start + hours for karaoke_only
+  (API requires it) and puts the hours in `notes` for restaurant_then_karaoke.
+- Config changes: `experiences[].hours`, `copy.hoursLabel`, `copy.hoursUnit`
+  (optional), `ReservationRequest.hours`. `requiresEndTime` still exists;
+  prefer `hours` for client-facing forms.
+
 ## 2.3.0 — compact guests, "+max" option
 
 - Narrow containers (≤ 520px): the guests step is a grid of number orbs

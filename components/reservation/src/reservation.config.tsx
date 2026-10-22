@@ -22,6 +22,8 @@ const COPY: Record<Locale, ReservationCopy> = {
     guestsUnit: { one: "personne", many: "personnes" },
     startTimeLabel: "Arrivée",
     endTimeLabel: "Fin",
+    hoursLabel: "Durée",
+    hoursUnit: { one: "heure", many: "heures" },
     nameLabel: "Nom complet",
     phoneLabel: "Téléphone",
     emailLabel: "Email",
@@ -57,6 +59,8 @@ const COPY: Record<Locale, ReservationCopy> = {
     guestsUnit: { one: "guest", many: "guests" },
     startTimeLabel: "Arrival",
     endTimeLabel: "End",
+    hoursLabel: "Duration",
+    hoursUnit: { one: "hour", many: "hours" },
     nameLabel: "Full name",
     phoneLabel: "Phone",
     emailLabel: "Email",
@@ -85,12 +89,12 @@ const EXPERIENCES: Record<Locale, ReservationConfig["experiences"]> = {
   fr: [
     { value: "lunch", label: "Déjeuner", desc: "Table · Midi" },
     { value: "dinner", label: "Dîner", desc: "Table · Soir" },
-    { value: "private", label: "Salon privé", desc: "Groupe · À l'heure", requiresEndTime: true, timeNote: "Salon privé : 15 € par personne et par heure" },
+    { value: "private", label: "Salon privé", desc: "Groupe · À l'heure", hours: { options: [1, 2, 3], withinWindow: true }, timeNote: "Salon privé : 15 € par personne et par heure" },
   ],
   en: [
     { value: "lunch", label: "Lunch", desc: "Table · Noon" },
     { value: "dinner", label: "Dinner", desc: "Table · Evening" },
-    { value: "private", label: "Private room", desc: "Group · By the hour", requiresEndTime: true, timeNote: "Private room: €15 per person, per hour" },
+    { value: "private", label: "Private room", desc: "Group · By the hour", hours: { options: [1, 2, 3], withinWindow: true }, timeNote: "Private room: €15 per person, per hour" },
   ],
 };
 

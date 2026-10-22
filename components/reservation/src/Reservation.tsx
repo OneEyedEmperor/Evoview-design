@@ -69,6 +69,7 @@ export function Reservation({ config }: { config: ReservationConfig }) {
   const [guests, setGuests] = useState<number | null>(null);
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
+  const [hours, setHours] = useState<number | null>(null);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -83,14 +84,26 @@ export function Reservation({ config }: { config: ReservationConfig }) {
   const overflow = guests !== null && guests > guestRange.max;
   const current = experiences.find((e) => e.value === experience);
   const requiresEndTime = !!current?.requiresEndTime;
+  const hoursSpec = current?.hours;
   const dayWindows = date ? windows(date) : [];
   const endTimes = date && startTime ? endTimesFor(dayWindows, startTime, slot) : [];
+  // A start must leave room for the shortest duration when durations stay inside the window.
+  const minHours = hoursSpec?.withinWindow ? Math.min(...hoursSpec.options) : 0;
+  const startSlots = (w: ReservationWindow) => slotsOf(w, slot).filter((t) => toMinutes(t) + minHours * 60 <= toMinutes(w.close));
+  const hourOptions = !hoursSpec || !startTime
+    ? []
+    : hoursSpec.options.filter((h) => {
+        if (!hoursSpec.withinWindow) return true;
+        const start = toMinutes(startTime);
+        const w = dayWindows.find((x) => start >= toMinutes(x.open) && start < toMinutes(x.close));
+        return !!w && start + h * 60 <= toMinutes(w.close);
+      });
 
   const answered = [
     !!experience,
     !!date,
     guests !== null,
-    !!startTime && (!requiresEndTime || !!endTime),
+    !!startTime && (!requiresEndTime || !!endTime) && (!hoursSpec || hours !== null),
     !!name.trim() && !!phone.trim() && EMAIL_RE.test(email.trim()),
   ];
   const firstOpen = answered.indexOf(false) === -1 ? TOTAL - 1 : answered.indexOf(false);
@@ -129,12 +142,14 @@ export function Reservation({ config }: { config: ReservationConfig }) {
   const selectExperience = (value: string) => {
     setExperience(value);
     setEndTime("");
+    setHours(null);
     advanceSoon(0);
   };
   const selectDate = (d: Date | undefined) => {
     setDate(d);
     setStartTime("");
     setEndTime("");
+    setHours(null);
     if (d) advanceSoon(1);
   };
   const selectGuests = (n: number) => {
@@ -144,7 +159,12 @@ export function Reservation({ config }: { config: ReservationConfig }) {
   const selectStart = (time: string) => {
     setStartTime(time);
     setEndTime("");
-    if (!requiresEndTime) advanceSoon(3);
+    setHours(null);
+    if (!requiresEndTime && !hoursSpec) advanceSoon(3);
+  };
+  const selectHours = (h: number) => {
+    setHours(h);
+    advanceSoon(3);
   };
   const selectEnd = (time: string) => {
     setEndTime(time);
@@ -167,7 +187,7 @@ export function Reservation({ config }: { config: ReservationConfig }) {
       else setBlocked(true);
       return;
     }
-    if (!experience || !date || guests === null || !startTime || (requiresEndTime && !endTime)) {
+    if (!experience || !date || guests === null || !startTime || (requiresEndTime && !endTime) || (hoursSpec && hours === null)) {
       goTo(firstOpen);
       return;
     }
@@ -184,6 +204,7 @@ export function Reservation({ config }: { config: ReservationConfig }) {
       dateISO: format(date, "yyyy-MM-dd"),
       startTime,
       ...(requiresEndTime ? { endTime } : {}),
+      ...(hoursSpec && hours !== null ? { hours } : {}),
       guests: overflow ? guestRange.max : guests,
       ...(overflow ? { guestsOverflow: true } : {}),
       name: name.trim(),
@@ -216,6 +237,7 @@ export function Reservation({ config }: { config: ReservationConfig }) {
     setGuests(null);
     setStartTime("");
     setEndTime("");
+    setHours(null);
     setName("");
     setPhone("");
     setEmail("");
@@ -232,7 +254,7 @@ export function Reservation({ config }: { config: ReservationConfig }) {
     current?.label ?? null,
     date ? format(date, "EEEE d MMMM", { locale: config.dateLocale }) : null,
     guests !== null ? guestLabel(guests) : null,
-    startTime ? (endTime ? `${startTime} → ${endTime}` : startTime) : null,
+    startTime ? `${endTime ? `${startTime} → ${endTime}` : startTime}${hours !== null && hoursSpec ? ` · ${hours} h` : ""}` : null,
     name.trim() || null,
   ];
 
@@ -356,16 +378,33 @@ export function Reservation({ config }: { config: ReservationConfig }) {
   } else if (step === 3) {
     body = (
       <div className="evo-resa-times">
-        {dayWindows.map((w, wi) => (
+        {dayWindows.filter((w) => startSlots(w).length > 0).map((w, wi) => (
           <div key={wi} className="evo-resa-group">
             <span className="evo-resa-readout evo-resa-group__title">{w.label ?? c.startTimeLabel}<span>{w.open} — {w.close}</span></span>
-            <Pills label={w.label ?? c.startTimeLabel} items={slotsOf(w, slot)} selected={startTime || null} onSelect={selectStart} />
+            <Pills label={w.label ?? c.startTimeLabel} items={startSlots(w)} selected={startTime || null} onSelect={selectStart} />
           </div>
         ))}
         {startTime && requiresEndTime && (
           <div className="evo-resa-group evo-resa-reveal">
             <span className="evo-resa-readout evo-resa-group__title">{c.endTimeLabel}<span>{startTime} →</span></span>
             <Pills label={c.endTimeLabel} items={endTimes} selected={endTime || null} onSelect={selectEnd} />
+          </div>
+        )}
+        {startTime && hoursSpec && (
+          <div className="evo-resa-group evo-resa-reveal">
+            <span className="evo-resa-readout evo-resa-group__title">{c.hoursLabel ?? "Durée"}<span>{startTime} →</span></span>
+            <Pills
+              label={c.hoursLabel ?? "Durée"}
+              items={hourOptions}
+              selected={hours}
+              onSelect={selectHours}
+              render={(h) => (
+                <>
+                  <span className="evo-resa-pill__mark" aria-hidden="true">{pad(h)}</span>
+                  <span className="evo-resa-pill__unit"><span className="evo-resa-sr">{h} </span>{h > 1 ? c.hoursUnit?.many ?? "h" : c.hoursUnit?.one ?? "h"}</span>
+                </>
+              )}
+            />
           </div>
         )}
         {current?.timeNote && <p className="evo-resa-readout evo-resa-note"><i className="evo-resa-rec" aria-hidden="true" />{current.timeNote}</p>}
