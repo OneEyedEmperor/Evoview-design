@@ -8,9 +8,9 @@ import AccentPicker, { inkFor } from "./AccentPicker";
    client page, with a live accent picker standing in for the host's
    --primary token. Submissions are mocked. */
 
-const HEAD: Record<Locale, { kicker: string; title: string; subtitle: string }> = {
-  fr: { kicker: "Réservation", title: "Envoyez une demande", subtitle: "Envoyez votre demande et l'établissement vous contactera pour confirmer." },
-  en: { kicker: "Reservation", title: "Send a request", subtitle: "Send your request and the venue will contact you to confirm." },
+const HEAD: Record<Locale, { kicker: string; language: string }> = {
+  fr: { kicker: "Composant dynamique", language: "Langue" },
+  en: { kicker: "Dynamic component", language: "Language" },
 };
 
 const DEFAULT_ACCENT = "#e9e6df";
@@ -65,7 +65,7 @@ export default function ReservationShowcase() {
 
   return (
     <div
-      className="showcase-accent relative min-h-screen overflow-hidden px-6 py-24 text-white"
+      className="showcase-accent relative min-h-screen overflow-hidden px-6 pb-24 pt-20 text-white"
       style={{
         background: "#0b0b0c",
         fontFamily: "Inter, sans-serif",
@@ -78,16 +78,21 @@ export default function ReservationShowcase() {
       }}
     >
 
-      <div className="fixed left-1/2 top-4 z-20 flex -translate-x-1/2 gap-2">
-        <Toggle value={locale} options={[["fr", "FR"], ["en", "EN"]]} onChange={setLocale} />
-      </div>
 
 
-      <div className="relative z-10 mx-auto max-w-4xl pt-16">
+      <div className="relative z-10 mx-auto max-w-4xl">
         <div className="mx-auto mb-10 max-w-3xl text-center">
           <p className="mb-4 text-xs font-medium uppercase tracking-[0.3em]" style={{ color: "var(--primary)" }}>{head.kicker}</p>
-          <h1 className="mb-3 text-3xl font-bold md:text-4xl" style={{ fontFamily: "'Overused Grotesk', Inter, sans-serif" }}>{head.title}</h1>
-          <p className="mx-auto max-w-lg text-white/70">{head.subtitle}</p>
+          <h1
+            className="text-4xl font-black uppercase leading-[0.92] tracking-[-0.035em] md:text-6xl"
+            style={{ fontFamily: "'Overused Grotesk', Inter, sans-serif" }}
+          >
+            Evoview <span style={{ color: "var(--primary)" }}>Reservation</span> System
+          </h1>
+          <div className="mt-6 flex items-center justify-center gap-3">
+            <span className="text-xs uppercase tracking-[0.2em] text-white/50">{head.language}</span>
+            <Toggle value={locale} options={[["fr", "FR"], ["en", "EN"]]} onChange={setLocale} />
+          </div>
           <AccentPicker
             swatches={swatches}
             value={accentId}
