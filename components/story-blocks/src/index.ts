@@ -1,3 +1,5 @@
+import "../foundation";
+import "../controls";
 import "./story-blocks.css";
 
 export { Story, renderChapter, type StoryProps } from "./Story";

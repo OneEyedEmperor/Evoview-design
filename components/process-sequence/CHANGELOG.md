@@ -1,5 +1,11 @@
 # process-sequence changelog
 
+## 1.0.1
+
+- Requires `controls` 1.1.0: step dossier focuses its close button through the
+  `GlassClose` ref; `index.ts` loads `../foundation`, `../controls`, then
+  `process-sequence.css` (moved from `ProcessSequence.tsx`). No config changes.
+
 ## 1.0.0
 
 - First release on `foundation` 1.0.0 + `controls` 1.0.0: `ProcessSequence`

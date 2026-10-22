@@ -1,3 +1,7 @@
+import "../foundation";
+import "../controls";
+import "./process-sequence.css";
+
 export { ProcessSequence, type ProcessSequenceProps } from "./ProcessSequence";
 export { StepDossier, type StepDossierProps } from "./StepDossier";
 export { StepCard } from "./StepCard";

@@ -1,3 +1,5 @@
+import "../foundation";
+import "../controls";
 import "./card-track.css";
 
 export { CardTrack, type CardTrackProps, type CardTrackMode } from "./CardTrack";

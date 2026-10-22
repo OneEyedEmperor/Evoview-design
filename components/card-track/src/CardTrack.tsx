@@ -5,12 +5,11 @@ import {
   useLayoutEffect,
   useRef,
   useState,
-  useSyncExternalStore,
   type CSSProperties,
   type KeyboardEvent,
   type ReactNode,
 } from "react";
-import { Index, cn, useInViewPause } from "../foundation";
+import { Index, cn, useInViewPause, useMediaQuery } from "../foundation";
 import { MediaCard } from "./MediaCard";
 import type { CardTrackCopy, CardTrackDefinition, CardTrackItem } from "./types";
 
@@ -38,18 +37,6 @@ const PHONE_QUERY = "(max-width: 767px)";
 const FINE_QUERY = "(hover: hover) and (pointer: fine)";
 /* Lerp factor per frame toward the scroll target (measured on the source). */
 const LERP = 0.25;
-
-function useMediaQuery(query: string): boolean {
-  const subscribe = useCallback(
-    (cb: () => void) => {
-      const mq = window.matchMedia(query);
-      mq.addEventListener("change", cb);
-      return () => mq.removeEventListener("change", cb);
-    },
-    [query],
-  );
-  return useSyncExternalStore(subscribe, () => window.matchMedia(query).matches, () => false);
-}
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
 

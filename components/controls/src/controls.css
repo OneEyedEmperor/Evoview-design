@@ -492,7 +492,10 @@ textarea.evc-field__input { min-height: 78px; resize: vertical; line-height: 1.5
   position: absolute;
   inset: 3px;
   border-radius: max(calc(var(--ev-radius-control) - 3px), 4px);
-  background: var(--controls-accent);
+  /* A quarter of the way to the signal: a near-white accent still stands off
+     paper (≈ 90 % accent) while the client colour stays intact on dark (≈ 97 %)
+     and the accent ink keeps its contrast. */
+  background: color-mix(in oklab, var(--controls-accent) calc((var(--ev-signal-mix, 88%) + 300%) / 4), var(--ev-signal-toward, #fff));
   box-shadow: inset 0 0 0 1px var(--controls-signal), 0 10px 26px -14px var(--controls-accent-deep);
 }
 .evc-seg__option {
@@ -551,6 +554,9 @@ textarea.evc-field__input { min-height: 78px; resize: vertical; line-height: 1.5
 .evc-progress__caption { overflow: hidden; color: var(--ev-fg-35); text-overflow: ellipsis; white-space: nowrap; transition: color 260ms ease; }
 .evc-progress > [data-state="current"] .evc-progress__caption { color: var(--ev-fg); }
 .evc-progress > [data-state="done"] .evc-progress__caption { color: var(--controls-signal); }
+.evc-progress__caption:empty::before { content: "\200b"; }
+.evc-progress__caption[data-lock] { animation: evc-caption-lock 600ms var(--controls-ease) both; }
+@keyframes evc-caption-lock { from { opacity: 0; transform: translateY(6px); filter: blur(3px); } }
 
 /* Instrument size: 6px cells in a 1px-ruled shell. */
 .evc-progress--lg { gap: 3px; padding: 4px; border-radius: var(--ev-radius-badge); background: color-mix(in oklab, var(--ev-fg) 4%, transparent); box-shadow: inset 0 0 0 1px var(--ev-line-strong); }

@@ -1,9 +1,9 @@
-import type { AnchorHTMLAttributes, ButtonHTMLAttributes, MouseEvent, MouseEventHandler, ReactNode } from "react";
+import type { AnchorHTMLAttributes, ButtonHTMLAttributes, MouseEvent, MouseEventHandler, ReactNode, Ref } from "react";
 import { ArrowRight, Chevron, Close, cn } from "../foundation";
 import { useControlsCopy } from "./copy";
 
-type ButtonLike = ButtonHTMLAttributes<HTMLButtonElement> & { href?: undefined };
-type AnchorLike = AnchorHTMLAttributes<HTMLAnchorElement> & { href: string };
+type ButtonLike = ButtonHTMLAttributes<HTMLButtonElement> & { href?: undefined; ref?: Ref<HTMLButtonElement> };
+type AnchorLike = AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; ref?: Ref<HTMLAnchorElement> };
 
 /** Renders an <a> when `href` is set, a <button type="button"> otherwise. Busy keeps focus but ignores clicks. */
 function Pressable({ className, children, busy, onClick, ...rest }: (ButtonLike | AnchorLike) & { busy?: boolean }) {
@@ -69,6 +69,7 @@ export function GhostAction({ children, icon, iconPosition = "start", className,
 }
 
 export type GlassCloseProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+  ref?: Ref<HTMLButtonElement>;
   /** Accessible name; the locale's "Fermer" by default. */
   label?: string;
   /** Show the label next to the cross (desktop topbar `× FERMER`). */
@@ -88,6 +89,7 @@ export function GlassClose({ label, showLabel = false, className, ...rest }: Gla
 }
 
 export type PagerOrbProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+  ref?: Ref<HTMLButtonElement>;
   direction: "prev" | "next";
   /** Accessible name; "Précédent" / "Suivant" by default. Name the target when known. */
   label?: string;

@@ -1,6 +1,8 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { cn, sequenceFillStyle, type SequenceClock } from "../foundation";
 import { useControlsCopy } from "./copy";
+
+export type ProgressCellState = "current" | "done" | "upcoming";
 
 export type SegmentedProgressProps = {
   count: number;
@@ -14,7 +16,7 @@ export type SegmentedProgressProps = {
   isComplete?: (index: number) => boolean;
   /** "sm" 3px cells (sheets, headers), "lg" 6px cells in an instrument shell. */
   size?: "sm" | "lg";
-  /** Static 0–1 charge of the current segment (scroll, upload). */
+  /** Static 0–1 charge of the current segment (scroll, upload). Default 1 (full) when no `clock`. */
   fill?: number;
   /** Timed charge of the current segment, from `useSequenceClock` (pauses with it). */
   clock?: Pick<SequenceClock, "key" | "duration" | "elapsed" | "running" | "done">;
@@ -22,8 +24,12 @@ export type SegmentedProgressProps = {
   onSelect?: (index: number) => void;
   /** Which segments can be jumped to; default all except the current one. */
   canSelect?: (index: number) => boolean;
-  /** Show `labels` above the cells. */
-  captions?: boolean;
+  /**
+   * Captions above the cells (decorative; hidden < 520px). `true` / "all":
+   * every `labels` entry; "complete": a caption locks on when its segment
+   * completes; a function returns a cell's caption, `null` = empty slot.
+   */
+  captions?: boolean | "all" | "complete" | ((index: number, state: ProgressCellState) => ReactNode | null);
   className?: string;
 };
 
@@ -45,6 +51,8 @@ export function SegmentedProgress({
   const copy = useControlsCopy();
   const nameOf = (i: number) => labels?.[i] ?? copy.step(i + 1, count);
   const done = (i: number) => (isComplete ? isComplete(i) : i < current);
+  const captionOf = (i: number, state: ProgressCellState): ReactNode | null =>
+    typeof captions === "function" ? captions(i, state) : captions === "complete" ? (state === "done" ? nameOf(i) : null) : nameOf(i);
 
   return (
     <ol
@@ -54,16 +62,26 @@ export function SegmentedProgress({
     >
       {Array.from({ length: count }, (_, i) => {
         const isCurrent = i === current;
-        const state = isCurrent ? "current" : done(i) ? "done" : "upcoming";
+        const state: ProgressCellState = isCurrent ? "current" : done(i) ? "done" : "upcoming";
         const status = copy.stepStatus[state];
         const fillStyle: CSSProperties | undefined = isCurrent
           ? clock
             ? sequenceFillStyle(clock)
-            : { transform: `scaleX(${Math.max(0, Math.min(1, fill ?? 0))})` }
+            : { transform: `scaleX(${Math.max(0, Math.min(1, fill ?? 1))})` }
           : undefined;
+        const caption = captions ? captionOf(i, state) : null;
         const cell = (
           <>
-            {captions && <span className="ev-t-readout evc-progress__caption" aria-hidden="true">{nameOf(i)}</span>}
+            {captions && (
+              <span
+                key={caption == null ? "empty" : "on"}
+                className="ev-t-readout evc-progress__caption"
+                data-lock={captions === "complete" && caption != null ? "" : undefined}
+                aria-hidden="true"
+              >
+                {caption}
+              </span>
+            )}
             <span className="evc-progress__cell" aria-hidden="true">
               <span key={isCurrent && clock ? `${clock.key}` : undefined} className={cn("evc-progress__fill", isCurrent && clock && "evc-progress__fill--clock")} style={fillStyle} />
             </span>

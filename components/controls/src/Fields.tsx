@@ -1,5 +1,6 @@
 import { useId, type InputHTMLAttributes, type KeyboardEvent, type ReactNode, type Ref, type TextareaHTMLAttributes } from "react";
 import { Check, cn } from "../foundation";
+import { rovingKeyDown } from "./Choices";
 import { useControlsCopy } from "./copy";
 
 type FieldOwn = {
@@ -70,14 +71,16 @@ export type SwitchProps = {
   disabled?: boolean;
   id?: string;
   className?: string;
+  ref?: Ref<HTMLButtonElement>;
 };
 
 /** Switch row (consent, preferences): the whole row toggles; on = accent track, thumb right with a check. */
-export function Switch({ checked, onCheckedChange, label, description, disabled, id, className }: SwitchProps) {
+export function Switch({ checked, onCheckedChange, label, description, disabled, id, className, ref }: SwitchProps) {
   const autoId = useId();
   const base = id ?? `evc-switch-${autoId}`;
   return (
     <button
+      ref={ref}
       type="button"
       role="switch"
       id={base}
@@ -115,19 +118,7 @@ export type SegmentedControlProps = {
 /** Segmented switch between states of one frame (Avant / Après): sliding accent thumb, arrow keys. */
 export function SegmentedControl({ options, value, onChange, label, block = false, className }: SegmentedControlProps) {
   const active = Math.max(0, options.findIndex((o) => o.value === value));
-  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    const n = options.length;
-    const next =
-      e.key === "ArrowRight" || e.key === "ArrowDown" ? (active + 1) % n
-      : e.key === "ArrowLeft" || e.key === "ArrowUp" ? (active - 1 + n) % n
-      : e.key === "Home" ? 0
-      : e.key === "End" ? n - 1
-      : -1;
-    if (next < 0) return;
-    e.preventDefault();
-    onChange(options[next].value);
-    e.currentTarget.querySelectorAll<HTMLButtonElement>("[role=radio]")[next]?.focus();
-  };
+  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => rovingKeyDown(e, (i) => onChange(options[i].value), "[role=radio]");
   return (
     <div
       role="radiogroup"

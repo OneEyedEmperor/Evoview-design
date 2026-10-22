@@ -78,7 +78,7 @@ export function ProofAtlas({
             style={{ ["--i" as string]: 2 }}
             role="radiogroup"
             aria-label={label}
-            onKeyDown={radioKeys(items.length, index, select)}
+            onKeyDown={radioKeys(select)}
           >
             {items.map((it, i) => {
               const selected = i === index;

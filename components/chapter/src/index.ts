@@ -1,3 +1,4 @@
+import "../foundation";
 import "./chapter.css";
 
 export { Chapter, ChapterHeading, ChapterMark, ChapterTicker, chapterNavSections } from "./Chapter";

@@ -16,6 +16,10 @@ per-site file. Rules it encodes: `docs/RULES.md` (§0, §1–6, §9, §10).
   with `ln -sfn ../foundation/src components/<name>/foundation`.
 - A package's `install.sh` calls `components/foundation/install.sh <client>`
   first (idempotent, replaces the folder, prints version changes).
+- Cascade rule: a package's `index.ts` imports `../foundation` (and
+  `../controls` if used) **before** its own CSS, so package rules win over
+  foundation classes at equal specificity (e.g. `.ev-t-body { margin: 0 }`).
+  Never import the package CSS from a component file ahead of these.
 - Package root: `class="ev-root ev-<name>"`. Leaf components that may be used
   outside a root (controls) map the host accent in their own token block
   instead (`--<name>-accent: var(--primary, …)`), per RULES §0.
@@ -70,8 +74,10 @@ suspendBackground(): () => void          // ref-counted; sets <html data-ev-susp
 useSuspendBackground(active: boolean)    // for modals
 useBackgroundSuspended(): boolean
 isBackgroundSuspended(), subscribeSuspension(cb)
-useInViewPause(ref, { rootMargin?, threshold?, ignoreSuspension?, enabled? })
+useInViewPause(ref, { rootMargin?, threshold?, ignoreSuspension?, enabled?, once? })
   → { active, inView, documentVisible, suspended }
+  // once: `active` latches true after the first activation, observing stops (reveal once, lazy load)
+useMediaQuery(query): boolean            // live matchMedia; false on the server
 
 // Timed sequences: only enabled time counts, remainder carried, new key = 0
 useSequenceClock(key, enabled, durationMs, onElapsed)
@@ -101,7 +107,9 @@ poster, every step reachable by click) and obeys the pause model: loops and
 clocks run only while on-screen, the document is visible and no modal
 suspends the page (`useInViewPause` + `useSequenceClock`); ambient CSS loops
 carry `.ev-ambient` and pause under `[data-ev-paused]` or a suspended page
-(modal content opts out with `data-ev-modal`).
+(modal content opts out with `data-ev-modal`); the rule covers the element's
+`::before` / `::after` loops too. A loop on a deeper descendant needs its own
+`.ev-ambient`.
 
 ## Attribution (approved placement)
 

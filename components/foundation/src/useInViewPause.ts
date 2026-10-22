@@ -10,6 +10,8 @@ export type InViewPauseOptions = {
   ignoreSuspension?: boolean;
   /** Extra gate (e.g. "revealed", "hover not holding"). Default true. */
   enabled?: boolean;
+  /** Latch: `active` stays true after the first activation and observation stops (reveal once, lazy load). */
+  once?: boolean;
 };
 
 export type InViewPause = {
@@ -28,15 +30,22 @@ const getVisible = () => document.visibilityState !== "hidden";
 
 /** The pause model: loops and clocks run only while this returns `active`. */
 export function useInViewPause(ref: RefObject<Element | null>, options: InViewPauseOptions = {}): InViewPause {
-  const { rootMargin = "0px", threshold = 0, ignoreSuspension = false, enabled = true } = options;
+  const { rootMargin = "0px", threshold = 0, ignoreSuspension = false, enabled = true, once = false } = options;
   const [inView, setInView] = useState(false);
+  const [latched, setLatched] = useState(false);
   const documentVisible = useSyncExternalStore(subscribeVisibility, getVisible, () => true);
   const suspendedGlobal = useBackgroundSuspended();
   const suspended = !ignoreSuspension && suspendedGlobal;
+  const live = enabled && inView && documentVisible && !suspended;
+  const done = once && latched;
+
+  useEffect(() => {
+    if (once && live) setLatched(true);
+  }, [once, live]);
 
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    if (!el || done) return;
     if (typeof IntersectionObserver === "undefined") {
       setInView(true);
       return;
@@ -50,7 +59,7 @@ export function useInViewPause(ref: RefObject<Element | null>, options: InViewPa
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [ref, rootMargin, threshold]);
+  }, [ref, rootMargin, threshold, done]);
 
-  return { active: enabled && inView && documentVisible && !suspended, inView, documentVisible, suspended };
+  return { active: done || live, inView, documentVisible, suspended };
 }

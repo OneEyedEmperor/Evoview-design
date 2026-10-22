@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, HTMLAttributes, KeyboardEvent, ReactNode } from "react";
+import type { ButtonHTMLAttributes, HTMLAttributes, KeyboardEvent, ReactNode, Ref } from "react";
 import { Check, cn, pad } from "../foundation";
 import { useControlsCopy } from "./copy";
 
@@ -35,6 +35,7 @@ export function StepMark({ index, state = "idle", size = "md", label, className 
 /* ── Single controls ─────────────────────────────────────────────────── */
 
 export type OptionChipProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+  ref?: Ref<HTMLButtonElement>;
   selected?: boolean;
   /** Mark content: a number is padded ("01"); omitted → empty ring. Turns into a check when selected. */
   index?: number | string;
@@ -64,6 +65,7 @@ export function OptionChip({ selected = false, index, size = "md", className, ch
 }
 
 export type OptionRowProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children"> & {
+  ref?: Ref<HTMLButtonElement>;
   selected?: boolean;
   index?: number | string;
   /** Client mark / icon (keeps its own colours), 28px. */
@@ -121,18 +123,27 @@ export type OptionRowsProps = ChoiceGroupBase & (SingleChoice | MultiChoice);
 
 const NAV_KEYS = ["ArrowRight", "ArrowDown", "ArrowLeft", "ArrowUp", "Home", "End"];
 
-/** Radio-group keyboard: arrows / Home / End move focus and select. */
-function rovingKeyDown(e: KeyboardEvent<HTMLElement>, select: (value: string) => void) {
+/**
+ * Roving-tabindex radiogroup keyboard, for the group's `onKeyDown`: arrows
+ * (wrapping) / Home / End move focus to the next enabled item matching
+ * `itemSelector` and call `select(index, item)`; `index` counts every matching
+ * item, disabled ones included, so it maps onto the options array.
+ */
+export function rovingKeyDown(
+  e: KeyboardEvent<HTMLElement>,
+  select: (index: number, item: HTMLElement) => void,
+  itemSelector = "[data-evc-item]",
+): void {
   if (!NAV_KEYS.includes(e.key)) return;
-  const items = Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>("[data-evc-item]:not(:disabled)"));
-  const i = items.indexOf(document.activeElement as HTMLButtonElement);
-  if (i < 0 || items.length === 0) return;
+  const all = Array.from(e.currentTarget.querySelectorAll<HTMLElement>(itemSelector));
+  const items = all.filter((el) => !(el as HTMLButtonElement).disabled);
+  const i = items.indexOf(document.activeElement as HTMLElement);
+  if (i < 0) return;
   e.preventDefault();
   const n = items.length;
   const next = e.key === "Home" ? 0 : e.key === "End" ? n - 1 : e.key === "ArrowRight" || e.key === "ArrowDown" ? (i + 1) % n : (i - 1 + n) % n;
   items[next].focus();
-  const value = items[next].dataset.value;
-  if (value !== undefined) select(value);
+  select(all.indexOf(items[next]), items[next]);
 }
 
 function useChoiceGroup(props: ChoiceGroupBase & (SingleChoice | MultiChoice)) {
@@ -153,7 +164,10 @@ function useChoiceGroup(props: ChoiceGroupBase & (SingleChoice | MultiChoice)) {
   const group = {
     role: props.multiple ? "group" : "radiogroup",
     "aria-label": label,
-    onKeyDown: props.multiple ? undefined : (e: KeyboardEvent<HTMLElement>) => rovingKeyDown(e, choose),
+    onKeyDown: props.multiple ? undefined : (e: KeyboardEvent<HTMLElement>) =>
+          rovingKeyDown(e, (_, item) => {
+            if (item.dataset.value !== undefined) choose(item.dataset.value);
+          }),
   };
   const item = (o: ChoiceOption, i: number) => {
     const selected = isSelected(o.value);

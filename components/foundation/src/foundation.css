@@ -251,7 +251,14 @@
 .ev-attribution svg { display: block; width: 76px; height: auto; filter: brightness(0) invert(var(--ev-logo-invert, 1)); }
 
 /* ── Pause model: ambient loops stop off-screen, on hidden documents and
-   under a modal. Modal content opts out with data-ev-modal. */
+   under a modal. Modal content opts out with data-ev-modal. Animation
+   play-state does not inherit, so pseudo-element loops are covered too. */
 [data-ev-paused] .ev-ambient,
-.ev-ambient[data-ev-paused] { animation-play-state: paused; }
-html[data-ev-suspended] .ev-ambient:not([data-ev-modal] .ev-ambient) { animation-play-state: paused; }
+[data-ev-paused] .ev-ambient::before,
+[data-ev-paused] .ev-ambient::after,
+.ev-ambient[data-ev-paused],
+.ev-ambient[data-ev-paused]::before,
+.ev-ambient[data-ev-paused]::after { animation-play-state: paused; }
+html[data-ev-suspended] .ev-ambient:not([data-ev-modal] .ev-ambient),
+html[data-ev-suspended] .ev-ambient:not([data-ev-modal] .ev-ambient)::before,
+html[data-ev-suspended] .ev-ambient:not([data-ev-modal] .ev-ambient)::after { animation-play-state: paused; }

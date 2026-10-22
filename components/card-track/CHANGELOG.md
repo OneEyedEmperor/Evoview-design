@@ -1,5 +1,11 @@
 # card-track changelog
 
+## 1.0.1
+
+- Requires `foundation` 1.1.0 / `controls` 1.1.0: uses foundation's
+  `useMediaQuery` instead of a private copy; `index.ts` loads `../foundation`
+  and `../controls` before `card-track.css`. No config changes.
+
 ## 1.0.0
 
 - First release on `foundation` 1.0.0 and `controls` 1.0.0 (retry action).

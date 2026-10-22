@@ -75,7 +75,7 @@ export function SelectorStage({
   }, [index]);
 
   const { layers, keyOf } = layersOf(options);
-  const onKeyDown = radioKeys(options.length, index, (i) => select(i, true));
+  const onKeyDown = radioKeys((i) => select(i, true));
 
   const holdOn = (e: PointerEvent) => e.pointerType === "mouse" && setHold(true);
   const holdOff = (e: PointerEvent) => e.pointerType === "mouse" && setHold(false);

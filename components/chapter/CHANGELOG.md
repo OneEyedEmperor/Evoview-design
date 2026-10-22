@@ -1,5 +1,11 @@
 # chapter changelog
 
+## 1.0.1
+
+- Requires `foundation` 1.1.0: removed the local live-marker pause workaround
+  (foundation now pauses `.ev-ambient` pseudo-element loops); `index.ts` loads
+  `../foundation` before `chapter.css`. No config changes.
+
 ## 1.0.0
 
 - First release on `foundation` 1.0.0: `Chapter` (tone light / paper / dark,

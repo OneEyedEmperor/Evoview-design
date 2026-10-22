@@ -33,10 +33,6 @@
   top: -0.06em;
   margin-right: 0.42em;
 }
-/* Pause model for the live marker: foundation 1.0.0 pauses .ev-ambient on the
-   marker element, but the pulse runs on its ::after (play state does not inherit). */
-.ev-chapter[data-ev-paused] .ev-chapter__marker::after,
-html[data-ev-suspended] .ev-chapter:not([data-ev-modal] *) .ev-chapter__marker::after { animation-play-state: paused; }
 
 .ev-chapter__mark {
   position: relative;

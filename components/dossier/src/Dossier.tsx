@@ -64,6 +64,7 @@ function DossierLayer({ config, onClose, initialItemId, initialEntryId, classNam
   const stripRef = useRef<HTMLElement>(null);
   const detailRef = useRef<HTMLDivElement>(null);
   const boardHeadingRef = useRef<HTMLHeadingElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
   const tileRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const returnTileRef = useRef<number | null>(null);
   const prevEntryRef = useRef<number | null>(entryIndex);
@@ -109,7 +110,7 @@ function DossierLayer({ config, onClose, initialItemId, initialEntryId, classNam
   }, []);
 
   useEffect(() => {
-    dialogRef.current?.querySelector<HTMLButtonElement>(".evd-close")?.focus({ preventScroll: true });
+    closeRef.current?.focus({ preventScroll: true });
   }, []);
 
   /* ── History: overview = one entry, detail = a second. Back follows Escape's one-level model. */
@@ -414,7 +415,7 @@ function DossierLayer({ config, onClose, initialItemId, initialEntryId, classNam
                     <span className="evd-header__divider evd-header__divider--end" aria-hidden="true" />
                   </>
                 )}
-                <GlassClose className="evd-close" showLabel label={copy.close} aria-label={copy.closeDossier} onClick={closeAll} />
+                <GlassClose ref={closeRef} className="evd-close" showLabel label={copy.close} aria-label={copy.closeDossier} onClick={closeAll} />
               </div>
             </div>
           </header>

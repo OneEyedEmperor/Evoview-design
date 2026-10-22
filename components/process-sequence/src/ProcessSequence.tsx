@@ -4,7 +4,6 @@ import { cn, pad, SectionMarker, useInViewPause, useMediaReady, useSequenceClock
 import { StepCard, isVideo } from "./StepCard";
 import { StepDossier } from "./StepDossier";
 import type { ProcessSequenceConfig, ProcessStep, StepState } from "./types";
-import "./process-sequence.css";
 
 export type ProcessSequenceProps = {
   config: ProcessSequenceConfig;

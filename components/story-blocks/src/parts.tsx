@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { Fragment, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { cn, useInViewPause, useMediaReady } from "../foundation";
 import { useStoryCopy } from "./copy";
 import type { Lines, StoryMedia } from "./types";
@@ -32,15 +32,11 @@ type RevealProps = {
 export function Reveal({ as: Tag = "div", index = 0, kind = "text", className, style, children }: RevealProps) {
   const ref = useRef<HTMLElement>(null);
   const [armed, setArmed] = useState(false);
-  const [shown, setShown] = useState(false);
-  const { inView, documentVisible } = useInViewPause(ref, { threshold: 0.12, enabled: armed && !shown });
+  const { active: shown } = useInViewPause(ref, { threshold: 0.12, enabled: armed, ignoreSuspension: true, once: true });
 
   useLayoutEffect(() => {
     if (typeof IntersectionObserver !== "undefined") setArmed(true);
   }, []);
-  useEffect(() => {
-    if (armed && inView && documentVisible) setShown(true);
-  }, [armed, inView, documentVisible]);
 
   return (
     <Tag
@@ -70,11 +66,8 @@ type FigureProps = {
 export function StoryFigure({ media, className, eager = false, scrim = false, children }: FigureProps) {
   const copy = useStoryCopy();
   const ref = useRef<HTMLElement>(null);
-  const [near, setNear] = useState(eager);
-  const { inView } = useInViewPause(ref, { rootMargin: "600px 0px", enabled: !near });
-  useEffect(() => {
-    if (inView) setNear(true);
-  }, [inView]);
+  const { active } = useInViewPause(ref, { rootMargin: "600px 0px", enabled: !eager, ignoreSuspension: true, once: true });
+  const near = eager || active;
   const gate = useMediaReady(near, [media.src]);
   const state = gate.ready ? "ready" : gate.failed ? "failed" : gate.slow ? "loading" : "pending";
 

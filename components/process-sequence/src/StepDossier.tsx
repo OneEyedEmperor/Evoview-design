@@ -38,6 +38,7 @@ export function StepDossier({ steps, index, onIndexChange, onClose, copy, cta, a
   const n = steps.length;
   const titleId = useId();
   const shellRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
   const wide = useSyncExternalStore(subscribeWide, getWide, () => true);
   useSuspendBackground(true);
 
@@ -69,7 +70,7 @@ export function StepDossier({ steps, index, onIndexChange, onClose, copy, cta, a
     const html = document.documentElement;
     const prev = html.style.overflow;
     html.style.overflow = "hidden";
-    shellRef.current?.querySelector<HTMLElement>(".psd__close")?.focus({ preventScroll: true });
+    closeRef.current?.focus({ preventScroll: true });
     return () => {
       html.style.overflow = prev;
     };
@@ -188,7 +189,7 @@ export function StepDossier({ steps, index, onIndexChange, onClose, copy, cta, a
                 </span>
               </div>
             )}
-            <GlassClose label={copy.dossier.close} onClick={requestClose} className="psd__close" />
+            <GlassClose ref={closeRef} label={copy.dossier.close} onClick={requestClose} className="psd__close" />
           </div>
 
           <div className="psd__scroll">

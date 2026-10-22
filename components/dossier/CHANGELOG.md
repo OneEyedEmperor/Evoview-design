@@ -1,5 +1,10 @@
 # dossier changelog
 
+## 1.0.1
+
+- Requires `controls` 1.1.0: initial focus goes to the close button through
+  its `ref` (no `querySelector`). No config changes.
+
 ## 1.0.0
 
 - First release on `foundation` 1.0.0 + `controls` 1.0.0: `Dossier` (portal

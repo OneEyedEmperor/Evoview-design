@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode, type RefObject } from "react";
-import { GhostAction } from "../controls";
+import { useRef, type CSSProperties, type KeyboardEvent, type ReactNode, type RefObject } from "react";
+import { GhostAction, rovingKeyDown } from "../controls";
 import { Readout, cn, useInViewPause, useMediaReady, type MediaReady } from "../foundation";
 import { buildSelectorStageConfig, defaultSelectorStageLocale } from "./selector-stage.config";
 import type { SelectorStageCopy, StageMedia, StageVisual, Tone } from "./types";
@@ -11,12 +11,7 @@ export const toneClass = (tone: Tone) => `ev-tone-${tone}`;
 
 /** Latched once true: the element came on screen (reveal) / near the screen (media preload). */
 export function useOnce(ref: RefObject<Element | null>, rootMargin = "0px") {
-  const { inView } = useInViewPause(ref, { rootMargin, ignoreSuspension: true });
-  const [seen, setSeen] = useState(false);
-  useEffect(() => {
-    if (inView) setSeen(true);
-  }, [inView]);
-  return seen || inView;
+  return useInViewPause(ref, { rootMargin, ignoreSuspension: true, once: true }).active;
 }
 
 /** Media gate for every photograph of a chapter: loads once the chapter is near the viewport. */
@@ -25,20 +20,9 @@ export function useStageGate(ref: RefObject<Element | null>, media: (StageMedia 
   return useMediaReady(near, media.map((m) => m?.src));
 }
 
-/** Radio-group keyboard: arrows / Home / End move focus and select. Items carry data-ss-item. */
-export function radioKeys(count: number, current: number, select: (i: number) => void) {
-  return (e: KeyboardEvent<HTMLElement>) => {
-    const next =
-      e.key === "ArrowRight" || e.key === "ArrowDown" ? (current + 1) % count
-      : e.key === "ArrowLeft" || e.key === "ArrowUp" ? (current - 1 + count) % count
-      : e.key === "Home" ? 0
-      : e.key === "End" ? count - 1
-      : -1;
-    if (next < 0) return;
-    e.preventDefault();
-    select(next);
-    e.currentTarget.querySelectorAll<HTMLElement>("[data-ss-item]")[next]?.focus();
-  };
+/** Radio-group keyboard (controls' roving helper): arrows / Home / End move focus and select. Items carry data-ss-item. */
+export function radioKeys(select: (i: number) => void) {
+  return (e: KeyboardEvent<HTMLElement>) => rovingKeyDown(e, (i) => select(i), "[data-ss-item]");
 }
 
 /** Two short display lines, unboxed. */

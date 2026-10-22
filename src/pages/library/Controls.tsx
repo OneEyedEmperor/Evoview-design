@@ -401,7 +401,7 @@ function TimedInstrument({ locale }: { locale: Locale }) {
           {pause.active ? tr(t.running, locale) : `${tr(t.paused, locale)}${why ? ` · ${tr(why, locale)}` : ""}`}
         </Tag>
       </div>
-      <SegmentedProgress size="lg" captions label={tr(t.label, locale)} count={phases.length} current={phase} labels={phases} clock={clock} onSelect={setPhase} canSelect={() => true} />
+      <SegmentedProgress size="lg" captions="complete" label={tr(t.label, locale)} count={phases.length} current={phase} labels={phases} clock={clock} onSelect={setPhase} canSelect={() => true} />
       <p className="ev-t-compact ctl-instrument__hint">{tr(t.hint, locale)}</p>
     </div>
   );
