@@ -1,67 +1,44 @@
 import { useEffect, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
 import { DayPicker } from "react-day-picker";
 import { addDays, format, isBefore, startOfDay } from "date-fns";
-import { CalendarDays, CheckCircle, ChevronLeft, ChevronRight, Clock, Sparkles, UserRound, Users } from "lucide-react";
-import { EvoviewSignature } from "./EvoviewSignature";
-import type { ReservationConfig, ReservationIcon, ReservationRequest, ReservationWindow } from "./types";
+import EvoviewLogo from "./brand/EvoviewLogo";
+import ringEyeUrl from "./brand/eye-4-ring.svg";
+import { ArrowLeft, ArrowRight, Check, Chevron, EyeGlyph, Hud } from "./marks";
+import type { ReservationConfig, ReservationRequest, ReservationWindow } from "./types";
 import "./reservation.css";
 
+/* Protected Evoview attribution: the header wordmark links here. Not a client setting. */
+export const EVOVIEW_URL = "https://evoview.be/";
+
+const STEP_KEYS = ["experience", "date", "guests", "time", "contact"] as const;
+const TOTAL = STEP_KEYS.length;
+const ADVANCE_MS = 340;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+const pad = (n: number) => String(n).padStart(2, "0");
 const toMinutes = (time: string) => {
   const [h, m] = time.split(":").map(Number);
   return h * 60 + m;
 };
-
-const formatTime = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
-
+const formatTime = (m: number) => `${pad(Math.floor(m / 60))}:${pad(m % 60)}`;
 const range = (from: number, to: number, step: number) => {
   const out: number[] = [];
   for (let m = from; m <= to; m += step) out.push(m);
   return out;
 };
-
-const startTimesFor = (windows: ReservationWindow[], step: number) =>
-  windows.flatMap((w) => range(toMinutes(w.open), toMinutes(w.close) - step, step)).map(formatTime);
-
+const slotsOf = (w: ReservationWindow, step: number) => range(toMinutes(w.open), toMinutes(w.close) - step, step).map(formatTime);
 const endTimesFor = (windows: ReservationWindow[], startTime: string, step: number) => {
   const start = toMinutes(startTime);
   const window = windows.find((w) => start >= toMinutes(w.open) && start < toMinutes(w.close));
   return window ? range(start + step, toMinutes(window.close), step).map(formatTime) : [];
 };
 
-function Step({ number, title, icon: Icon, children }: { number: number; title: string; icon: ReservationIcon; children: ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (number > 1) ref.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }, [number]);
-
+function Pills<T extends string | number>({ items, selected, onSelect, render, label }: { items: T[]; selected: T | null; onSelect: (v: T) => void; render?: (v: T) => ReactNode; label: string }) {
   return (
-    <div ref={ref} className="evo-resa__step">
-      <div className="evo-resa__step-head">
-        <span className="evo-resa__step-num">{number}</span>
-        <h3 className="evo-resa__step-title">
-          <Icon className="evo-resa__step-icon" />
-          {title}
-        </h3>
-      </div>
-      <div className="evo-resa__step-body">{children}</div>
-    </div>
-  );
-}
-
-function ChoiceList<T extends string | number>({ items, selected, onSelect, wide }: { items: T[]; selected: T | null; onSelect: (v: T) => void; wide?: boolean }) {
-  return (
-    <div className="evo-resa__choices">
+    <div className="evo-resa-pills" role="group" aria-label={label}>
       {items.map((item) => (
-        <button
-          key={item}
-          type="button"
-          aria-pressed={selected === item}
-          onClick={() => onSelect(item)}
-          className={`evo-resa__chip${wide ? " evo-resa__chip--wide" : ""}`}
-        >
-          {item}
+        <button key={item} type="button" className="evo-resa-pill" aria-pressed={selected === item} onClick={() => onSelect(item)}>
+          {render ? render(item) : item}
         </button>
       ))}
     </div>
@@ -69,12 +46,18 @@ function ChoiceList<T extends string | number>({ items, selected, onSelect, wide
 }
 
 export function Reservation({ config }: { config: ReservationConfig }) {
-  const { copy: c, experiences, windows, guests: guestRange, submit } = config;
-  const step = config.slotMinutes ?? 30;
+  const { copy: c, experiences, windows, guests: guestRange, submit, venue } = config;
+  const slot = config.slotMinutes ?? 30;
 
   const onMount = config.onMount;
   useEffect(() => onMount?.(), [onMount]);
 
+  const rootRef = useRef<HTMLDivElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const advanceTimer = useRef<number | undefined>(undefined);
+  const interacted = useRef(false);
+
+  const [step, setStep] = useState(0);
   const [experience, setExperience] = useState<string | null>(null);
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [guests, setGuests] = useState<number | null>(null);
@@ -86,30 +69,81 @@ export function Reservation({ config }: { config: ReservationConfig }) {
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const [blocked, setBlocked] = useState(false);
+  const [formError, setFormError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const current = experiences.find((e) => e.value === experience);
   const requiresEndTime = !!current?.requiresEndTime;
   const dayWindows = date ? windows(date) : [];
-  const startTimes = startTimesFor(dayWindows, step);
-  const endTimes = date && startTime ? endTimesFor(dayWindows, startTime, step) : [];
+  const endTimes = date && startTime ? endTimesFor(dayWindows, startTime, slot) : [];
+
+  const answered = [
+    !!experience,
+    !!date,
+    guests !== null,
+    !!startTime && (!requiresEndTime || !!endTime),
+    !!name.trim() && !!phone.trim() && EMAIL_RE.test(email.trim()),
+  ];
+  const firstOpen = answered.indexOf(false) === -1 ? TOTAL - 1 : answered.indexOf(false);
+  // The contact step only counts once the request is sent.
+  const doneCount = confirmed ? TOTAL : answered.slice(0, TOTAL - 1).filter(Boolean).length;
+  const percent = Math.round((doneCount / TOTAL) * 100);
 
   const today = startOfDay(new Date());
   const lastDay = config.maxDaysAhead ? addDays(today, config.maxDaysAhead) : undefined;
   const isDisabled = (d: Date) => isBefore(d, today) || (lastDay ? isBefore(lastDay, d) : false) || windows(d).length === 0;
 
+  useEffect(() => () => window.clearTimeout(advanceTimer.current), []);
+
+  // After a user-driven step change: bring the chassis top into view and move focus to the question.
+  useEffect(() => {
+    if (!interacted.current) return;
+    const root = rootRef.current;
+    if (root) {
+      const top = root.getBoundingClientRect().top;
+      if (top < 0 || top > window.innerHeight * 0.6) {
+        const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        window.scrollTo({ top: top + window.scrollY - 96, behavior: reduce ? "auto" : "smooth" });
+      }
+    }
+    headingRef.current?.focus({ preventScroll: true });
+  }, [step, confirmed]);
+
+  const goTo = (i: number) => {
+    window.clearTimeout(advanceTimer.current);
+    interacted.current = true;
+    setBlocked(false);
+    setStep(Math.max(0, Math.min(i, TOTAL - 1)));
+  };
+  const advanceSoon = (from: number) => {
+    window.clearTimeout(advanceTimer.current);
+    advanceTimer.current = window.setTimeout(() => goTo(from + 1), ADVANCE_MS);
+  };
+
   const selectExperience = (value: string) => {
     setExperience(value);
     setEndTime("");
+    advanceSoon(0);
   };
   const selectDate = (d: Date | undefined) => {
     setDate(d);
     setStartTime("");
     setEndTime("");
+    if (d) advanceSoon(1);
   };
-  const selectStartTime = (time: string) => {
+  const selectGuests = (n: number) => {
+    setGuests(n);
+    advanceSoon(2);
+  };
+  const selectStart = (time: string) => {
     setStartTime(time);
     setEndTime("");
+    if (!requiresEndTime) advanceSoon(3);
+  };
+  const selectEnd = (time: string) => {
+    setEndTime(time);
+    advanceSoon(3);
   };
 
   const validate = () => {
@@ -123,14 +157,20 @@ export function Reservation({ config }: { config: ReservationConfig }) {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!experience || !date || guests === null || !startTime || (requiresEndTime && !endTime)) return;
-    const errs = validate();
-    if (Object.keys(errs).length > 0) {
-      setFieldErrors(errs);
+    if (step < TOTAL - 1) {
+      if (answered[step]) goTo(step + 1);
+      else setBlocked(true);
       return;
     }
-    setFieldErrors({});
+    if (!experience || !date || guests === null || !startTime || (requiresEndTime && !endTime)) {
+      goTo(firstOpen);
+      return;
+    }
+    const errs = validate();
+    setFieldErrors(errs);
+    if (Object.keys(errs).length > 0) return;
     setSubmitting(true);
+    setFormError("");
 
     const trimmedNotes = notes.trim();
     const request: ReservationRequest = {
@@ -155,8 +195,13 @@ export function Reservation({ config }: { config: ReservationConfig }) {
     setSubmitting(false);
     config.onResult?.(result, request);
 
-    if (result.ok) setConfirmed(true);
-    else if (result.fieldErrors) setFieldErrors(result.fieldErrors as Record<string, string>);
+    if (result.ok) {
+      interacted.current = true;
+      setConfirmed(true);
+    } else {
+      if (result.fieldErrors) setFieldErrors(result.fieldErrors as Record<string, string>);
+      setFormError(result.error || c.errorGeneric);
+    }
   };
 
   const resetForm = () => {
@@ -171,142 +216,287 @@ export function Reservation({ config }: { config: ReservationConfig }) {
     setNotes("");
     setConfirmed(false);
     setFieldErrors({});
+    setFormError("");
+    goTo(0);
   };
+
+  const guestLabel = (n: number) => `${n} ${n > 1 ? c.guestsUnit.many : c.guestsUnit.one}`;
+  const values: (string | null)[] = [
+    current?.label ?? null,
+    date ? format(date, "EEEE d MMMM", { locale: config.dateLocale }) : null,
+    guests !== null ? guestLabel(guests) : null,
+    startTime ? (endTime ? `${startTime} → ${endTime}` : startTime) : null,
+    name.trim() || null,
+  ];
 
   const style = {
     ...(config.accent ? { "--resa-accent": config.accent } : {}),
-    ...(config.accentForeground ? { "--resa-accent-fg": config.accentForeground } : {}),
     ...config.vars,
     ...config.style,
   } as CSSProperties;
 
-  const field = (id: string, label: ReactNode, input: ReactNode, error?: string) => (
-    <div className="evo-resa__field">
-      <label htmlFor={id} className="evo-resa__label">{label}</label>
-      {input}
-      {error && <p id={`${id}-error`} className="evo-resa__error">{error}</p>}
+  const stepCopy = c.steps[STEP_KEYS[step]];
+  const canVisit = (i: number) => !confirmed && i <= firstOpen;
+
+  const rail = (
+    <div className="evo-resa-rail">
+      <div className="evo-resa-rail__status">
+        <span className="evo-resa-readout evo-resa-rail__legend">
+          <b>{confirmed ? c.statusSent : c.dossier}</b>
+          <span>{pad(doneCount)} / {pad(TOTAL)} {c.stepsWord}</span>
+          {!confirmed && TOTAL - doneCount > 1 && <span>{TOTAL - doneCount} {c.remainingWord}</span>}
+        </span>
+        <span className="evo-resa-rail__percent">{percent}<small>%</small></span>
+      </div>
+      <div className="evo-resa-rail__segments">
+        {STEP_KEYS.map((key, i) => {
+          const done = confirmed || (answered[i] && i < TOTAL - 1);
+          return (
+            <button
+              key={key}
+              type="button"
+              tabIndex={-1}
+              aria-hidden="true"
+              disabled={!canVisit(i)}
+              onClick={() => goTo(i)}
+              className={`${done ? "is-done" : ""}${i === step && !confirmed ? " is-current" : ""}`}
+            >
+              <span className="evo-resa-rail__bar"><b /></span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 
-  return (
-    <div className={`evo-resa${config.className ? ` ${config.className}` : ""}`} style={style}>
-      <div className="evo-resa__card">
-        {confirmed ? (
-          <div className="evo-resa__done" role="status">
-            <CheckCircle className="evo-resa__done-icon" />
-            <h3 className="evo-resa__done-title">{c.confirmationTitle}</h3>
-            <p className="evo-resa__done-text">{c.confirmationMessage}</p>
-            <button type="button" className="evo-resa__ghost" onClick={resetForm}>{c.submitAnother}</button>
-          </div>
+  const ticket = (compact = false) => (
+    <div className={`evo-resa-ticket${compact ? " evo-resa-ticket--compact" : ""}`} data-sent={confirmed || undefined}>
+      <span className="evo-resa-ticket__phosphor" aria-hidden="true" />
+      <span className="evo-resa-ticket__scan" aria-hidden="true" />
+      <Hud />
+      <div className="evo-resa-ticket__head">
+        <span className="evo-resa-readout"><i className="evo-resa-rec" aria-hidden="true" />{confirmed ? c.statusSent : c.statusDraft}</span>
+        <span className="evo-resa-readout evo-resa-ticket__venue">{venue.name}{venue.place ? ` · ${venue.place}` : ""}</span>
+      </div>
+      <div className={`evo-resa-ticket__date${date ? "" : " is-empty"}`} aria-hidden={!date}>
+        {date ? (
+          <>
+            <span>{format(date, "EEE", { locale: config.dateLocale }).replace(".", "")}</span>
+            <strong>{format(date, "d")}</strong>
+            <span>{format(date, "MMM yyyy", { locale: config.dateLocale }).replace(".", "")}</span>
+          </>
         ) : (
-          <form onSubmit={handleSubmit} className="evo-resa__form" noValidate>
-            <Step number={1} title={c.experienceLabel} icon={Sparkles}>
-              <div role="radiogroup" className="evo-resa__experiences">
-                {experiences.map(({ value, label, desc, icon: Icon }) => (
-                  <label key={value} className="evo-resa__experience" data-selected={experience === value || undefined}>
-                    <input type="radio" name="experience" value={value} checked={experience === value} onChange={() => selectExperience(value)} className="evo-resa__sr" />
-                    <Icon className="evo-resa__experience-icon" />
-                    <span className="evo-resa__experience-label">{label}</span>
-                    <span className="evo-resa__experience-desc">{desc}</span>
-                  </label>
-                ))}
+          <>
+            <span>···</span>
+            <strong>00</strong>
+            <span>{c.steps.date.short}</span>
+          </>
+        )}
+      </div>
+      <dl className="evo-resa-ticket__rows">
+        {([0, 2, 3, 4] as const).map((i) => (
+          <div key={i} data-filled={!!values[i] || undefined}>
+            <dt className="evo-resa-readout">{c.steps[STEP_KEYS[i]].short}</dt>
+            <dd>{values[i] ?? "—"}</dd>
+          </div>
+        ))}
+      </dl>
+      <EvoviewLogo className="evo-resa-ticket__mark" alt="" />
+    </div>
+  );
+
+  let body: ReactNode;
+  if (step === 0) {
+    body = (
+      <div className="evo-resa-choices" role="group" aria-label={stepCopy.short}>
+        {experiences.map((exp, i) => {
+          const Icon = exp.icon;
+          return (
+            <button key={exp.value} type="button" className="evo-resa-choice" aria-pressed={experience === exp.value} onClick={() => selectExperience(exp.value)}>
+              <span className="evo-resa-readout evo-resa-choice__index">{pad(i + 1)}</span>
+              {Icon ? <Icon className="evo-resa-choice__eye" /> : <EyeGlyph className="evo-resa-choice__eye" variant={i === experiences.length - 1 && i > 0 ? 4 : i} />}
+              <span className="evo-resa-choice__label">{exp.label}</span>
+              <span className="evo-resa-readout evo-resa-choice__hint">{exp.desc}</span>
+              <span className="evo-resa-choice__check" aria-hidden="true"><Check /></span>
+            </button>
+          );
+        })}
+      </div>
+    );
+  } else if (step === 1) {
+    body = (
+      <div className="evo-resa-calendar-wrap">
+        <DayPicker
+          mode="single"
+          selected={date}
+          onSelect={selectDate}
+          disabled={isDisabled}
+          defaultMonth={date}
+          showOutsideDays
+          locale={config.dateLocale}
+          className="evo-resa-calendar"
+          classNames={{
+            months: "evo-cal__months",
+            month: "evo-cal__month",
+            nav: "evo-cal__nav",
+            button_previous: "evo-cal__navbtn",
+            button_next: "evo-cal__navbtn",
+            month_caption: "evo-cal__caption",
+            caption_label: "evo-cal__caption-label",
+            month_grid: "evo-cal__grid",
+            weekdays: "evo-cal__weekdays",
+            weekday: "evo-cal__weekday",
+            week: "evo-cal__week",
+            day: "evo-cal__day",
+            day_button: "evo-cal__daybtn",
+            selected: "is-selected",
+            today: "is-today",
+            outside: "is-outside",
+            disabled: "is-disabled",
+            hidden: "is-hidden",
+          }}
+          components={{ Chevron: ({ orientation }) => <Chevron className="evo-cal__chevron" dir={orientation === "left" ? "left" : "right"} /> }}
+        />
+        {c.closedNote && <p className="evo-resa-readout evo-resa-note"><i className="evo-resa-rec" aria-hidden="true" />{c.closedNote}</p>}
+      </div>
+    );
+  } else if (step === 2) {
+    const counts = Array.from({ length: guestRange.max - guestRange.min + 1 }, (_, i) => i + guestRange.min);
+    body = <Pills label={stepCopy.short} items={counts} selected={guests} onSelect={selectGuests} render={(n) => <><span className="evo-resa-pill__mark">{pad(n)}</span>{n > 1 ? c.guestsUnit.many : c.guestsUnit.one}</>} />;
+  } else if (step === 3) {
+    body = (
+      <div className="evo-resa-times">
+        {dayWindows.map((w, wi) => (
+          <div key={wi} className="evo-resa-group">
+            <span className="evo-resa-readout evo-resa-group__title">{w.label ?? c.startTimeLabel}<span>{w.open} — {w.close}</span></span>
+            <Pills label={w.label ?? c.startTimeLabel} items={slotsOf(w, slot)} selected={startTime || null} onSelect={selectStart} />
+          </div>
+        ))}
+        {startTime && requiresEndTime && (
+          <div className="evo-resa-group evo-resa-reveal">
+            <span className="evo-resa-readout evo-resa-group__title">{c.endTimeLabel}<span>{startTime} →</span></span>
+            <Pills label={c.endTimeLabel} items={endTimes} selected={endTime || null} onSelect={selectEnd} />
+          </div>
+        )}
+        {current?.timeNote && <p className="evo-resa-readout evo-resa-note"><i className="evo-resa-rec" aria-hidden="true" />{current.timeNote}</p>}
+      </div>
+    );
+  } else {
+    const field = (id: string, key: string, label: string, input: ReactNode, wide = false, optional = false) => (
+      <div className={`evo-resa-field${wide ? " is-wide" : ""}`}>
+        <label htmlFor={id} className="evo-resa-readout">
+          {label} {optional ? <small>({c.optional})</small> : "*"}
+        </label>
+        {input}
+        {fieldErrors[key] && <p id={`${id}-error`} className="evo-resa-field__error">{fieldErrors[key]}</p>}
+      </div>
+    );
+    const aria = (key: string, id: string) => ({ "aria-invalid": !!fieldErrors[key] || undefined, "aria-describedby": fieldErrors[key] ? `${id}-error` : undefined });
+    body = (
+      <>
+        <div className="evo-resa-inline-ticket">{ticket(true)}</div>
+        <div className="evo-resa-fields">
+          {field("evo-resa-name", "name", c.nameLabel, <input id="evo-resa-name" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} {...aria("name", "evo-resa-name")} />)}
+          {field("evo-resa-phone", "phone", c.phoneLabel, <input id="evo-resa-phone" type="tel" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} {...aria("phone", "evo-resa-phone")} />)}
+          {field("evo-resa-email", "email", c.emailLabel, <input id="evo-resa-email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} {...aria("email", "evo-resa-email")} />, true)}
+          {field("evo-resa-notes", "notes", c.notesLabel, <textarea id="evo-resa-notes" value={notes} placeholder={c.notesPlaceholder} onChange={(e) => setNotes(e.target.value)} />, true, true)}
+        </div>
+      </>
+    );
+  }
+
+  const last = step === TOTAL - 1;
+
+  return (
+    <div ref={rootRef} className={`evo-resa${config.className ? ` ${config.className}` : ""}`} style={style}>
+      <div className="evo-resa__chassis">
+        <span className="evo-resa__grain" aria-hidden="true" />
+
+        <header className="evo-resa-top">
+          <a className="evo-resa-top__brand" href={EVOVIEW_URL} target="_blank" rel="noopener" aria-label={c.signatureAriaLabel}>
+            <EvoviewLogo className="evo-resa-top__logo" alt="" />
+          </a>
+          <span className="evo-resa-top__divider" aria-hidden="true" />
+          <span className="evo-resa-top__meta">
+            <span className="evo-resa-readout evo-resa-top__kicker">{c.kicker} · {venue.name}</span>
+            <span className="evo-resa-readout evo-resa-top__title" aria-live="polite">
+              {confirmed ? c.statusSent : `${pad(step + 1)} / ${pad(TOTAL)} · ${stepCopy.short}`}
+            </span>
+          </span>
+          <span className="evo-resa-top__progress" aria-hidden="true">
+            {STEP_KEYS.map((key, i) => (
+              <i key={key} className={confirmed || i < step ? "is-done" : i === step ? "is-current" : ""} />
+            ))}
+          </span>
+        </header>
+
+        <div className="evo-resa__grid">
+          <form className="evo-resa-stage" onSubmit={handleSubmit} noValidate>
+            <span className="evo-resa-stage__light" aria-hidden="true" />
+            {confirmed ? (
+              <div className="evo-resa-scroll evo-resa-done" key="done">
+                <img className="evo-resa-done__emblem" src={ringEyeUrl} alt="" width={76} height={76} draggable={false} />
+                <span className="evo-resa-readout evo-resa-done__kicker">{c.confirmationKicker}</span>
+                <h3 ref={headingRef} tabIndex={-1} className="evo-resa-done__title">{c.confirmationTitle}</h3>
+                <p className="evo-resa-done__text">{c.confirmationMessage}</p>
+                <div className="evo-resa-inline-ticket">{ticket(true)}</div>
+                <button type="button" className="evo-resa-ghost evo-resa-readout" onClick={resetForm}>
+                  <ArrowLeft className="evo-resa-ghost__icon" />
+                  {c.submitAnother}
+                </button>
               </div>
-            </Step>
-
-            {experience && (
-              <Step number={2} title={c.dateLabel} icon={CalendarDays}>
-                <DayPicker
-                  mode="single"
-                  selected={date}
-                  onSelect={selectDate}
-                  disabled={isDisabled}
-                  showOutsideDays
-                  locale={config.dateLocale}
-                  className="evo-resa__calendar"
-                  classNames={{
-                    months: "evo-cal__months",
-                    month: "evo-cal__month",
-                    nav: "evo-cal__nav",
-                    button_previous: "evo-cal__navbtn",
-                    button_next: "evo-cal__navbtn",
-                    month_caption: "evo-cal__caption",
-                    caption_label: "evo-cal__caption-label",
-                    month_grid: "evo-cal__grid",
-                    weekdays: "evo-cal__weekdays",
-                    weekday: "evo-cal__weekday",
-                    week: "evo-cal__week",
-                    day: "evo-cal__day",
-                    day_button: "evo-cal__daybtn",
-                    selected: "is-selected",
-                    today: "is-today",
-                    outside: "is-outside",
-                    disabled: "is-disabled",
-                    hidden: "is-hidden",
-                  }}
-                  components={{
-                    Chevron: ({ orientation }) => (orientation === "left" ? <ChevronLeft className="evo-cal__chevron" /> : <ChevronRight className="evo-cal__chevron" />),
-                  }}
-                />
-                {c.closedNote && <p className="evo-resa__hint">{c.closedNote}</p>}
-              </Step>
-            )}
-
-            {experience && date && (
-              <Step number={3} title={c.guestsLabel} icon={Users}>
-                <ChoiceList
-                  items={Array.from({ length: guestRange.max - guestRange.min + 1 }, (_, i) => i + guestRange.min)}
-                  selected={guests}
-                  onSelect={setGuests}
-                />
-              </Step>
-            )}
-
-            {experience && date && guests !== null && (
-              <Step number={4} title={c.timeLabel} icon={Clock}>
-                <div className="evo-resa__stack">
-                  <div>
-                    <span className="evo-resa__sublabel">{c.startTimeLabel}</span>
-                    <ChoiceList items={startTimes} selected={startTime} onSelect={selectStartTime} wide />
+            ) : (
+              <>
+                <div className="evo-resa-scroll" key={step}>
+                  <div className="evo-resa-question">
+                    <h3 ref={headingRef} tabIndex={-1}>
+                      <span className="evo-resa-mark">{pad(step + 1)}</span>
+                      {stepCopy.title}
+                    </h3>
+                    <p>{stepCopy.hint}</p>
                   </div>
-                  {startTime && requiresEndTime && (
-                    <div className="evo-resa__reveal">
-                      <span className="evo-resa__sublabel">{c.endTimeLabel}</span>
-                      <ChoiceList items={endTimes} selected={endTime} onSelect={setEndTime} wide />
-                    </div>
-                  )}
-                  {current?.timeNote && <p className="evo-resa__note">{current.timeNote}</p>}
+                  {body}
                 </div>
-              </Step>
-            )}
-
-            {experience && date && guests !== null && startTime && (!requiresEndTime || endTime) && (
-              <Step number={5} title={c.contactLabel} icon={UserRound}>
-                <div className="evo-resa__contact">
-                  <div className="evo-resa__fields">
-                    {field("evo-resa-name", <>{c.nameLabel} *</>,
-                      <input id="evo-resa-name" className="evo-resa__input" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} aria-invalid={!!fieldErrors.name || undefined} aria-describedby={fieldErrors.name ? "evo-resa-name-error" : undefined} />,
-                      fieldErrors.name)}
-                    {field("evo-resa-phone", <>{c.phoneLabel} *</>,
-                      <input id="evo-resa-phone" type="tel" className="evo-resa__input" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} aria-invalid={!!fieldErrors.phone || undefined} aria-describedby={fieldErrors.phone ? "evo-resa-phone-error" : undefined} />,
-                      fieldErrors.phone)}
-                    {field("evo-resa-email", <>{c.emailLabel} *</>,
-                      <input id="evo-resa-email" type="email" className="evo-resa__input" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} aria-invalid={!!fieldErrors.email || undefined} aria-describedby={fieldErrors.email ? "evo-resa-email-error" : undefined} />,
-                      fieldErrors.email)}
-                    {field("evo-resa-notes", <>{c.notesLabel} <span className="evo-resa__muted">({c.notesOptional})</span></>,
-                      <textarea id="evo-resa-notes" className="evo-resa__input evo-resa__textarea" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={c.notesPlaceholder} />,
-                      fieldErrors.notes)}
-                  </div>
-                  <div className="evo-resa__actions">
-                    <button type="submit" className="evo-resa__submit" disabled={submitting}>
-                      {submitting ? c.submitting : c.submit}
-                    </button>
-                  </div>
+                <div className="evo-resa-bar">
+                  <button type="button" className="evo-resa-ghost evo-resa-readout" onClick={() => goTo(step - 1)} disabled={step === 0}>
+                    <ArrowLeft className="evo-resa-ghost__icon" />
+                    {c.back}
+                  </button>
+                  {(blocked || formError) && <p className="evo-resa-bar__error" role="alert">{formError || c.chooseToContinue}</p>}
+                  <button type="submit" className="evo-resa-primary" disabled={submitting} aria-busy={submitting || undefined}>
+                    {last ? (submitting ? c.submitting : c.submit) : c.next}
+                    <span className="evo-resa-primary__orb"><ArrowRight /></span>
+                  </button>
                 </div>
-              </Step>
+              </>
             )}
           </form>
-        )}
-        <EvoviewSignature lead={c.signatureLead} ariaLabel={c.signatureAriaLabel} />
+
+          <aside className="evo-resa-dossier" aria-label={c.dossier}>
+            <span className="evo-resa-dossier__light" aria-hidden="true" />
+            <div className="evo-resa-monitor">
+              {rail}
+              {ticket()}
+            </div>
+            <ol className="evo-resa-journey">
+              {STEP_KEYS.map((key, i) => {
+                const done = confirmed || (answered[i] && i !== step);
+                const isCurrent = i === step && !confirmed;
+                return (
+                  <li key={key} className={`${done ? "is-done" : ""}${isCurrent ? " is-current" : ""}`}>
+                    <button type="button" disabled={!canVisit(i) || isCurrent} onClick={() => goTo(i)}>
+                      <span className="evo-resa-journey__mark">{done ? <Check /> : pad(i + 1)}</span>
+                      <span className="evo-resa-readout evo-resa-journey__label">{c.steps[key].short}</span>
+                      <span className="evo-resa-journey__value">
+                        {values[i] ?? (isCurrent ? <span className="evo-resa-journey__pending"><i />{c.pending}</span> : "—")}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ol>
+          </aside>
+        </div>
       </div>
     </div>
   );

@@ -1,292 +1,623 @@
-/* Evoview reservation. Everything is scoped under .evo-resa. The token block
-   maps the host's (shadcn / Tailwind v4) tokens with fallbacks; brand values
-   go through config.accent / config.vars, not edits here. */
+/* Evoview reservation — the candidature chassis of evoview.be applied to a
+   booking request. Everything is scoped under .evo-resa and self-contained
+   (fonts included). Brand values are fixed; a client changes only
+   config.accent / config.vars. */
+
+@font-face { font-family: "Evoview Montserrat"; font-style: normal; font-weight: 300 900; font-display: swap; src: url("./brand/fonts/montserrat-latin-ext.woff2") format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Evoview Montserrat"; font-style: normal; font-weight: 300 900; font-display: swap; src: url("./brand/fonts/montserrat-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Evoview Satoshi"; font-style: normal; font-weight: 700; font-display: swap; src: url("./brand/fonts/satoshi-700.woff2") format("woff2"); }
+@font-face { font-family: "Evoview Grotesk"; font-style: normal; font-weight: 100 900; font-display: swap; src: url("./brand/fonts/overused-grotesk-vf.woff2") format("woff2"); }
+
 .evo-resa {
-  --resa-accent: var(--primary, #3f51b5);
-  --resa-accent-fg: var(--primary-foreground, #fff);
-  --resa-fg: var(--foreground, #fafafa);
-  --resa-muted: var(--muted-foreground, #9a9a9a);
-  --resa-error: #f87171;
-  --resa-success: #22c55e;
-  --resa-font-heading: var(--font-heading, inherit);
-  --resa-u: var(--spacing, 0.25rem);
-  --resa-text-xs: var(--text-xs, 0.75rem);
-  --resa-text-sm: var(--text-sm, 0.875rem);
-  --resa-text-base: var(--text-base, 1rem);
-  --resa-text-2xl: var(--text-2xl, 1.5rem);
-  --resa-text-3xl: var(--text-3xl, 1.875rem);
-  --resa-radius-card: var(--radius-3xl, 1.5rem);
-  --resa-radius-tile: var(--radius-xl, 0.75rem);
-  --resa-radius-chip: var(--radius-lg, 0.5rem);
-  --resa-radius-input: var(--radius-md, 0.375rem);
-  --resa-surface: rgb(255 255 255 / 5%);
-  --resa-line: rgb(255 255 255 / 10%);
-  --resa-card-blur: 8px;
+  --resa-accent: #818cf8;
+  --resa-iris: #3f51b5;
+  --resa-ink: #eeeee9;
+  --resa-muted: rgba(238, 238, 233, 0.56);
+  --resa-faint: rgba(238, 238, 233, 0.34);
+  --resa-line: rgba(255, 255, 255, 0.09);
+  --resa-line-strong: rgba(255, 255, 255, 0.2);
+  --resa-tile: #141416;
+  --resa-error: #f3a6a6;
+  --resa-radius: 1.5rem;
+  --resa-radius-lg: 1rem;
+  --resa-radius-md: 0.75rem;
+  --resa-gutter: clamp(20px, 4.2cqi, 52px);
+  --resa-ease: cubic-bezier(0.23, 1, 0.32, 1);
+  --resa-font-body: "Evoview Montserrat", "Montserrat", system-ui, sans-serif;
+  --resa-font-label: "Evoview Satoshi", "Satoshi", var(--resa-font-body);
+  --resa-font-display: "Evoview Grotesk", "Overused Grotesk", var(--resa-font-body);
 
-  /* Evoview signature: fixed brand values, not client tokens. */
-  --resa-evo-indigo: #3f51b5;
-  --resa-evo-iris: #fff;
-
-  position: relative;
-  color: var(--resa-fg);
-  /* Room for the half of the seal that hangs below the card. */
-  padding-bottom: 1.375rem;
+  container-type: inline-size;
+  color: var(--resa-ink);
+  font-family: var(--resa-font-body);
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: left;
+  -webkit-font-smoothing: antialiased;
 }
+.evo-resa *, .evo-resa *::before, .evo-resa *::after { box-sizing: border-box; }
+:where(.evo-resa) :where(button, input, textarea) { margin: 0; font: inherit; color: inherit; letter-spacing: inherit; }
+:where(.evo-resa) :where(button) { padding: 0; border: 0; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+:where(.evo-resa) :where(button:disabled) { cursor: default; }
+:where(.evo-resa) :where(h3, p, dl, dd, ol) { margin: 0; padding: 0; }
 
-.evo-resa *,
-.evo-resa *::before,
-.evo-resa *::after { box-sizing: border-box; }
-
-.evo-resa button,
-.evo-resa input,
-.evo-resa textarea { font: inherit; color: inherit; }
-
-.evo-resa__card {
-  position: relative;
-  border: 1px solid var(--resa-line);
-  border-radius: var(--resa-radius-card);
-  background: var(--resa-surface);
-  -webkit-backdrop-filter: blur(var(--resa-card-blur));
-  backdrop-filter: blur(var(--resa-card-blur));
-  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 25%);
-  padding: calc(var(--resa-u) * 6) calc(var(--resa-u) * 6) calc(var(--resa-u) * 6 + 1.25rem);
+/* Readout: the Satoshi uppercase micro-label of every Evoview screen. */
+.evo-resa-readout {
+  font-family: var(--resa-font-label);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  line-height: 1.25;
+  text-transform: uppercase;
 }
-@media (min-width: 768px) {
-  .evo-resa__card { padding: calc(var(--resa-u) * 10) calc(var(--resa-u) * 10) calc(var(--resa-u) * 10 + 1rem); }
-}
-
-.evo-resa__sr {
-  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
-  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
-}
-
-/* Steps */
-.evo-resa__form { display: flex; flex-direction: column; gap: calc(var(--resa-u) * 10); margin: 0; }
-.evo-resa__step,
-.evo-resa__reveal { animation: evo-resa-in 0.8s ease-out both; }
-@keyframes evo-resa-in {
-  from { opacity: 0; transform: translateY(30px); }
-  to { opacity: 1; transform: none; }
-}
-.evo-resa__step-head { display: flex; align-items: center; gap: calc(var(--resa-u) * 3); margin-bottom: calc(var(--resa-u) * 4); }
-.evo-resa__step-num {
-  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-  width: calc(var(--resa-u) * 8); height: calc(var(--resa-u) * 8);
+.evo-resa-rec {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  margin-right: 8px;
   border-radius: 999px;
-  background: color-mix(in oklab, var(--resa-accent) 15%, transparent);
+  background: var(--resa-accent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--resa-accent) 80%, transparent);
+  vertical-align: 0.1em;
+}
+
+/* ── Chassis ─────────────────────────────────────────────────────────── */
+.evo-resa__chassis {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--resa-radius);
+  background: #0c0c0d;
+  box-shadow: 0 50px 100px -50px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(0, 0, 0, 0.4);
+}
+.evo-resa__grain {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0.18;
+  mix-blend-mode: screen;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.88' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.14'/%3E%3C/svg%3E");
+}
+
+/* Header strip: wordmark (Evoview link) | kicker + step readout | progress */
+.evo-resa-top {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 68px;
+  padding: 14px var(--resa-gutter);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent), #0d0d0f;
+}
+.evo-resa-top__brand {
+  display: inline-flex;
+  flex: 0 0 auto;
+  padding: 6px 4px;
+  margin: -6px -4px;
+  border-radius: 6px;
+  color: #fff;
+  opacity: 0.94;
+  transition: opacity 200ms ease;
+}
+.evo-resa-top__brand:hover { opacity: 1; }
+.evo-resa-top__brand:focus-visible { outline: 2px solid var(--resa-accent); outline-offset: 2px; }
+.evo-resa-top__logo { display: block; width: 76px; height: auto; filter: brightness(0) invert(1); }
+.evo-resa-top__divider { width: 1px; height: 24px; flex: 0 0 auto; background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.22), transparent); }
+.evo-resa-top__meta { display: flex; min-width: 0; flex: 1 1 auto; flex-direction: column; gap: 4px; }
+.evo-resa-top__kicker { overflow: hidden; color: color-mix(in srgb, var(--resa-accent) 70%, rgba(255, 255, 255, 0.6)); font-size: 7.5px; text-overflow: ellipsis; white-space: nowrap; }
+.evo-resa-top__title { overflow: hidden; color: #fff; text-overflow: ellipsis; white-space: nowrap; }
+.evo-resa-top__progress { display: grid; flex: 0 0 auto; grid-template-columns: repeat(5, 1fr); gap: 4px; width: 92px; }
+.evo-resa-top__progress > i { height: 2px; border-radius: 999px; background: rgba(255, 255, 255, 0.13); transition: background-color 260ms ease, transform 260ms var(--resa-ease); }
+.evo-resa-top__progress > .is-done { background: color-mix(in srgb, var(--resa-accent) 60%, transparent); }
+.evo-resa-top__progress > .is-current { background: var(--resa-accent); transform: scaleY(1.5); }
+
+.evo-resa__grid { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); }
+
+/* ── Stage (questions) ──────────────────────────────────────────────── */
+.evo-resa-stage {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  margin: 0;
+  background: linear-gradient(180deg, #0e0e11 0%, #0b0b0d 50%, #09090b 100%);
+}
+.evo-resa-stage__light {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(70% 55% at 8% -10%, rgba(214, 208, 232, 0.085) 0%, rgba(214, 208, 232, 0.022) 45%, transparent 72%),
+    radial-gradient(60% 40% at 6% 106%, rgba(99, 75, 114, 0.2) 0%, transparent 70%),
+    radial-gradient(40% 30% at 100% 50%, rgba(63, 81, 181, 0.06) 0%, transparent 70%);
+}
+.evo-resa-scroll { flex: 1 1 auto; padding: 30px var(--resa-gutter) 28px; animation: evo-resa-in 520ms var(--resa-ease) both; }
+@keyframes evo-resa-in {
+  from { opacity: 0; transform: translateY(14px); filter: blur(4px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+
+.evo-resa-question { margin-bottom: 26px; }
+.evo-resa-question h3,
+.evo-resa-done__title {
+  max-width: 720px;
+  color: #fff;
+  font-family: var(--resa-font-display);
+  font-size: clamp(1.7rem, 5.4cqi, 3rem);
+  font-weight: 900;
+  letter-spacing: -0.035em;
+  line-height: 0.98;
+  outline: none;
+}
+.evo-resa-mark {
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  margin: 0 14px 0.1em 0;
+  border: 1.5px solid var(--resa-accent);
+  border-radius: 999px;
   color: var(--resa-accent);
-  font-size: var(--resa-text-sm); font-weight: 700;
+  font-family: var(--resa-font-label);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  vertical-align: middle;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--resa-accent) 16%, transparent), 0 0 18px -4px color-mix(in srgb, var(--resa-accent) 70%, transparent);
 }
-.evo-resa__step-title {
-  display: flex; align-items: center; gap: calc(var(--resa-u) * 2);
-  margin: 0; font-size: var(--resa-text-base); font-weight: 600; line-height: 1.5;
-}
-.evo-resa__step-icon { width: calc(var(--resa-u) * 4); height: calc(var(--resa-u) * 4); color: var(--resa-accent); }
-@media (min-width: 640px) {
-  .evo-resa__step-body { padding-left: calc(var(--resa-u) * 11); }
-}
+.evo-resa-question p { max-width: 560px; margin-top: 12px; color: var(--resa-muted); font-size: 14px; line-height: 1.55; }
 
-/* Experience tiles */
-.evo-resa__experiences { display: grid; gap: calc(var(--resa-u) * 3); }
-@media (min-width: 640px) {
-  .evo-resa__experiences { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+/* Experience rows */
+.evo-resa-choices { display: grid; gap: 10px; }
+.evo-resa-choice {
+  position: relative;
+  display: flex;
+  min-height: 84px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 7px;
+  padding: 14px 56px 14px 88px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--resa-radius-lg);
+  background: #121214;
+  text-align: left;
+  transition: border-color 220ms ease, transform 160ms ease, box-shadow 300ms ease;
 }
-.evo-resa__experience {
-  display: flex; flex-direction: column; align-items: center; gap: calc(var(--resa-u) * 2);
-  padding: calc(var(--resa-u) * 4);
-  border: 1px solid var(--resa-line); border-radius: var(--resa-radius-tile);
-  background: var(--resa-surface); color: var(--resa-muted);
-  text-align: center; cursor: pointer;
-  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+.evo-resa-choice:hover { border-color: rgba(255, 255, 255, 0.3); }
+.evo-resa-choice:active { transform: scale(0.985); }
+.evo-resa-choice:focus-visible { outline: 2px solid var(--resa-accent); outline-offset: 3px; }
+.evo-resa-choice[aria-pressed="true"] {
+  border-color: var(--resa-accent);
+  background: radial-gradient(70% 140% at 0% 50%, color-mix(in srgb, var(--resa-iris) 22%, transparent), transparent 70%), #121214;
+  box-shadow: 0 0 0 1px var(--resa-accent), 0 20px 50px -30px color-mix(in srgb, var(--resa-accent) 80%, transparent);
 }
-.evo-resa__experience:hover { border-color: color-mix(in oklab, var(--resa-accent) 40%, transparent); }
-.evo-resa__experience[data-selected] {
-  border-color: var(--resa-accent); color: var(--resa-accent);
-  background: color-mix(in oklab, var(--resa-accent) 10%, transparent);
+.evo-resa-choice__index { position: absolute; top: 9px; left: 12px; color: rgba(255, 255, 255, 0.35); font-size: 8px; }
+.evo-resa-choice__eye { position: absolute; top: 50%; left: 26px; width: 40px; height: 40px; translate: 0 -50%; color: rgba(255, 255, 255, 0.75); transition: color 220ms ease; }
+.evo-resa-choice[aria-pressed="true"] .evo-resa-choice__eye { color: #fff; }
+.evo-resa-choice__label { color: #fff; font-family: var(--resa-font-display); font-size: clamp(15px, 2.4cqi, 19px); font-weight: 800; letter-spacing: -0.01em; line-height: 1.05; }
+.evo-resa-choice__hint { color: rgba(255, 255, 255, 0.5); }
+.evo-resa-choice__check {
+  position: absolute;
+  top: 50%;
+  right: 18px;
+  display: flex;
+  width: 24px;
+  height: 24px;
+  translate: 0 -50%;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  color: #101011;
+  transition: background-color 200ms ease, border-color 200ms ease;
 }
-.evo-resa__experience:focus-within { box-shadow: 0 0 0 2px color-mix(in oklab, var(--resa-accent) 50%, transparent); }
-.evo-resa__experience-icon { width: calc(var(--resa-u) * 6); height: calc(var(--resa-u) * 6); }
-.evo-resa__experience-label { font-size: var(--resa-text-sm); font-weight: 500; }
-.evo-resa__experience-desc { font-size: var(--resa-text-xs); opacity: 0.7; }
+.evo-resa-choice__check svg { width: 12px; height: 12px; opacity: 0; transition: opacity 200ms ease; }
+.evo-resa-choice[aria-pressed="true"] .evo-resa-choice__check { border-color: var(--resa-accent); background: var(--resa-accent); }
+.evo-resa-choice[aria-pressed="true"] .evo-resa-choice__check svg { opacity: 1; }
 
-/* Chips (guests, hours) */
-.evo-resa__choices { display: flex; flex-wrap: wrap; gap: calc(var(--resa-u) * 2); }
-.evo-resa__chip {
-  width: calc(var(--resa-u) * 11); height: calc(var(--resa-u) * 11);
-  border: 1px solid var(--resa-line); border-radius: var(--resa-radius-chip);
-  background: var(--resa-surface);
-  font-size: var(--resa-text-base); font-weight: 500; cursor: pointer;
-  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+/* Pills (guests, hours) */
+.evo-resa-pills { display: flex; flex-wrap: wrap; gap: 10px; }
+.evo-resa-pill {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(238, 238, 233, 0.8);
+  font-size: 14px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  transition: border-color 200ms ease, background-color 200ms ease, color 200ms ease, transform 140ms ease;
 }
-.evo-resa__chip--wide { width: auto; min-width: calc(var(--resa-u) * 18); height: calc(var(--resa-u) * 12); padding: 0 calc(var(--resa-u) * 3); }
-.evo-resa__chip:hover { border-color: color-mix(in oklab, var(--resa-accent) 40%, transparent); }
-.evo-resa__chip[aria-pressed="true"] { background: var(--resa-accent); border-color: var(--resa-accent); color: var(--resa-accent-fg); }
-
-.evo-resa__stack { display: flex; flex-direction: column; gap: calc(var(--resa-u) * 5); }
-.evo-resa__sublabel { display: block; margin-bottom: calc(var(--resa-u) * 2); font-size: var(--resa-text-sm); font-weight: 500; line-height: 1; color: var(--resa-muted); }
-.evo-resa__note { margin: 0; font-size: var(--resa-text-sm); color: var(--resa-muted); }
-.evo-resa__hint { margin: calc(var(--resa-u) * 2) 0 0; font-size: var(--resa-text-xs); color: var(--resa-muted); }
-
-/* Calendar (react-day-picker v9, unstyled build) */
-.evo-resa__calendar {
-  --cell: calc(var(--resa-u) * 8);
-  position: relative; width: fit-content;
-  padding: calc(var(--resa-u) * 3);
-  border: 1px solid var(--resa-line); border-radius: var(--resa-radius-tile);
-  background: var(--resa-surface);
-  font-size: var(--resa-text-sm);
+.evo-resa-pill:has(.evo-resa-pill__mark) { padding-left: 10px; }
+.evo-resa-pill:hover { border-color: rgba(255, 255, 255, 0.34); color: #fff; }
+.evo-resa-pill:active { transform: scale(0.97); }
+.evo-resa-pill:focus-visible { outline: 2px solid var(--resa-accent); outline-offset: 3px; }
+.evo-resa-pill[aria-pressed="true"] { border-color: var(--resa-accent); background: color-mix(in srgb, var(--resa-accent) 14%, transparent); color: #fff; }
+.evo-resa-pill__mark {
+  display: flex;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
+  color: #fff;
+  font-family: var(--resa-font-label);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
-.evo-cal__months { position: relative; display: flex; flex-direction: column; gap: calc(var(--resa-u) * 4); }
-.evo-cal__month { display: flex; flex-direction: column; gap: calc(var(--resa-u) * 4); width: 100%; }
-.evo-cal__nav { position: absolute; inset: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: calc(var(--resa-u) * 1); z-index: 1; }
+.evo-resa-pill[aria-pressed="true"] .evo-resa-pill__mark { border-color: var(--resa-accent); background: var(--resa-accent); color: #101011; }
+
+.evo-resa-times { display: grid; gap: 26px; }
+.evo-resa-group { display: grid; gap: 12px; }
+.evo-resa-group + .evo-resa-group { padding-top: 22px; border-top: 1px solid var(--resa-line); }
+.evo-resa-group__title { display: flex; align-items: baseline; gap: 12px; color: var(--resa-accent); }
+.evo-resa-group__title > span { color: var(--resa-faint); }
+.evo-resa-reveal { animation: evo-resa-in 520ms var(--resa-ease) both; }
+.evo-resa-note { display: flex; align-items: center; margin-top: 18px; color: var(--resa-muted); }
+.evo-resa-times .evo-resa-note { margin-top: 0; }
+
+/* Calendar (react-day-picker v9, unstyled build) in an Evoview monitor tile */
+.evo-resa-calendar-wrap { max-width: 440px; }
+.evo-resa-calendar {
+  --cell: clamp(36px, 9cqi, 50px);
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+  padding: 18px;
+  border: 1px solid var(--resa-line);
+  border-radius: var(--resa-radius-lg);
+  background: radial-gradient(70% 60% at 100% 100%, rgba(63, 81, 181, 0.14) 0%, transparent 70%), #121214;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.evo-cal__months, .evo-cal__month { display: flex; flex-direction: column; gap: 14px; }
+.evo-cal__months { position: relative; }
+.evo-cal__nav { position: absolute; inset: 0 0 auto; z-index: 1; display: flex; justify-content: space-between; }
 .evo-cal__navbtn {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: var(--cell); height: var(--cell); padding: 0;
-  border: 0; border-radius: var(--resa-radius-input); background: transparent; cursor: pointer;
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  color: #fff;
+  transition: border-color 200ms ease, background-color 200ms ease;
 }
-.evo-cal__navbtn:hover { background: rgb(255 255 255 / 8%); }
-.evo-cal__navbtn[aria-disabled="true"], .evo-cal__navbtn:disabled { opacity: 0.5; cursor: default; }
-.evo-cal__chevron { width: calc(var(--resa-u) * 4); height: calc(var(--resa-u) * 4); }
-.evo-cal__caption { display: flex; align-items: center; justify-content: center; height: var(--cell); padding: 0 var(--cell); }
-.evo-cal__caption-label { font-weight: 500; user-select: none; text-transform: capitalize; }
-.evo-cal__grid { width: 100%; border-collapse: collapse; }
+.evo-cal__navbtn:hover { border-color: rgba(255, 255, 255, 0.34); background: rgba(255, 255, 255, 0.05); }
+.evo-cal__navbtn:focus-visible { outline: 2px solid var(--resa-accent); outline-offset: 2px; }
+.evo-cal__navbtn:disabled, .evo-cal__navbtn[aria-disabled="true"] { opacity: 0.3; }
+.evo-cal__chevron { width: 16px; height: 16px; }
+.evo-cal__caption { display: flex; height: 34px; align-items: center; justify-content: center; padding: 0 44px; }
+.evo-cal__caption-label { color: #fff; font-family: var(--resa-font-display); font-size: 17px; font-weight: 800; letter-spacing: -0.01em; text-transform: uppercase; }
+.evo-cal__grid { border-collapse: collapse; }
 .evo-cal__weekdays { display: flex; }
-.evo-cal__weekday { flex: 1; font-size: 0.8rem; font-weight: 400; color: var(--resa-muted); user-select: none; }
-.evo-cal__week { display: flex; width: 100%; margin-top: calc(var(--resa-u) * 2); }
-.evo-cal__day { position: relative; width: 100%; padding: 0; aspect-ratio: 1; text-align: center; user-select: none; }
+.evo-cal__weekday { width: var(--cell); padding-bottom: 6px; color: var(--resa-faint); font-family: var(--resa-font-label); font-size: 8px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; }
+.evo-cal__week { display: flex; }
+.evo-cal__day { position: relative; width: var(--cell); height: var(--cell); padding: 2px; text-align: center; }
 .evo-cal__daybtn {
-  display: flex; align-items: center; justify-content: center;
-  width: 100%; min-width: var(--cell); aspect-ratio: 1;
-  border: 0; border-radius: var(--resa-radius-input); background: transparent;
-  font-weight: 400; line-height: 1; cursor: pointer;
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: rgba(238, 238, 233, 0.86);
+  font-size: 14px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  transition: background-color 180ms ease, color 180ms ease, box-shadow 220ms ease;
 }
-.evo-cal__daybtn:hover { background: rgb(255 255 255 / 8%); }
-.evo-cal__daybtn:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in oklab, var(--resa-accent) 50%, transparent); position: relative; z-index: 1; }
-.evo-cal__day.is-today:not(.is-selected) .evo-cal__daybtn { box-shadow: inset 0 0 0 1px rgb(255 255 255 / 18%); }
-.evo-cal__day.is-selected .evo-cal__daybtn { background: var(--resa-accent); color: var(--resa-accent-fg); }
-.evo-cal__day.is-outside { color: var(--resa-muted); }
-.evo-cal__day.is-disabled { color: var(--resa-muted); opacity: 0.5; }
-.evo-cal__day.is-disabled .evo-cal__daybtn { cursor: default; background: transparent; }
+.evo-cal__daybtn:hover { background: rgba(255, 255, 255, 0.07); color: #fff; }
+.evo-cal__daybtn:focus-visible { outline: 2px solid var(--resa-accent); outline-offset: 1px; }
+.evo-cal__day.is-today .evo-cal__daybtn::after { content: ""; position: absolute; bottom: 5px; left: 50%; width: 4px; height: 4px; translate: -50% 0; border-radius: 999px; background: var(--resa-accent); }
+.evo-cal__day.is-selected .evo-cal__daybtn {
+  background: var(--resa-accent);
+  color: #101011;
+  font-weight: 700;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--resa-accent) 18%, transparent), 0 0 22px -4px color-mix(in srgb, var(--resa-accent) 80%, transparent);
+}
+.evo-cal__day.is-selected .evo-cal__daybtn::after { background: #101011; }
+.evo-cal__day.is-outside .evo-cal__daybtn { color: rgba(238, 238, 233, 0.22); }
+.evo-cal__day.is-disabled .evo-cal__daybtn { color: rgba(238, 238, 233, 0.18); background: none; cursor: default; }
 .evo-cal__day.is-hidden { visibility: hidden; }
 
-/* Contact */
-.evo-resa__contact { display: flex; flex-direction: column; gap: calc(var(--resa-u) * 6); }
-.evo-resa__fields { display: grid; gap: calc(var(--resa-u) * 4); }
-@media (min-width: 640px) {
-  .evo-resa__fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-.evo-resa__label { display: block; margin-bottom: calc(var(--resa-u) * 1.5); font-size: var(--resa-text-sm); font-weight: 500; line-height: 1; }
-.evo-resa__muted { color: var(--resa-muted); }
-.evo-resa__input {
-  display: block; width: 100%; min-width: 0;
-  height: calc(var(--resa-u) * 9);
-  padding: calc(var(--resa-u) * 1) calc(var(--resa-u) * 3);
-  border: 1px solid var(--resa-line); border-radius: var(--resa-radius-input);
-  background: var(--resa-surface);
-  font-size: var(--resa-text-base);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
+/* Contact fields: underline inputs */
+.evo-resa-fields { display: grid; gap: 22px 24px; }
+.evo-resa-field { display: grid; gap: 4px; }
+.evo-resa-field label { color: var(--resa-muted); }
+.evo-resa-field label small { color: var(--resa-faint); font-size: inherit; letter-spacing: 0.06em; text-transform: none; }
+.evo-resa-field input,
+.evo-resa-field textarea {
+  display: block;
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 0;
+  border: 0;
+  border-bottom: 1px solid var(--resa-line-strong);
+  border-radius: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 16px;
   outline: none;
-  transition: color 150ms, box-shadow 150ms, border-color 150ms;
+  box-shadow: none;
+  transition: border-color 200ms ease;
 }
-@media (min-width: 768px) { .evo-resa__input { font-size: var(--resa-text-sm); } }
-.evo-resa__input::placeholder { color: var(--resa-muted); }
-.evo-resa__input:focus-visible { border-color: var(--resa-accent); box-shadow: 0 0 0 3px color-mix(in oklab, var(--resa-accent) 50%, transparent); }
-.evo-resa__input[aria-invalid="true"] { border-color: var(--resa-error); }
-.evo-resa__textarea { height: auto; min-height: calc(var(--resa-u) * 16); padding-block: calc(var(--resa-u) * 2); resize: vertical; field-sizing: content; }
-.evo-resa__error { margin: calc(var(--resa-u) * 1.5) 0 0; font-size: var(--resa-text-xs); color: var(--resa-error); }
+.evo-resa-field textarea { min-height: 76px; resize: vertical; line-height: 1.55; }
+.evo-resa-field input::placeholder, .evo-resa-field textarea::placeholder { color: rgba(255, 255, 255, 0.26); }
+.evo-resa-field input:focus, .evo-resa-field textarea:focus { border-bottom-color: var(--resa-accent); }
+.evo-resa-field [aria-invalid="true"] { border-bottom-color: #f08a8a; }
+.evo-resa-field__error { color: var(--resa-error); font-size: 12px; }
 
-.evo-resa__actions { display: flex; justify-content: center; padding-top: calc(var(--resa-u) * 2); }
-.evo-resa__submit {
-  display: inline-flex; align-items: center; justify-content: center;
-  height: calc(var(--resa-u) * 12); padding: 0 calc(var(--resa-u) * 12);
-  border: 0; border-radius: var(--resa-radius-input);
-  background: var(--resa-accent); color: var(--resa-accent-fg);
-  font-size: var(--resa-text-base); font-weight: 500; white-space: nowrap; cursor: pointer;
-  transition: background 150ms, box-shadow 150ms;
+/* Bottom bar */
+.evo-resa-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px 18px;
+  padding: 16px var(--resa-gutter) 22px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: linear-gradient(180deg, rgba(9, 9, 11, 0.4), rgba(7, 7, 9, 0.75));
 }
-.evo-resa__submit:hover { background: color-mix(in oklab, var(--resa-accent) 90%, transparent); }
-.evo-resa__submit:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in oklab, var(--resa-accent) 50%, transparent); }
-.evo-resa__submit:disabled { opacity: 0.5; pointer-events: none; }
+.evo-resa-bar__error { max-width: 260px; color: var(--resa-error); font-size: 12px; line-height: 1.4; text-align: right; }
+.evo-resa-primary {
+  display: inline-flex;
+  min-height: 54px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  padding: 0 7px 0 22px;
+  border-radius: var(--resa-radius-md);
+  background: #fff;
+  color: #101011;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 18px 40px -24px rgba(200, 166, 217, 0.8);
+  transition: background-color 300ms var(--resa-ease), transform 140ms ease, opacity 200ms ease;
+}
+.evo-resa-primary:hover { background: var(--resa-accent); }
+.evo-resa-primary:active { transform: scale(0.985); }
+.evo-resa-primary:focus-visible { outline: 2px solid var(--resa-accent); outline-offset: 4px; }
+.evo-resa-primary[aria-busy="true"] { cursor: wait; opacity: 0.75; }
+.evo-resa-primary__orb {
+  display: flex;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #101011;
+  color: #fff;
+  transition: transform 300ms var(--resa-ease);
+}
+.evo-resa-primary__orb svg { width: 16px; height: 16px; }
+.evo-resa-primary:hover .evo-resa-primary__orb { transform: translateX(3px); }
+.evo-resa-ghost {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 8px;
+  margin-right: auto;
+  padding: 0 4px;
+  color: rgba(238, 238, 233, 0.55);
+  transition: color 180ms ease;
+}
+.evo-resa-ghost:hover { color: #fff; }
+.evo-resa-ghost:focus-visible { outline: 2px solid var(--resa-accent); outline-offset: 2px; border-radius: 6px; }
+.evo-resa-ghost:disabled { visibility: hidden; }
+.evo-resa-ghost__icon { width: 14px; height: 14px; }
 
 /* Confirmation */
-.evo-resa__done { padding: calc(var(--resa-u) * 12) 0; text-align: center; }
-.evo-resa__done-icon { display: block; width: calc(var(--resa-u) * 16); height: calc(var(--resa-u) * 16); margin: 0 auto calc(var(--resa-u) * 6); color: var(--resa-success); }
-.evo-resa__done-title { margin: 0 0 calc(var(--resa-u) * 4); font-family: var(--resa-font-heading); font-size: var(--resa-text-2xl); font-weight: 700; line-height: 1.25; }
-@media (min-width: 768px) { .evo-resa__done-title { font-size: var(--resa-text-3xl); } }
-.evo-resa__done-text { max-width: 28rem; margin: 0 auto calc(var(--resa-u) * 8); color: var(--resa-muted); }
-.evo-resa__ghost {
-  height: calc(var(--resa-u) * 9); padding: 0 calc(var(--resa-u) * 4);
-  border: 1px solid var(--resa-line); border-radius: var(--resa-radius-input);
-  background: rgb(255 255 255 / 4%); font-size: var(--resa-text-sm); font-weight: 500; cursor: pointer;
-  transition: background 150ms;
-}
-.evo-resa__ghost:hover { background: rgb(255 255 255 / 9%); }
-.evo-resa__ghost:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in oklab, var(--resa-accent) 50%, transparent); }
+.evo-resa-done { display: flex; flex-direction: column; align-items: center; justify-content: center; padding-block: 44px 36px; text-align: center; }
+.evo-resa-done__emblem { width: 76px; height: 76px; margin-bottom: 18px; filter: drop-shadow(0 0 22px color-mix(in srgb, var(--resa-accent) 55%, transparent)); animation: evo-resa-emblem 900ms var(--resa-ease) both; }
+@keyframes evo-resa-emblem { from { opacity: 0; transform: scale(0.82) rotate(-12deg); } to { opacity: 1; transform: none; } }
+.evo-resa-done__kicker { display: flex; align-items: center; margin-bottom: 14px; color: var(--resa-accent); }
+.evo-resa-done__title { font-size: clamp(1.8rem, 5cqi, 2.8rem); }
+.evo-resa-done__text { max-width: 470px; margin: 14px 0 22px; color: var(--resa-muted); line-height: 1.6; }
+.evo-resa-done .evo-resa-inline-ticket { width: 100%; max-width: 440px; margin-bottom: 18px; text-align: left; }
+.evo-resa-done .evo-resa-ghost { margin-right: 0; }
 
-/* ── Evoview signature ────────────────────────────────────────────────────
-   A seal set on the card's bottom edge: half on the card, half below it,
-   centred. Glass capsule (the navbar's finder language), Evoview eye with an
-   indigo pupil, lead text, wordmark, outbound arrow. Protected: keep the
-   placement, the eye, the wordmark and the destination on every client. */
-.evo-resa__seal {
+/* ── Dossier (wide layouts) ─────────────────────────────────────────── */
+.evo-resa-dossier { display: none; }
+.evo-resa-inline-ticket { margin-bottom: 26px; }
+
+.evo-resa-monitor {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--resa-line);
+  border-radius: var(--resa-radius-lg);
+  background: #121214;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 30px 60px -44px rgba(0, 0, 0, 0.9);
+}
+.evo-resa-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 13px 20px 12px;
+  background:
+    linear-gradient(180deg, transparent 35%, #0c0d15 100%),
+    radial-gradient(ellipse at 90% 0%, rgba(109, 94, 208, 0.1), transparent 65%),
+    linear-gradient(115deg, #0b090e 0%, #0c0d15 55%, #100c18 100%);
+}
+.evo-resa-rail__status { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.evo-resa-rail__legend { display: flex; min-width: 0; gap: 8px; overflow: hidden; color: var(--resa-faint); font-size: 8px; white-space: nowrap; }
+.evo-resa-rail__legend b { color: var(--resa-accent); }
+.evo-resa-rail__legend > span::before { content: "·"; margin-right: 8px; }
+.evo-resa-rail__percent { color: #fff; font-family: var(--resa-font-display); font-size: 18px; font-variant-numeric: tabular-nums; font-weight: 900; letter-spacing: -0.04em; line-height: 0.8; }
+.evo-resa-rail__percent small { margin-left: 1px; color: var(--resa-accent); font-family: var(--resa-font-label); font-size: 9px; letter-spacing: 0; }
+.evo-resa-rail__segments { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.evo-resa-rail__segments > button { display: flex; padding: 4px 0; }
+.evo-resa-rail__bar { position: relative; display: block; width: 100%; height: 3px; overflow: hidden; border-radius: 999px; background: rgba(255, 255, 255, 0.12); transition: transform 260ms var(--resa-ease); }
+.evo-resa-rail__bar > b { position: absolute; inset: 0 100% 0 0; border-radius: 999px; background: #fff; transition: inset 520ms var(--resa-ease); }
+.evo-resa-rail__segments > .is-done .evo-resa-rail__bar > b { inset: 0; }
+.evo-resa-rail__segments > .is-current .evo-resa-rail__bar { background: rgba(255, 255, 255, 0.18); box-shadow: 0 0 10px rgba(255, 255, 255, 0.25); }
+.evo-resa-rail__segments > .is-current:not(.is-done) .evo-resa-rail__bar > b { inset: 0 70% 0 0; opacity: 0.7; }
+.evo-resa-rail__segments > button:not(:disabled):hover .evo-resa-rail__bar { transform: scaleY(1.67); }
+
+/* Ticket: the live booking, on an Evoview CRT screen */
+.evo-resa-ticket {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  min-height: 300px;
+  flex-direction: column;
+  gap: 18px;
+  padding: 22px 24px;
+  overflow: hidden;
+  background:
+    radial-gradient(80% 50% at 50% -10%, rgba(178, 172, 216, 0.1) 0%, transparent 70%),
+    radial-gradient(70% 45% at 100% 105%, rgba(63, 81, 181, 0.3) 0%, transparent 70%),
+    #0c0d15;
+}
+.evo-resa-ticket--compact { min-height: 0; gap: 14px; padding: 18px 20px; border: 1px solid var(--resa-line); border-radius: var(--resa-radius-lg); }
+.evo-resa-ticket__phosphor {
   position: absolute;
-  left: 50%;
-  bottom: 0;
-  z-index: 2;
-  transform: translate(-50%, 50%);
+  inset: 0;
+  z-index: -1;
+  opacity: 0.6;
+  background-image: radial-gradient(rgba(206, 210, 236, 0.09) 0.55px, transparent 0.75px);
+  background-size: 3px 3px;
+  -webkit-mask-image: radial-gradient(95% 70% at 50% 20%, #000 0%, rgba(0, 0, 0, 0.35) 55%, transparent 95%);
+  mask-image: radial-gradient(95% 70% at 50% 20%, #000 0%, rgba(0, 0, 0, 0.35) 55%, transparent 95%);
 }
-.evo-sig {
-  display: inline-flex; align-items: center; gap: 0.625rem;
-  height: 2.75rem; padding: 0 1rem 0 0.75rem;
-  border: 1px solid rgb(255 255 255 / 14%); border-radius: 999px;
-  background: rgb(14 14 16 / 82%);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
-  backdrop-filter: blur(14px) saturate(140%);
-  box-shadow: 0 10px 30px -10px rgb(0 0 0 / 70%), inset 0 1px 0 rgb(255 255 255 / 8%);
-  color: rgb(255 255 255 / 72%);
-  text-decoration: none; white-space: nowrap;
-  transition: border-color 300ms ease, box-shadow 300ms ease, color 300ms ease;
-}
-.evo-sig:hover,
-.evo-sig:focus-visible {
-  color: #fff;
-  border-color: color-mix(in oklab, var(--resa-evo-indigo) 70%, white 10%);
-  box-shadow: 0 10px 30px -10px rgb(0 0 0 / 70%), 0 0 0 4px color-mix(in oklab, var(--resa-evo-indigo) 22%, transparent), 0 0 28px -4px color-mix(in oklab, var(--resa-evo-indigo) 65%, transparent), inset 0 1px 0 rgb(255 255 255 / 10%);
-  outline: none;
-}
-.evo-sig__eye { width: 1.375rem; height: 1.375rem; flex-shrink: 0; overflow: visible; }
-.evo-sig__corners { opacity: 0.55; transition: opacity 300ms ease; }
-.evo-sig__lid { fill: rgb(255 255 255 / 6%); }
-.evo-sig__pupil { fill: var(--resa-evo-indigo); stroke: var(--resa-evo-iris); stroke-width: 1; transform-box: view-box; transform-origin: 12px 12px; }
-.evo-sig:hover .evo-sig__corners,
-.evo-sig:focus-visible .evo-sig__corners { opacity: 1; }
-.evo-sig:hover .evo-sig__lid,
-.evo-sig:focus-visible .evo-sig__lid { animation: evo-sig-blink 2.4s ease-in-out 120ms infinite; }
-.evo-sig:hover .evo-sig__pupil,
-.evo-sig:focus-visible .evo-sig__pupil { animation: evo-sig-blink-pupil 2.4s ease-in-out 120ms infinite; }
-/* The navbar's double blink: two soft blinks, then quiet. */
-@keyframes evo-sig-blink {
-  0%, 5%, 17%, 23%, 35%, 100% { d: path("M3 12Q12 1 21 12Q12 23 3 12Z"); }
-  11%, 29% { d: path("M3 12Q12 11.34 21 12Q12 12.66 3 12Z"); }
-}
-@keyframes evo-sig-blink-pupil {
-  0%, 5%, 17%, 23%, 35%, 100% { transform: scaleY(1); }
-  11%, 29% { transform: scaleY(0.06); }
-}
-.evo-sig__lead { font-size: 0.6875rem; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; line-height: 1; }
-.evo-sig__rule { width: 1px; height: 0.875rem; background: rgb(255 255 255 / 18%); }
-.evo-sig__wordmark { display: block; height: 0.875rem; width: auto; filter: brightness(0) invert(1); opacity: 0.92; }
-.evo-sig__arrow { width: 0.8125rem; height: 0.8125rem; flex-shrink: 0; transition: transform 300ms ease; }
-.evo-sig:hover .evo-sig__arrow,
-.evo-sig:focus-visible .evo-sig__arrow { transform: translate(2px, -2px); }
+.evo-resa-ticket__scan { position: absolute; inset: 0; z-index: -1; background-image: repeating-linear-gradient(0deg, transparent 0 2px, rgba(220, 222, 255, 0.02) 2px 3px); }
+.evo-resa-hud { position: absolute; inset: 10px; z-index: 0; pointer-events: none; }
+.evo-resa-hud > i { position: absolute; width: 12px; height: 12px; border: 0 solid rgba(255, 255, 255, 0.5); }
+.evo-resa-hud > i:nth-child(1) { top: 0; left: 0; border-top-width: 1.5px; border-left-width: 1.5px; }
+.evo-resa-hud > i:nth-child(2) { top: 0; right: 0; border-top-width: 1.5px; border-right-width: 1.5px; }
+.evo-resa-hud > i:nth-child(3) { bottom: 0; left: 0; border-bottom-width: 1.5px; border-left-width: 1.5px; }
+.evo-resa-hud > i:nth-child(4) { bottom: 0; right: 0; border-bottom-width: 1.5px; border-right-width: 1.5px; }
+.evo-resa-ticket__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 14px; color: var(--resa-accent); }
+.evo-resa-ticket__head > span { display: inline-flex; align-items: center; }
+.evo-resa-ticket__venue { color: var(--resa-faint); }
+.evo-resa-ticket__date { display: flex; align-items: flex-end; gap: 12px; color: #fff; font-family: var(--resa-font-display); text-transform: uppercase; }
+.evo-resa-ticket__date strong { font-size: clamp(54px, 7cqi, 76px); font-weight: 900; letter-spacing: -0.05em; line-height: 0.8; }
+.evo-resa-ticket__date.is-empty, .evo-resa-ticket__date.is-empty span:first-child { color: rgba(255, 255, 255, 0.13); }
+.evo-resa-ticket__date span { padding-bottom: 2px; font-size: 15px; font-weight: 800; letter-spacing: 0.02em; line-height: 1; }
+.evo-resa-ticket__date span:first-child { order: -1; color: var(--resa-accent); }
+.evo-resa-ticket--compact .evo-resa-ticket__date strong { font-size: 44px; }
+.evo-resa-ticket__rows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 18px; margin-top: auto; }
+.evo-resa-ticket__rows > div { display: grid; gap: 3px; padding: 9px 0; border-top: 1px solid rgba(255, 255, 255, 0.08); }
+.evo-resa-ticket__rows dt { color: var(--resa-faint); font-size: 8px; }
+.evo-resa-ticket__rows dd { overflow: hidden; color: rgba(255, 255, 255, 0.28); font-size: 13px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; transition: color 300ms ease; }
+.evo-resa-ticket__rows [data-filled] dd { color: #fff; }
+.evo-resa-ticket__rows [data-filled] dt { color: var(--resa-accent); }
+.evo-resa-ticket__mark { position: absolute; right: 22px; top: 50%; width: 92px; height: auto; filter: brightness(0) invert(1); opacity: 0.07; pointer-events: none; }
+.evo-resa-ticket--compact .evo-resa-ticket__mark { top: 20px; right: 20px; width: 70px; }
+.evo-resa-ticket[data-sent] .evo-resa-ticket__head { color: #a7f3c4; }
+.evo-resa-ticket[data-sent] .evo-resa-ticket__head .evo-resa-rec { background: #4ade80; box-shadow: 0 0 10px rgba(74, 222, 128, 0.8); }
 
-@media (max-width: 359px) {
-  .evo-sig__lead, .evo-sig__rule { display: none; }
+/* Journey list */
+.evo-resa-journey { display: grid; gap: 4px; list-style: none; }
+.evo-resa-journey button {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 30px minmax(0, 1fr);
+  align-items: center;
+  gap: 2px 14px;
+  padding: 9px 12px;
+  border: 1px solid transparent;
+  border-radius: var(--resa-radius-md);
+  text-align: left;
+  transition: background-color 200ms ease, border-color 200ms ease;
+}
+.evo-resa-journey button:not(:disabled):hover { background: rgba(255, 255, 255, 0.04); }
+.evo-resa-journey button:focus-visible { outline: 2px solid var(--resa-accent); outline-offset: 2px; }
+.evo-resa-journey__mark {
+  display: flex;
+  width: 28px;
+  height: 28px;
+  grid-row: span 2;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  color: var(--resa-faint);
+  font-family: var(--resa-font-label);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.evo-resa-journey__mark svg { width: 13px; height: 13px; }
+.evo-resa-journey__label { color: var(--resa-faint); }
+.evo-resa-journey__value { overflow: hidden; color: rgba(255, 255, 255, 0.3); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.evo-resa-journey .is-done .evo-resa-journey__mark { border-color: var(--resa-accent); background: var(--resa-accent); color: #101011; }
+.evo-resa-journey .is-done .evo-resa-journey__label { color: rgba(255, 255, 255, 0.82); }
+.evo-resa-journey .is-done .evo-resa-journey__value { color: rgba(255, 255, 255, 0.62); }
+.evo-resa-journey .is-current button {
+  border-color: rgba(255, 255, 255, 0.07);
+  background: radial-gradient(60% 120% at 100% 50%, rgba(63, 81, 181, 0.2), transparent 70%), rgba(255, 255, 255, 0.025);
+}
+.evo-resa-journey .is-current .evo-resa-journey__mark { border-color: var(--resa-accent); color: var(--resa-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--resa-accent) 16%, transparent); }
+.evo-resa-journey .is-current .evo-resa-journey__label { color: var(--resa-accent); }
+.evo-resa-journey__pending { display: inline-flex; align-items: center; gap: 8px; padding: 3px 10px 3px 4px; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 999px; background: rgba(255, 255, 255, 0.03); color: var(--resa-muted); font-size: 12px; }
+.evo-resa-journey__pending i { width: 14px; height: 14px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 999px; }
+
+/* ── Responsive (container) ─────────────────────────────────────────── */
+@container (min-width: 560px) {
+  .evo-resa-fields { grid-template-columns: 1fr 1fr; }
+  .evo-resa-field.is-wide { grid-column: 1 / -1; }
+  .evo-resa-choices:has(> :nth-child(3):last-child) { gap: 10px; }
+}
+@container (min-width: 900px) {
+  .evo-resa__grid { grid-template-columns: minmax(0, 1fr) minmax(320px, 0.58fr); min-height: 640px; }
+  .evo-resa-top__progress { display: none; }
+  .evo-resa-scroll { padding-top: 44px; }
+  .evo-resa-stage .evo-resa-inline-ticket { display: none; }
+  .evo-resa-dossier {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 28px 26px 26px;
+    border-left: 1px solid rgba(255, 255, 255, 0.05);
+    background: linear-gradient(180deg, #0a0a0f 0%, #08080c 45%, #060608 100%);
+  }
+  .evo-resa-dossier__light {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(80% 42% at 50% -8%, rgba(178, 172, 216, 0.11) 0%, transparent 75%),
+      radial-gradient(70% 38% at 92% 104%, rgba(63, 81, 181, 0.26) 0%, transparent 70%);
+  }
+}
+@container (max-width: 520px) {
+  .evo-resa-choice { min-height: 76px; padding-left: 70px; }
+  .evo-resa-choice__eye { left: 18px; width: 34px; height: 34px; }
+  .evo-resa-top__divider, .evo-resa-top__kicker { display: none; }
+  .evo-resa-top { gap: 12px; }
+  .evo-resa-top__logo { width: 66px; }
+  .evo-resa-top__progress { width: 48px; gap: 3px; }
+  .evo-resa-bar { justify-content: space-between; }
+  .evo-resa-bar__error { order: 3; max-width: none; width: 100%; text-align: right; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .evo-resa__step, .evo-resa__reveal { animation: none; }
-  .evo-sig__lid, .evo-sig__pupil, .evo-sig:hover .evo-sig__lid, .evo-sig:hover .evo-sig__pupil,
-  .evo-sig:focus-visible .evo-sig__lid, .evo-sig:focus-visible .evo-sig__pupil { animation: none; }
-  .evo-sig__arrow { transition: none; }
+  .evo-resa-scroll, .evo-resa-reveal, .evo-resa-done__emblem { animation: none; }
+  .evo-resa *, .evo-resa *::before, .evo-resa *::after { transition-duration: 0s; }
 }

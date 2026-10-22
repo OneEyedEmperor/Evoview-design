@@ -1,5 +1,30 @@
 # reservation changelog
 
+## 2.0.0 — rebuilt on the Evoview application chassis (breaking)
+
+The 1.x form kept Tchin Tchin's look with an Evoview seal attached. 2.0.0
+is an Evoview component end to end, modelled on evoview.be's candidature flow:
+header strip with the wordmark, one question per screen with circled step
+marks and auto-advance, eye-glyph experience rows, pill chips, Evoview
+calendar and underline fields, white plate CTA, live dossier (segmented rail,
+CRT ticket, journey list), ring-eye confirmation. Fonts bundled. The seal is
+gone; the header wordmark is now the `https://evoview.be/` link.
+
+Config changes:
+
+- New required: `venue: { name, place? }`.
+- `copy` reshaped: added `kicker`, `steps.{experience,date,guests,time,contact}.{title,hint,short}`,
+  `guestsUnit`, `optional`, `next`, `back`, `chooseToContinue`, `dossier`,
+  `stepsWord`, `remainingWord`, `pending`, `statusDraft`, `statusSent`,
+  `confirmationKicker`. Removed `experienceLabel`, `dateLabel`, `guestsLabel`,
+  `timeLabel`, `contactLabel`, `notesOptional` (→ `optional`),
+  `signatureLead`.
+- `experiences[].icon` optional (defaults to Evoview eye glyphs).
+- `ReservationWindow.label` (optional) titles each slot group.
+- `accent` defaults to Evoview indigo and no longer reads the host `--primary`;
+  `accentForeground` removed. `--resa-*` tokens renamed.
+- `install.sh` now removes files dropped from the package on upgrade.
+
 ## 1.0.0 — extracted from Tchin Tchin, Evoview signature added
 
 - Portable version of Tchin Tchin's `UnifiedBookingForm` + its glass card:

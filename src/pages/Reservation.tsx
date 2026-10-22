@@ -5,8 +5,8 @@ import { buildReservationConfig, type Locale } from "../../components/reservatio
 import { buildTchinReservationConfig } from "../../components/reservation/examples/tchin.config";
 
 /* Showcase of the reservation package. "Tchin Tchin" reproduces the live
-   client page (gold accent, background video, Inter); "Référence" is the
-   Evoview-branded reference config. Submissions are mocked. */
+   client page around the component (background video, gold page header);
+   "Référence" is the reference config. Submissions are mocked. */
 
 type Variant = "tchin" | "reference";
 
@@ -81,9 +81,9 @@ export default function ReservationShowcase() {
         <Toggle value={locale} options={[["fr", "FR"], ["en", "EN"]]} onChange={setLocale} />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-3xl pt-16">
-        <div className="mb-10 text-center">
-          <p className="mb-4 text-xs font-medium uppercase tracking-[0.3em]" style={{ color: config.accent }}>{head.kicker}</p>
+      <div className="relative z-10 mx-auto max-w-6xl pt-16">
+        <div className="mx-auto mb-10 max-w-3xl text-center">
+          <p className="mb-4 text-xs font-medium uppercase tracking-[0.3em]" style={{ color: tchin ? "oklch(0.88 0.18 90)" : "#818cf8" }}>{head.kicker}</p>
           <h1 className="mb-3 text-3xl font-bold md:text-4xl" style={{ fontFamily: "'Overused Grotesk', Inter, sans-serif" }}>{head.title}</h1>
           <p className="mx-auto max-w-lg text-white/70">{head.subtitle}</p>
         </div>

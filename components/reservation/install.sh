@@ -4,7 +4,7 @@
 #   components/reservation/install.sh <client-project-dir>
 #
 # First run: copies everything, including the reference reservation.config.tsx.
-# Later runs: refreshes the component source (brand/ included: it is the
+# Later runs: replaces the component source (brand/ included: it is the
 # Evoview signature, not client branding); reservation.config.tsx is kept.
 set -euo pipefail
 
@@ -23,6 +23,8 @@ done
 mkdir -p "$DEST"
 fresh=1
 [ -f "$DEST/reservation.config.tsx" ] && fresh=0
+# Drop package files removed upstream; the client config survives.
+find "$DEST" -mindepth 1 -maxdepth 1 ! -name reservation.config.tsx -exec rm -rf {} +
 
 for file in "$HERE"/src/*; do
   name="$(basename "$file")"

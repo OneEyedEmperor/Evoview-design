@@ -1,20 +1,20 @@
 import type { ComponentType, CSSProperties } from "react";
 import type { Locale } from "date-fns";
 
-export type ReservationIcon = ComponentType<{ className?: string }>;
-
 /** Opening window, "HH:MM" local time. Start slots run from `open` to `close - slotMinutes`. */
-export type ReservationWindow = { open: string; close: string };
+export type ReservationWindow = { open: string; close: string; /** Group label above its slots ("Midi", "Soir"). */ label?: string };
 
 export type ReservationExperience = {
   /** Sent back to `submit` as `experience`. */
   value: string;
   label: string;
+  /** Short meta line under the label, rendered as an uppercase readout ("Table · Dîner"). */
   desc: string;
-  icon: ReservationIcon;
+  /** Overrides the Evoview eye glyph of this row. Prefer the default. */
+  icon?: ComponentType<{ className?: string }>;
   /** Ask for an end time too (e.g. a room rented by the hour). */
   requiresEndTime?: boolean;
-  /** Line shown under the time step when this experience is selected (price, duration…). */
+  /** Line shown in the time step when this experience is selected (price, duration…). */
   timeNote?: string;
 };
 
@@ -36,39 +36,60 @@ export type ReservationResult =
   | { ok: true }
   | { ok: false; error?: string; fieldErrors?: Partial<Record<"name" | "phone" | "email" | "notes", string>> };
 
+export type ReservationStepCopy = {
+  /** Question heading of the step ("Quelle expérience vous tente ?"). */
+  title: string;
+  /** One line under the heading. */
+  hint: string;
+  /** Short name for the header, progress rail and dossier ("Expérience"). */
+  short: string;
+};
+
 export type ReservationCopy = {
-  experienceLabel: string;
-  dateLabel: string;
-  /** Under the calendar, e.g. "Closed on Sundays". Empty string hides it. */
+  /** Header kicker ("Réservation"). */
+  kicker: string;
+  steps: Record<"experience" | "date" | "guests" | "time" | "contact", ReservationStepCopy>;
+  /** Under the calendar, e.g. "Fermé le dimanche". Empty string hides it. */
   closedNote: string;
-  guestsLabel: string;
-  timeLabel: string;
+  guestsUnit: { one: string; many: string };
   startTimeLabel: string;
   endTimeLabel: string;
-  contactLabel: string;
   nameLabel: string;
   phoneLabel: string;
   emailLabel: string;
   notesLabel: string;
-  notesOptional: string;
+  optional: string;
   notesPlaceholder: string;
+  next: string;
+  back: string;
   submit: string;
   submitting: string;
+  /** Shown next to "next" when the step is not answered yet. */
+  chooseToContinue: string;
+  /** Dossier: "Dossier en cours", "étapes", "restantes", pending value. */
+  dossier: string;
+  stepsWord: string;
+  remainingWord: string;
+  pending: string;
+  /** Ticket status line while composing and once sent. */
+  statusDraft: string;
+  statusSent: string;
+  confirmationKicker: string;
   confirmationTitle: string;
   confirmationMessage: string;
   submitAnother: string;
   errorRequired: string;
   errorInvalidEmail: string;
   errorGeneric: string;
-  /** Evoview signature, in the page language. Lead text before the wordmark. */
-  signatureLead: string;
-  /** Accessible name of the signature link; must say it opens Evoview's site in a new tab. */
+  /** Accessible name of the Evoview wordmark link; must say it opens evoview.be in a new tab. */
   signatureAriaLabel: string;
 };
 
 export type ReservationConfig = {
   copy: ReservationCopy;
-  /** date-fns locale for the calendar (month names, week start). Omit for en-US. */
+  /** The client's venue, printed on the ticket. */
+  venue: { name: string; place?: string };
+  /** date-fns locale for the calendar and ticket date. Omit for en-US. */
   dateLocale?: Locale;
   experiences: ReservationExperience[];
   /** Opening windows for a date; `[]` closes the day (disabled in the calendar). */
@@ -82,10 +103,8 @@ export type ReservationConfig = {
   onMount?: () => void;
   /** Called after every submit (toasts, analytics already wired by the host). */
   onResult?: (result: ReservationResult, request: ReservationRequest) => void;
-  /** Client accent; drives selections, step badges, focus ring and the submit button. */
+  /** Accent of the Evoview chassis (selections, marks, focus, rail). Default Evoview indigo #818cf8. */
   accent?: string;
-  /** Text colour on top of `accent`. */
-  accentForeground?: string;
   /** Any `--resa-*` token override. */
   vars?: Record<`--resa-${string}`, string>;
   className?: string;

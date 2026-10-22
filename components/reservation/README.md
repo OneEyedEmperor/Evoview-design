@@ -1,48 +1,71 @@
-# reservation — Evoview guided booking request
+# reservation — Evoview booking application
 
-Five-step request form in a glass card (experience → date → guests → time →
-contact), each step revealed once the previous one is answered, with the
-**Evoview signature seal** on the card's bottom edge. Origin: Tchin Tchin
-(`/root/.vibehub/projects/test`, `/reservation`), designed by Evoview.
+A booking request built on Evoview's own application chassis (the
+candidature flow of evoview.be): one question per screen, a live **dossier**
+that composes the booking ticket as the guest answers, and Evoview's
+typography, marks and grading throughout. Origin: Tchin Tchin
+(`/root/.vibehub/projects/test`, `/reservation`).
 
-Showcase: `https://evoview-library.said.bet/reservation` — toggles for the
-Tchin Tchin example (gold, as shipped) and the Evoview reference (indigo), FR/EN.
-Submissions are mocked there.
+Showcase: `https://evoview-library.said.bet/reservation` (Tchin Tchin example
+and reference, FR/EN, mocked submit).
 
-## Evoview signature (protected)
+```
+wide (container ≥ 900px)
+┌ EVOVIEW │ RÉSERVATION · VENUE / 01 / 05 · EXPÉRIENCE ───────────────────┐
+│ (01) Question heading                   │ DOSSIER · 01/05 ÉTAPES   20%  │
+│ hint                                    │ ▬▬ ▬▬ ▬▬ ▬▬ ▬▬                 │
+│ ┌01 ◉ Option ───────────── ○┐           │ ┌ ● DEMANDE EN COURS  VENUE ┐  │
+│ │   META · READOUT          │           │ │ MAR 27 OCT 2026           │  │
+│ └───────────────────────────┘           │ │ EXPÉRIENCE  PERSONNES ... │  │
+│                                         │ └───────────── EVOVIEW ─────┘  │
+│ ← RETOUR              [ Continuer  (→) ] │ ✓ Expérience / (02) Date / ... │
+└─────────────────────────────────────────┴───────────────────────────────┘
+narrow: single column, 5-segment progress in the header, ticket shown above
+the contact fields and on the confirmation.
+```
 
-Read `STRATEGY.md`. What stays on every client:
+## What is Evoview (protected)
 
-- **The seal**: a glass capsule centred on the card's bottom edge (half on,
-  half below) — Evoview eye (HUD corners, almond, indigo `#3f51b5` pupil with
-  a white iris), lead text, divider, Evoview wordmark, outbound arrow. Visible
-  in every state (all steps, confirmation). Hover/focus: indigo halo, double
-  blink of the eye (the navbar's timing), arrow nudge.
-- **Destination**: `https://evoview.be/` (`EVOVIEW_URL`, Evoview's verified
-  site), new tab, `rel="noopener"`, no tracking parameters. Not a config value.
-- **The guided reveal**: one question at a time, smooth scroll to the new
-  step, rise-in animation; chips for guests and hours instead of selects.
+Read `STRATEGY.md`. These are the component, not decoration — never restyle
+them to the client's palette or swap them for client equivalents:
 
-Client-adaptable (config only): copy, experiences and icons, opening windows,
-guests range, horizon, accent, `--resa-*` tokens, submit/toast wiring. The
-seal wording is translatable (`signatureLead`, `signatureAriaLabel`) but must
-keep naming Evoview and stating that the link opens a new tab.
+- **Chassis**: `#0c0c0d` panel, 1.5rem radius, grain, stage/dossier grades
+  (silver spill top-left, plum floor, indigo floor on the dossier).
+- **Header strip**: Evoview wordmark (the attribution link, see below),
+  divider, accent kicker `RÉSERVATION · VENUE`, step readout `01 / 05 · STEP`.
+- **Type system**: Overused Grotesk 900 questions, Montserrat body, Satoshi
+  700 uppercase readouts. Fonts ship in `brand/fonts/` (no host fonts needed).
+- **Marks**: circled step mark with accent halo, Evoview eye glyphs on the
+  experience rows (index `01…`, check orb), pill chips with numbered orbs,
+  white primary plate with dark arrow orb, `← RETOUR` ghost, HUD corners,
+  REC dots, ring-eye emblem on the confirmation.
+- **Dossier**: segmented rail + percentage, CRT ticket (phosphor dots,
+  scanlines, Evoview watermark), journey list with check orbs.
+- **Choreography**: auto-advance 340 ms after a choice, blur-rise step
+  entrance, emblem reveal; rail and journey jump back to answered steps.
+- **Accent**: Evoview indigo `#818cf8` (iris `#3f51b5`).
 
-Do not move the seal into the form flow, put it before the submit button,
-recolour it to the client accent, or add a second Evoview placement around
-the form.
+Client-adaptable (config only): venue, all copy, experiences (label, meta,
+end time, note), opening windows and their labels, guests range, horizon,
+submit/toast wiring. `accent` exists but changing it dilutes the signature;
+keep indigo unless the founder decides otherwise.
+
+**Attribution**: the header wordmark links to `https://evoview.be/`
+(`EVOVIEW_URL`, Evoview's verified site), new tab, `rel="noopener"`, no
+tracking parameters. Its accessible name (`signatureAriaLabel`) must name
+Evoview and say it opens a new tab. No other Evoview link inside the form.
 
 ## Files
 
 | File | Role | Edit per site? |
 | --- | --- | --- |
-| `src/reservation.config.tsx` | Copy, experiences, windows, guests, accent, `submit`. | **yes — the only one** |
+| `src/reservation.config.tsx` | Venue, copy, experiences, windows, guests, `submit`. | **yes — the only one** |
 | `src/types.ts` | `ReservationConfig` contract (fields commented). | no |
-| `src/Reservation.tsx` | Card, steps, calendar, validation, confirmation. | no |
-| `src/EvoviewSignature.tsx` | The seal + `EVOVIEW_URL`. | no |
-| `src/brand/` | Evoview wordmark (signature asset, refreshed on upgrade). | no |
-| `src/reservation.css` | All styles under `.evo-resa`; token block at the top. | no (use `config.vars`) |
-| `examples/tchin.config.tsx` | Tchin Tchin as shipped (showcase). Not installed. | — |
+| `src/Reservation.tsx` | Chassis, steps, dossier, validation, confirmation; `EVOVIEW_URL`. | no |
+| `src/marks.tsx` | Evoview eye glyphs, arrows, check, HUD. | no |
+| `src/brand/` | Wordmark, ring-eye emblem, fonts. Refreshed on upgrade. | no |
+| `src/reservation.css` | All styles under `.evo-resa`, container-query responsive. | no |
+| `examples/tchin.config.tsx` | Tchin Tchin (showcase). Not installed. | — |
 
 ## Install
 
@@ -50,8 +73,8 @@ the form.
 /root/.vibehub/projects/evoview-design-library/components/reservation/install.sh /root/.vibehub/projects/<client>
 ```
 
-Copies `src/` to `<client>/src/components/reservation/`; re-runs keep
-`reservation.config.tsx`.
+Copies `src/` to `<client>/src/components/reservation/`; re-runs replace
+everything but `reservation.config.tsx`.
 
 ```tsx
 import { Reservation } from "@/components/reservation";
@@ -60,44 +83,44 @@ const config = useMemo(() => buildReservationConfig(locale, t), [locale, t]);
 <Reservation config={config} />
 ```
 
-The page owns the section heading and background; the component owns the card.
+Give it ~1100px (`max-w-6xl`) on desktop so the dossier column shows; the
+page keeps its own section heading and background.
 
 ## Host contract
 
-- React 19, Vite (`?raw` import for the wordmark), TypeScript strict.
-- `react-day-picker` ^9, `date-fns` ^4, `lucide-react`. No Tailwind, shadcn
-  or toast dependency; toasts go through `onResult`.
-- Dark background behind the card (glass surface, white text). Light hosts
-  need `--resa-surface`, `--resa-line`, `--foreground` overrides; the seal
-  stays dark.
-- Tokens read from the host with fallbacks: `--primary`, `--primary-foreground`,
-  `--foreground`, `--muted-foreground`, `--font-heading`, `--spacing`,
-  `--text-*`, `--radius-*` (shadcn / Tailwind v4 names). `config.accent`
-  overrides `--primary`.
-- Leave ≥1.5rem below the component for the hanging half of the seal.
+- React 19, Vite (asset imports for SVG/fonts, `?raw` for the wordmark),
+  TypeScript strict. `react-day-picker` ^9, `date-fns` ^4. No Tailwind,
+  shadcn, lucide or toast dependency; toasts go through `onResult`.
+- Independent of host tokens. Resets use zero-specificity `:where()`, so
+  host base styles in `@layer base` cannot leak in.
+- CSP: fonts/SVG are same-origin assets; grain/scan textures are `data:`
+  images (`img-src data:`).
 
 ## Behaviour
 
-- Experiences: radio group; `requiresEndTime` adds an end-time list bounded by
-  the start's window; `timeNote` shows under the time step.
+- Step complete → auto-advance; "Continuer" on an unanswered step shows
+  `chooseToContinue`. `requiresEndTime` adds an end-time group bounded by the
+  start's window; `timeNote` shows under the times.
 - Calendar: past days, days beyond `maxDaysAhead` and days where `windows()`
-  returns `[]` are disabled.
-- Start slots every `slotMinutes` from `open` to `close - slotMinutes`.
-- Changing experience clears the end time; changing date clears both times.
-- Validation: name, phone, email required, email format. Server `fieldErrors`
-  map onto the fields. `submit` throwing → `errorGeneric`.
-- Reduced motion: no step rise-in, no eye blink, no arrow transition.
-- Mobile < 360px: the seal drops the lead text and divider (eye + wordmark + arrow).
+  is `[]` are disabled. Changing experience clears the end time; changing
+  date clears both times (later steps reopen).
+- Validation on send: name, phone, email required, email format. Server
+  `fieldErrors` map onto fields; other errors show next to the button.
+  `submit` throwing → `errorGeneric`.
+- After a user-driven step change the chassis is scrolled into view (96px
+  offset for a fixed navbar) and focus moves to the question heading.
+- Reduced motion: no entrance, emblem or transition animation.
 
 ## Verification
 
-1. 1440 and 390: card, steps and seal match the showcase; the seal is centred
-   on the card's bottom edge and does not overlap the submit button.
-2. Walk all experiences; end time only where configured; closed days disabled.
-3. Empty submit shows three errors; a valid submit reaches the confirmation
-   and the seal is still there. On a live client, do not submit without the
-   owner's consent (it sends a real request).
-4. Seal: Tab reaches it after the form, focus ring visible, accessible name
-   in the page language, opens `https://evoview.be/` in a new tab.
+1. 1440 and 390: chassis, header readout untruncated, dossier visible on
+   wide only, compact ticket on narrow contact/confirmation.
+2. Walk every experience; end time only where configured; closed days
+   disabled; rail/journey jump back to answered steps.
+3. Empty send shows three field errors; valid send reaches the confirmation;
+   ticket turns "transmise" with a green REC dot. Never send on a live
+   client without the owner's consent (real request).
+4. Wordmark link: keyboard-focusable, accessible name in the page language,
+   opens `https://evoview.be/` in a new tab.
 5. `prefers-reduced-motion: reduce`: no animation.
-6. Host `tsc` and build (including SSR prerender if the host has one) pass.
+6. Host `tsc`, build and SSR prerender (if any) pass; CSP allows the assets.

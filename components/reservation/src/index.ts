@@ -1,3 +1,2 @@
-export { Reservation } from "./Reservation";
-export { EvoviewSignature, EVOVIEW_URL } from "./EvoviewSignature";
+export { Reservation, EVOVIEW_URL } from "./Reservation";
 export type * from "./types";
