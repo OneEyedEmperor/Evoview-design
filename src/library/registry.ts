@@ -76,7 +76,7 @@ const DRAFTS: Draft[] = [
     route: "/components/selector-stage",
     title: { fr: "Sélecteur et scène", en: "Selector stage" },
     meta: { fr: "Sélecteur ↔ scène, comparaison avant/après", en: "Selector ↔ stage, before/after compare" },
-    status: "building",
+    status: "ready",
   },
   {
     id: "controls",
