@@ -1,5 +1,11 @@
 # dossier changelog
 
+## 1.0.2
+
+- The inert walk skips elements carrying `data-ev-keep-interactive` (host
+  dev/showcase chrome, e.g. the library's floating accent palette). Client
+  behaviour unchanged. No config changes.
+
 ## 1.0.1
 
 - Requires `controls` 1.1.0: initial focus goes to the close button through

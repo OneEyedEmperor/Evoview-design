@@ -138,6 +138,10 @@ type DossierConfig = {
   sibling up the ancestor chain is `inert` while open, page scroll locked,
   `useSuspendBackground` pauses the page's loops and clocks; the dialog carries
   `data-ev-modal` so its own loops keep running.
+- **Exemption**: elements carrying `data-ev-keep-interactive` are skipped by
+  the inert walk (stay clickable; stack them above `--dossier-z`). They are
+  outside the Tab trap, so pointer only while open. For host dev/showcase
+  tools (the library's floating accent palette); client sites never render it.
 - Focus to the close on open; Tab trapped; focus restored to the launcher on
   close; a view swap that removes the focused control returns focus to the
   dialog; returning to the overview focuses the tile you came from.

@@ -142,7 +142,10 @@ type ProcessSequenceConfig = {
   wipe, cells, intro, items (+40 ms each), footer stagger; step change = 180 ms
   out, hold until the next media is decoded, replay. ←/→, Esc, Tab contained,
   focus on close, returns to the launching card, page scroll locked, background
-  suspended (`useSuspendBackground`).
+  suspended (`useSuspendBackground`). It sets no `inert` on the page, so host
+  chrome marked `data-ev-keep-interactive` (see `dossier` README) stays
+  clickable when stacked above its z-index 1000; it is outside the Tab trap
+  (pointer only while open).
 - **Pause model**: the clock runs only while the section is on screen (12 %),
   revealed, the tab visible, no modal open, and the active step's media
   decoded (`useInViewPause` + `useSequenceClock` + `useMediaReady`); resumes

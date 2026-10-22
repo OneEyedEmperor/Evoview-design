@@ -39,11 +39,13 @@ type Props = {
   customLabel: string;
   onChange: (id: string) => void;
   onCustom: (hex: string) => void;
+  /** Swatches only; the caption becomes the group's accessible name. */
+  compact?: boolean;
 };
 
 /* Radiogroup of accent swatches plus a native colour input. Roving
    tabindex; arrows/Home/End select and move focus. */
-export default function AccentPalette({ swatches, value, custom, caption, customLabel, onChange, onCustom }: Props) {
+export default function AccentPalette({ swatches, value, custom, caption, customLabel, onChange, onCustom, compact = false }: Props) {
   const captionId = useId();
   const group = useRef<HTMLDivElement>(null);
   const picker = useRef<HTMLInputElement>(null);
@@ -74,11 +76,20 @@ export default function AccentPalette({ swatches, value, custom, caption, custom
   };
 
   return (
-    <div className="lib-palette">
-      <p id={captionId} className="lib-palette__caption">
-        <span>{caption.strong}</span> — {caption.rest}
-      </p>
-      <div ref={group} role="radiogroup" aria-labelledby={captionId} className="lib-palette__row" onKeyDown={onKeyDown}>
+    <div className={compact ? "lib-palette lib-palette--compact" : "lib-palette"}>
+      {!compact && (
+        <p id={captionId} className="lib-palette__caption">
+          <span>{caption.strong}</span> — {caption.rest}
+        </p>
+      )}
+      <div
+        ref={group}
+        role="radiogroup"
+        aria-labelledby={compact ? undefined : captionId}
+        aria-label={compact ? caption.strong : undefined}
+        className="lib-palette__row"
+        onKeyDown={onKeyDown}
+      >
         {swatches.map((s) => {
           const checked = value === s.id;
           return (

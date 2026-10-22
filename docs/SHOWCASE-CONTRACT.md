@@ -65,3 +65,19 @@ palette) and wraps children in an element that sets `--primary`,
 
 Components read the host accent via `var(--primary)` / `var(--primary-foreground)`
 mapped in their own token block, exactly like `components/reservation`.
+
+- **Floating palette**: same state, glass capsule bottom-right (phone: an orb
+  that unfolds), shown when the header palette is off-screen or a modal
+  suspends the page. It carries `data-ev-keep-interactive`, which modal
+  packages skip when applying `inert` (documented in `dossier` /
+  `process-sequence` READMEs); pointer only while a modal is open.
+- **Nav tone**: the frame marks only its header (and bottom spacer) dark; the
+  stage is marked dark only while its content declares no tone. Content tone
+  = `data-nav-tone` or foundation `ev-tone-*` on outermost section roots
+  (dark roots without `data-nav-tone` are bridged automatically). Nested tone
+  elements (cards, modals) are ignored.
+- **Text accent on light frames** goes through `--lib-signal` (62 % accent
+  toward ink, as foundation's `--ev-accent-signal`).
+- **Covers** (`covers.tsx`): screenshot crops in `public/library/covers/
+  <id>-banner.webp` (900×216, navbar trays) and `<id>-card.webp` (1280×800,
+  index wells, graded at rest); the SVG drawing is the fallback.

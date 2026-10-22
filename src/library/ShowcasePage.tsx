@@ -1,7 +1,8 @@
-import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
 import { Link } from "react-router-dom";
 import AccentPalette, { CUSTOM_SWATCH, inkFor } from "./AccentPalette";
 import { Cover } from "./covers";
+import FloatingPalette from "./FloatingPalette";
 import LocaleToggle from "./LocaleToggle";
 import { useLibraryLocale, type Locale, type Localized } from "./locale";
 import { CATEGORY_LABEL, CATEGORY_ROUTE, getEntry, pad2, positionOf } from "./registry";
@@ -89,9 +90,27 @@ export default function ShowcasePage({ entryId, title, intro, tone = "dark", def
 
   const body = children === undefined ? <InConstruction entryId={entry.id} category={entry.category} /> : typeof children === "function" ? children({ locale, accent, ink }) : children;
 
+  const paletteRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const tonedByContent = useHasNavTone(stageRef);
+  const dark = tone === "dark" ? "dark" : undefined;
+  const paletteProps = {
+    swatches,
+    value: accentId,
+    custom,
+    caption: { strong: copy.paletteStrong, rest: copy.paletteRest },
+    customLabel: copy.custom,
+    onChange: setAccentId,
+    onCustom: setCustom,
+  };
+
+  /* Nav tone is declared per region, never on the wrapper: the navbar probe
+     has no nesting priority, so a dark wrapper would win over every light
+     chapter inside it. The stage is marked only while its content declares
+     no tone of its own. */
   return (
-    <div className="lib-showcase lib-toned ev-library" data-tone={tone} data-nav-tone={tone === "dark" ? "dark" : undefined} style={style}>
-      <header className="lib-showcase__head lib-rail">
+    <div className="lib-showcase lib-toned ev-library" data-tone={tone} style={style}>
+      <header className="lib-showcase__head lib-rail" data-nav-tone={dark}>
         <nav aria-label={copy.breadcrumb} className="lib-crumbs lib-voice-state">
           <Link to="/">{copy.library}</Link>
           <span aria-hidden="true">/</span>
@@ -116,20 +135,65 @@ export default function ShowcasePage({ entryId, title, intro, tone = "dark", def
           </div>
         </div>
         {palette && (
-          <AccentPalette
-            swatches={swatches}
-            value={accentId}
-            custom={custom}
-            caption={{ strong: copy.paletteStrong, rest: copy.paletteRest }}
-            customLabel={copy.custom}
-            onChange={setAccentId}
-            onCustom={setCustom}
-          />
+          <div ref={paletteRef} className="lib-showcase__palette">
+            <AccentPalette {...paletteProps} />
+          </div>
         )}
       </header>
-      <div className="lib-showcase__stage">{body}</div>
+      <div ref={stageRef} className="lib-showcase__stage" data-nav-tone={tonedByContent ? undefined : dark}>
+        {body}
+      </div>
+      <div className="lib-showcase__tail" data-nav-tone={dark} aria-hidden="true" />
+      {palette && <FloatingPalette {...paletteProps} anchor={paletteRef} tone={tone} accent={accent} />}
     </div>
   );
+}
+
+const TONED = ".ev-tone-dark, .ev-tone-light, .ev-tone-paper, [data-nav-tone]";
+const BRIDGED = "data-nav-tone-bridged";
+
+/* True once the stage content declares its own tone. Packages that only set
+   foundation's `ev-tone-*` class on a section root (no `data-nav-tone`) are
+   bridged: outermost dark roots get `data-nav-tone="dark"`. Nested tone
+   elements (cards, modals) are ignored — the navbar probe is a horizontal
+   line, so a dark card inside a light chapter must not darken the bar. */
+function useHasNavTone(ref: RefObject<HTMLElement | null>): boolean {
+  const [has, setHas] = useState(false);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let frame = 0;
+    const sync = () => {
+      frame = 0;
+      const roots = Array.from(el.querySelectorAll<HTMLElement>(TONED)).filter((n) => {
+        const outer = n.parentElement?.closest(TONED);
+        return !outer || outer === el || !el.contains(outer);
+      });
+      for (const n of Array.from(el.querySelectorAll<HTMLElement>(`[${BRIDGED}]`))) {
+        if (!roots.includes(n) || !n.classList.contains("ev-tone-dark")) {
+          n.removeAttribute("data-nav-tone");
+          n.removeAttribute(BRIDGED);
+        }
+      }
+      for (const n of roots) {
+        if (n.classList.contains("ev-tone-dark") && !n.hasAttribute("data-nav-tone")) {
+          n.setAttribute(BRIDGED, "");
+          n.setAttribute("data-nav-tone", "dark");
+        }
+      }
+      setHas(roots.length > 0);
+    };
+    sync();
+    const mo = new MutationObserver(() => {
+      if (!frame) frame = requestAnimationFrame(sync);
+    });
+    mo.observe(el, { subtree: true, childList: true, attributes: true, attributeFilter: ["class", "data-nav-tone"] });
+    return () => {
+      mo.disconnect();
+      cancelAnimationFrame(frame);
+    };
+  }, [ref]);
+  return has;
 }
 
 function InConstruction({ entryId, category }: { entryId: string; category: keyof typeof CATEGORY_ROUTE }) {

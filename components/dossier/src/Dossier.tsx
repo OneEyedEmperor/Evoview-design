@@ -38,6 +38,8 @@ export function Dossier(props: DossierProps) {
 }
 
 const FOCUSABLE = 'a[href], button, input, textarea, select, [tabindex], video[controls]';
+/** Host chrome that must stay usable over the modal (a dev/showcase tool, never client UI): not made inert, not in the Tab trap. */
+const KEEP_INTERACTIVE = "data-ev-keep-interactive";
 
 function DossierLayer({ config, onClose, initialItemId, initialEntryId, className, closing, onExited }: DossierProps & { closing: boolean; onExited: () => void }) {
   const { items, copy } = config;
@@ -89,7 +91,7 @@ function DossierLayer({ config, onClose, initialItemId, initialEntryId, classNam
     let node: Element | null = root;
     while (node && node.parentElement && node !== document.body) {
       for (const sibling of Array.from(node.parentElement.children)) {
-        if (sibling !== node && sibling instanceof HTMLElement && sibling.tagName !== "SCRIPT") {
+        if (sibling !== node && sibling instanceof HTMLElement && sibling.tagName !== "SCRIPT" && !sibling.hasAttribute(KEEP_INTERACTIVE)) {
           touched.push([sibling, sibling.inert]);
           sibling.inert = true;
         }

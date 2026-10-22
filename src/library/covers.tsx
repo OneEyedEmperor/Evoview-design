@@ -1,9 +1,9 @@
-import { useId, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 
 /* Abstract structure previews for each library entry, drawn as inline SVG
    in neutral greys (the navbar card renders them monochrome anyway). One
-   thin accent signal per cover, via --cover-signal. Placeholders for real
-   screenshots: swap the map at the bottom without touching the callers.
+   thin accent signal per cover, via --cover-signal. Fallback for entries
+   without a screenshot crop (see PHOTO below).
 
    `banner` = navbar tray card (900×216). `card` = library index well (16:10). */
 
@@ -345,8 +345,30 @@ const DRAW: Record<string, Draw> = {
   navbar,
 };
 
+/* Real crops of each showcase (public/library/covers/<id>-<variant>.webp,
+   banner 900×216, card 1280×800). The SVG stays as the fallback. */
+const PHOTO = new Set(["chapter", "card-track", "process-sequence", "story-blocks", "reservation", "dossier", "selector-stage", "controls", "navbar"]);
+const PHOTO_SIZE: Record<CoverVariant, [number, number]> = { banner: [900, 216], card: [1280, 800] };
+
 export function Cover({ id, variant = "card", className }: { id: string; variant?: CoverVariant; className?: string }) {
   const uid = useId().replace(/:/g, "");
+  const [failed, setFailed] = useState(false);
+  if (PHOTO.has(id) && !failed) {
+    const [pw, ph] = PHOTO_SIZE[variant];
+    return (
+      <img
+        src={`/library/covers/${id}-${variant}.webp`}
+        alt=""
+        width={pw}
+        height={ph}
+        decoding="async"
+        loading={variant === "card" ? "lazy" : undefined}
+        draggable={false}
+        className={className ? `lib-cover ${className}` : "lib-cover"}
+        onError={() => setFailed(true)}
+      />
+    );
+  }
   const draw = DRAW[id];
   if (!draw) return null;
   const [w, h] = SIZE[variant];
