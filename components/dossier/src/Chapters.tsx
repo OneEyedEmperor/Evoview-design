@@ -1,0 +1,188 @@
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { cn, pad } from "../foundation";
+import type { DossierMedia } from "./types";
+import { isVideo } from "./hooks";
+
+/* Open chapters for a dossier detail: claim → artefact → one interpreting
+   sentence. Chapters are unboxed; they separate by spacing, a hairline and an
+   alternating near-black. Any block library (e.g. story-blocks) may replace
+   the inner pieces; keep DossierChapter as the shell. */
+
+export type DossierChapterProps = {
+  /** "a" #0c0c0d, "b" #101011 (alternate them), "paper" light chapter inside the dark shell. */
+  tone?: "a" | "b" | "paper";
+  /** "intro" opens the story (tighter top), "payoff" closes it (bloom). */
+  variant?: "intro" | "standard" | "payoff";
+  className?: string;
+  children: ReactNode;
+};
+
+export function DossierChapter({ tone = "a", variant = "standard", className, children }: DossierChapterProps) {
+  const ref = useRef<HTMLElement>(null);
+  const [revealed, setRevealed] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || revealed) return;
+    if (typeof IntersectionObserver === "undefined") {
+      setRevealed(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setRevealed(true);
+          io.disconnect();
+        }
+      },
+      { rootMargin: "0px 0px -10% 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [revealed]);
+  return (
+    <section ref={ref} className={cn("evd-chapter", `evd-chapter--${variant}`, tone === "paper" && "ev-tone-light", className)} data-tone={tone} data-revealed={revealed || undefined}>
+      <div className="evd-rail">{children}</div>
+    </section>
+  );
+}
+
+export type ChapterHeadProps = {
+  title: ReactNode;
+  lead?: ReactNode;
+  body?: ReactNode;
+  /** "title" once per story (intro), "heading" per chapter. */
+  level?: "title" | "heading";
+  as?: "h2" | "h3";
+};
+
+/** Title / copy split, .72 / 1.28; copy bottom-aligned. */
+export function ChapterHead({ title, lead, body, level = "heading", as: Tag = level === "title" ? "h2" : "h3" }: ChapterHeadProps) {
+  return (
+    <div className={cn("evd-head", !lead && !body && "evd-head--solo")}>
+      <Tag className={level === "title" ? "ev-t-title" : "ev-t-heading"}>{title}</Tag>
+      {(lead || body) && (
+        <div className="evd-head__copy">
+          {lead && <p className="ev-t-lead evd-head__lead">{lead}</p>}
+          {body && <p className="ev-t-body evd-head__body">{body}</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export type ChapterFigureProps = {
+  media: DossierMedia & { alt: string };
+  /** "hero" 16:10 → 4:5 phone, "stage" 4:3, or a number (w / h). */
+  ratio?: "hero" | "stage" | number;
+  caption?: { kicker: string; title: string };
+  className?: string;
+};
+
+/** Media well with the caption inside (readout kicker + accent dot + title). */
+export function ChapterFigure({ media, ratio = "stage", caption, className }: ChapterFigureProps) {
+  const style = { objectPosition: media.position ?? "50% 50%", objectFit: media.fit ?? "cover" } as const;
+  return (
+    <figure
+      className={cn("evd-figure", typeof ratio === "string" && `evd-figure--${ratio}`, className)}
+      style={typeof ratio === "number" ? { aspectRatio: String(ratio) } : undefined}
+    >
+      {isVideo(media) ? (
+        <video src={media.src} poster={media.poster} muted loop autoPlay playsInline aria-label={media.alt} style={style} />
+      ) : (
+        <img src={media.src} srcSet={media.srcSet} sizes={media.sizes} alt={media.alt} decoding="async" style={style} />
+      )}
+      {caption && (
+        <figcaption className="evd-figure__caption">
+          <span className="ev-t-readout evd-figure__kicker">{caption.kicker}</span>
+          <span className="evd-figure__title">{caption.title}</span>
+          <span className="evd-figure__dot" aria-hidden="true" />
+        </figcaption>
+      )}
+    </figure>
+  );
+}
+
+/** Side / stage split, .7 / 1.3. The stage (larger side) holds the proof; on phones it comes first. */
+export function ChapterSplit({ aside, children }: { aside: ReactNode; children: ReactNode }) {
+  return (
+    <div className="evd-split">
+      <div className="evd-split__aside">{aside}</div>
+      <div className="evd-split__stage">{children}</div>
+    </div>
+  );
+}
+
+export type ChapterRow = { label: ReactNode; detail: ReactNode; index?: string };
+
+/** Numbered rows with hairlines: index · label · detail. */
+export function ChapterRows({ rows, numbered = true, className }: { rows: ChapterRow[]; numbered?: boolean; className?: string }) {
+  return (
+    <ol className={cn("evd-rows", !numbered && "evd-rows--plain", className)}>
+      {rows.map((row, i) => (
+        <li key={i} className="evd-rows__row">
+          {numbered && <span className="ev-t-readout evd-rows__index">{row.index ?? pad(i + 1)}</span>}
+          <span className="ev-t-label evd-rows__label">{row.label}</span>
+          <span className="evd-rows__detail">{row.detail}</span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/** Paper specimen inside the dark shell: a demonstration of a client artefact (menu, card, plan). */
+export function ChapterSpecimen({ label, note, children }: { label?: string; note?: string; children: ReactNode }) {
+  return (
+    <div className="ev-tone-paper evd-specimen">
+      {label && <span className="ev-t-readout evd-specimen__label">{label}</span>}
+      {children}
+      {note && <p className="ev-t-compact evd-specimen__note">{note}</p>}
+    </div>
+  );
+}
+
+export type ChapterPayoffProps = {
+  /** Two short lines, period-terminated. */
+  lines: string[];
+  /** Index of the line taking the accent (signal). */
+  accentLine?: number;
+  lead?: ReactNode;
+  results?: { value: string; label: string }[];
+  /** The one exit CTA of the story (client action), e.g. a PrimaryPlate. */
+  action?: ReactNode;
+  /** Consequence readout under the CTA ("Quitte le dossier"). */
+  consequence?: string;
+};
+
+/** Closing band: statement 1.2 | .8 action, results row below. */
+export function ChapterPayoff({ lines, accentLine, lead, results, action, consequence }: ChapterPayoffProps) {
+  return (
+    <div className="evd-payoff">
+      <div className="evd-payoff__statement">
+        <h3 className="ev-t-display">
+          {lines.map((line, i) => (
+            <span key={i} className={cn("evd-payoff__line", i === accentLine && "evd-payoff__line--accent")}>
+              {line}
+            </span>
+          ))}
+        </h3>
+        {lead && <p className="ev-t-lead evd-payoff__lead">{lead}</p>}
+        {results && results.length > 0 && (
+          <dl className="evd-payoff__results">
+            {results.map((r, i) => (
+              <div key={i}>
+                <dt className="ev-t-compact">{r.label}</dt>
+                <dd className="evd-payoff__value">{r.value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+      </div>
+      {action && (
+        <div className="evd-payoff__action">
+          {action}
+          {consequence && <span className="ev-t-readout evd-payoff__consequence">{consequence}</span>}
+        </div>
+      )}
+    </div>
+  );
+}
