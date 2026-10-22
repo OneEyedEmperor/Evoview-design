@@ -68,7 +68,7 @@ const DRAFTS: Draft[] = [
     route: "/components/dossier",
     title: { fr: "Dossier", en: "Dossier" },
     meta: { fr: "Modale portail, sélection, bande de chapitres", en: "Portal modal, board, chapter strip" },
-    status: "building",
+    status: "ready",
   },
   {
     id: "selector-stage",
