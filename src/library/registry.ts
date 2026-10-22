@@ -84,7 +84,7 @@ const DRAFTS: Draft[] = [
     route: "/components/controls",
     title: { fr: "Contrôles", en: "Controls" },
     meta: { fr: "Boutons, puces, champs, progression, interrupteur", en: "Buttons, chips, fields, progress, switch" },
-    status: "building",
+    status: "ready",
   },
   {
     id: "navbar",
