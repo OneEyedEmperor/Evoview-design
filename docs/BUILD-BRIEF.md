@@ -1,0 +1,28 @@
+## Shared brief (all six package agents)
+
+You are one of six parallel agents each building **one** package of the Evoview design library (`/root/.vibehub/projects/evoview-design-library`): a neutral, reusable layout/component in the Evoview style, adaptable to any client, with a live accent palette on its showcase page.
+
+### Read first (in this order)
+1. `CLAUDE.md` (packaging contract), `STRATEGY.md` (client utility + Evoview authorship/attribution).
+2. **`docs/RULES.md`** — binding. §0 decisions (scale, floors, no reduced-motion branch + pause model, accent mapping, asymmetric splits, media-first on phone), §8 signature vs motifs not to clone, §9 attribution.
+3. **`docs/SHOWCASE-CONTRACT.md`** — your route, your page file, the `ShowcasePage` API.
+4. `components/foundation/README.md` (tokens, tone classes, type classes, hooks: `useInViewPause`, `useSequenceClock`, `useMediaReady`, `useSuspendBackground`, primitives `Readout`, `Index`, `SectionMarker`, `EvoviewMark`) and `components/controls/README.md` (PrimaryPlate, GhostAction, GlassClose, PagerOrb, OptionChip/ChipGroup, OptionRow(s), Tag, Badge, StepMark, CheckOrb, UnderlineField, Switch, SegmentedControl, SegmentedProgress). **Reuse them — do not re-implement controls, tokens or clocks.**
+5. Your extraction evidence (named in your task) for exact measured values, and `/root/.vibehub/projects/evoview/skills/evoview-architecture/SKILL.md` (mandatory lens; apply its "Apply and verify" questions).
+6. Look at an existing package for shape: `components/controls` (newest, uses foundation) and `components/reservation` (config pattern, FR/EN builder, accent mapping).
+
+The live site `https://evoview.said.bet` / `/root/.vibehub/projects/evoview` is **reference only — read-only, never edit/stage/build/restart there.** Look at the original live when it helps, but build a *neutral* version: no Evoview copy, imagery, eyes, REC, CRT, scanlines, Gaegu, `EVV`. Demo content = a plausible generic client (e.g. a restaurant, an architect, a studio — pick what best demonstrates the component), FR + EN via `build<Name>Config(locale)`. Demo media: use royalty-free-looking local placeholders you generate (CSS/SVG compositions or images via the `nano-banana-pro` skill if you need photographic media — keep them small, webp, in your package's `examples/` or `public/library/<name>/`), never Evoview's own assets.
+
+### Package shape
+`components/<name>/{src/, README.md, SKILL.md, CHANGELOG.md, VERSION (1.0.0), install.sh}`. `src/<name>.config.tsx` is the only per-site file. Root class `ev-root ev-<name>` + tone class; CSS scoped under `.ev-<name>`; accent via `--primary` → `--<name>-accent` (or `--ev-accent*`). Library symlinks so client-style imports work: `ln -sfn ../foundation/src components/<name>/foundation` (and `../controls/src` → `components/<name>/controls` if used); import as `./foundation` / `../foundation` per the foundation README's pattern — follow exactly what foundation's README specifies. `install.sh` calls `../controls/install.sh` (or `../foundation/install.sh`) first, then copies `src/`, preserving the config on re-run. README: files table, host requirements, config, adaptation levers, **what is the protected Evoview signature vs what the client changes**, attribution (one linked `EvoviewMark` max, in a header strip, never next to a client CTA — only if the component has a natural header/chassis; otherwise none), desktop/mobile behaviour, pause model, verification checklist. SKILL.md: agent procedure for installing/adapting it on a client site. Symlink the skill: `mkdir -p ~/.vibehub/skills/evoview-<name> && ln -sfn $PWD/components/<name>/SKILL.md ~/.vibehub/skills/evoview-<name>/SKILL.md`.
+
+### Showcase page
+Replace the placeholder at your page file with a real `ShowcasePage` page (contract API). Pass the component as a **node child** (not the render function) if it is expensive, so palette changes recolour via CSS variables without re-rendering. Show the component in realistic context and its meaningful variants (e.g. tone dark/light, a variant prop) — compose the page like an Evoview page (asymmetric, indexed, no filler), not a props dump. Every accent-capable part must recolour live on swatch click; check the yellow and near-white swatches still show state.
+
+### Verify
+`pnpm build` green. On `https://evoview-library.said.bet` (vhdev-managed; `vhdev up` if 502; **never** `pnpm dev`) with agent-browser at **1440, 1024, 390**: layout proportions match RULES, keyboard/focus, hover vs touch behaviour, pause model (scroll away / hidden tab where applicable), palette recolours live, FR/EN, no horizontal overflow, no text under the floors. Save a 1440 and a 390 screenshot to `~/.vibehub/documents/evoview-library/shots/<name>-1440.png` / `<name>-390.png` (they may become navbar tray covers). Answer the skill's four questions honestly in your reply. Do not claim visual verification you did not do.
+
+### Commit discipline
+Five other agents commit in this repo concurrently. Commit only `components/<name>/**` and your page file (`git add <paths>`; never `-A`, never reset/stash/checkout others' files). Do **not** edit `src/App.tsx`, `src/library/*`, `CLAUDE.md`, `docs/*`, `components/foundation|controls/**`. If you find a bug or a missing capability in foundation/controls, work around it locally if trivial and **report it in your reply** (I'll route fixes) — don't edit those packages.
+
+### Reply
+Version, file list, config shape (type snippet), the variants shown, verification results per width, screenshots paths, foundation/controls issues found, and anything unverified.
