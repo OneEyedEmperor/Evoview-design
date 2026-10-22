@@ -1,0 +1,330 @@
+/* Evoview selector stage — SelectorStage, CompareToggle, ProofAtlas.
+   Root: .ev-root.ev-selector-stage + a tone class. Element classes ss-*.
+   Host accent: --primary / --primary-foreground. Sizes in em (× --ev-scale). */
+
+.ev-selector-stage {
+  --ss-accent: var(--primary, #818cf8);
+  --ss-accent-ink: var(--primary-foreground, #101011);
+  --ss-accent-deep: color-mix(in oklab, var(--ss-accent) 62%, var(--ev-deep-toward, #000));
+  /* Strokes and text marks: pulled toward the tone foreground so yellow / off-white still read on paper. */
+  --ss-signal: color-mix(in oklab, var(--ss-accent) var(--ev-signal-mix, 88%), var(--ev-signal-toward, #fff));
+  --ss-tint: color-mix(in oklab, var(--ss-accent) 22%, transparent);
+  --ss-border: color-mix(in oklab, var(--ss-signal) 65%, transparent);
+  /* Marks over media (always on a dark scrim): lifted toward white so an ink accent still reads. */
+  --ss-on-media: color-mix(in oklab, var(--ss-accent) 62%, #fff);
+  --ss-ratio: 4 / 3;
+
+  position: relative;
+  color: var(--ev-fg);
+}
+.ev-selector-stage.ss-chapter { padding-block: var(--ev-chapter-standard); }
+
+/* ── Chapter copy ──────────────────────────────────────────────────── */
+
+.ss-heading { color: var(--ev-fg); }
+.ss-heading__line { display: block; }
+.ss-heading em { font-style: normal; color: var(--ss-signal); }
+.ss-body { max-width: 35em; margin-top: 1.25em; color: var(--ev-fg-65); }
+.ss-detail { max-width: 44em; min-height: 3.2em; margin-top: 1.25em; color: var(--ev-fg-65); }
+.ss-note { margin: 1.25em 0 0; color: var(--ev-fg-35); }
+
+/* Reveal once: y 28 + fade, 600ms cinematic, stagger 80ms. */
+.ss-reveal {
+  opacity: 0;
+  translate: 0 28px;
+  transition: opacity var(--ev-dur-reveal) var(--ev-ease-cinematic), translate var(--ev-dur-reveal) var(--ev-ease-cinematic);
+  transition-delay: calc(var(--i, 0) * var(--ev-stagger));
+}
+[data-revealed] .ss-reveal { opacity: 1; translate: 0 0; }
+
+/* ── Splits ────────────────────────────────────────────────────────── */
+
+.ss-split { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2em; }
+.ss-side, .ss-main { min-width: 0; }
+.ss-selector { display: grid; gap: 0.75em; margin-top: 2em; min-width: 0; }
+
+/* Heading / copy split for pair and atlas: .72 / 1.28, copy bottom-aligned. */
+.ss-headsplit { display: grid; gap: 0.25em; margin-bottom: 2.5em; }
+.ss-headsplit .ss-body { margin-top: 1em; }
+
+@media (min-width: 1024px) {
+  .ss-split { grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr); column-gap: 3.5em; align-items: start; }
+  .ss-headsplit { grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr); column-gap: 3.5em; align-items: end; margin-bottom: 3.5em; }
+  .ss-headsplit .ss-body { margin-top: 0; justify-self: end; }
+}
+
+/* ── Selector: joined rows (≥ 1024) ↔ chip strip (< 1024) ──────────── */
+
+.ss-rows { display: none; border-top: 1px solid var(--ev-fg-12); }
+.ss-row {
+  display: grid;
+  width: 100%;
+  min-height: 64px;
+  grid-template-columns: 2.4em minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75em;
+  margin: 0;
+  padding: 1.1em 1.25em 1.1em 1em;
+  border: 0;
+  border-bottom: 1px solid var(--ev-fg-12);
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 300ms var(--ev-ease), border-color 300ms var(--ev-ease);
+}
+.ss-row__index { color: var(--ev-fg-35); transition: color 300ms var(--ev-ease); }
+.ss-row__label { font-size: max(0.8125em, 12px); color: var(--ev-fg-55); transition: color 300ms var(--ev-ease); }
+.ss-row__bar {
+  width: 7px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--ev-fg-12);
+  transition: width 300ms var(--ev-ease-cinematic), background-color 300ms var(--ev-ease);
+}
+.ss-row[data-selected] { background: var(--ss-tint); border-bottom-color: var(--ss-border); }
+.ss-row[data-selected] .ss-row__index { color: var(--ss-signal); }
+.ss-row[data-selected] .ss-row__label { color: var(--ev-fg); }
+.ss-row[data-selected] .ss-row__bar { width: 22px; background: var(--ss-signal); }
+@media (hover: hover) {
+  .ss-row:not([data-selected]):hover .ss-row__label { color: var(--ev-fg-90); }
+  .ss-row:not([data-selected]):hover { background: color-mix(in oklab, var(--ev-fg) 3%, transparent); }
+}
+.ss-row:focus-visible { outline: 2px solid var(--ss-signal); outline-offset: -2px; }
+
+.ss-chips {
+  display: flex;
+  gap: 8px;
+  margin-inline: calc(-1 * var(--ev-gutter));
+  padding: 2px var(--ev-gutter) 4px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-padding-inline: var(--ev-gutter);
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+.ss-chips::-webkit-scrollbar { display: none; }
+.ss-chips > * { flex: 0 0 auto; scroll-snap-align: start; }
+
+@media (min-width: 1024px) {
+  .ss-rows { display: block; }
+  .ss-chips { display: none; }
+}
+
+/* Autoplay toggle: a quiet text action under the selector. */
+.ss-auto {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-self: start;
+  gap: 10px;
+  margin: 0;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--ev-fg-55);
+  font: inherit;
+  cursor: pointer;
+  transition: color var(--ev-dur-fast) ease;
+}
+@media (hover: hover) { .ss-auto:hover { color: var(--ev-fg); } }
+.ss-auto:focus-visible { outline: 2px solid var(--ss-signal); outline-offset: 2px; }
+.ss-auto__icon { position: relative; width: 10px; height: 10px; flex: 0 0 auto; }
+.ss-auto__icon::before, .ss-auto__icon::after { content: ""; position: absolute; top: 0; width: 3px; height: 10px; border-radius: 1px; background: currentColor; }
+.ss-auto__icon::before { left: 1px; }
+.ss-auto__icon::after { right: 1px; }
+.ss-auto__icon[data-paused]::before { left: 1px; width: 0; height: 0; border-radius: 0; border-block: 5px solid transparent; border-left: 9px solid currentColor; background: none; }
+.ss-auto__icon[data-paused]::after { display: none; }
+
+/* ── Stage ─────────────────────────────────────────────────────────── */
+
+.ss-stage {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  margin: 0;
+  aspect-ratio: var(--ss-ratio);
+  border: 1px solid color-mix(in oklab, var(--ss-signal) 44%, transparent);
+  border-radius: var(--ev-radius-surface);
+  background: #080808;
+  color: #fff;
+}
+.ss-stage__layers { position: absolute; inset: 0; }
+.ss-layer { position: absolute; inset: 0; overflow: hidden; }
+.ss-layer > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  user-select: none;
+  transition: object-position 300ms var(--ev-ease), transform 300ms var(--ev-ease);
+}
+
+/* Fade (selector, atlas): crossfade 300ms. */
+.ss-stage[data-transition="fade"] .ss-layer { opacity: 0; transition: opacity 300ms var(--ev-ease); }
+.ss-stage[data-transition="fade"] .ss-layer[data-state="active"] { opacity: 1; }
+
+/* Wipe (compare): the new state clips in over the previous one. */
+.ss-stage[data-transition="wipe"] .ss-layer { z-index: 0; clip-path: inset(0 100% 0 0); }
+.ss-stage[data-transition="wipe"] .ss-layer[data-state="prev"] { z-index: 1; clip-path: inset(0); }
+/* A keyframe (not a transition): it restarts on every activation, even from "prev". */
+.ss-stage[data-transition="wipe"] .ss-layer[data-state="active"] {
+  z-index: 2;
+  clip-path: inset(0);
+  animation: ss-wipe var(--ev-dur-reveal) var(--ev-ease-cinematic) both;
+}
+@keyframes ss-wipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0); } }
+
+/* Media gate: nothing shows before every photograph is decoded. */
+.ss-stage__layers { opacity: 0; transition: opacity var(--ev-dur-reveal) var(--ev-ease); }
+.ss-stage[data-ready] .ss-stage__layers { opacity: 1; }
+
+.ss-stage__scrim {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0) 42%), linear-gradient(to bottom, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0) 30%);
+}
+.ss-caption {
+  position: absolute;
+  z-index: 4;
+  inset-inline: 1.25em;
+  bottom: 1.25em;
+  display: grid;
+  gap: 4px;
+  pointer-events: none;
+}
+.ss-caption__kicker { color: var(--ss-on-media); }
+.ss-caption__label { font-size: max(0.875em, 13px); font-weight: 600; line-height: 1.35; color: #fff; }
+@media (min-width: 768px) { .ss-caption { inset-inline: 1.5em; bottom: 1.5em; } }
+
+.ss-loader {
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  padding: 1.5em;
+  color: rgba(255, 255, 255, 0.65);
+  text-align: center;
+}
+.ss-loader .evc-ghost { color: rgba(255, 255, 255, 0.8); }
+.ss-loader__bar { position: relative; width: 120px; height: 2px; overflow: hidden; border-radius: 999px; background: rgba(255, 255, 255, 0.13); }
+.ss-loader__bar i { position: absolute; inset: 0; transform-origin: left; background: var(--ss-on-media); transition: transform 300ms var(--ev-ease); }
+
+/* Autoplay progress on the stage's bottom edge (follows the paused clock). */
+.ss-progress { position: absolute; z-index: 4; inset: auto 0 0; height: 2px; background: rgba(255, 255, 255, 0.13); }
+.ss-progress i { position: absolute; inset: 0; transform-origin: left; background: var(--ss-on-media); animation-name: ss-fill; }
+@keyframes ss-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* ── Compare toggle ────────────────────────────────────────────────── */
+
+.ss-split--compare { grid-template-areas: "head" "stage" "controls"; }
+.ss-area-head { grid-area: head; min-width: 0; }
+.ss-area-stage { grid-area: stage; min-width: 0; }
+.ss-area-controls { grid-area: controls; min-width: 0; }
+.ss-area-controls .ss-detail { margin-top: 1em; }
+.ss-segmented { max-width: 26em; }
+@media (min-width: 1024px) {
+  .ss-split--compare { grid-template-areas: "head stage" "controls stage"; grid-template-rows: auto 1fr; row-gap: 2em; }
+}
+
+/* Pair: true peers → equal columns, ≠ on the seam. Phone: toggle on one frame. */
+.ss-pair { position: relative; display: grid; gap: 1.25em; }
+.ss-pair__switch { min-width: 0; }
+.ss-pair__item { position: relative; min-width: 0; }
+.ss-pair__item:not([data-active]) { display: none; }
+.ss-pair__item .ss-detail { margin-top: 1em; }
+.ss-pair__frame { position: relative; }
+.ss-versus { display: none; }
+@media (min-width: 768px) {
+  .ss-pair { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 1.75em; }
+  .ss-pair__switch { display: none; }
+  .ss-pair__item:not([data-active]) { display: block; }
+  .ss-versus {
+    position: absolute;
+    z-index: 6;
+    top: 50%;
+    right: calc(-0.875 * var(--ev-rem));
+    translate: 50% -50%;
+    display: grid;
+    width: calc(3.2 * var(--ev-rem));
+    height: calc(3.2 * var(--ev-rem));
+    place-items: center;
+    border: 1px solid var(--ss-border);
+    border-radius: 999px;
+    background: var(--ev-bg);
+    color: var(--ss-signal);
+    font-family: var(--ev-font-display);
+    font-size: max(1.25em, 18px);
+    font-weight: 900;
+    line-height: 1;
+    box-shadow: 0 0 0 0.4em var(--ev-bg), 0 12px 30px -12px var(--ss-accent-deep);
+  }
+}
+
+/* ── Atlas ─────────────────────────────────────────────────────────── */
+
+.ss-atlas { display: grid; gap: 0.75em; }
+.ss-atlas__main { min-width: 0; }
+.ss-thumbs {
+  display: flex;
+  gap: 0.75em;
+  margin-inline: calc(-1 * var(--ev-gutter));
+  padding: 2px var(--ev-gutter) 4px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-padding-inline: var(--ev-gutter);
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+.ss-thumbs::-webkit-scrollbar { display: none; }
+.ss-thumb {
+  position: relative;
+  overflow: hidden;
+  flex: 0 0 auto;
+  width: 58vw;
+  aspect-ratio: 1;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--ev-fg-12);
+  border-radius: var(--ev-radius-surface);
+  background: #080808;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+  scroll-snap-align: start;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 300ms var(--ev-ease), box-shadow 300ms var(--ev-ease);
+}
+.ss-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  filter: grayscale(1) contrast(1.06) brightness(0.5);
+  transition: filter 300ms var(--ev-ease), opacity var(--ev-dur-reveal) var(--ev-ease);
+}
+.ss-thumb img[data-ready] { opacity: 1; }
+.ss-thumb::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0) 50%); pointer-events: none; }
+.ss-thumb__label { position: absolute; z-index: 1; left: 0.9em; right: 0.9em; bottom: 0.85em; color: rgba(255, 255, 255, 0.75); text-align: left; }
+.ss-thumb[data-selected] { border-color: color-mix(in oklab, var(--ss-signal) 70%, transparent); box-shadow: 0 0 0 1px color-mix(in oklab, var(--ss-signal) 70%, transparent); }
+.ss-thumb[data-selected] img { filter: none; }
+.ss-thumb[data-selected] .ss-thumb__label { color: var(--ss-on-media); }
+@media (hover: hover) { .ss-thumb:not([data-selected]):hover img { filter: grayscale(0.4) contrast(1.04) brightness(0.75); } }
+.ss-thumb:focus-visible { outline: 2px solid var(--ss-signal); outline-offset: 3px; }
+
+@media (min-width: 640px) { .ss-thumb { width: 38vw; } }
+@media (min-width: 1024px) {
+  .ss-atlas { grid-template-columns: minmax(0, 1.22fr) minmax(0, 0.78fr); gap: 1.25em; align-items: start; }
+  .ss-thumbs { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25em; margin: 0; padding: 0; overflow: visible; }
+  .ss-thumb { width: auto; }
+}

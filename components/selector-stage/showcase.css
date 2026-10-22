@@ -1,0 +1,20 @@
+/* Showcase-only chrome for /components/selector-stage (not installed into clients). */
+
+.ssx-band { position: relative; }
+.ssx-band + .ssx-band { border-top: 0; }
+.ssx-spec {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.6em 1.1em;
+  padding-top: 2.5em;
+  color: var(--ev-fg-55);
+}
+.ssx-spec__index { color: var(--ev-fg-35); }
+.ssx-spec__index .ev-index__current { color: var(--ev-accent-signal); }
+.ssx-spec__name { color: var(--ev-fg); }
+.ssx-band > .ev-selector-stage.ss-chapter { padding-top: 3em; }
+@media (min-width: 768px) {
+  .ssx-spec { padding-top: 4em; }
+  .ssx-band > .ev-selector-stage.ss-chapter { padding-top: 4em; }
+}
