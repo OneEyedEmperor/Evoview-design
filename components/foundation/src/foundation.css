@@ -1,0 +1,257 @@
+/* Evoview foundation — tokens and base roles shared by every library package.
+   Never touches the host's root font-size: proportions come from --ev-scale.
+   Host inputs: --primary / --primary-foreground (accent), --font-heading /
+   --font-body / --font-readout (optional family overrides). */
+
+@font-face { font-family: "Evoview Montserrat"; font-style: normal; font-weight: 300 900; font-display: swap; src: url("./fonts/montserrat-latin-ext.woff2") format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Evoview Montserrat"; font-style: normal; font-weight: 300 900; font-display: swap; src: url("./fonts/montserrat-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Evoview Satoshi"; font-style: normal; font-weight: 700; font-display: swap; src: url("./fonts/satoshi-700.woff2") format("woff2"); }
+@font-face { font-family: "Evoview Grotesk"; font-style: normal; font-weight: 100 900; font-display: swap; src: url("./fonts/overused-grotesk-vf.woff2") format("woff2"); }
+
+/* ── Scale ──────────────────────────────────────────────────────────────
+   1 below 768, .86 from 768, clamp(.86, 100vw / 1710px, .9123) from 1024.
+   Between 1024 and 1470 the clamp is .86; the steps approximate the
+   1470–1560 ramp where typed calc division is unsupported. */
+:where(:root) { --ev-scale: 1; }
+@media (min-width: 768px) { :where(:root) { --ev-scale: 0.86; } }
+@media (min-width: 1500px) { :where(:root) { --ev-scale: 0.877; } }
+@media (min-width: 1530px) { :where(:root) { --ev-scale: 0.895; } }
+@media (min-width: 1560px) { :where(:root) { --ev-scale: 0.9123; } }
+@supports (scale: calc(1px / 1px)) {
+  @media (min-width: 1024px) { :where(:root) { --ev-scale: clamp(0.86, 100vw / 1710px, 0.9123); } }
+}
+
+/* ── Tokens (absolute lengths: safe to use at any nesting depth) ─────── */
+:where(:root) {
+  /* One authored rem at Evoview proportions (16px × scale). */
+  --ev-rem: calc(16px * var(--ev-scale));
+
+  --ev-radius-shell: calc(1.5 * var(--ev-rem));
+  --ev-radius-surface: calc(1 * var(--ev-rem));
+  --ev-radius-control: calc(0.75 * var(--ev-rem));
+  --ev-radius-tag: calc(0.5 * var(--ev-rem));
+  --ev-radius-badge: calc(0.25 * var(--ev-rem));
+  --ev-radius-round: 999px;
+
+  --ev-rail-reading: calc(70 * var(--ev-rem));
+  --ev-rail-wide: calc(85 * var(--ev-rem));
+  --ev-gutter: 20px;
+
+  --ev-gap-internal: calc(0.5 * var(--ev-rem));
+  --ev-gap-neighbour: calc(1.25 * var(--ev-rem));
+  --ev-gap-group: calc(2 * var(--ev-rem));
+  --ev-gap-heading: calc(3 * var(--ev-rem));
+  --ev-chapter-standard: calc(5 * var(--ev-rem));
+  --ev-chapter-compact: calc(4 * var(--ev-rem));
+  --ev-chapter-cinematic-top: calc(6 * var(--ev-rem));
+  --ev-chapter-cinematic-bottom: calc(5 * var(--ev-rem));
+
+  --ev-dur-fast: 180ms;
+  --ev-dur-control: 280ms;
+  --ev-dur-reveal: 600ms;
+  --ev-dur-cinematic: 900ms;
+  --ev-stagger: 80ms;
+  --ev-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ev-ease-cinematic: cubic-bezier(0.23, 1, 0.32, 1);
+
+  /* Legibility floors (never scaled below). */
+  --ev-floor-body: 13px;
+  --ev-floor-label: 11px;
+  --ev-floor-readout: 9px;
+}
+@media (min-width: 640px) { :where(:root) { --ev-gutter: calc(2 * var(--ev-rem)); } }
+@media (min-width: 768px) {
+  :where(:root) {
+    --ev-gap-heading: calc(4 * var(--ev-rem));
+    --ev-chapter-standard: calc(7.5 * var(--ev-rem));
+    --ev-chapter-compact: calc(6 * var(--ev-rem));
+    --ev-chapter-cinematic-top: calc(9 * var(--ev-rem));
+    --ev-chapter-cinematic-bottom: calc(7.5 * var(--ev-rem));
+  }
+}
+@media (min-width: 1024px) { :where(:root) { --ev-gutter: calc(3 * var(--ev-rem)); } }
+@media (min-width: 1280px) { :where(:root) { --ev-gutter: calc(4 * var(--ev-rem)); } }
+
+/* ── Host-mapped tokens: re-resolved at every .ev-root so a subtree that
+   sets --primary / --font-heading (palette, per-item accent) or changes
+   tone is honoured. */
+:where(:root, .ev-root, .ev-tone-dark, .ev-tone-light, .ev-tone-paper) {
+  --ev-font-display: var(--font-heading, "Evoview Grotesk", "Overused Grotesk", system-ui, sans-serif);
+  --ev-font-body: var(--font-body, "Evoview Montserrat", "Montserrat", system-ui, sans-serif);
+  --ev-font-readout: var(--font-readout, "Evoview Satoshi", "Satoshi", "Evoview Montserrat", "Montserrat", system-ui, sans-serif);
+
+  --ev-accent: var(--primary, #818cf8);
+  --ev-accent-ink: var(--primary-foreground, #101011);
+  /* Glows and blooms: still reads when the accent is yellow or near-white.
+     Darkened on dark tones; a translucent accent on light ones (no grey smudge). */
+  --ev-accent-deep: color-mix(in oklab, var(--ev-accent) 62%, var(--ev-deep-toward));
+  /* Strokes, thin fills, focus: pulled toward the tone's foreground so a
+     light accent still shows on paper and a dark one on black. */
+  --ev-accent-signal: color-mix(in oklab, var(--ev-accent) var(--ev-signal-mix), var(--ev-signal-toward));
+}
+
+/* ── Tones (environment). Dark is the default outside any tone. ─────── */
+:where(:root),
+.ev-tone-dark {
+  --ev-bg: #0e0e0e;
+  --ev-bg-alt: #101011;
+  --ev-shell: #0c0c0d;
+  --ev-fg: #ffffff;
+  --ev-fg-90: rgba(255, 255, 255, 0.9);
+  --ev-fg-65: rgba(255, 255, 255, 0.65);
+  --ev-fg-55: rgba(255, 255, 255, 0.55);
+  --ev-fg-35: rgba(255, 255, 255, 0.35);
+  --ev-fg-12: rgba(255, 255, 255, 0.13);
+  --ev-line: rgba(255, 255, 255, 0.08);
+  --ev-line-strong: rgba(255, 255, 255, 0.2);
+  --ev-surface: #121214;
+  --ev-well: #080808;
+  --ev-glass: rgba(20, 20, 22, 0.62);
+  --ev-glass-line: rgba(255, 255, 255, 0.2);
+  --ev-plate: #ffffff;
+  --ev-plate-ink: #101011;
+  --ev-error: #f08a8a;
+  --ev-error-text: #f3a6a6;
+  --ev-signal-toward: #ffffff;
+  --ev-signal-mix: 88%;
+  --ev-deep-toward: #000;
+  --ev-logo-invert: 1;
+}
+.ev-tone-light,
+.ev-tone-paper {
+  --ev-bg: #efefef;
+  --ev-bg-alt: #ffffff;
+  --ev-shell: #ffffff;
+  --ev-fg: #151515;
+  --ev-fg-90: rgba(21, 21, 21, 0.9);
+  --ev-fg-65: rgba(21, 21, 21, 0.68);
+  --ev-fg-55: rgba(21, 21, 21, 0.58);
+  --ev-fg-35: rgba(21, 21, 21, 0.38);
+  --ev-fg-12: rgba(21, 21, 21, 0.1);
+  --ev-line: rgba(21, 21, 21, 0.1);
+  --ev-line-strong: rgba(21, 21, 21, 0.26);
+  --ev-surface: #ffffff;
+  --ev-well: #e4e4e4;
+  --ev-glass: rgba(255, 255, 255, 0.66);
+  --ev-glass-line: rgba(21, 21, 21, 0.14);
+  --ev-plate: #151515;
+  --ev-plate-ink: #ffffff;
+  --ev-error: #c4321f;
+  --ev-error-text: #b42318;
+  --ev-signal-toward: #151515;
+  --ev-signal-mix: 62%;
+  --ev-deep-toward: transparent;
+  --ev-logo-invert: 0;
+}
+.ev-tone-paper {
+  --ev-bg: #ffffff;
+  --ev-bg-alt: #efefef;
+  --ev-surface: #f4f4f3;
+}
+.ev-tone-dark { color-scheme: dark; }
+.ev-tone-light, .ev-tone-paper { color-scheme: light; }
+.ev-tone-dark, .ev-tone-light, .ev-tone-paper { background-color: var(--ev-bg); color: var(--ev-fg); }
+
+/* ── Root ────────────────────────────────────────────────────────────── */
+.ev-root {
+  font-family: var(--ev-font-body);
+  font-size: max(calc(16px * var(--ev-scale)), var(--ev-floor-body));
+  line-height: 1.55;
+  text-align: left;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.ev-root *, .ev-root *::before, .ev-root *::after { box-sizing: border-box; }
+
+/* ── Type roles: what it is (display), why/how (body), where/state (readout) */
+.ev-t-display,
+.ev-t-title,
+.ev-t-heading,
+.ev-t-section,
+.ev-t-section-feature,
+.ev-t-card,
+.ev-t-question {
+  margin: 0;
+  font-family: var(--ev-font-display);
+  font-weight: 900;
+  text-wrap: balance;
+}
+.ev-t-display { font-size: clamp(calc(2.1 * var(--ev-rem)), 4.6vw, calc(4.2 * var(--ev-rem))); line-height: 0.85; letter-spacing: -0.035em; text-transform: uppercase; }
+.ev-t-title { font-size: clamp(calc(2.1 * var(--ev-rem)), 3.6vw, calc(3.4 * var(--ev-rem))); line-height: 0.88; letter-spacing: -0.025em; text-transform: uppercase; }
+.ev-t-heading { font-size: clamp(calc(1.75 * var(--ev-rem)), 3vw, calc(2.9 * var(--ev-rem))); line-height: 0.9; letter-spacing: -0.02em; text-transform: uppercase; }
+.ev-t-section-feature { font-size: clamp(calc(1.75 * var(--ev-rem)), 7vw, calc(2 * var(--ev-rem))); line-height: 1.1; letter-spacing: -0.025em; text-transform: uppercase; }
+.ev-t-section { font-size: clamp(calc(1.375 * var(--ev-rem)), 5.8vw, calc(1.5 * var(--ev-rem))); line-height: 1.1; letter-spacing: -0.015em; text-transform: uppercase; }
+.ev-t-card { font-size: clamp(calc(1.1 * var(--ev-rem)), 2.5vw, calc(1.6 * var(--ev-rem))); line-height: 0.9; letter-spacing: 0; text-transform: uppercase; }
+/* Questions to the visitor are sentence case. */
+.ev-t-question { font-size: clamp(calc(1.9 * var(--ev-rem)), 3.4vw, calc(3.3 * var(--ev-rem))); line-height: 0.95; letter-spacing: -0.035em; }
+@media (min-width: 768px) {
+  .ev-t-section-feature { font-size: clamp(calc(2.25 * var(--ev-rem)), 3.2vw, calc(2.5 * var(--ev-rem))); }
+  .ev-t-section { font-size: clamp(calc(2 * var(--ev-rem)), 2.9vw, calc(2.125 * var(--ev-rem))); }
+}
+
+.ev-t-lead { margin: 0; font-family: var(--ev-font-body); font-size: max(var(--ev-rem), 15px); font-weight: 500; line-height: 1.6; }
+.ev-t-body { margin: 0; font-family: var(--ev-font-body); font-size: max(var(--ev-rem), var(--ev-floor-body)); font-weight: 400; line-height: 1.6; }
+.ev-t-compact { margin: 0; font-family: var(--ev-font-body); font-size: max(calc(0.8125 * var(--ev-rem)), 12px); font-weight: 400; line-height: 1.55; }
+@media (min-width: 768px) { .ev-t-lead { font-size: max(calc(1.125 * var(--ev-rem)), 15px); } }
+
+/* Labels / controls: Overused 700 uppercase, positive tracking. */
+.ev-t-label { font-family: var(--ev-font-display); font-size: max(calc(0.6875 * var(--ev-rem)), var(--ev-floor-label)); font-weight: 700; line-height: 1.1; letter-spacing: 0.14em; text-transform: uppercase; }
+/* Readouts: Satoshi 700 uppercase, tabular. Indices, counters, status, kickers. */
+.ev-t-readout { font-family: var(--ev-font-readout); font-size: max(calc(0.5625 * var(--ev-rem)), var(--ev-floor-readout)); font-weight: 700; line-height: 1.25; letter-spacing: 0.2em; font-variant-numeric: tabular-nums; text-transform: uppercase; }
+.ev-t-readout-lg { font-family: var(--ev-font-readout); font-size: max(calc(0.8125 * var(--ev-rem)), 12px); font-weight: 700; line-height: 1; letter-spacing: 0.14em; font-variant-numeric: tabular-nums; text-transform: uppercase; }
+/* File index: the large secondary numeral beside a title (a readout, not a heading). */
+.ev-t-index { font-family: var(--ev-font-readout); font-size: clamp(calc(1.4 * var(--ev-rem)), 2.5vw, calc(2.6 * var(--ev-rem))); font-weight: 700; line-height: 1; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+
+/* ── Rails and chapters ─────────────────────────────────────────────── */
+.ev-rail { width: 100%; max-width: calc(var(--ev-rail-reading) + 2 * var(--ev-gutter)); margin-inline: auto; padding-inline: var(--ev-gutter); }
+.ev-rail--wide { max-width: calc(var(--ev-rail-wide) + 2 * var(--ev-gutter)); }
+/* Tracks start on the wide rail and bleed right. */
+.ev-track-gutters { padding-inline: max(var(--ev-gutter), (100% - var(--ev-rail-wide)) / 2); }
+.ev-chapter { padding-block: var(--ev-chapter-standard); }
+.ev-chapter--compact { padding-block: var(--ev-chapter-compact); }
+.ev-chapter--cinematic { padding-block: var(--ev-chapter-cinematic-top) var(--ev-chapter-cinematic-bottom); }
+.ev-hairline { height: 1px; border: 0; margin: 0; background: var(--ev-line); }
+
+/* ── Primitives ─────────────────────────────────────────────────────── */
+.ev-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+.ev-index { display: inline-flex; align-items: baseline; gap: 0.5em; }
+.ev-index__total { opacity: 0.45; }
+
+.ev-marker {
+  position: relative;
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in oklab, var(--ev-accent-signal) 30%, transparent);
+  border-radius: 6px;
+  vertical-align: middle;
+}
+.ev-marker::after { content: ""; width: 8px; height: 8px; border-radius: 999px; background: var(--ev-accent-signal); }
+.ev-marker[data-live]::after { animation: ev-pulse 2.2s ease-in-out infinite; }
+@keyframes ev-pulse { 50% { opacity: 0.35; } }
+
+.ev-attribution {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  /* ≥ 44px hit area around the wordmark without moving it. */
+  padding: 15px 8px;
+  margin: -15px -8px;
+  border-radius: 6px;
+  color: inherit;
+  opacity: 0.92;
+  transition: opacity var(--ev-dur-fast) ease;
+}
+@media (hover: hover) { .ev-attribution:hover { opacity: 1; } }
+.ev-attribution:focus-visible { outline: 2px solid var(--ev-accent-signal); outline-offset: 2px; }
+.ev-attribution svg { display: block; width: 76px; height: auto; filter: brightness(0) invert(var(--ev-logo-invert, 1)); }
+
+/* ── Pause model: ambient loops stop off-screen, on hidden documents and
+   under a modal. Modal content opts out with data-ev-modal. */
+[data-ev-paused] .ev-ambient,
+.ev-ambient[data-ev-paused] { animation-play-state: paused; }
+html[data-ev-suspended] .ev-ambient:not([data-ev-modal] .ev-ambient) { animation-play-state: paused; }
