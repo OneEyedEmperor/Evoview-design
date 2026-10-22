@@ -130,6 +130,8 @@ heading and background.
   `guests.overflow` adds "+max", submitted as `guests: max` +
   `guestsOverflow: true`; map it in `submit` (e.g. a notes prefix) if the API
   caps the party size.
+- Mobile (≤ 520px container): no "Continuer" on steps 1–4, a small "Retour"
+  pill only; re-tapping the current answer moves forward.
 - Step complete → auto-advance; "Continuer" on an unanswered step shows
   `chooseToContinue`. `timeNote` shows under the times.
 - Durations: `hours: { options, withinWindow }` asks how many hours after the

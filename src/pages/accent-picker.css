@@ -40,10 +40,12 @@
   font-size: 12px;
   line-height: 1.3;
   text-align: center;
+  text-wrap: balance;
 }
 .accent-picker__caption span { color: #fff; font-weight: 500; }
 
-.accent-picker__row { position: relative; display: flex; }
+/* Mobile: 9 swatches don't fit one row at 44px, so a balanced 5 + 4 grid. */
+.accent-picker__row { position: relative; display: flex; max-width: calc(5 * 44px); flex-wrap: wrap; justify-content: center; }
 
 .accent-picker__swatch {
   display: grid;
@@ -99,6 +101,7 @@
     padding: 4px 4px 4px 18px;
   }
   .accent-picker__caption { padding: 0; text-align: left; white-space: nowrap; }
+  .accent-picker__row { max-width: none; flex-wrap: nowrap; }
   .accent-picker__swatch { width: 38px; height: 38px; }
 }
 

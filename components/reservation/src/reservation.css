@@ -562,6 +562,20 @@
   .evo-resa-ghost:disabled { display: none; }
   .evo-resa-bar__error { grid-row: 1; grid-column: 2; align-self: center; max-width: none; text-align: right; }
   .evo-resa-bar .evo-resa-primary { grid-column: 1 / -1; width: 100%; }
+
+  /* Steps 1–4 validate on tap: no "Continuer", only a small neutral back pill
+     (no bar at all on step 1). Re-tapping the current answer moves forward. */
+  .evo-resa-bar--auto { display: flex; justify-content: flex-start; padding-block: 12px 16px; }
+  .evo-resa-bar--auto .evo-resa-primary, .evo-resa-bar--auto .evo-resa-bar__error { display: none; }
+  .evo-resa-bar--auto:has(.evo-resa-ghost:disabled) { display: none; }
+  .evo-resa-bar--auto .evo-resa-ghost {
+    min-height: 44px;
+    padding: 0 18px 0 14px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.03);
+    color: rgba(238, 238, 233, 0.75);
+  }
 }
 
 /* Short landscape phones: tighten the vertical rhythm so a step fits under the host navbar. */

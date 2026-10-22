@@ -1,5 +1,16 @@
 # reservation changelog
 
+## 2.8.0 — tap-to-validate on mobile
+
+- Narrow containers (≤ 520px): steps 1–4 validate on tap, so the bar drops
+  "Continuer" and shows only a small neutral "Retour" pill (no bar on step 1).
+  The contact step keeps the full-width send plate.
+- Re-tapping the current answer (experience, calendar day, start time) keeps
+  it and moves forward, so going back never traps the guest. Calendar is
+  `required` (a tap can't deselect the day).
+- Showcase: the accent picker wraps into centred rows on mobile (no overflow).
+- Config changes: none.
+
 ## 2.7.1 — showcase cleanup
 
 - Showcase shows the reference only: the Tchin Tchin toggle and

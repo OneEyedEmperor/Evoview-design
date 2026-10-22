@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
 import { DayPicker } from "react-day-picker";
-import { addDays, format, isBefore, startOfDay } from "date-fns";
+import { addDays, format, isBefore, isSameDay, startOfDay } from "date-fns";
 import EvoviewLogo from "./brand/EvoviewLogo";
 import ringEyeSvg from "./brand/eye-4-ring.svg?raw";
 import { ArrowLeft, ArrowRight, Check, Chevron, EyeGlyph } from "./marks";
@@ -158,13 +158,17 @@ export function Reservation({ config }: { config: ReservationConfig }) {
     advanceTimer.current = window.setTimeout(() => goTo(from + 1), ADVANCE_MS);
   };
 
+  // Re-tapping the current answer keeps it and moves on: on mobile the
+  // auto-advancing steps have no "Continuer", so this is how to go forward again.
   const selectExperience = (value: string) => {
+    if (value === experience) return advanceSoon(0);
     setExperience(value);
     setEndTime("");
     setHours(null);
     advanceSoon(0);
   };
   const selectDate = (d: Date | undefined) => {
+    if (d && date && isSameDay(d, date)) return advanceSoon(1);
     setDate(d);
     setStartTime("");
     setEndTime("");
@@ -176,6 +180,10 @@ export function Reservation({ config }: { config: ReservationConfig }) {
     advanceSoon(2);
   };
   const selectStart = (time: string) => {
+    if (time === startTime) {
+      if (answered[3]) advanceSoon(3);
+      return;
+    }
     setStartTime(time);
     setEndTime("");
     setHours(null);
@@ -360,6 +368,7 @@ export function Reservation({ config }: { config: ReservationConfig }) {
       <div className="evo-resa-calendar-wrap">
         <DayPicker
           mode="single"
+          required
           selected={date}
           onSelect={selectDate}
           disabled={isDisabled}
@@ -532,7 +541,7 @@ export function Reservation({ config }: { config: ReservationConfig }) {
                   </div>
                   {body}
                 </div>
-                <div className="evo-resa-bar">
+                <div className={`evo-resa-bar${last ? "" : " evo-resa-bar--auto"}`}>
                   <button type="button" className="evo-resa-ghost evo-resa-readout" onClick={() => goTo(step - 1)} disabled={step === 0}>
                     <ArrowLeft className="evo-resa-ghost__icon" />
                     {c.back}
