@@ -456,10 +456,10 @@
   overflow: hidden;
   border: 1px solid var(--resa-line);
   border-radius: var(--resa-radius-lg);
+  /* Same neutral tile as the option rows; only the accent glow tints it. */
   background:
-    radial-gradient(80% 50% at 50% -10%, rgba(178, 172, 216, 0.1) 0%, transparent 70%),
     radial-gradient(70% 45% at 100% 105%, color-mix(in srgb, var(--resa-iris) 30%, transparent) 0%, transparent 70%),
-    #0c0d15;
+    #121214;
 }
 /* Status pinned to the right edge, venue under it. */
 .evo-resa-ticket__head { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; margin-bottom: -8px; text-align: right; }

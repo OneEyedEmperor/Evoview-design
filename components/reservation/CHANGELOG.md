@@ -1,5 +1,10 @@
 # reservation changelog
 
+## 2.2.1
+
+- Recap ticket background: neutral `#121214` (same as the option rows)
+  instead of the blue-black screen; only the accent glow remains. No config change.
+
 ## 2.2.0 — cleaner recap ticket
 
 - Ticket: phosphor/scanline overlays and HUD corners removed; status and
