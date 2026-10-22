@@ -2,10 +2,13 @@ import { useEffect, useRef, useState, type CSSProperties, type FormEvent, type R
 import { DayPicker } from "react-day-picker";
 import { addDays, format, isBefore, startOfDay } from "date-fns";
 import EvoviewLogo from "./brand/EvoviewLogo";
-import ringEyeUrl from "./brand/eye-4-ring.svg";
+import ringEyeSvg from "./brand/eye-4-ring.svg?raw";
 import { ArrowLeft, ArrowRight, Check, Chevron, EyeGlyph, Hud } from "./marks";
 import type { ReservationConfig, ReservationRequest, ReservationWindow } from "./types";
 import "./reservation.css";
+
+// The emblem's iris follows the accent; the white contours stay.
+const RING_EYE = ringEyeSvg.replace(/#6078FF/gi, "currentColor").replace(/ width="380" height="380"/, "");
 
 /* Protected Evoview attribution: the header wordmark links here. Not a client setting. */
 export const EVOVIEW_URL = "https://evoview.be/";
@@ -86,9 +89,6 @@ export function Reservation({ config }: { config: ReservationConfig }) {
     !!name.trim() && !!phone.trim() && EMAIL_RE.test(email.trim()),
   ];
   const firstOpen = answered.indexOf(false) === -1 ? TOTAL - 1 : answered.indexOf(false);
-  // The contact step only counts once the request is sent.
-  const doneCount = confirmed ? TOTAL : answered.slice(0, TOTAL - 1).filter(Boolean).length;
-  const percent = Math.round((doneCount / TOTAL) * 100);
 
   const today = startOfDay(new Date());
   const lastDay = config.maxDaysAhead ? addDays(today, config.maxDaysAhead) : undefined;
@@ -231,6 +231,7 @@ export function Reservation({ config }: { config: ReservationConfig }) {
 
   const style = {
     ...(config.accent ? { "--resa-accent": config.accent } : {}),
+    ...(config.accentInk ? { "--resa-accent-ink": config.accentInk } : {}),
     ...config.vars,
     ...config.style,
   } as CSSProperties;
@@ -238,39 +239,8 @@ export function Reservation({ config }: { config: ReservationConfig }) {
   const stepCopy = c.steps[STEP_KEYS[step]];
   const canVisit = (i: number) => !confirmed && i <= firstOpen;
 
-  const rail = (
-    <div className="evo-resa-rail">
-      <div className="evo-resa-rail__status">
-        <span className="evo-resa-readout evo-resa-rail__legend">
-          <b>{confirmed ? c.statusSent : c.dossier}</b>
-          <span>{pad(doneCount)} / {pad(TOTAL)} {c.stepsWord}</span>
-          {!confirmed && TOTAL - doneCount > 1 && <span>{TOTAL - doneCount} {c.remainingWord}</span>}
-        </span>
-        <span className="evo-resa-rail__percent">{percent}<small>%</small></span>
-      </div>
-      <div className="evo-resa-rail__segments">
-        {STEP_KEYS.map((key, i) => {
-          const done = confirmed || (answered[i] && i < TOTAL - 1);
-          return (
-            <button
-              key={key}
-              type="button"
-              tabIndex={-1}
-              aria-hidden="true"
-              disabled={!canVisit(i)}
-              onClick={() => goTo(i)}
-              className={`${done ? "is-done" : ""}${i === step && !confirmed ? " is-current" : ""}`}
-            >
-              <span className="evo-resa-rail__bar"><b /></span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-
-  const ticket = (compact = false) => (
-    <div className={`evo-resa-ticket${compact ? " evo-resa-ticket--compact" : ""}`} data-sent={confirmed || undefined}>
+  const ticket = (
+    <div className="evo-resa-ticket" data-sent={confirmed || undefined}>
       <span className="evo-resa-ticket__phosphor" aria-hidden="true" />
       <span className="evo-resa-ticket__scan" aria-hidden="true" />
       <Hud />
@@ -394,7 +364,7 @@ export function Reservation({ config }: { config: ReservationConfig }) {
     const aria = (key: string, id: string) => ({ "aria-invalid": !!fieldErrors[key] || undefined, "aria-describedby": fieldErrors[key] ? `${id}-error` : undefined });
     body = (
       <>
-        <div className="evo-resa-inline-ticket">{ticket(true)}</div>
+        <div className="evo-resa-inline-ticket">{ticket}</div>
         <div className="evo-resa-fields">
           {field("evo-resa-name", "name", c.nameLabel, <input id="evo-resa-name" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} {...aria("name", "evo-resa-name")} />)}
           {field("evo-resa-phone", "phone", c.phoneLabel, <input id="evo-resa-phone" type="tel" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} {...aria("phone", "evo-resa-phone")} />)}
@@ -423,23 +393,33 @@ export function Reservation({ config }: { config: ReservationConfig }) {
               {confirmed ? c.statusSent : `${pad(step + 1)} / ${pad(TOTAL)} · ${stepCopy.short}`}
             </span>
           </span>
-          <span className="evo-resa-top__progress" aria-hidden="true">
+          <span className="evo-resa-top__progress">
             {STEP_KEYS.map((key, i) => (
-              <i key={key} className={confirmed || i < step ? "is-done" : i === step ? "is-current" : ""} />
+              <button
+                key={key}
+                type="button"
+                aria-label={c.steps[key].short}
+                aria-current={i === step && !confirmed ? "step" : undefined}
+                disabled={!canVisit(i) || i === step}
+                onClick={() => goTo(i)}
+                className={confirmed || i < step ? "is-done" : i === step ? "is-current" : ""}
+              >
+                <i />
+              </button>
             ))}
           </span>
         </header>
 
-        <div className="evo-resa__grid">
+        <div className="evo-resa__body">
           <form className="evo-resa-stage" onSubmit={handleSubmit} noValidate>
             <span className="evo-resa-stage__light" aria-hidden="true" />
             {confirmed ? (
               <div className="evo-resa-scroll evo-resa-done" key="done">
-                <img className="evo-resa-done__emblem" src={ringEyeUrl} alt="" width={76} height={76} draggable={false} />
+                <span className="evo-resa-done__emblem" aria-hidden="true" dangerouslySetInnerHTML={{ __html: RING_EYE }} />
                 <span className="evo-resa-readout evo-resa-done__kicker">{c.confirmationKicker}</span>
                 <h3 ref={headingRef} tabIndex={-1} className="evo-resa-done__title">{c.confirmationTitle}</h3>
                 <p className="evo-resa-done__text">{c.confirmationMessage}</p>
-                <div className="evo-resa-inline-ticket">{ticket(true)}</div>
+                <div className="evo-resa-inline-ticket">{ticket}</div>
                 <button type="button" className="evo-resa-ghost evo-resa-readout" onClick={resetForm}>
                   <ArrowLeft className="evo-resa-ghost__icon" />
                   {c.submitAnother}
@@ -471,31 +451,6 @@ export function Reservation({ config }: { config: ReservationConfig }) {
               </>
             )}
           </form>
-
-          <aside className="evo-resa-dossier" aria-label={c.dossier}>
-            <span className="evo-resa-dossier__light" aria-hidden="true" />
-            <div className="evo-resa-monitor">
-              {rail}
-              {ticket()}
-            </div>
-            <ol className="evo-resa-journey">
-              {STEP_KEYS.map((key, i) => {
-                const done = confirmed || (answered[i] && i !== step);
-                const isCurrent = i === step && !confirmed;
-                return (
-                  <li key={key} className={`${done ? "is-done" : ""}${isCurrent ? " is-current" : ""}`}>
-                    <button type="button" disabled={!canVisit(i) || isCurrent} onClick={() => goTo(i)}>
-                      <span className="evo-resa-journey__mark">{done ? <Check /> : pad(i + 1)}</span>
-                      <span className="evo-resa-readout evo-resa-journey__label">{c.steps[key].short}</span>
-                      <span className="evo-resa-journey__value">
-                        {values[i] ?? (isCurrent ? <span className="evo-resa-journey__pending"><i />{c.pending}</span> : "—")}
-                      </span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ol>
-          </aside>
         </div>
       </div>
     </div>

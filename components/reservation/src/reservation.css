@@ -9,8 +9,11 @@
 @font-face { font-family: "Evoview Grotesk"; font-style: normal; font-weight: 100 900; font-display: swap; src: url("./brand/fonts/overused-grotesk-vf.woff2") format("woff2"); }
 
 .evo-resa {
-  --resa-accent: #818cf8;
-  --resa-iris: #3f51b5;
+  /* Client accent: the host's --primary (shadcn/Tailwind v4 name); Evoview indigo otherwise. */
+  --resa-accent: var(--primary, #818cf8);
+  --resa-accent-ink: var(--primary-foreground, #101011);
+  /* Deep tone of the accent for the chassis glows. */
+  --resa-iris: color-mix(in srgb, var(--resa-accent) 62%, #000);
   --resa-ink: #eeeee9;
   --resa-muted: rgba(238, 238, 233, 0.56);
   --resa-faint: rgba(238, 238, 233, 0.34);
@@ -111,12 +114,15 @@
 .evo-resa-top__meta { display: flex; min-width: 0; flex: 1 1 auto; flex-direction: column; gap: 4px; }
 .evo-resa-top__kicker { overflow: hidden; color: color-mix(in srgb, var(--resa-accent) 70%, rgba(255, 255, 255, 0.6)); font-size: 7.5px; text-overflow: ellipsis; white-space: nowrap; }
 .evo-resa-top__title { overflow: hidden; color: #fff; text-overflow: ellipsis; white-space: nowrap; }
-.evo-resa-top__progress { display: grid; flex: 0 0 auto; grid-template-columns: repeat(5, 1fr); gap: 4px; width: 92px; }
-.evo-resa-top__progress > i { height: 2px; border-radius: 999px; background: rgba(255, 255, 255, 0.13); transition: background-color 260ms ease, transform 260ms var(--resa-ease); }
-.evo-resa-top__progress > .is-done { background: color-mix(in srgb, var(--resa-accent) 60%, transparent); }
-.evo-resa-top__progress > .is-current { background: var(--resa-accent); transform: scaleY(1.5); }
+.evo-resa-top__progress { display: grid; flex: 0 0 auto; grid-template-columns: repeat(5, 1fr); gap: 5px; width: 120px; }
+.evo-resa-top__progress > button { display: flex; padding: 8px 0; }
+.evo-resa-top__progress > button:focus-visible { outline: 2px solid var(--resa-accent); outline-offset: 2px; border-radius: 2px; }
+.evo-resa-top__progress i { width: 100%; height: 2px; border-radius: 999px; background: rgba(255, 255, 255, 0.13); transition: background-color 260ms ease, transform 260ms var(--resa-ease); }
+.evo-resa-top__progress > .is-done i { background: color-mix(in srgb, var(--resa-accent) 60%, transparent); }
+.evo-resa-top__progress > .is-current i { background: var(--resa-accent); transform: scaleY(1.5); }
+.evo-resa-top__progress > button:not(:disabled):hover i { transform: scaleY(2); background: var(--resa-accent); }
 
-.evo-resa__grid { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); }
+.evo-resa__body { position: relative; }
 
 /* ── Stage (questions) ──────────────────────────────────────────────── */
 .evo-resa-stage {
@@ -136,7 +142,7 @@
   background:
     radial-gradient(70% 55% at 8% -10%, rgba(214, 208, 232, 0.085) 0%, rgba(214, 208, 232, 0.022) 45%, transparent 72%),
     radial-gradient(60% 40% at 6% 106%, rgba(99, 75, 114, 0.2) 0%, transparent 70%),
-    radial-gradient(40% 30% at 100% 50%, rgba(63, 81, 181, 0.06) 0%, transparent 70%);
+    radial-gradient(40% 30% at 100% 50%, color-mix(in srgb, var(--resa-iris) 6%, transparent) 0%, transparent 70%);
 }
 .evo-resa-scroll { flex: 1 1 auto; padding: 30px var(--resa-gutter) 28px; animation: evo-resa-in 520ms var(--resa-ease) both; }
 @keyframes evo-resa-in {
@@ -217,7 +223,7 @@
   justify-content: center;
   border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 999px;
-  color: #101011;
+  color: var(--resa-accent-ink);
   transition: background-color 200ms ease, border-color 200ms ease;
 }
 .evo-resa-choice__check svg { width: 12px; height: 12px; opacity: 0; transition: opacity 200ms ease; }
@@ -262,7 +268,7 @@
   font-weight: 700;
   letter-spacing: 0.04em;
 }
-.evo-resa-pill[aria-pressed="true"] .evo-resa-pill__mark { border-color: var(--resa-accent); background: var(--resa-accent); color: #101011; }
+.evo-resa-pill[aria-pressed="true"] .evo-resa-pill__mark { border-color: var(--resa-accent); background: var(--resa-accent); color: var(--resa-accent-ink); }
 
 .evo-resa-times { display: grid; gap: 26px; }
 .evo-resa-group { display: grid; gap: 12px; }
@@ -283,7 +289,7 @@
   padding: 18px;
   border: 1px solid var(--resa-line);
   border-radius: var(--resa-radius-lg);
-  background: radial-gradient(70% 60% at 100% 100%, rgba(63, 81, 181, 0.14) 0%, transparent 70%), #121214;
+  background: radial-gradient(70% 60% at 100% 100%, color-mix(in srgb, var(--resa-iris) 14%, transparent) 0%, transparent 70%), #121214;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 .evo-cal__months, .evo-cal__month { display: flex; flex-direction: column; gap: 14px; }
@@ -330,11 +336,11 @@
 .evo-cal__day.is-today .evo-cal__daybtn::after { content: ""; position: absolute; bottom: 5px; left: 50%; width: 4px; height: 4px; translate: -50% 0; border-radius: 999px; background: var(--resa-accent); }
 .evo-cal__day.is-selected .evo-cal__daybtn {
   background: var(--resa-accent);
-  color: #101011;
+  color: var(--resa-accent-ink);
   font-weight: 700;
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--resa-accent) 18%, transparent), 0 0 22px -4px color-mix(in srgb, var(--resa-accent) 80%, transparent);
 }
-.evo-cal__day.is-selected .evo-cal__daybtn::after { background: #101011; }
+.evo-cal__day.is-selected .evo-cal__daybtn::after { background: var(--resa-accent-ink); }
 .evo-cal__day.is-outside .evo-cal__daybtn { color: rgba(238, 238, 233, 0.22); }
 .evo-cal__day.is-disabled .evo-cal__daybtn { color: rgba(238, 238, 233, 0.18); background: none; cursor: default; }
 .evo-cal__day.is-hidden { visibility: hidden; }
@@ -391,10 +397,10 @@
   font-size: 14px;
   font-weight: 700;
   white-space: nowrap;
-  box-shadow: 0 18px 40px -24px rgba(200, 166, 217, 0.8);
+  box-shadow: 0 18px 40px -24px color-mix(in srgb, var(--resa-accent) 70%, transparent);
   transition: background-color 300ms var(--resa-ease), transform 140ms ease, opacity 200ms ease;
 }
-.evo-resa-primary:hover { background: var(--resa-accent); }
+.evo-resa-primary:hover { background: var(--resa-accent); color: var(--resa-accent-ink); }
 .evo-resa-primary:active { transform: scale(0.985); }
 .evo-resa-primary:focus-visible { outline: 2px solid var(--resa-accent); outline-offset: 4px; }
 .evo-resa-primary[aria-busy="true"] { cursor: wait; opacity: 0.75; }
@@ -428,70 +434,33 @@
 
 /* Confirmation */
 .evo-resa-done { display: flex; flex-direction: column; align-items: center; justify-content: center; padding-block: 44px 36px; text-align: center; }
-.evo-resa-done__emblem { width: 76px; height: 76px; margin-bottom: 18px; filter: drop-shadow(0 0 22px color-mix(in srgb, var(--resa-accent) 55%, transparent)); animation: evo-resa-emblem 900ms var(--resa-ease) both; }
+.evo-resa-done__emblem { display: block; width: 76px; height: 76px; color: var(--resa-accent); margin-bottom: 18px; filter: drop-shadow(0 0 22px color-mix(in srgb, var(--resa-accent) 55%, transparent)); animation: evo-resa-emblem 900ms var(--resa-ease) both; }
+.evo-resa-done__emblem svg { display: block; width: 100%; height: 100%; }
+.evo-resa-done__emblem title { display: none; }
 @keyframes evo-resa-emblem { from { opacity: 0; transform: scale(0.82) rotate(-12deg); } to { opacity: 1; transform: none; } }
 .evo-resa-done__kicker { display: flex; align-items: center; margin-bottom: 14px; color: var(--resa-accent); }
 .evo-resa-done__title { font-size: clamp(1.8rem, 5cqi, 2.8rem); }
 .evo-resa-done__text { max-width: 470px; margin: 14px 0 22px; color: var(--resa-muted); line-height: 1.6; }
-.evo-resa-done .evo-resa-inline-ticket { width: 100%; max-width: 440px; margin-bottom: 18px; text-align: left; }
+.evo-resa-done .evo-resa-inline-ticket { width: 100%; max-width: 460px; margin-bottom: 18px; text-align: left; }
 .evo-resa-done .evo-resa-ghost { margin-right: 0; }
 
-/* ── Dossier (wide layouts) ─────────────────────────────────────────── */
-.evo-resa-dossier { display: none; }
+/* Recap ticket: the live booking on an Evoview CRT screen (contact step, confirmation) */
 .evo-resa-inline-ticket { margin-bottom: 26px; }
-
-.evo-resa-monitor {
-  position: relative;
-  isolation: isolate;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  border: 1px solid var(--resa-line);
-  border-radius: var(--resa-radius-lg);
-  background: #121214;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 30px 60px -44px rgba(0, 0, 0, 0.9);
-}
-.evo-resa-rail {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 13px 20px 12px;
-  background:
-    linear-gradient(180deg, transparent 35%, #0c0d15 100%),
-    radial-gradient(ellipse at 90% 0%, rgba(109, 94, 208, 0.1), transparent 65%),
-    linear-gradient(115deg, #0b090e 0%, #0c0d15 55%, #100c18 100%);
-}
-.evo-resa-rail__status { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-.evo-resa-rail__legend { display: flex; min-width: 0; gap: 8px; overflow: hidden; color: var(--resa-faint); font-size: 8px; white-space: nowrap; }
-.evo-resa-rail__legend b { color: var(--resa-accent); }
-.evo-resa-rail__legend > span::before { content: "·"; margin-right: 8px; }
-.evo-resa-rail__percent { color: #fff; font-family: var(--resa-font-display); font-size: 18px; font-variant-numeric: tabular-nums; font-weight: 900; letter-spacing: -0.04em; line-height: 0.8; }
-.evo-resa-rail__percent small { margin-left: 1px; color: var(--resa-accent); font-family: var(--resa-font-label); font-size: 9px; letter-spacing: 0; }
-.evo-resa-rail__segments { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
-.evo-resa-rail__segments > button { display: flex; padding: 4px 0; }
-.evo-resa-rail__bar { position: relative; display: block; width: 100%; height: 3px; overflow: hidden; border-radius: 999px; background: rgba(255, 255, 255, 0.12); transition: transform 260ms var(--resa-ease); }
-.evo-resa-rail__bar > b { position: absolute; inset: 0 100% 0 0; border-radius: 999px; background: #fff; transition: inset 520ms var(--resa-ease); }
-.evo-resa-rail__segments > .is-done .evo-resa-rail__bar > b { inset: 0; }
-.evo-resa-rail__segments > .is-current .evo-resa-rail__bar { background: rgba(255, 255, 255, 0.18); box-shadow: 0 0 10px rgba(255, 255, 255, 0.25); }
-.evo-resa-rail__segments > .is-current:not(.is-done) .evo-resa-rail__bar > b { inset: 0 70% 0 0; opacity: 0.7; }
-.evo-resa-rail__segments > button:not(:disabled):hover .evo-resa-rail__bar { transform: scaleY(1.67); }
-
-/* Ticket: the live booking, on an Evoview CRT screen */
 .evo-resa-ticket {
   position: relative;
   isolation: isolate;
   display: flex;
-  min-height: 300px;
   flex-direction: column;
-  gap: 18px;
-  padding: 22px 24px;
+  gap: 14px;
+  padding: 18px 20px;
   overflow: hidden;
+  border: 1px solid var(--resa-line);
+  border-radius: var(--resa-radius-lg);
   background:
     radial-gradient(80% 50% at 50% -10%, rgba(178, 172, 216, 0.1) 0%, transparent 70%),
-    radial-gradient(70% 45% at 100% 105%, rgba(63, 81, 181, 0.3) 0%, transparent 70%),
+    radial-gradient(70% 45% at 100% 105%, color-mix(in srgb, var(--resa-iris) 30%, transparent) 0%, transparent 70%),
     #0c0d15;
 }
-.evo-resa-ticket--compact { min-height: 0; gap: 14px; padding: 18px 20px; border: 1px solid var(--resa-line); border-radius: var(--resa-radius-lg); }
 .evo-resa-ticket__phosphor {
   position: absolute;
   inset: 0;
@@ -513,67 +482,19 @@
 .evo-resa-ticket__head > span { display: inline-flex; align-items: center; }
 .evo-resa-ticket__venue { color: var(--resa-faint); }
 .evo-resa-ticket__date { display: flex; align-items: flex-end; gap: 12px; color: #fff; font-family: var(--resa-font-display); text-transform: uppercase; }
-.evo-resa-ticket__date strong { font-size: clamp(54px, 7cqi, 76px); font-weight: 900; letter-spacing: -0.05em; line-height: 0.8; }
+.evo-resa-ticket__date strong { font-size: 44px; font-weight: 900; letter-spacing: -0.05em; line-height: 0.8; }
 .evo-resa-ticket__date.is-empty, .evo-resa-ticket__date.is-empty span:first-child { color: rgba(255, 255, 255, 0.13); }
 .evo-resa-ticket__date span { padding-bottom: 2px; font-size: 15px; font-weight: 800; letter-spacing: 0.02em; line-height: 1; }
 .evo-resa-ticket__date span:first-child { order: -1; color: var(--resa-accent); }
-.evo-resa-ticket--compact .evo-resa-ticket__date strong { font-size: 44px; }
 .evo-resa-ticket__rows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 18px; margin-top: auto; }
 .evo-resa-ticket__rows > div { display: grid; gap: 3px; padding: 9px 0; border-top: 1px solid rgba(255, 255, 255, 0.08); }
 .evo-resa-ticket__rows dt { color: var(--resa-faint); font-size: 8px; }
 .evo-resa-ticket__rows dd { overflow: hidden; color: rgba(255, 255, 255, 0.28); font-size: 13px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; transition: color 300ms ease; }
 .evo-resa-ticket__rows [data-filled] dd { color: #fff; }
 .evo-resa-ticket__rows [data-filled] dt { color: var(--resa-accent); }
-.evo-resa-ticket__mark { position: absolute; right: 22px; top: 50%; width: 92px; height: auto; filter: brightness(0) invert(1); opacity: 0.07; pointer-events: none; }
-.evo-resa-ticket--compact .evo-resa-ticket__mark { top: 20px; right: 20px; width: 70px; }
+.evo-resa-ticket__mark { position: absolute; right: 22px; bottom: 18px; width: 70px; height: auto; filter: brightness(0) invert(1); opacity: 0.07; pointer-events: none; }
 .evo-resa-ticket[data-sent] .evo-resa-ticket__head { color: #a7f3c4; }
 .evo-resa-ticket[data-sent] .evo-resa-ticket__head .evo-resa-rec { background: #4ade80; box-shadow: 0 0 10px rgba(74, 222, 128, 0.8); }
-
-/* Journey list */
-.evo-resa-journey { display: grid; gap: 4px; list-style: none; }
-.evo-resa-journey button {
-  display: grid;
-  width: 100%;
-  grid-template-columns: 30px minmax(0, 1fr);
-  align-items: center;
-  gap: 2px 14px;
-  padding: 9px 12px;
-  border: 1px solid transparent;
-  border-radius: var(--resa-radius-md);
-  text-align: left;
-  transition: background-color 200ms ease, border-color 200ms ease;
-}
-.evo-resa-journey button:not(:disabled):hover { background: rgba(255, 255, 255, 0.04); }
-.evo-resa-journey button:focus-visible { outline: 2px solid var(--resa-accent); outline-offset: 2px; }
-.evo-resa-journey__mark {
-  display: flex;
-  width: 28px;
-  height: 28px;
-  grid-row: span 2;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 999px;
-  color: var(--resa-faint);
-  font-family: var(--resa-font-label);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-}
-.evo-resa-journey__mark svg { width: 13px; height: 13px; }
-.evo-resa-journey__label { color: var(--resa-faint); }
-.evo-resa-journey__value { overflow: hidden; color: rgba(255, 255, 255, 0.3); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
-.evo-resa-journey .is-done .evo-resa-journey__mark { border-color: var(--resa-accent); background: var(--resa-accent); color: #101011; }
-.evo-resa-journey .is-done .evo-resa-journey__label { color: rgba(255, 255, 255, 0.82); }
-.evo-resa-journey .is-done .evo-resa-journey__value { color: rgba(255, 255, 255, 0.62); }
-.evo-resa-journey .is-current button {
-  border-color: rgba(255, 255, 255, 0.07);
-  background: radial-gradient(60% 120% at 100% 50%, rgba(63, 81, 181, 0.2), transparent 70%), rgba(255, 255, 255, 0.025);
-}
-.evo-resa-journey .is-current .evo-resa-journey__mark { border-color: var(--resa-accent); color: var(--resa-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--resa-accent) 16%, transparent); }
-.evo-resa-journey .is-current .evo-resa-journey__label { color: var(--resa-accent); }
-.evo-resa-journey__pending { display: inline-flex; align-items: center; gap: 8px; padding: 3px 10px 3px 4px; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 999px; background: rgba(255, 255, 255, 0.03); color: var(--resa-muted); font-size: 12px; }
-.evo-resa-journey__pending i { width: 14px; height: 14px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 999px; }
 
 /* ── Responsive (container) ─────────────────────────────────────────── */
 @container (min-width: 560px) {
@@ -581,30 +502,9 @@
   .evo-resa-field.is-wide { grid-column: 1 / -1; }
   .evo-resa-choices:has(> :nth-child(3):last-child) { gap: 10px; }
 }
-@container (min-width: 900px) {
-  .evo-resa__grid { grid-template-columns: minmax(0, 1fr) minmax(320px, 0.58fr); min-height: 640px; }
-  .evo-resa-top__progress { display: none; }
-  .evo-resa-scroll { padding-top: 44px; }
-  .evo-resa-stage .evo-resa-inline-ticket { display: none; }
-  .evo-resa-dossier {
-    position: relative;
-    isolation: isolate;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    padding: 28px 26px 26px;
-    border-left: 1px solid rgba(255, 255, 255, 0.05);
-    background: linear-gradient(180deg, #0a0a0f 0%, #08080c 45%, #060608 100%);
-  }
-  .evo-resa-dossier__light {
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    background:
-      radial-gradient(80% 42% at 50% -8%, rgba(178, 172, 216, 0.11) 0%, transparent 75%),
-      radial-gradient(70% 38% at 92% 104%, rgba(63, 81, 181, 0.26) 0%, transparent 70%);
-  }
+@container (min-width: 760px) {
+  .evo-resa-scroll { padding-top: 40px; }
+  .evo-resa-inline-ticket { max-width: 560px; }
 }
 @container (max-width: 520px) {
   .evo-resa-choice { min-height: 76px; padding-left: 70px; }

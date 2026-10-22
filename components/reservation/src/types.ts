@@ -41,7 +41,7 @@ export type ReservationStepCopy = {
   title: string;
   /** One line under the heading. */
   hint: string;
-  /** Short name for the header, progress rail and dossier ("Expérience"). */
+  /** Short name for the header, progress and recap ticket ("Expérience"). */
   short: string;
 };
 
@@ -66,11 +66,6 @@ export type ReservationCopy = {
   submitting: string;
   /** Shown next to "next" when the step is not answered yet. */
   chooseToContinue: string;
-  /** Dossier: "Dossier en cours", "étapes", "restantes", pending value. */
-  dossier: string;
-  stepsWord: string;
-  remainingWord: string;
-  pending: string;
   /** Ticket status line while composing and once sent. */
   statusDraft: string;
   statusSent: string;
@@ -103,8 +98,10 @@ export type ReservationConfig = {
   onMount?: () => void;
   /** Called after every submit (toasts, analytics already wired by the host). */
   onResult?: (result: ReservationResult, request: ReservationRequest) => void;
-  /** Accent of the Evoview chassis (selections, marks, focus, rail). Default Evoview indigo #818cf8. */
+  /** Overrides the accent. By default the chassis takes the host's `--primary` (the client's accent), Evoview indigo #818cf8 if absent. */
   accent?: string;
+  /** Overrides the text colour on accent fills. Default: host `--primary-foreground`, else #101011. */
+  accentInk?: string;
   /** Any `--resa-*` token override. */
   vars?: Record<`--resa-${string}`, string>;
   className?: string;

@@ -5,7 +5,7 @@ import { buildReservationConfig, type Locale } from "../../components/reservatio
 import { buildTchinReservationConfig } from "../../components/reservation/examples/tchin.config";
 
 /* Showcase of the reservation package. "Tchin Tchin" reproduces the live
-   client page around the component (background video, gold page header);
+   client page around the component (its --primary accent, page header);
    "Référence" is the reference config. Submissions are mocked. */
 
 type Variant = "tchin" | "reference";
@@ -55,24 +55,12 @@ export default function ReservationShowcase() {
         ["--foreground" as string]: "oklch(0.98 0 0)",
         ["--muted-foreground" as string]: tchin ? "oklch(0.60 0 0)" : "#a3a3a3",
         ["--font-heading" as string]: "'Overused Grotesk', Inter, sans-serif",
+        // The host's accent tokens; the component reads them.
+        ["--primary" as string]: tchin ? "oklch(0.88 0.18 90)" : "#818cf8",
+        ["--primary-foreground" as string]: tchin ? "oklch(0.07 0 0)" : "#101011",
       }}
     >
-      {tchin ? (
-        <>
-          <video
-            key="tchin-bg"
-            src="https://tchin-tchin-pullzone.b-cdn.net/restaurant-bg-1080p.mp4"
-            className="absolute inset-0 h-full w-full object-cover opacity-30"
-            autoPlay
-            muted
-            loop
-            playsInline
-          />
-          <div className="absolute inset-0 bg-black/50" />
-          <div className="absolute inset-x-0 top-0 h-1/4" style={{ background: "linear-gradient(to bottom, oklch(0.115 0.006 75), transparent)" }} />
-          <div className="absolute inset-x-0 bottom-0 h-1/4" style={{ background: "linear-gradient(to top, oklch(0.115 0.006 75), transparent)" }} />
-        </>
-      ) : (
+      {!tchin && (
         <div className="absolute inset-0" style={{ background: "radial-gradient(60% 50% at 50% 0%, rgba(63,81,181,.35), transparent 70%), radial-gradient(40% 40% at 80% 90%, rgba(63,81,181,.18), transparent 70%)" }} />
       )}
 
@@ -81,9 +69,9 @@ export default function ReservationShowcase() {
         <Toggle value={locale} options={[["fr", "FR"], ["en", "EN"]]} onChange={setLocale} />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-6xl pt-16">
+      <div className="relative z-10 mx-auto max-w-4xl pt-16">
         <div className="mx-auto mb-10 max-w-3xl text-center">
-          <p className="mb-4 text-xs font-medium uppercase tracking-[0.3em]" style={{ color: tchin ? "oklch(0.88 0.18 90)" : "#818cf8" }}>{head.kicker}</p>
+          <p className="mb-4 text-xs font-medium uppercase tracking-[0.3em]" style={{ color: "var(--primary)" }}>{head.kicker}</p>
           <h1 className="mb-3 text-3xl font-bold md:text-4xl" style={{ fontFamily: "'Overused Grotesk', Inter, sans-serif" }}>{head.title}</h1>
           <p className="mx-auto max-w-lg text-white/70">{head.subtitle}</p>
         </div>

@@ -1,6 +1,6 @@
 ---
 name: evoview-reservation
-description: Install and adapt the Evoview booking application (one-question-per-screen reservation request on Evoview's candidature chassis, with a live dossier/ticket) into a client website. Use when asked to add a booking/reservation form, the Evoview reservation component, or the Tchin Tchin reservation to a project. Triggers on "evoview reservation", "booking form", "reservation form", "réservation", "add reservations".
+description: Install and adapt the Evoview booking application (one-question-per-screen reservation request on Evoview's candidature chassis, in the client's accent) into a client website. Use when asked to add a booking/reservation form, the Evoview reservation component, or the Tchin Tchin reservation to a project. Triggers on "evoview reservation", "booking form", "reservation form", "réservation", "add reservations".
 ---
 
 # Evoview reservation
@@ -22,7 +22,9 @@ library's `STRATEGY.md` first.
 4. Edit `src/components/reservation/reservation.config.tsx` only. Pull
    existing labels from the client's i18n; write the question copy in the
    Evoview voice (short, direct questions).
-5. Mount `<Reservation config={…} />` in a ~1100px container on a dark page.
+5. Mount `<Reservation config={…} />` in a ~900px column on a dark page.
+   Check the accent: it is the host's `--primary`; set `accent`/`accentInk`
+   only if that token doesn't work on a dark chassis.
 6. Verify with the README checklist. Never send on a live client without
    the owner's consent.
 7. Log an activity record (`surface: code`, `type: feature`, subject = the
@@ -30,9 +32,11 @@ library's `STRATEGY.md` first.
 
 ## Rules
 
-- The whole chassis is the Evoview signature: do not re-theme it to the
-  client palette, swap fonts or marks, or change the accent without the
-  founder's decision. The client shows up through venue, copy and choices.
+- The chassis is the Evoview signature: do not re-theme its surfaces, swap
+  fonts or marks. The client shows up through its accent, venue, copy and
+  choices.
+- Do not add the evoview.be side dossier (rail/monitor/journey): it is
+  exclusive to Evoview's site.
 - The header wordmark is the only Evoview link (`https://evoview.be/`, new
   tab, no tracking). Do not add or move attribution.
 - Never fork the component for a client. Generic fixes go into the library:

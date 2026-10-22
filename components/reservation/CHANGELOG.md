@@ -1,5 +1,18 @@
 # reservation changelog
 
+## 2.1.0 — client accent, single column
+
+- Accent now comes from the host's `--primary` / `--primary-foreground`
+  (Evoview indigo only as fallback): marks, selections, progress, glows, CTA
+  hover and the confirmation emblem's iris all follow the client.
+- Side dossier removed (rail, monitor, journey list): it is exclusive to
+  evoview.be. Single column at every width; the recap ticket stays on the
+  contact step and confirmation; the header progress is clickable to jump
+  back to answered steps. Mount in a ~900px column.
+- Config changes: removed `copy.dossier`, `copy.stepsWord`,
+  `copy.remainingWord`, `copy.pending`; added `accentInk`. `accent` is now an
+  override of the host token.
+
 ## 2.0.0 — rebuilt on the Evoview application chassis (breaking)
 
 The 1.x form kept Tchin Tchin's look with an Evoview seal attached. 2.0.0
