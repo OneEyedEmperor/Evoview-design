@@ -30,10 +30,23 @@ src/pages/       showcase pages, one per component, importing from ../../compone
 
 ## Components
 
+Binding design rules: `docs/RULES.md` (evidence: `docs/extraction/*`).
+Showcase contract (routes, `ShowcasePage`, registry): `docs/SHOWCASE-CONTRACT.md`.
+New packages build on `foundation` (tokens, `--ev-scale`, pause-model hooks)
+and `controls`; follow `docs/BUILD-BRIEF.md`.
+
 | Component | Status | Skill |
 | --- | --- | --- |
-| `navbar` — finder capsule, desktop + mobile, cover-card trays | 2.3.0 | `evoview-navbar` |
-| `reservation` — Evoview booking application, client accent (`/reservation`) | 2.8.1 | `evoview-reservation` |
+| `foundation` — tokens, scale, tones, type voices, pause-model hooks, attribution mark | 1.0.0 | `evoview-foundation` |
+| `controls` — plate, ghost, glass close/pager, chips, rows, fields, switch, segmented control/progress (`/components/controls`) | 1.0.0 | `evoview-controls` |
+| `chapter` — section shell, headings, tone cuts, footer with attribution (`/layouts/chapter`) | 1.0.0 | `evoview-chapter` |
+| `card-track` — media card + scroll-scrubbed track (`/layouts/card-track`) | 1.0.0 | `evoview-card-track` |
+| `process-sequence` — timed step board + step dossier (`/layouts/process-sequence`) | 1.0.0 | `evoview-process-sequence` |
+| `story-blocks` — intro split, indexed rows, proof grid, pillars, payoff (`/layouts/story-blocks`) | 1.0.0 | `evoview-story-blocks` |
+| `dossier` — portal modal, selection board, chapter strip, mobile dock (`/components/dossier`) | 1.0.0 | `evoview-dossier` |
+| `selector-stage` — selector ↔ stage, before/after, atlas (`/components/selector-stage`) | 1.0.0 | `evoview-selector-stage` |
+| `navbar` — finder capsule, desktop + mobile, cover-card trays (`/navbar`) | 2.3.0 | `evoview-navbar` |
+| `reservation` — Evoview booking application, client accent (`/components/reservation`) | 2.8.1 | `evoview-reservation` |
 
 ## Rules for changing a component here
 
@@ -54,3 +67,11 @@ Each package's README and SKILL must carry the relevant strategy requirements
 into client handoffs: what makes the component recognizably Evoview, which
 client-facing values are adaptable, and how its approved Evoview attribution
 and destination work. Do not leave this context only in the library repo.
+
+<!-- vibehub:knowledge:start -->
+## Project knowledge
+
+Facts learned about this codebase, maintained by Vibehub. Everything from this heading to the end of the list below is regenerated on every write: add to it with POST /api/memory (destination=project), never by editing here, because a hand edit inside it is refused as drift. Prose elsewhere in this file is hand-written and yours to edit.
+
+- docs/RULES.md is binding for every package (evidence in docs/extraction/*); the evoview site's EVOVIEW-VISUAL-GRAMMAR.md is outdated — authority is rendered site (measured) > working-tree source > grammar doc. <!--vh:b3d83440-->
+<!-- vibehub:knowledge:end -->

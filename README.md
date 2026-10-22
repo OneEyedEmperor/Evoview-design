@@ -9,9 +9,23 @@ also serve as subtle Evoview publicity and referral assets across client sites.
 
 Showcase: `https://evoview-library.said.bet`
 
-| Component | Version | Install |
+Install any package with `components/<name>/install.sh <client-dir>`; it
+installs `foundation` (and `controls` where used) first.
+
+| Pill | Package | Version |
 | --- | --- | --- |
-| [navbar](components/navbar/README.md) | 2.2.0 | `components/navbar/install.sh <client-dir>` |
+| Layouts | [chapter](components/chapter/README.md) | 1.0.0 |
+| Layouts | [card-track](components/card-track/README.md) | 1.0.0 |
+| Layouts | [process-sequence](components/process-sequence/README.md) | 1.0.0 |
+| Layouts | [story-blocks](components/story-blocks/README.md) | 1.0.0 |
+| Components | [reservation](components/reservation/README.md) | 2.8.1 |
+| Components | [dossier](components/dossier/README.md) | 1.0.0 |
+| Components | [selector-stage](components/selector-stage/README.md) | 1.0.0 |
+| Components | [controls](components/controls/README.md) | 1.0.0 |
+| Navbar | [navbar](components/navbar/README.md) | 2.3.0 |
+| — | [foundation](components/foundation/README.md) (base, not showcased) | 1.0.0 |
+
+Design rules: [docs/RULES.md](docs/RULES.md).
 
 Agents: the skill `evoview-<name>` in your skill list points at the package's
 `SKILL.md`. Read it, then the package `README.md`, before installing.

@@ -52,7 +52,7 @@ const DRAFTS: Draft[] = [
     route: "/layouts/story-blocks",
     title: { fr: "Blocs de récit", en: "Story blocks" },
     meta: { fr: "Intro, rangs indexés, preuves, bandeau final", en: "Intro split, indexed rows, proof grid, payoff" },
-    status: "building",
+    status: "ready",
   },
   {
     id: "reservation",
