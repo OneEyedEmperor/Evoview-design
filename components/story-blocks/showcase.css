@@ -1,0 +1,15 @@
+/* Showcase-only chrome for /layouts/story-blocks (not installed into clients). */
+
+.sbx-variant { padding-block: 2.2em 2em; border-top: 1px solid var(--ev-line); color: var(--ev-fg); }
+.sbx-variant__row { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 0.6em 1.4em; }
+.sbx-variant__index { color: var(--ev-fg-35); }
+.sbx-variant__index .ev-index__current { color: var(--ev-accent-signal); }
+.sbx-variant__name { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.4em 1em; margin: 0; font-family: var(--ev-font-display); font-size: max(1.25em, 17px); font-weight: 900; letter-spacing: -0.01em; line-height: 1; text-transform: uppercase; }
+.sbx-variant__tone { color: var(--ev-fg-55); }
+.sbx-variant__parts, .sbx-variant__fiction { grid-column: 2; color: var(--ev-fg-55); }
+.sbx-variant__fiction { color: var(--ev-fg-35); }
+@media (min-width: 1024px) {
+  .sbx-variant__row { grid-template-columns: 6em minmax(0, 1fr) auto; }
+  .sbx-variant__parts { grid-column: 2; }
+  .sbx-variant__fiction { grid-column: 3; grid-row: 1; justify-self: end; }
+}
