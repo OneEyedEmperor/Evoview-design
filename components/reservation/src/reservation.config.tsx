@@ -14,7 +14,7 @@ const COPY: Record<Locale, ReservationCopy> = {
     steps: {
       experience: { short: "Expérience", title: "Quelle expérience vous tente ?", hint: "Choisissez votre moment. Nous l'affinerons ensemble." },
       date: { short: "Date", title: "Quel jour vous attend-on ?", hint: "Les jours grisés sont complets ou fermés." },
-      guests: { short: "Convives", title: "Combien serez-vous ?", hint: "Au-delà, écrivez-nous dans la dernière étape." },
+      guests: { short: "Convives", title: "Combien serez-vous ?", hint: "Plus nombreux ? Choisissez la dernière option." },
       time: { short: "Horaire", title: "À quelle heure ?", hint: "Votre heure d'arrivée souhaitée." },
       contact: { short: "Contact", title: "On confirme ?", hint: "Nous vous recontactons pour valider la réservation." },
     },
@@ -49,7 +49,7 @@ const COPY: Record<Locale, ReservationCopy> = {
     steps: {
       experience: { short: "Experience", title: "What are you in the mood for?", hint: "Pick your moment. We will fine-tune it together." },
       date: { short: "Date", title: "Which day should we expect you?", hint: "Greyed-out days are full or closed." },
-      guests: { short: "Guests", title: "How many of you?", hint: "Larger group? Tell us in the last step." },
+      guests: { short: "Guests", title: "How many of you?", hint: "A larger group? Pick the last option." },
       time: { short: "Time", title: "What time?", hint: "Your preferred arrival time." },
       contact: { short: "Contact", title: "Shall we confirm?", hint: "We will get back to you to confirm the booking." },
     },
@@ -111,7 +111,7 @@ export function buildReservationConfig(locale: Locale): ReservationConfig {
     experiences: EXPERIENCES[locale],
     windows: (date) => (isSunday(date) ? [] : isSaturday(date) ? [dinner] : [lunch, dinner]),
     slotMinutes: 30,
-    guests: { min: 1, max: 12 },
+    guests: { min: 1, max: 12, overflow: true },
     submit: submitRequest,
   };
 }

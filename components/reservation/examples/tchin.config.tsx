@@ -34,6 +34,6 @@ export function buildTchinReservationConfig(locale: Locale): ReservationConfig {
       { value: "karaoke_only", label: isFr ? "Karaoké uniquement" : "Karaoke only", desc: isFr ? "Une salle privée pour chanter" : "A private room to sing", requiresEndTime: true, timeNote: karaokePrice },
       { value: "restaurant_then_karaoke", label: isFr ? "Restaurant puis karaoké" : "Restaurant then karaoke", desc: isFr ? "Dînez, puis chantez" : "Dine, then sing", timeNote: karaokePrice },
     ],
-    guests: { min: 1, max: 15 },
+    guests: { min: 1, max: 15, overflow: true },
   };
 }

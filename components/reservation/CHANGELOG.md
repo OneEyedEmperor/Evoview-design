@@ -1,5 +1,17 @@
 # reservation changelog
 
+## 2.3.0 — compact guests, "+max" option
+
+- Narrow containers (≤ 520px): the guests step is a grid of number orbs
+  (`01`…`15`, `+15`) instead of a list of labelled pills; wide layouts keep
+  the pills.
+- New `guests.overflow`: adds a final "+max" choice. It submits
+  `guests: max` with `guestsOverflow: true` (APIs that cap the party size keep
+  validating); recap shows "+max …". Tchin maps it to a "Groupe de plus de 15
+  personnes" prefix in `notes`.
+- Question and confirmation titles keep `? ! : ;` on the previous word (nbsp).
+- Config changes: `guests.overflow` (optional), `ReservationRequest.guestsOverflow`.
+
 ## 2.2.1
 
 - Recap ticket background: neutral `#121214` (same as the option rows)

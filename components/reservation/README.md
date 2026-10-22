@@ -108,6 +108,10 @@ heading and background.
 
 ## Behaviour
 
+- Guests: pills on wide layouts, a grid of number orbs on narrow ones.
+  `guests.overflow` adds "+max", submitted as `guests: max` +
+  `guestsOverflow: true`; map it in `submit` (e.g. a notes prefix) if the API
+  caps the party size.
 - Step complete → auto-advance; "Continuer" on an unanswered step shows
   `chooseToContinue`. `requiresEndTime` adds an end-time group bounded by the
   start's window; `timeNote` shows under the times.

@@ -26,6 +26,8 @@ export type ReservationRequest = {
   startTime: string;
   endTime?: string;
   guests: number;
+  /** Set when the guest picked "+max": the real party is larger than `guests`. */
+  guestsOverflow?: boolean;
   name: string;
   phone: string;
   email: string;
@@ -90,7 +92,8 @@ export type ReservationConfig = {
   /** Opening windows for a date; `[]` closes the day (disabled in the calendar). */
   windows: (date: Date) => ReservationWindow[];
   slotMinutes?: number;
-  guests: { min: number; max: number };
+  /** `overflow` adds a final "+max" choice; it submits `guests: max` with `guestsOverflow: true`. */
+  guests: { min: number; max: number; overflow?: boolean };
   /** Bookable horizon in days from today. Omit for no limit. */
   maxDaysAhead?: number;
   submit: (request: ReservationRequest) => Promise<ReservationResult>;

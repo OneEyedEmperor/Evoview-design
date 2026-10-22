@@ -19,6 +19,9 @@ const ADVANCE_MS = 340;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const pad = (n: number) => String(n).padStart(2, "0");
+const OVERFLOW = (max: number) => max + 1;
+// French typography: keep "?", "!", ":" and ";" on the line of the word before them.
+const nbsp = (text: string) => text.replace(/ ([?!:;])/g, "\u00a0$1");
 const toMinutes = (time: string) => {
   const [h, m] = time.split(":").map(Number);
   return h * 60 + m;
@@ -76,6 +79,8 @@ export function Reservation({ config }: { config: ReservationConfig }) {
   const [formError, setFormError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
+  // `max + 1` stands for "more than max" when `guests.overflow` is on.
+  const overflow = guests !== null && guests > guestRange.max;
   const current = experiences.find((e) => e.value === experience);
   const requiresEndTime = !!current?.requiresEndTime;
   const dayWindows = date ? windows(date) : [];
@@ -179,7 +184,8 @@ export function Reservation({ config }: { config: ReservationConfig }) {
       dateISO: format(date, "yyyy-MM-dd"),
       startTime,
       ...(requiresEndTime ? { endTime } : {}),
-      guests,
+      guests: overflow ? guestRange.max : guests,
+      ...(overflow ? { guestsOverflow: true } : {}),
       name: name.trim(),
       phone: phone.trim(),
       email: email.trim(),
@@ -220,7 +226,8 @@ export function Reservation({ config }: { config: ReservationConfig }) {
     goTo(0);
   };
 
-  const guestLabel = (n: number) => `${n} ${n > 1 ? c.guestsUnit.many : c.guestsUnit.one}`;
+  const unit = (n: number) => (n > 1 ? c.guestsUnit.many : c.guestsUnit.one);
+  const guestLabel = (n: number) => (n > guestRange.max ? `+${guestRange.max} ${c.guestsUnit.many}` : `${n} ${unit(n)}`);
   const values: (string | null)[] = [
     current?.label ?? null,
     date ? format(date, "EEEE d MMMM", { locale: config.dateLocale }) : null,
@@ -329,7 +336,23 @@ export function Reservation({ config }: { config: ReservationConfig }) {
     );
   } else if (step === 2) {
     const counts = Array.from({ length: guestRange.max - guestRange.min + 1 }, (_, i) => i + guestRange.min);
-    body = <Pills label={stepCopy.short} items={counts} selected={guests} onSelect={selectGuests} render={(n) => <><span className="evo-resa-pill__mark">{pad(n)}</span>{n > 1 ? c.guestsUnit.many : c.guestsUnit.one}</>} />;
+    if (guestRange.overflow) counts.push(OVERFLOW(guestRange.max));
+    body = (
+      <div className="evo-resa-guests">
+        <Pills
+          label={stepCopy.short}
+          items={counts}
+          selected={guests}
+          onSelect={selectGuests}
+          render={(n) => (
+            <>
+              <span className="evo-resa-pill__mark" aria-hidden="true">{n > guestRange.max ? `+${guestRange.max}` : pad(n)}</span>
+              <span className="evo-resa-pill__unit"><span className="evo-resa-sr">{n > guestRange.max ? `+${guestRange.max}` : n} </span>{unit(n)}</span>
+            </>
+          )}
+        />
+      </div>
+    );
   } else if (step === 3) {
     body = (
       <div className="evo-resa-times">
@@ -414,7 +437,7 @@ export function Reservation({ config }: { config: ReservationConfig }) {
               <div className="evo-resa-scroll evo-resa-done" key="done">
                 <span className="evo-resa-done__emblem" aria-hidden="true" dangerouslySetInnerHTML={{ __html: RING_EYE }} />
                 <span className="evo-resa-readout evo-resa-done__kicker">{c.confirmationKicker}</span>
-                <h3 ref={headingRef} tabIndex={-1} className="evo-resa-done__title">{c.confirmationTitle}</h3>
+                <h3 ref={headingRef} tabIndex={-1} className="evo-resa-done__title">{nbsp(c.confirmationTitle)}</h3>
                 <p className="evo-resa-done__text">{c.confirmationMessage}</p>
                 <div className="evo-resa-inline-ticket">{ticket}</div>
                 <button type="button" className="evo-resa-ghost evo-resa-readout" onClick={resetForm}>
@@ -428,7 +451,7 @@ export function Reservation({ config }: { config: ReservationConfig }) {
                   <div className="evo-resa-question">
                     <h3 ref={headingRef} tabIndex={-1}>
                       <span className="evo-resa-mark">{pad(step + 1)}</span>
-                      {stepCopy.title}
+                      {nbsp(stepCopy.title)}
                     </h3>
                     <p>{stepCopy.hint}</p>
                   </div>
