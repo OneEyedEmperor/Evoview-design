@@ -1,0 +1,19 @@
+/* Showcase-only page chrome for /layouts/process-sequence (not installed into clients). */
+
+.ps-show { font-size: max(calc(16px * var(--ev-scale)), 13px); }
+.ps-show__strip {
+  display: grid;
+  gap: 1em;
+  padding-block: 3em 2em;
+  border-top: 1px solid var(--ev-line);
+  color: var(--ev-fg);
+}
+.ps-show__id { display: grid; gap: 0.75em; align-content: start; }
+.ps-show__id .ev-index { color: var(--ev-fg-35); }
+.ps-show__id .ev-index__current { color: var(--ev-accent-signal); }
+.ps-show__note { display: grid; gap: 1em; }
+.ps-show__note p { max-width: 38em; color: var(--ev-fg-65); }
+.ps-show__note ul { display: flex; flex-wrap: wrap; gap: 0.5em 1.4em; margin: 0; padding: 0; list-style: none; color: var(--ev-fg-55); }
+@media (min-width: 768px) {
+  .ps-show__strip { grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr); column-gap: 3em; padding-block: 4.5em 2.5em; }
+}
