@@ -5,8 +5,11 @@ candidature flow of evoview.be): one question per screen in Evoview's
 typography, marks and grading, coloured with the client's accent. Origin:
 Tchin Tchin (`/root/.vibehub/projects/test`, `/reservation`).
 
-Showcase: `https://evoview-library.said.bet/reservation` (reference by
-default, Tchin Tchin example, FR/EN, mocked submit).
+Showcase: `https://evoview-library.said.bet/reservation` (reference config,
+FR/EN, live accent picker standing in for the host `--primary`, mocked
+submit). Live client: Tchin Tchin, `/root/.vibehub/projects/test`
+(`src/components/reservation/reservation.config.tsx` is the worked example of
+an adaptation: i18n labels, API mapping of `hours`/`guestsOverflow`).
 
 The reference config is a neutral copy of the Tchin Tchin setup, the
 first client: same flow and choices (table / by-the-hour room / both, icons
@@ -89,7 +92,6 @@ Evoview and say it opens a new tab. No other Evoview link inside the form.
 | `src/marks.tsx` | Evoview eye glyphs, arrows, check, HUD. | no |
 | `src/brand/` | Wordmark, ring-eye emblem, fonts. Refreshed on upgrade. | no |
 | `src/reservation.css` | All styles under `.evo-resa`, container-query responsive. | no |
-| `examples/tchin.config.tsx` | Tchin Tchin (showcase). Not installed. | — |
 
 ## Install
 

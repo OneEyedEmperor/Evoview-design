@@ -1,5 +1,13 @@
 # reservation changelog
 
+## 2.7.1 — showcase cleanup
+
+- Showcase shows the reference only: the Tchin Tchin toggle and
+  `examples/tchin.config.tsx` are removed (the live install in `test` is the
+  adaptation example). The accent picker sits in the page flow under the
+  header subtitle instead of a fixed bottom bar (it covered the CTA on mobile).
+- Config changes: none.
+
 ## 2.7.0 — mobile pass
 
 Tested at 320×568, 360×740, 375×667, 390×844, 412×915, 430×932 and 844×390

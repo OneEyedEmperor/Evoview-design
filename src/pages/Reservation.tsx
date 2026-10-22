@@ -2,28 +2,18 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Reservation } from "../../components/reservation/src";
 import { buildReservationConfig, type Locale } from "../../components/reservation/src/reservation.config";
-import { buildTchinReservationConfig } from "../../components/reservation/examples/tchin.config";
 import AccentPicker, { inkFor } from "./AccentPicker";
 
-/* Showcase of the reservation package. "Tchin Tchin" reproduces the live
-   client page around the component (its --primary accent, page header);
-   "Référence" is the same page, neutral: reference config, off-white accent.
-   Submissions are mocked. */
+/* Showcase of the reservation package: the reference config on a neutral
+   client page, with a live accent picker standing in for the host's
+   --primary token. Submissions are mocked. */
 
-type Variant = "tchin" | "reference";
-
-const HEAD: Record<Variant, Record<Locale, { kicker: string; title: string; subtitle: string }>> = {
-  tchin: {
-    fr: { kicker: "Reservation", title: "Envoyez une Demande", subtitle: "Envoyez votre demande et le propriétaire vous contactera pour confirmer." },
-    en: { kicker: "Reservation", title: "Send a Request", subtitle: "Send your request and the owner will contact you to confirm." },
-  },
-  reference: {
-    fr: { kicker: "Réservation", title: "Envoyez une demande", subtitle: "Envoyez votre demande et l'établissement vous contactera pour confirmer." },
-    en: { kicker: "Reservation", title: "Send a request", subtitle: "Send your request and the venue will contact you to confirm." },
-  },
+const HEAD: Record<Locale, { kicker: string; title: string; subtitle: string }> = {
+  fr: { kicker: "Réservation", title: "Envoyez une demande", subtitle: "Envoyez votre demande et l'établissement vous contactera pour confirmer." },
+  en: { kicker: "Reservation", title: "Send a request", subtitle: "Send your request and the venue will contact you to confirm." },
 };
 
-const DEFAULT_ACCENT: Record<Variant, string> = { reference: "#e9e6df", tchin: "oklch(0.88 0.18 90)" };
+const DEFAULT_ACCENT = "#e9e6df";
 
 const SWATCHES: { id: string; color: string; label: Record<Locale, string> }[] = [
   { id: "indigo", color: "#818cf8", label: { fr: "Indigo Evoview", en: "Evoview indigo" } },
@@ -57,30 +47,27 @@ function Toggle<T extends string>({ value, options, onChange }: { value: T; opti
 }
 
 export default function ReservationShowcase() {
-  const [variant, setVariant] = useState<Variant>("reference");
   const [locale, setLocale] = useState<Locale>("fr");
-  const config = useMemo(() => (variant === "tchin" ? buildTchinReservationConfig(locale) : buildReservationConfig(locale)), [variant, locale]);
-  const head = HEAD[variant][locale];
-  const tchin = variant === "tchin";
+  const config = useMemo(() => buildReservationConfig(locale), [locale]);
+  const head = HEAD[locale];
   const [accentId, setAccentId] = useState("default");
   const [custom, setCustom] = useState("#7c3aed");
   const copy = PICKER_COPY[locale];
   const swatches = useMemo(
     () => [
-      { id: "default", color: DEFAULT_ACCENT[variant], label: `${copy.default} — ${tchin ? "Tchin Tchin" : "Référence"}` },
+      { id: "default", color: DEFAULT_ACCENT, label: copy.default },
       ...SWATCHES.map((s) => ({ id: s.id, color: s.color, label: s.label[locale] })),
     ],
-    [variant, locale, copy, tchin],
+    [locale, copy],
   );
   const accent = accentId === "custom" ? custom : (swatches.find((s) => s.id === accentId) ?? swatches[0]).color;
   const ink = useMemo(() => inkFor(accent), [accent]);
 
   return (
     <div
-      data-variant={variant}
-      className="showcase-accent relative min-h-screen overflow-hidden px-6 pb-40 pt-24 text-white"
+      className="showcase-accent relative min-h-screen overflow-hidden px-6 py-24 text-white"
       style={{
-        background: tchin ? "oklch(0.115 0.006 75)" : "#0b0b0c",
+        background: "#0b0b0c",
         fontFamily: "Inter, sans-serif",
         ["--foreground" as string]: "oklch(0.98 0 0)",
         ["--muted-foreground" as string]: "oklch(0.60 0 0)",
@@ -92,34 +79,26 @@ export default function ReservationShowcase() {
     >
 
       <div className="fixed left-1/2 top-4 z-20 flex -translate-x-1/2 gap-2">
-        <Toggle
-          value={variant}
-          options={[["reference", "Référence"], ["tchin", "Tchin Tchin"]]}
-          onChange={(v) => {
-            setVariant(v);
-            setAccentId("default");
-          }}
-        />
         <Toggle value={locale} options={[["fr", "FR"], ["en", "EN"]]} onChange={setLocale} />
       </div>
 
-      <AccentPicker
-        swatches={swatches}
-        value={accentId}
-        custom={custom}
-        caption={{ strong: copy.strong, rest: copy.rest }}
-        customLabel={copy.custom}
-        onChange={setAccentId}
-        onCustom={setCustom}
-      />
 
       <div className="relative z-10 mx-auto max-w-4xl pt-16">
         <div className="mx-auto mb-10 max-w-3xl text-center">
           <p className="mb-4 text-xs font-medium uppercase tracking-[0.3em]" style={{ color: "var(--primary)" }}>{head.kicker}</p>
           <h1 className="mb-3 text-3xl font-bold md:text-4xl" style={{ fontFamily: "'Overused Grotesk', Inter, sans-serif" }}>{head.title}</h1>
           <p className="mx-auto max-w-lg text-white/70">{head.subtitle}</p>
+          <AccentPicker
+            swatches={swatches}
+            value={accentId}
+            custom={custom}
+            caption={{ strong: copy.strong, rest: copy.rest }}
+            customLabel={copy.custom}
+            onChange={setAccentId}
+            onCustom={setCustom}
+          />
         </div>
-        <Reservation key={`${variant}-${locale}`} config={config} />
+        <Reservation key={locale} config={config} />
         <p className="mt-16 text-center">
           <Link to="/" className="text-xs uppercase tracking-widest opacity-50 hover:opacity-100">← navbar</Link>
         </p>

@@ -17,14 +17,12 @@
   transition: --showcase-accent 420ms ease, --showcase-ink 420ms ease;
 }
 
+/* In the page flow, under the header subtitle. */
 .accent-picker {
-  position: fixed;
-  bottom: 16px;
-  left: 50%;
-  z-index: 20;
   display: flex;
-  max-width: calc(100vw - 24px);
-  translate: -50% 0;
+  width: fit-content;
+  max-width: 100%;
+  margin: 24px auto 0;
   flex-direction: column;
   align-items: center;
   gap: 2px;
