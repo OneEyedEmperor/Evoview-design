@@ -1,0 +1,195 @@
+/* Evoview chapter — section shell, chapter heading, footer bar.
+   Rhythm, rails and tones come from foundation (.ev-chapter[--compact|
+   --cinematic], .ev-rail[--wide], .ev-tone-*); this sheet adds the heading
+   anatomy and the footer. Scoped under .ev-chapter. Host accent: --primary /
+   --primary-foreground (re-resolved per chapter, so `accent` overrides work). */
+
+.ev-chapter {
+  --chapter-accent: var(--ev-accent);
+  --chapter-accent-ink: var(--ev-accent-ink);
+  --chapter-accent-deep: var(--ev-accent-deep);
+  /* Strokes, dots, focus, the accent word: pulled toward the tone foreground
+     so a yellow or near-white accent still reads on paper. */
+  --chapter-signal: var(--ev-accent-signal);
+}
+
+/* ── Heading ─────────────────────────────────────────────────────────── */
+.ev-chapter__heading {
+  display: flex;
+  flex-direction: column;
+  gap: calc(1.5 * var(--ev-rem));
+  margin-bottom: var(--ev-gap-heading);
+  color: var(--ev-fg);
+}
+.ev-chapter__heading:last-child { margin-bottom: 0; }
+.ev-chapter__heading--centered { align-items: center; text-align: center; }
+.ev-chapter__heading--split { align-items: flex-start; }
+.ev-chapter__main { min-width: 0; max-width: 100%; }
+
+.ev-chapter__title { color: var(--ev-fg); }
+.ev-chapter__title em { font-style: normal; color: var(--chapter-signal); }
+.ev-chapter__marker {
+  position: relative;
+  top: -0.06em;
+  margin-right: 0.42em;
+}
+/* Pause model for the live marker: foundation 1.0.0 pauses .ev-ambient on the
+   marker element, but the pulse runs on its ::after (play state does not inherit). */
+.ev-chapter[data-ev-paused] .ev-chapter__marker::after,
+html[data-ev-suspended] .ev-chapter:not([data-ev-modal] *) .ev-chapter__marker::after { animation-play-state: paused; }
+
+.ev-chapter__mark {
+  position: relative;
+  top: -0.05em;
+  display: inline-block;
+  height: 1.1em;
+  margin-inline: 0.2em;
+  line-height: 0;
+  vertical-align: middle;
+}
+.ev-chapter__mark > svg,
+.ev-chapter__mark > img { display: block; width: auto; height: 100%; }
+
+.ev-chapter__subtitle {
+  max-width: calc(36.875 * var(--ev-rem));
+  margin: calc(0.875 * var(--ev-rem)) auto 0;
+  color: var(--ev-fg-55);
+  font-family: var(--ev-font-body);
+  font-size: max(calc(0.875 * var(--ev-rem)), var(--ev-floor-body));
+  font-weight: 400;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+.ev-chapter__heading--split .ev-chapter__subtitle { max-width: calc(23.75 * var(--ev-rem)); margin-inline: 0; }
+
+.ev-chapter__support { display: flex; margin-top: calc(1 * var(--ev-rem)); }
+.ev-chapter__heading--centered .ev-chapter__support { justify-content: center; }
+
+.ev-chapter__side { width: 100%; min-width: 0; }
+.ev-chapter__heading--centered .ev-chapter__side { display: flex; justify-content: center; }
+
+@media (min-width: 768px) {
+  .ev-chapter__heading--split {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    column-gap: calc(3 * var(--ev-rem));
+  }
+  .ev-chapter__heading--split .ev-chapter__side { width: auto; flex: 0 0 auto; }
+}
+
+/* ── Ticker (support line) ───────────────────────────────────────────── */
+.ev-chapter__ticker {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: inherit;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--ev-fg-35);
+  font-family: var(--ev-font-readout);
+  font-size: max(calc(0.625 * var(--ev-rem)), 10px);
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.ev-chapter__heading--centered .ev-chapter__ticker { justify-content: center; }
+.ev-chapter__ticker li { display: inline-flex; align-items: center; }
+.ev-chapter__ticker li + li::before { content: "·"; margin-inline: 0.9em; color: var(--ev-line-strong); }
+.ev-chapter__ticker li[aria-current] { color: var(--ev-fg); }
+.ev-chapter__ticker-dot {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  margin-right: 0.7em;
+  border-radius: 999px;
+  background: var(--chapter-signal);
+}
+@media (max-width: 767.98px) {
+  .ev-chapter__ticker[data-phone="hide"] { display: none; }
+}
+
+/* ── Footer bar ──────────────────────────────────────────────────────── */
+.ev-chapter.ev-chapter--footer { padding-block: calc(1.5 * var(--ev-rem)); }
+@media (min-width: 768px) {
+  .ev-chapter.ev-chapter--footer { padding-block: calc(2 * var(--ev-rem)); }
+}
+
+.ev-chapter__footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(1 * var(--ev-rem));
+  padding-top: calc(1.25 * var(--ev-rem));
+  border-top: 1px solid var(--ev-line);
+  text-align: center;
+}
+.ev-chapter__brand {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  color: var(--ev-fg);
+  font-size: calc(1.5 * var(--ev-rem));
+  line-height: 1;
+  text-decoration: none;
+  border-radius: var(--ev-radius-badge);
+}
+.ev-chapter__footer-end {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(1 * var(--ev-rem));
+}
+.ev-chapter__legal { display: flex; flex-direction: column; align-items: center; gap: calc(0.25 * var(--ev-rem)); }
+.ev-chapter__legal .ev-t-compact { color: var(--ev-fg-55); letter-spacing: 0.025em; }
+.ev-chapter__links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0 calc(1.25 * var(--ev-rem));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ev-chapter__link {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ev-fg-55);
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: var(--ev-line-strong);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  transition: color var(--ev-dur-fast) ease, text-decoration-color var(--ev-dur-fast) ease;
+}
+@media (hover: hover) {
+  .ev-chapter__link:hover { color: var(--ev-fg); text-decoration-color: currentColor; }
+}
+.ev-chapter__credit {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(0.75 * var(--ev-rem));
+  margin: 0;
+  color: var(--ev-fg-55);
+}
+.ev-chapter__brand:focus-visible,
+.ev-chapter__link:focus-visible {
+  outline: 2px solid var(--chapter-signal);
+  outline-offset: 3px;
+  border-radius: var(--ev-radius-badge);
+}
+
+@media (min-width: 768px) {
+  .ev-chapter__footer { flex-direction: row; justify-content: space-between; gap: calc(2 * var(--ev-rem)); text-align: left; }
+  .ev-chapter__brand { font-size: calc(1.75 * var(--ev-rem)); }
+  .ev-chapter__footer-end { flex-direction: row; gap: calc(2 * var(--ev-rem)); }
+  .ev-chapter__legal { align-items: flex-end; text-align: right; }
+  .ev-chapter__links { justify-content: flex-end; }
+  .ev-chapter__credit { align-self: stretch; padding-left: calc(2 * var(--ev-rem)); border-left: 1px solid var(--ev-line); }
+}
