@@ -1,0 +1,364 @@
+/* Evoview card track — media cards (ribbon | portrait) on a scroll-scrubbed
+   track. Scoped under .ev-card-track; structure in em on the foundation
+   scale; the host accent arrives through --primary (foundation --ev-accent*). */
+
+.ev-card-track {
+  --card-track-accent: var(--ev-accent);
+  --card-track-ink: var(--ev-accent-ink);
+  --card-track-signal: var(--ev-accent-signal);
+  --card-track-deep: var(--ev-accent-deep);
+  --ctc-grade: saturate(0.78) contrast(1.06) brightness(0.88);
+
+  position: relative;
+  overflow-x: clip;
+}
+
+/* ── Card geometry ───────────────────────────────────────────────────── */
+.ev-card-track[data-variant="ribbon"] {
+  --ctc-w: min(78vw, 40em);
+  --ctc-h: clamp(340px, 50vh, 600px);
+  --ctc-gap: 1.25em;
+}
+.ev-card-track[data-variant="portrait"] {
+  --ctc-w: min(clamp(20em, 31vw, 31.25em), 46vh);
+  --ctc-h: calc(var(--ctc-w) / 0.9);
+  --ctc-gap: clamp(18px, 2vw, 30px);
+}
+@media (max-width: 767px) {
+  .ev-card-track[data-variant="ribbon"] { --ctc-w: 82vw; --ctc-gap: 16px; }
+  .ev-card-track[data-variant="portrait"] { --ctc-w: min(82vw, 350px); --ctc-h: calc(var(--ctc-w) / 0.7); --ctc-gap: 14px; }
+}
+
+/* ── Mechanism ───────────────────────────────────────────────────────── */
+.ev-card-track[data-mode="scrub"] { height: var(--ctr-length); }
+/* Centred in the viewport: the free space above and below replaces the
+   chapter rhythm; the padding is only the minimum (room for a host header). */
+.ev-card-track[data-mode="scrub"] .ctr-stage {
+  position: sticky;
+  top: 0;
+  display: flex;
+  min-height: 100vh;
+  padding-block: 5em 2.5em;
+  flex-direction: column;
+  justify-content: center;
+}
+.ctr-head { margin-bottom: var(--ev-gap-heading); }
+
+.ctr-progress { display: flex; align-items: center; gap: 1.25em; margin-bottom: 2em; }
+.ctr-progress__rail {
+  position: relative;
+  height: 2px;
+  flex: 1 1 auto;
+  overflow: hidden;
+  border-radius: var(--ev-radius-round);
+  background: var(--ev-fg-12);
+}
+.ctr-progress__fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--card-track-signal);
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+.ctr-progress__index { flex: 0 0 auto; color: var(--ev-fg-55); }
+.ctr-progress__index .ev-index__current { color: var(--card-track-signal); }
+
+.ctr-dots { display: none; }
+.ev-card-track[data-mode="snap"] .ctr-progress { margin-bottom: 1em; }
+.ev-card-track[data-mode="snap"] .ctr-dots { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 1.25em; }
+.ctr-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--ev-radius-round);
+  background: var(--ev-fg-12);
+  transition: width var(--ev-dur-control) var(--ev-ease), background-color var(--ev-dur-control) var(--ev-ease);
+}
+.ctr-dot[data-current] { width: 18px; background: var(--card-track-signal); }
+.ev-card-track[data-mode="static"] :is(.ctr-progress, .ctr-dots) { display: none; }
+
+.ctr-region:focus-visible { outline: 2px solid var(--card-track-signal); outline-offset: -2px; }
+
+.ctr-viewport { container-type: inline-size; overflow-x: clip; }
+.ev-card-track[data-mode="snap"] .ctr-viewport {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: max(var(--ev-gutter), (100% - var(--ev-rail-wide)) / 2);
+  scrollbar-width: none;
+  /* Room for the bloom inside the scroll container's clip. */
+  margin-block: -2em;
+  padding-block: 2em;
+  -webkit-overflow-scrolling: touch;
+}
+.ev-card-track[data-mode="snap"] .ctr-viewport::-webkit-scrollbar { display: none; }
+
+/* One grid row pair shared by every card (subgrid): ribbons stay equal height. */
+.ctr-track {
+  display: grid;
+  width: max-content;
+  height: var(--ctc-h);
+  grid-auto-columns: var(--ctc-w);
+  grid-auto-flow: column;
+  grid-template-rows: minmax(0, 1fr) auto;
+  column-gap: var(--ctc-gap);
+  /* Starts on the wide rail, bleeds right. */
+  padding-inline: max(var(--ev-gutter), (100cqw - var(--ev-rail-wide)) / 2);
+}
+.ev-card-track[data-mode="scrub"] .ctr-track { will-change: transform; }
+.ev-card-track[data-mode="snap"] .ctc { scroll-snap-align: start; }
+@media (max-width: 767px) {
+  .ev-card-track[data-mode="snap"] .ctr-track { padding-inline: calc((100cqw - var(--ctc-w)) / 2); }
+  .ev-card-track[data-mode="snap"] .ctc { scroll-snap-align: center; }
+}
+
+/* ── Card ────────────────────────────────────────────────────────────── */
+.ctc {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  grid-row: 1 / span 2;
+  grid-template-rows: subgrid;
+  opacity: 0;
+  translate: 0 30px;
+  transition:
+    opacity var(--ev-dur-reveal) var(--ev-ease-cinematic) calc(var(--ctc-i) * var(--ev-stagger)),
+    translate var(--ev-dur-reveal) var(--ev-ease-cinematic) calc(var(--ctc-i) * var(--ev-stagger));
+}
+.ev-card-track[data-revealed] .ctc { opacity: 1; translate: none; }
+
+.ctc__frame {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  grid-row: 1 / span 2;
+  grid-template-rows: subgrid;
+  overflow: hidden;
+  border-radius: var(--ev-radius-surface);
+  isolation: isolate;
+  transition:
+    opacity 360ms ease,
+    scale var(--ev-dur-reveal) var(--ev-ease-cinematic),
+    box-shadow var(--ev-dur-reveal) var(--ev-ease-cinematic);
+}
+.ctc__frame::after {
+  content: "";
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px var(--ctc-edge, rgba(21, 21, 21, 0.06));
+  pointer-events: none;
+}
+.ctc__frame:has(.ctc__open:focus-visible) { outline: 2px solid var(--card-track-signal); outline-offset: 3px; }
+
+.ctc__media { position: relative; min-height: 0; overflow: hidden; grid-row: 1; background: #121214; }
+.ctc__img,
+.ctc__video {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  scale: 1.01;
+  transition:
+    opacity var(--ev-dur-reveal) ease,
+    filter var(--ev-dur-reveal) ease,
+    scale 700ms var(--ev-ease-cinematic);
+  user-select: none;
+}
+/* Graded at rest, released on focus / hover / the current card. */
+.ctc__img { opacity: 0; filter: var(--ctc-grade); }
+.ctc[data-media="ready"] .ctc__img { opacity: 1; }
+.ctc:is([data-released], :focus-within) .ctc__img { filter: none; }
+.ctc[data-released] :is(.ctc__img, .ctc__video) { scale: 1.035; }
+.ctc__video { opacity: 0; transition-duration: 200ms, var(--ev-dur-reveal), 700ms; }
+.ctc__video[data-visible] { opacity: 1; }
+
+.ctc__status {
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 0.25em;
+  background: #121214;
+  color: var(--ev-fg-65);
+  pointer-events: none;
+}
+.ctc__retry { pointer-events: auto; }
+
+/* Glass affordance: the only chrome on the card; the whole card is the hit target. */
+.ctc__affordance {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--ev-radius-tag);
+  background: rgba(0, 0, 0, 0.45);
+  color: rgba(255, 255, 255, 0.95);
+  text-transform: uppercase;
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  pointer-events: none;
+}
+.ctc__affordance-pointer { display: none; }
+@media (hover: hover) and (pointer: fine) {
+  .ctc__affordance-pointer { display: inline; }
+  .ctc__affordance-touch { display: none; }
+}
+.ctc__affordance--center {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: 50%;
+  height: max(2.25em, 32px);
+  padding-inline: 1.25em 1em;
+  font-family: var(--ev-font-display);
+  font-size: max(0.75em, 11px);
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  translate: -50% -50%;
+}
+.ctc__affordance--inline {
+  padding: 5px 7px 5px 8px;
+  font-family: var(--ev-font-readout);
+  font-size: var(--ev-floor-readout);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  line-height: 1;
+  transition: opacity var(--ev-dur-control) ease;
+}
+
+.ctc__open {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.ctc__open:focus { outline: none; }
+
+/* ── Ribbon variant: media ~70 % over an information ribbon ─────────── */
+.ctc__ribbon {
+  position: relative;
+  z-index: 1;
+  grid-row: 2;
+  padding: 2em;
+  background: #ffffff;
+  color: #151515;
+}
+.ctc--ribbon-dark { --ctc-edge: rgba(255, 255, 255, 0.08); }
+.ctc--ribbon-dark .ctc__ribbon { background: rgba(10, 10, 10, 0.9); color: #ffffff; }
+.ctc--ribbon .ctc__title {
+  display: -webkit-box;
+  margin: 0 0 0.875em;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+.ctc__body {
+  display: -webkit-box;
+  min-height: calc(3em * 1.55);
+  margin: 0;
+  overflow: hidden;
+  color: #555555;
+  font-family: var(--ev-font-body);
+  font-size: max(0.875em, var(--ev-floor-body));
+  line-height: 1.55;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+.ctc--ribbon-dark .ctc__body { color: rgba(255, 255, 255, 0.65); }
+/* Square tab against the round card: overlaps the ribbon's top edge by half its height. */
+.ctc__tab {
+  position: absolute;
+  top: 0;
+  left: 2em;
+  padding: calc(0.6 * var(--ev-rem)) calc(0.8 * var(--ev-rem)) calc(0.6 * var(--ev-rem)) calc(0.85 * var(--ev-rem));
+  border-radius: 0;
+  background: var(--card-track-accent);
+  box-shadow: 0 0 0 1px rgba(21, 21, 21, 0.12);
+  color: var(--card-track-ink);
+  white-space: nowrap;
+  translate: 0 -50%;
+}
+@media (max-width: 767px) {
+  .ctc__ribbon { padding: 1.5em; }
+  .ctc__tab { left: 1.5em; }
+}
+
+/* ── Portrait variant: full-bleed media, identity bottom-left ───────── */
+.ctc--portrait { --ctc-edge: rgba(255, 255, 255, 0.16); }
+.ctc--portrait .ctc__media { position: absolute; inset: 0; }
+:where(.ev-tone-light, .ev-tone-paper) .ctc--portrait .ctc__frame { box-shadow: 0 12px 28px rgba(18, 17, 19, 0.14); }
+.ctc__scrim {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background:
+    linear-gradient(180deg, transparent 52%, rgba(10, 9, 11, 0.12) 66%, rgba(10, 9, 11, 0.56) 84%, rgba(8, 7, 9, 0.88) 100%),
+    linear-gradient(90deg, rgba(8, 7, 9, 0.18), transparent 58%);
+  pointer-events: none;
+}
+.ctc__identity {
+  position: absolute;
+  z-index: 2;
+  right: 1.75em;
+  bottom: 1.75em;
+  left: 1.75em;
+  color: #ffffff;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.54);
+  transition: opacity var(--ev-dur-control) ease;
+}
+.ctc__readout { display: flex; min-height: 22px; align-items: center; gap: 9px; margin-bottom: 0.75em; }
+.ctc__readout > .ev-t-readout { opacity: 0.72; }
+.ctc__title--portrait {
+  margin: 0;
+  font-family: var(--ev-font-display);
+  font-size: clamp(1.75em, 2.6vw, 2.75em);
+  font-weight: 900;
+  line-height: 0.92;
+  letter-spacing: -0.045em;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+/* Focus acknowledgement: the title wipes in on the current card. */
+.ctc__wipe { display: block; clip-path: inset(0 0 0 0); transition: clip-path 150ms ease; }
+.ctc__meta {
+  margin: 0.9em 0 0;
+  overflow: hidden;
+  opacity: 0.7;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: opacity 360ms ease;
+}
+
+.ev-card-track[data-variant="portrait"]:is([data-mode="scrub"], [data-mode="snap"]) .ctc__frame { opacity: 0.4; scale: 0.94; }
+.ev-card-track[data-variant="portrait"]:is([data-mode="scrub"], [data-mode="snap"]) .ctc:not([data-current]) .ctc__wipe { clip-path: inset(0 100% 0 0); }
+.ev-card-track[data-variant="portrait"]:is([data-mode="scrub"], [data-mode="snap"]) .ctc:not([data-current]) :is(.ctc__meta, .ctc__affordance--inline) { opacity: 0; }
+.ev-card-track[data-variant="portrait"] .ctc[data-current] .ctc__frame {
+  opacity: 1;
+  scale: 1;
+  box-shadow: 0 1.5em 3em -0.75em color-mix(in oklab, var(--card-track-deep) 70%, transparent);
+}
+.ev-card-track[data-variant="portrait"] .ctc[data-current] .ctc__wipe {
+  transition: clip-path 420ms var(--ev-ease-cinematic) 45ms;
+}
+@media (max-width: 767px) {
+  .ev-card-track[data-variant="portrait"][data-mode="snap"] .ctc__frame { opacity: 0.5; scale: 0.97; }
+  .ev-card-track[data-variant="portrait"][data-mode="snap"] .ctc:not([data-current]) .ctc__identity { opacity: 0; }
+  .ctc__identity { right: 1.125em; bottom: 1.125em; left: 1.125em; }
+  .ctc__title--portrait { font-size: clamp(1.6em, 8vw, 2.125em); }
+}
+
+@media (forced-colors: active) {
+  .ctc__frame { border: 1px solid CanvasText; }
+  .ctr-progress__fill, .ctr-dot[data-current] { background: Highlight; }
+}
