@@ -80,12 +80,8 @@ const T = {
       word: "Halde",
       subtitle: "Relever, dessiner, construire, transmettre : chaque projet traverse les mêmes gestes.",
       phasesLabel: "Phases",
-      phases: [
-        ["Relevé", "Le terrain, la lumière, l'existant."],
-        ["Esquisse", "Trois pistes, une retenue."],
-        ["Chantier", "Une visite par semaine."],
-        ["Livraison", "Les clés et le carnet."],
-      ],
+      phases: ["Relevé", "Esquisse", "Chantier", "Livraison"],
+      drawings: ["Relevé · plan du rez", "Esquisse · coupe A–A", "Chantier · façade sud", "Livraison · façade sud, le soir"],
     },
     page: {
       name: "Chapitre · page",
@@ -150,12 +146,8 @@ const T = {
       word: "Halde",
       subtitle: "Survey, draw, build, hand over: every project goes through the same moves.",
       phasesLabel: "Phases",
-      phases: [
-        ["Survey", "The site, the light, what stands."],
-        ["Sketch", "Three options, one kept."],
-        ["Build", "One site visit a week."],
-        ["Handover", "The keys and the logbook."],
-      ],
+      phases: ["Survey", "Sketch", "Build", "Handover"],
+      drawings: ["Survey · ground floor plan", "Sketch · section A–A", "Build · south elevation", "Handover · south elevation, evening"],
     },
     page: {
       name: "Chapter · page",
@@ -240,7 +232,7 @@ function Specimen({ t, brandMark }: { t: Copy; brandMark: ReactNode }) {
           ? s.say.heading[said.heading]
           : s.say.mark[said.mark];
 
-  const phases = t.studio.phases.map(([label]) => label);
+  const phases = t.studio.phases;
   const name = mark === "logo" ? <ChapterMark label={t.studio.word}>{brandMark}</ChapterMark> : t.studio.word;
 
   return (
@@ -334,6 +326,7 @@ function Specimen({ t, brandMark }: { t: Copy; brandMark: ReactNode }) {
               variant={heading === "feature" ? "feature" : "standard"}
               title={t.studio.title(name)}
               subtitle={t.studio.subtitle}
+              support={heading === "split" ? undefined : <ChapterTicker label={t.studio.phasesLabel} items={phases} active={phase} />}
               side={
                 heading === "split" ? (
                   <SegmentedControl
@@ -345,15 +338,16 @@ function Specimen({ t, brandMark }: { t: Copy; brandMark: ReactNode }) {
                 ) : undefined
               }
             />
-            <ol className="chd-phases" aria-label={t.studio.phasesLabel}>
-              {t.studio.phases.map(([label, line], i) => (
-                <li key={i} className="chd-phase" aria-current={i === phase ? "step" : undefined}>
-                  <span className="chd-phase__bar" aria-hidden="true" />
-                  <span className="ev-t-label chd-phase__label">{label}</span>
-                  <p className="ev-t-compact chd-phase__line">{line}</p>
-                </li>
-              ))}
-            </ol>
+            <figure className="chd-figure">
+              <div className="chd-sheet chd-sheet--specimen">
+                <Drawing key={phase} view={PHASE_VIEW[phase]} lit={phase === 3} />
+              </div>
+              <figcaption className="chd-caption">
+                <Readout>
+                  {String(phase + 1).padStart(2, "0")} / {String(phases.length).padStart(2, "0")} — {t.studio.drawings[phase]}
+                </Readout>
+              </figcaption>
+            </figure>
           </ChapterShell>
 
           <div className="ev-root ev-tone-dark chd-neighbour chd-neighbour--after" aria-hidden="true">
@@ -387,6 +381,8 @@ function Setting({ label, children }: { label: string; children: ReactNode }) {
 }
 
 /* ── Scene 2 · the page ───────────────────────────────────────────────── */
+
+const PHASE_VIEW: View[] = ["plan", "section", "elevation", "elevation"];
 
 const MOMENT_MS = 4200;
 
@@ -469,9 +465,9 @@ function Room({ moment, label }: { moment: number; label?: string }) {
 }
 
 /* Line drawings of the fictional house (ink, one accent signal each). */
-function Drawing({ view }: { view: View }) {
+function Drawing({ view, lit = false }: { view: View; lit?: boolean }) {
   return (
-    <svg className="chd-drawing" viewBox="0 0 440 200" aria-hidden="true" focusable="false">
+    <svg className="chd-drawing" data-lit={lit || undefined} viewBox="0 0 440 200" aria-hidden="true" focusable="false">
       {view === "plan" && (
         <>
           <rect x="90" y="30" width="260" height="140" className="chd-d-wall" />
@@ -504,9 +500,9 @@ function Drawing({ view }: { view: View }) {
         <>
           <path d="M20 170H420" className="chd-d-thin" />
           <path d="M140 170V75L220 30L300 75V170Z" className="chd-d-wall" />
-          <rect x="160" y="92" width="30" height="40" className="chd-d-thin" />
-          <rect x="250" y="92" width="30" height="40" className="chd-d-thin" />
-          <rect x="205" y="118" width="30" height="52" className="chd-d-thin" />
+          <rect x="160" y="92" width="30" height="40" className="chd-d-thin chd-d-window" />
+          <rect x="250" y="92" width="30" height="40" className="chd-d-thin chd-d-window" />
+          <rect x="205" y="118" width="30" height="52" className="chd-d-thin chd-d-window" />
           <circle cx="220" cy="64" r="9" className="chd-d-thin" />
           <path d="M160 112h30M265 92v40" className="chd-d-hatch" />
           <g className="chd-d-accent">
