@@ -1,5 +1,13 @@
 # selector-stage changelog
 
+## 1.1.1
+
+- Borders only for media clipping and selection: unselected rows and resting
+  atlas thumbs carry no frame (rows: selection is an inset 1px box; thumbs:
+  a 2px inset ring on the scrim, the grade carries rest vs active). Stage
+  keeps its 44 % accent frame (media clipping). No config changes.
+- `showcase.css` removed (the library frame owns showcase spacing).
+
 ## 1.1.0
 
 Visual contract changes (no type / prop changes):

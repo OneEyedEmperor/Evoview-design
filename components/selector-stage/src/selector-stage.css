@@ -67,7 +67,7 @@
   gap: 0.75em;
   margin: 0;
   padding: 1.1em 1.25em 1.1em 1em;
-  border: 1px solid transparent;
+  border: 0;
   border-radius: 0;
   background: transparent;
   color: inherit;
@@ -75,7 +75,7 @@
   text-align: left;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: background-color 300ms var(--ev-ease), border-color 300ms var(--ev-ease);
+  transition: background-color 300ms var(--ev-ease), box-shadow 300ms var(--ev-ease);
 }
 .ss-row__index { color: var(--ev-fg-35); transition: color 300ms var(--ev-ease); }
 .ss-row__label { font-size: max(0.8125em, 12px); color: var(--ev-fg-55); transition: color 300ms var(--ev-ease); }
@@ -86,7 +86,8 @@
   background: var(--ev-fg-12);
   transition: width 300ms var(--ev-ease-cinematic), background-color 300ms var(--ev-ease);
 }
-.ss-row[data-selected] { background: var(--ss-tint); border-color: var(--ss-border); }
+/* Selection box: the only frame a row ever gets. */
+.ss-row[data-selected] { background: var(--ss-tint); box-shadow: inset 0 0 0 1px var(--ss-border); }
 .ss-row[data-selected] .ss-row__index { color: var(--ss-signal); }
 .ss-row[data-selected] .ss-row__label { color: var(--ev-fg); }
 .ss-row[data-selected] .ss-row__bar { width: 22px; background: var(--ss-signal); }
@@ -272,7 +273,7 @@
   aspect-ratio: 1;
   margin: 0;
   padding: 0;
-  border: 1px solid var(--ev-fg-12);
+  border: 0;
   border-radius: var(--ev-radius-surface);
   background: #080808;
   color: #fff;
@@ -280,7 +281,6 @@
   cursor: pointer;
   scroll-snap-align: start;
   -webkit-tap-highlight-color: transparent;
-  transition: border-color 300ms var(--ev-ease), box-shadow 300ms var(--ev-ease);
 }
 .ss-thumb img {
   display: block;
@@ -292,9 +292,19 @@
   transition: filter 300ms var(--ev-ease), opacity var(--ev-dur-reveal) var(--ev-ease);
 }
 .ss-thumb img[data-ready] { opacity: 1; }
-.ss-thumb::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0) 50%); pointer-events: none; }
+/* Scrim + selection box (no resting frame: the grade carries rest vs active). */
+.ss-thumb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0) 50%);
+  box-shadow: inset 0 0 0 2px transparent;
+  pointer-events: none;
+  transition: box-shadow 300ms var(--ev-ease);
+}
 .ss-thumb__label { position: absolute; z-index: 1; left: 0.9em; right: 0.9em; bottom: 0.85em; color: rgba(255, 255, 255, 0.75); text-align: left; }
-.ss-thumb[data-selected] { border-color: color-mix(in oklab, var(--ss-signal) 70%, transparent); box-shadow: 0 0 0 1px color-mix(in oklab, var(--ss-signal) 70%, transparent); }
+.ss-thumb[data-selected]::after { box-shadow: inset 0 0 0 2px color-mix(in oklab, var(--ss-signal) 70%, transparent); }
 .ss-thumb[data-selected] img { filter: none; }
 .ss-thumb[data-selected] .ss-thumb__label { color: var(--ss-on-media); }
 @media (hover: hover) { .ss-thumb:not([data-selected]):hover img { filter: grayscale(0.4) contrast(1.04) brightness(0.75); } }

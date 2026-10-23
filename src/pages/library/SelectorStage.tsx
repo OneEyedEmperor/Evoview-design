@@ -1,8 +1,6 @@
 import { useMemo, type ReactNode } from "react";
 import { CompareToggle, ProofAtlas, SelectorStage as Stage, buildSelectorStageConfig, type Tone } from "../../../components/selector-stage/src";
-import { Readout } from "../../../components/foundation/src";
-import "../../../components/selector-stage/showcase.css";
-import ShowcasePage from "../../library/ShowcasePage";
+import ShowcasePage, { ShowcaseVariant } from "../../library/ShowcasePage";
 import { useLibraryLocale, type Localized } from "../../library/locale";
 
 /* Four chapters of one fictional client (a renovation studio with a lime-paint
@@ -55,17 +53,15 @@ const JOBS: { name: string; job: Localized }[] = [
   },
 ];
 
-function Band({ n, tone, children }: { n: number; tone: Tone; children: ReactNode }) {
+/* The first chapter sits on the dark frame (no tone); every chapter brings
+   the standard chapter padding. */
+function Variant({ n, tone, children }: { n: number; tone?: Tone; children: ReactNode }) {
   const { locale } = useLibraryLocale();
   const { name, job } = JOBS[n];
   return (
-    <div className={`ev-root ev-tone-${tone} ssx-band`}>
-      <p className="ev-rail ev-rail--wide ssx-job">
-        <Readout className="ssx-job__name">{name}</Readout>
-        <span className="ev-t-compact ssx-job__text">{job[locale]}</span>
-      </p>
+    <ShowcaseVariant name={name} when={job[locale]} tone={tone} rhythm="standard">
       {children}
-    </div>
+    </ShowcaseVariant>
   );
 }
 
@@ -73,19 +69,19 @@ function Demo() {
   const { locale } = useLibraryLocale();
   const { copy, chapters } = useMemo(() => buildSelectorStageConfig(locale), [locale]);
   return (
-    <div>
-      <Band n={0} tone="dark">
+    <>
+      <Variant n={0}>
         <Stage {...chapters.finishes} copy={copy} tone="dark" autoplay={{ dwellMs: 4200 }} />
-      </Band>
-      <Band n={1} tone="paper">
+      </Variant>
+      <Variant n={1} tone="paper">
         <CompareToggle {...chapters.renovation} copy={copy} tone="paper" />
-      </Band>
-      <Band n={2} tone="light">
+      </Variant>
+      <Variant n={2} tone="light">
         <CompareToggle {...chapters.plans} copy={copy} tone="light" mode="pair" />
-      </Band>
-      <Band n={3} tone="dark">
+      </Variant>
+      <Variant n={3} tone="dark">
         <ProofAtlas {...chapters.atlas} copy={copy} tone="dark" />
-      </Band>
-    </div>
+      </Variant>
+    </>
   );
 }

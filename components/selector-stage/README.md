@@ -43,7 +43,7 @@ restyle them to a client's UI kit:
   "after" sheet wipes in left → right and back out right → left, 600ms,
   reversing in place when toggled mid-wipe.
 - **Grade carries state** in the atlas: resting thumbs `grayscale · brightness .5`,
-  the active one releases colour with a 70 % accent border.
+  the active one releases colour inside a 70 % accent ring; no resting frame.
 - **Media gate**: photographs reveal only once decoded (loader after 350ms,
   counter, retry).
 - **Illustrative ≠ result**: demonstrations carry a `note` line ("Cas fictif").
@@ -83,8 +83,6 @@ options (2–6 reads well; atlas 4), accent, tone per chapter, dwell.
 | `src/stage.tsx` | Stage frame, media gate, radio keys, heading | no |
 | `src/types.ts` | Content / copy types | no |
 | `src/selector-stage.css` | Token block `.ev-selector-stage`, `ss-*` classes | no |
-
-`showcase.css` is the library page's sheet; not installed.
 
 ## Install
 
