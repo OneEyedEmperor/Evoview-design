@@ -3,12 +3,12 @@
 .ctp-head { display: grid; gap: 1.25em; }
 .ctp-head__title { display: grid; gap: 0.9em; align-content: end; }
 .ctp-head__kicker { display: flex; align-items: center; gap: 0.75em; margin: 0; color: var(--ev-fg-55); }
-.ctp-head__aside { display: grid; gap: 1em; align-content: end; }
+.ctp-head__aside { display: grid; gap: 0.75em; align-content: end; }
 .ctp-head__note { max-width: 34em; margin: 0; color: var(--ev-fg-65); font-size: max(0.9375em, var(--ev-floor-body)); line-height: 1.6; }
-.ctp-head__meta { display: grid; gap: 0.5em; margin: 0; }
-.ctp-head__spec { color: var(--ev-fg-90); }
-.ctp-head__opened { color: var(--ev-fg-35); }
-.ctp-head__opened[data-opened] { color: var(--ev-accent-signal); }
+.ctp-head__opened { margin: 0; color: var(--ev-accent-signal); }
+.ctp-head__opened:empty { display: none; }
+/* Reserved line on the pinned stage: an open acknowledgement must not move it. */
+.ev-card-track[data-mode="scrub"] .ctp-head__opened { display: block; min-height: 1.6em; }
 
 @media (min-width: 768px) {
   .ctp-head { grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr); column-gap: 4em; align-items: end; }

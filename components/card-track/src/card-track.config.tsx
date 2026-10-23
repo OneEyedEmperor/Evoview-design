@@ -1,8 +1,8 @@
 import type { CardTrackConfig, CardTrackCopy, CardTrackItem, Locale } from "./types";
 
 /* Reference config — the only per-site file. A neutral architecture and
-   interiors studio ("Atelier Sorel"): its services (ribbon cards), its
-   portfolio (portrait cards) and two visit formats. Replace the tracks,
+   interiors studio ("Atelier Sorel"): its services (ribbon cards) and its
+   portfolio (portrait cards). Replace the tracks,
    media and copy; keep the keys. Media paths point at the library showcase
    placeholders and must be replaced by the client's own media. */
 
@@ -90,28 +90,6 @@ const PORTFOLIO: { id: string; title: string; meta: L; src: string; video?: stri
   { id: "sheds", title: "Atelier Sheds", meta: { fr: "Rénovation — Verviers — 2023", en: "Renovation — Verviers — 2023" }, src: `${MEDIA}/pf-atelier.webp`, position: "50% 40%" },
 ];
 
-const VISITS: { id: string; title: L; body: L; tab?: L; src: string }[] = [
-  {
-    id: "materials",
-    title: { fr: "Matériauthèque", en: "Material library" },
-    body: {
-      fr: "Une heure à l'atelier pour toucher les pierres, bois et enduits avant de choisir.",
-      en: "An hour at the studio to handle stones, woods and plasters before choosing.",
-    },
-    tab: { fr: "Sur rendez-vous", en: "By appointment" },
-    src: `${MEDIA}/rv-materials.webp`,
-  },
-  {
-    id: "site",
-    title: { fr: "Visite de chantier", en: "Site visit" },
-    body: {
-      fr: "Un chantier en cours, expliqué sur place : ce qui se décide, quand, et pourquoi.",
-      en: "A building site in progress, explained on the spot: what gets decided, when, and why.",
-    },
-    src: `${MEDIA}/rv-site.webp`,
-  },
-];
-
 export function buildCardTrackConfig(locale: Locale): CardTrackConfig {
   const services: CardTrackItem[] = SERVICES.map((s) => ({
     id: s.id,
@@ -126,21 +104,13 @@ export function buildCardTrackConfig(locale: Locale): CardTrackConfig {
     meta: pick(locale, p.meta),
     media: { src: p.src, video: p.video, position: p.position },
   }));
-  const visits: CardTrackItem[] = VISITS.map((v) => ({
-    id: v.id,
-    title: pick(locale, v.title),
-    body: pick(locale, v.body),
-    tab: v.tab && pick(locale, v.tab),
-    media: { src: v.src },
-  }));
 
   return {
     locale,
     copy: COPY[locale],
     tracks: {
       services: { label: locale === "fr" ? "Services de l'atelier" : "Studio services", variant: "ribbon", ribbon: "light", showIndex: true, items: services },
-      portfolio: { label: locale === "fr" ? "Projets réalisés" : "Completed projects", variant: "portrait", showIndex: true, items: portfolio },
-      visits: { label: locale === "fr" ? "Formats de visite" : "Visit formats", variant: "ribbon", ribbon: "dark", items: visits },
+      portfolio: { label: locale === "fr" ? "Projets réalisés" : "Completed projects", variant: "portrait", items: portfolio },
     },
   };
 }

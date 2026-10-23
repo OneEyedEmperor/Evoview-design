@@ -1,5 +1,29 @@
 # card-track changelog
 
+## 1.1.0
+
+- Fix: the scrub lerp was per frame, so slow frames left the track trailing
+  the scroll (measured 120px behind after a jump under dev-mode jank). It is
+  now time-based (.25 per 60 Hz frame).
+- Fix: scrub geometry (sticky span = wrapper − stage, track overflow) is read
+  live instead of cached at the last resize; the span no longer assumes
+  `100vh === innerHeight`.
+- Fix: rapid ←/→ during the smooth scroll of a previous press advanced only
+  one card; presses now chain from the pending target.
+- Fix: the fit check (scrub vs snap) also observes the stage children, so a
+  heading that reflows inside the pinned stage (locale, fonts) re-evaluates.
+- Fix: affordance wording uses `(pointer: coarse)` for the touch label;
+  keyboard-only and pointer-less desktops no longer read `Toucher` / `Tap`.
+- Visual: one progress indicator per mechanism — hairline (+ index) on
+  desktop scrub and snap, dots only on the phone strip (was hairline + index
+  + dots).
+- Per-card handlers are stable, so an active change re-renders only the
+  cards it touches.
+- Config (`card-track.config.tsx`, reference only): the `visits` track and
+  its two media are removed; `portfolio` drops `showIndex` (portrait cards
+  carry their own index). Client configs are untouched by `install.sh`; no
+  API change.
+
 ## 1.0.1
 
 - Requires `foundation` 1.1.0 / `controls` 1.1.0: uses foundation's

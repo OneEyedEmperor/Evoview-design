@@ -17,7 +17,8 @@ Read `README.md` ("What is Evoview", decisions, behaviour) and the library's
    and to yellow / off-white.
 2. Pick the variant from the content: `ribbon` when each card needs a
    sentence (services, offers), `portrait` when the image is the argument
-   (projects, rooms, dishes). One variant per track.
+   (projects, rooms, dishes). One variant per track. `showIndex` only on
+   ribbon tracks: portrait cards already carry their own `01 / 05`.
 3. `components/card-track/install.sh /root/.vibehub/projects/<client>`
    (installs / upgrades controls and foundation first).
 4. Edit only `src/components/card-track/card-track.config.tsx`: the client's

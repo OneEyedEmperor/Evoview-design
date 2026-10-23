@@ -3,6 +3,7 @@ import {
   useEffect,
   useId,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type CSSProperties,
@@ -35,8 +36,12 @@ export type CardTrackProps = {
 
 const PHONE_QUERY = "(max-width: 767px)";
 const FINE_QUERY = "(hover: hover) and (pointer: fine)";
-/* Lerp factor per frame toward the scroll target (measured on the source). */
+/* Lerp toward the scroll target: .25 per 60 Hz frame (measured on the source),
+   applied per elapsed time so slow or fast frames land on the same mapping. */
 const LERP = 0.25;
+const FRAME_MS = 1000 / 60;
+/* A keyboard move scrolls smoothly; presses during that scroll chain from its target. */
+const PENDING_MS = 1200;
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
 
@@ -52,9 +57,12 @@ export function CardTrack({ track, copy, heading, tone, rhythm = "standard", onO
   const trackRef = useRef<HTMLDivElement>(null);
   const fillRef = useRef<HTMLSpanElement>(null);
   const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const geo = useRef({ maxX: 0, range: 0 });
-  const progressRef = useRef(0);
   const resyncRef = useRef<() => void>(() => undefined);
+  const pendingRef = useRef<{ index: number; at: number } | null>(null);
+  const onOpenRef = useRef(onOpen);
+  useLayoutEffect(() => {
+    onOpenRef.current = onOpen;
+  });
 
   const [mode, setMode] = useState<CardTrackMode>(() =>
     typeof window !== "undefined" && window.matchMedia(PHONE_QUERY).matches ? "snap" : "scrub",
@@ -66,15 +74,31 @@ export function CardTrack({ track, copy, heading, tone, rhythm = "standard", onO
   const [near, setNear] = useState(false);
   const [revealed, setRevealed] = useState(false);
   const instructionsId = useId();
+  const hasHeading = !!heading;
 
   const pause = useInViewPause(viewportRef);
   const { suspended } = pause;
 
   const setActiveIdx = useCallback((i: number) => {
+    if (pendingRef.current?.index === i) pendingRef.current = null;
     if (i === activeRef.current) return;
     activeRef.current = i;
     setActive(i);
   }, []);
+
+  // Stable per-card handlers: an active change re-renders only the cards it touches.
+  const handlers = useMemo(
+    () =>
+      items.map((item, i) => ({
+        open: () => onOpenRef.current?.(item, i),
+        hover: (h: boolean) => setHoverIdx((prev) => (h ? i : prev === i ? null : prev)),
+        focus: () => setFocusIdx(i),
+        ref: (el: HTMLButtonElement | null) => {
+          buttonRefs.current[i] = el;
+        },
+      })),
+    [items],
+  );
 
   // Media loads once the track approaches; the reveal plays once.
   useEffect(() => {
@@ -94,7 +118,7 @@ export function CardTrack({ track, copy, heading, tone, rhythm = "standard", onO
     };
   }, []);
 
-  // Geometry and mechanism; never measured during scroll frames.
+  // Mechanism only. Scrub geometry is read live (scrubGeometry) so it can never go stale.
   useLayoutEffect(() => {
     const root = rootRef.current;
     const stage = stageRef.current;
@@ -111,8 +135,6 @@ export function CardTrack({ track, copy, heading, tone, rhythm = "standard", onO
       const last = stage.lastElementChild?.getBoundingClientRect().bottom ?? 0;
       const em = Number.parseFloat(getComputedStyle(stage).fontSize) || 16;
       const tooTall = last - first + 7.5 * em > window.innerHeight;
-      geo.current.maxX = Math.max(0, overflow);
-      geo.current.range = Math.max(0, root.offsetHeight - window.innerHeight);
       setMode(phone || n < 2 ? (n < 2 ? "static" : "snap") : overflow <= 4 ? "static" : tooTall ? "snap" : "scrub");
       resyncRef.current();
     };
@@ -122,7 +144,9 @@ export function CardTrack({ track, copy, heading, tone, rhythm = "standard", onO
 
     measure();
     const ro = new ResizeObserver(schedule);
-    [root, stage, viewport, inner].forEach((el) => ro.observe(el));
+    // The stage children too: in scrub the stage is pinned at 100vh, so a heading
+    // that reflows (locale, fonts) only shows up on its own box.
+    [root, stage, viewport, inner, ...Array.from(stage.children)].forEach((el) => ro.observe(el));
     window.addEventListener("resize", schedule);
     document.fonts?.addEventListener?.("loadingdone", schedule);
     return () => {
@@ -131,45 +155,54 @@ export function CardTrack({ track, copy, heading, tone, rhythm = "standard", onO
       document.fonts?.removeEventListener?.("loadingdone", schedule);
       if (raf !== null) cancelAnimationFrame(raf);
     };
-  }, [phone, n]);
+  }, [phone, n, hasHeading]);
 
   // Desktop scrub: page scroll → lerped translate, progress fill and focus.
   useEffect(() => {
     const root = rootRef.current;
+    const stage = stageRef.current;
+    const viewport = viewportRef.current;
     const inner = trackRef.current;
-    if (mode !== "scrub" || !root || !inner) {
+    if (mode !== "scrub" || !root || !stage || !viewport || !inner) {
       if (inner) inner.style.transform = "";
       resyncRef.current = () => undefined;
       return;
     }
     if (suspended) return;
 
-    const target = () => (geo.current.range > 0 ? clamp(-root.getBoundingClientRect().top / geo.current.range, 0, 1) : 0);
-    const apply = (p: number) => {
-      progressRef.current = p;
-      inner.style.transform = `translate3d(${(-p * geo.current.maxX).toFixed(2)}px, 0, 0)`;
+    const read = () => {
+      const { range, maxX } = scrubGeometry(root, stage, viewport, inner);
+      return { maxX, goal: range > 0 ? clamp(-root.getBoundingClientRect().top / range, 0, 1) : 0 };
+    };
+    const apply = (p: number, maxX: number) => {
+      inner.style.transform = `translate3d(${(-p * maxX).toFixed(2)}px, 0, 0)`;
       if (fillRef.current) fillRef.current.style.transform = `scaleX(${p})`;
       setActiveIdx(Math.round(p * (n - 1)));
     };
 
-    let goal = target();
-    let current = goal;
+    const start = read();
+    let current = start.goal;
     let raf = 0;
-    apply(current);
+    let last = 0;
+    apply(current, start.maxX);
 
-    const tick = () => {
-      current += (goal - current) * LERP;
-      if (Math.abs(goal - current) * Math.max(1, geo.current.maxX) < 0.3) {
+    const tick = (now: number) => {
+      const { goal, maxX } = read();
+      const k = 1 - Math.pow(1 - LERP, (last ? now - last : FRAME_MS) / FRAME_MS);
+      last = now;
+      current += (goal - current) * k;
+      if (Math.abs(goal - current) * Math.max(1, maxX) < 0.3) {
         current = goal;
         raf = 0;
       } else {
         raf = requestAnimationFrame(tick);
       }
-      apply(current);
+      apply(current, maxX);
     };
     const onScroll = () => {
-      goal = target();
-      if (!raf) raf = requestAnimationFrame(tick);
+      if (raf) return;
+      last = 0;
+      raf = requestAnimationFrame(tick);
     };
     resyncRef.current = onScroll;
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -231,10 +264,13 @@ export function CardTrack({ track, copy, heading, tone, rhythm = "standard", onO
     (i: number) => {
       const next = clamp(i, 0, n - 1);
       const root = rootRef.current;
+      const stage = stageRef.current;
       const viewport = viewportRef.current;
       const inner = trackRef.current;
-      if (mode === "scrub" && root) {
-        const top = window.scrollY + root.getBoundingClientRect().top + (n > 1 ? (geo.current.range * next) / (n - 1) : 0);
+      if (mode !== "static") pendingRef.current = { index: next, at: performance.now() };
+      if (mode === "scrub" && root && stage && viewport && inner) {
+        const { range } = scrubGeometry(root, stage, viewport, inner);
+        const top = window.scrollY + root.getBoundingClientRect().top + (n > 1 ? (range * next) / (n - 1) : 0);
         window.scrollTo({ top, behavior: "smooth" });
       } else if (mode === "snap" && viewport && inner) {
         const card = inner.children[next] as HTMLElement | undefined;
@@ -255,7 +291,9 @@ export function CardTrack({ track, copy, heading, tone, rhythm = "standard", onO
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (n < 2) return;
-    const from = mode === "static" ? focusIdx : activeRef.current;
+    const pending = pendingRef.current;
+    const from =
+      mode === "static" ? focusIdx : pending && performance.now() - pending.at < PENDING_MS ? pending.index : activeRef.current;
     const to = e.key === "ArrowRight" ? from + 1 : e.key === "ArrowLeft" ? from - 1 : e.key === "Home" ? 0 : e.key === "End" ? n - 1 : null;
     if (to === null) return;
     e.preventDefault();
@@ -329,12 +367,10 @@ export function CardTrack({ track, copy, heading, tone, rhythm = "standard", onO
                     near={near}
                     play={play}
                     tabbable={i === tabStop}
-                    onOpen={onOpen ? () => onOpen(item, i) : undefined}
-                    onHover={fine ? (h) => setHoverIdx((prev) => (h ? i : prev === i ? null : prev)) : undefined}
-                    onFocusCard={() => setFocusIdx(i)}
-                    buttonRef={(el) => {
-                      buttonRefs.current[i] = el;
-                    }}
+                    onOpen={onOpen ? handlers[i]?.open : undefined}
+                    onHover={fine ? handlers[i]?.hover : undefined}
+                    onFocusCard={handlers[i]?.focus}
+                    buttonRef={handlers[i]?.ref}
                   />
                 );
               })}
@@ -344,6 +380,14 @@ export function CardTrack({ track, copy, heading, tone, rhythm = "standard", onO
       </div>
     </div>
   );
+}
+
+/** Scrub geometry, read when used: the sticky span (wrapper − stage) and the track's overflow. */
+function scrubGeometry(root: HTMLElement, stage: HTMLElement, viewport: HTMLElement, inner: HTMLElement) {
+  return {
+    range: Math.max(0, root.offsetHeight - stage.offsetHeight),
+    maxX: Math.max(0, inner.offsetWidth - viewport.clientWidth),
+  };
 }
 
 export type { CardTrackCopy };

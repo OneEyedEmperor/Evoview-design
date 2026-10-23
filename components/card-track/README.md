@@ -6,9 +6,9 @@ desktop the page's vertical scroll drives the track sideways under a sticky
 stage; on phones the track is a native snap strip. Depends on `foundation`
 and `controls`.
 
-Showcase: `https://evoview-library.said.bet/layouts/card-track` (a studio's
-services on a light chapter, its portfolio on a dark one, a two-card dark
-ribbon row that stays static where it fits; live accent palette, FR / EN).
+Showcase: `https://evoview-library.said.bet/layouts/card-track` (one studio,
+the two variants: services as ribbon cards on a light chapter, the portfolio
+as portrait cards on a dark one; live accent palette, FR / EN).
 
 ## What is Evoview (protected)
 
@@ -16,10 +16,12 @@ Read `STRATEGY.md`. The track is a client utility (browse services or work
 one at a time) and a recognisable Evoview piece. Keep:
 
 - **Scrub, not carousel arrows.** Desktop: sticky stage, vertical scroll →
-  horizontal translate, lerped (.25 / frame), first card on the wide rail,
-  track bleeding right, 2px progress hairline on the wide rail, optional
-  `01 / 04` index. Phone changes the mechanism: native snap at 82vw with
-  dots (18 vs 6). Do not replace with arrow buttons, autoplay or a slider lib.
+  horizontal translate, lerped (.25 per 60 Hz frame, time-based), first card
+  on the wide rail, track bleeding right, 2px progress hairline on the wide
+  rail (the chapter's only line: it is information), optional `01 / 04`
+  index. Phone changes the mechanism: native snap at 82vw, dots (18 vs 6)
+  replace the hairline. Do not replace with arrow buttons, autoplay or a
+  slider lib.
 - **Media first.** Ribbon cards: media ~70 %, information ribbon below with
   the title (Overused 900, uppercase) and ≤ 3 clamped lines; ribbons are equal
   height across siblings. Portrait cards: full-bleed media, bottom scrim,
@@ -60,8 +62,8 @@ card or next to the affordance.
 - Desktop mapping is rail-to-rail (progress 0: first card on the wide rail;
   1: last card ends on the rail's right edge) instead of the source's
   centre-to-centre mapping, so the first card sits on the rail at rest.
-- Affordance label is `Voir` / `View` on fine pointers, `Toucher` / `Tap` on
-  touch (source: `click` / `tap`).
+- Affordance label is `Toucher` / `Tap` when the primary pointer is coarse,
+  `Voir` / `View` otherwise, keyboard-only included (source: `click` / `tap`).
 
 ## Files
 
@@ -115,7 +117,7 @@ type CardTrackDefinition = {
   label: string;                         // carousel name
   variant: "ribbon" | "portrait";
   ribbon?: "light" | "dark";             // ribbon variant, default light
-  showIndex?: boolean;                   // 01 / 04 at the hairline's end
+  showIndex?: boolean;                   // 01 / 04 at the hairline's end (ribbon; portrait cards carry their own)
   items: {
     id: string; title: string;
     body?: string;                       // ribbon, 3-line clamp
@@ -141,15 +143,16 @@ No `srcSet` (the media gate decodes `src`).
 | --- | --- | --- |
 | Mechanism | `scrub` when the track overflows; `static` row when it fits; `snap` when the stage is taller than the viewport | `snap`, centred, 82vw cards (portrait min(82vw, 350px)) |
 | Card | ribbon `min(78vw, 40em)` × `clamp(340px, 50vh, 600px)`; portrait `min(clamp(20em, 31vw, 31.25em), 46vh)` at .90 | ribbon 82vw × same height; portrait .70 |
-| Progress | hairline + index | hairline + index + dots |
+| Progress | hairline (+ index) — scrub and snap | dots only |
 | Focus (portrait) | current card per scroll progress | card nearest the centre |
 | Video | ribbon: hover preview on fine pointers only (resets on leave); portrait: current card | portrait: current card; ribbon: none |
-| Affordance | `Voir` / `View` | `Toucher` / `Tap`; tap vs swipe by a 6px slop |
+| Affordance | `Voir` / `View` | `Toucher` / `Tap` (coarse pointer); tap vs swipe by a 6px slop |
 
 Keyboard: one tab stop (the current card); ←/→ / Home / End move it (desktop
 scrub scrolls the page to that card's position, snap scrolls the strip) and
-focus follows; Enter / Space open. Without `onOpen` the region itself is the
-tab stop. Live region announces "2 sur 4 : Title".
+focus follows; presses during that smooth scroll chain from its target.
+Enter / Space open. Without `onOpen` the region itself is the tab stop. Live
+region announces "2 sur 4 : Title".
 
 Reveal: cards y 30 → 0 + fade, 600ms cinematic, 80ms stagger, once.
 
@@ -158,8 +161,9 @@ Reveal: cards y 30 → 0 + fade, 600ms cinematic, 80ms stagger, once.
 One full-motion experience, no `prefers-reduced-motion` branch (architecture
 skill). Every state is complete at rest: posters are the stable state, all
 cards are reachable by scroll, swipe or keyboard. The scrub is driven by
-scroll events only (no running loop); it stops while a modal suspends the
-page and re-syncs on resume. Videos play only when the track is on-screen,
+scroll events only (no running loop); its geometry (sticky span, overflow)
+is read on each frame it runs, never cached; it stops while a modal
+suspends the page and re-syncs on resume. Videos play only when the track is on-screen,
 the document is visible and no modal suspends the page
 (`useInViewPause`), only on the allowed card, after a 160ms settle; they are
 revealed only once frames play. Posters go through `useMediaReady`
@@ -171,12 +175,13 @@ revealed only once frames play. Posters go through `useMediaReady`
    nothing below 9px (readouts) / 13px (body).
 2. Desktop scrub: first card on the wide rail at progress 0, last card ends on
    the rail's right edge at 1; hairline and index follow; portrait focus moves.
-3. Phone: snap centres each card, dots and index follow, inactive portrait
-   identities hidden.
+3. Phone: snap centres each card, dots follow (no hairline), inactive
+   portrait identities hidden.
 4. Palette: default, indigo, yellow, off-white — fill, index, dot, tab, focus
    ring, bloom readable on light and dark chapters.
-5. Keyboard: Tab lands on the current card, arrows / Home / End move, Enter
-   calls `onOpen`.
+5. Keyboard: Tab lands on the current card, arrows / Home / End move (three
+   quick presses move three cards), Enter calls `onOpen`.
 6. Video: plays only on the current portrait card / hovered ribbon card;
    pauses when scrolled away or the tab is hidden.
-7. Two-card row on a wide screen renders static (no hairline, no scrub).
+7. A track whose cards fit the rail renders static (no hairline, no scrub);
+   check it with the client's own card count at their widest breakpoint.

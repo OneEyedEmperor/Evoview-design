@@ -64,9 +64,13 @@
 .ctr-progress__index { flex: 0 0 auto; color: var(--ev-fg-55); }
 .ctr-progress__index .ev-index__current { color: var(--card-track-signal); }
 
+/* One progress indicator per mechanism: the hairline on desktop (scrub, or snap
+   on a short viewport), dots on the phone strip. */
 .ctr-dots { display: none; }
-.ev-card-track[data-mode="snap"] .ctr-progress { margin-bottom: 1em; }
-.ev-card-track[data-mode="snap"] .ctr-dots { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 1.25em; }
+@media (max-width: 767px) {
+  .ev-card-track[data-mode="snap"] .ctr-progress { display: none; }
+  .ev-card-track[data-mode="snap"] .ctr-dots { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 1.25em; }
+}
 .ctr-dot {
   width: 6px;
   height: 6px;
@@ -202,10 +206,12 @@
   backdrop-filter: blur(16px);
   pointer-events: none;
 }
-.ctc__affordance-pointer { display: none; }
-@media (hover: hover) and (pointer: fine) {
-  .ctc__affordance-pointer { display: inline; }
-  .ctc__affordance-touch { display: none; }
+/* Touch wording only for a coarse primary pointer; keyboard-only and unknown
+   pointers read the pointer wording. */
+.ctc__affordance-touch { display: none; }
+@media (pointer: coarse) {
+  .ctc__affordance-pointer { display: none; }
+  .ctc__affordance-touch { display: inline; }
 }
 .ctc__affordance--center {
   position: absolute;
