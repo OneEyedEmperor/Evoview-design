@@ -15,63 +15,54 @@ export type StoryMedia = {
   fit?: "cover" | "contain";
 };
 
-/** Override the automatic base / alt alternation of a chapter. */
-export type Band = "base" | "alt";
-
 export type StoryIntroProps = {
   /** The story title (one per story). */
   title: Lines;
   lead: ReactNode;
   body?: ReactNode;
   media: StoryMedia;
-  /** Caption inside the media: readout kicker + caption title + accent status dot. */
-  caption: { kicker: ReactNode; title: ReactNode };
+  /** Inside the media, on a dark scrim: optional readout kicker (place, moment), one caption line, accent status dot. */
+  caption?: { kicker?: ReactNode; title: ReactNode };
   /** Copy bottom-aligned against the title (default) or top-aligned. */
   align?: "end" | "start";
-  band?: Band;
 };
 
-export type IndexedRow = { label: ReactNode; detail: ReactNode };
+export type IndexedRow = {
+  label: ReactNode;
+  detail: ReactNode;
+  /** A real value instead of the automatic 01, 02… (a time, a day, a dose). */
+  index?: ReactNode;
+};
 
 export type IndexedRowsProps = {
   heading: Lines;
   body?: ReactNode;
+  /** An ordered sequence; separated by space and scale, never by rules. */
   rows: readonly IndexedRow[];
-  /** "split": heading .72 | rows 1.28 · "full": heading/body split above full-width rows. */
-  layout?: "split" | "full";
-  band?: Band;
+  /** One proof beside the sequence: it takes the larger side (first on phones); the heading
+   *  tops it and the rows end on its baseline. Without media the rows sit beside the heading. */
+  media?: StoryMedia & { ratio?: number; ratioPhone?: number };
 };
 
 export type ProofItem = {
   media: StoryMedia;
-  /** Width / height chosen from the artefact (1.83, 1.5, 1.33, 1, .8 …). */
+  /** Width / height chosen from the artefact (1.5, 1.33, 1, .8 …). Below 1 the item pairs up on phones. */
   ratio: number;
-  /** Phone ratio; default relaxes `ratio` toward 1 (clamped to .88–1.25). */
+  /** Phone ratio; defaults to `ratio`. */
   ratioPhone?: number;
-  /** Caption `NN / LABEL`. */
-  label: ReactNode;
-  /** Right-hand caption qualifier (framing, material, place). */
-  qualifier?: ReactNode;
+  /** Desktop columns out of 12; default alternates 7/5 then 5/7. */
+  span?: number;
+  /** One sentence-case line under the media: what the image proves. */
+  caption?: ReactNode;
 };
 
 export type ProofGridProps = {
   heading?: Lines;
   body?: ReactNode;
-  /** Laid out in pairs, 7/5 then 5/7 on 12 columns. */
+  /** "start": heading split above the collage · "end": the images lead and the heading
+   *  split follows them (show, then explain). Default "start". */
+  headingAt?: "start" | "end";
   items: readonly ProofItem[];
-  /** 2–3 short lines under a short accent rule. */
-  note?: Lines;
-  band?: Band;
-};
-
-export type Pillar = { label: ReactNode; heading: Lines; copy: ReactNode };
-
-export type RuledPillarsProps = {
-  heading?: Lines;
-  body?: ReactNode;
-  /** Exactly three facts. */
-  pillars: readonly [Pillar, Pillar, Pillar];
-  band?: Band;
 };
 
 export type PayoffCta = {
@@ -91,19 +82,17 @@ export type PayoffBandProps = {
   lines: readonly ReactNode[];
   /** 0-based line taking the accent (optional, at most one). */
   accentLine?: number;
-  lead: ReactNode;
-  /** Up to three results; equal columns (true peers). */
+  lead?: ReactNode;
+  /** Up to three true results (duration, price, capacity); equal columns. */
   results?: readonly PayoffResult[];
   /** Exactly one CTA per story. */
   cta: PayoffCta;
-  /** Accent bloom top-right. Default true. */
+  /** Accent bloom behind the action. Default true. */
   bloom?: boolean;
-  band?: Band;
 };
 
 export type StoryChapter =
   | ({ kind: "intro" } & StoryIntroProps)
   | ({ kind: "rows" } & IndexedRowsProps)
   | ({ kind: "proof" } & ProofGridProps)
-  | ({ kind: "pillars" } & RuledPillarsProps)
   | ({ kind: "payoff" } & PayoffBandProps);

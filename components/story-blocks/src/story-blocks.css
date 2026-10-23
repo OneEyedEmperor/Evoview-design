@@ -1,6 +1,8 @@
-/* Evoview story blocks — open editorial compositions for a chapter or a
-   dossier: intro split + hero proof, indexed rows, proof grid, ruled pillars,
-   payoff band. Scoped under .ev-story-blocks; elements are evsb-*.
+/* Evoview story blocks — open editorial chapters for a page or a dossier:
+   intro split over a hero proof, a sequence (beside its proof or its
+   heading), a proof collage, a payoff band with one action. Chapters are
+   told apart by space, scale, alignment and tone — never by rules, boxes
+   or zebra bands. Scoped under .ev-story-blocks; elements are evsb-*.
    Lengths are authored in em against the .ev-root font (16px × --ev-scale),
    so 1em = 13.76px from 768 and 16px on phones. */
 
@@ -8,50 +10,40 @@
   --story-blocks-accent: var(--ev-accent);
   --story-blocks-signal: var(--ev-accent-signal);
   --story-blocks-accent-deep: var(--ev-accent-deep);
-  --story-blocks-band-base: var(--ev-bg);
-  --story-blocks-band-alt: var(--ev-bg-alt);
+  --story-blocks-bg: var(--ev-bg);
   /* Media wells stay dark in every tone: captions sit on a dark scrim. */
   --story-blocks-well: #080808;
+  /* The chapter band: the only thing between two chapters. */
+  --story-blocks-chapter: var(--ev-chapter-cinematic-top);
 
   position: relative;
   color: var(--ev-fg);
-  background: var(--story-blocks-band-base);
+  background: var(--story-blocks-bg);
   overflow-x: clip;
 }
-.ev-story-blocks.ev-tone-dark { --story-blocks-band-base: var(--ev-shell); }
+.ev-story-blocks.ev-tone-dark { --story-blocks-bg: var(--ev-shell); }
+.ev-story-blocks[data-rhythm="dossier"] { --story-blocks-chapter: var(--ev-chapter-compact); }
 
-/* ── Chapters: spacing → hairline → alternating band ────────────────── */
-.evsb-chapter {
-  position: relative;
-  padding-block: var(--ev-chapter-standard);
-  background: var(--story-blocks-band-base);
-}
-.evsb-chapter:nth-child(even) { background: var(--story-blocks-band-alt); }
-.evsb-chapter[data-band="base"] { background: var(--story-blocks-band-base); }
-.evsb-chapter[data-band="alt"] { background: var(--story-blocks-band-alt); }
-.evsb-chapter + .evsb-chapter { border-top: 1px solid var(--ev-line); }
-.ev-story-blocks[data-rhythm="dossier"] .evsb-chapter { padding-block: 3em; }
-@media (min-width: 768px) {
-  .ev-story-blocks[data-rhythm="dossier"] .evsb-chapter { padding-block: 4em; }
-}
+/* ── Chapters ───────────────────────────────────────────────────────── */
+.evsb-chapter { position: relative; padding-top: var(--story-blocks-chapter); }
+.evsb-chapter:last-child { padding-bottom: var(--story-blocks-chapter); }
 .evsb-rail { position: relative; }
 
 /* ── Type colour ladder ─────────────────────────────────────────────── */
 .evsb-title, .evsb-heading, .evsb-display { color: var(--ev-fg); }
-.evsb-lead { max-width: 46.5em; color: var(--ev-fg-90); font-weight: 600; }
-.evsb-body { max-width: 40.7em; color: var(--ev-fg-65); }
-.evsb-body--under { max-width: 35em; margin-top: 1.25em; }
-.evsb-intro__copy .evsb-body { max-width: 46.5em; margin-top: 1em; }
+.evsb-lead { max-width: 34em; color: var(--ev-fg-90); font-weight: 600; }
+.evsb-body { max-width: 34em; color: var(--ev-fg-65); }
+.evsb-body--under { max-width: 24em; margin-top: 1.25em; }
+.evsb-intro__copy .evsb-body { margin-top: 1em; }
 .evsb-accent-line { color: var(--story-blocks-signal); }
 
-/* ── Split: heading .72 / copy 1.28 ─────────────────────────────────── */
+/* ── Split: heading .72 / copy 1.28 — the shared inner edge ─────────── */
 .evsb-split { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5em; min-width: 0; }
 .evsb-rail > .evsb-after-head { margin-top: var(--ev-gap-heading); }
 @media (min-width: 1024px) {
   .evsb-split { grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr); column-gap: 3.5em; }
   .evsb-split[data-align="end"] { align-items: end; }
   .evsb-split[data-align="start"] { align-items: start; }
-  .evsb-split__aside { justify-self: end; }
 }
 
 /* ── Reveal (once): text y24 / 600, media y45 / 900, stagger 80 ─────── */
@@ -118,16 +110,13 @@
 
 /* ── StoryIntro ─────────────────────────────────────────────────────── */
 .evsb-intro__body { display: flex; flex-direction: column; gap: 2em; }
-/* Phone: show, then explain — the proof comes first. */
+/* Phone and tablet: show, then explain — the proof comes first. */
 .evsb-intro__media { order: -1; }
 @media (min-width: 1024px) {
-  .evsb-intro__body { gap: 2.35em; }
+  .evsb-intro__body { gap: var(--ev-gap-heading); }
   .evsb-intro__media { order: 0; }
 }
-.evsb-hero {
-  aspect-ratio: 4 / 5;
-  border: 1px solid color-mix(in oklab, var(--story-blocks-signal) 44%, transparent);
-}
+.evsb-hero { aspect-ratio: 4 / 5; }
 @media (min-width: 640px) { .evsb-hero { aspect-ratio: 4 / 3; } }
 @media (min-width: 1024px) { .evsb-hero { aspect-ratio: 16 / 10; } }
 .evsb-caption {
@@ -155,97 +144,73 @@
   box-shadow: 0 0 16px var(--story-blocks-accent);
 }
 
-/* ── IndexedRows: 48 / 132 / 1fr ────────────────────────────────────── */
-.evsb-rows { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--ev-line); }
+/* ── IndexedRows: index · label (card voice) over its detail ────────── */
+.evsb-rows { display: grid; gap: 1.6em; margin: 0; padding: 0; list-style: none; }
 .evsb-row {
   display: grid;
-  grid-template-columns: 2.5em minmax(0, 1fr);
+  grid-template-columns: 3.5em minmax(0, 1fr);
   column-gap: 0.75em;
-  row-gap: 0.5em;
+  row-gap: 0.45em;
   align-items: baseline;
-  padding-block: 1.25em;
-  border-bottom: 1px solid var(--ev-line);
 }
-.evsb-row__index { color: var(--story-blocks-signal); }
-.evsb-row__label { margin: 0; color: var(--ev-fg-90); }
-.evsb-row__detail { grid-column: 2; max-width: 37.8em; color: var(--ev-fg-65); }
-@media (min-width: 640px) {
-  .evsb-row { grid-template-columns: 3.5em minmax(0, 9.6em) minmax(0, 1fr); column-gap: 0.85em; padding-block: 1.45em; }
-  .evsb-row__detail { grid-column: 3; }
+.evsb-row__index { color: var(--story-blocks-signal); white-space: nowrap; }
+.evsb-row__label { color: var(--ev-fg); }
+.evsb-row__detail { grid-column: 2; max-width: 30em; color: var(--ev-fg-65); }
+/* Phone body is 16px: step the detail down so the label keeps its lead. */
+@media (max-width: 767px) { .evsb-row__detail { font-size: 0.875em; } }
+
+/* Beside its proof: media on the larger side; the heading tops it and the
+   rows end on its baseline. Phone and tablet: media first. */
+.evsb-sequence { display: flex; flex-direction: column; gap: 2em; }
+.evsb-sequence__media { order: -1; }
+.evsb-sequence__text { display: flex; flex-direction: column; gap: 2.25em; min-width: 0; }
+.evsb-sequence__figure { aspect-ratio: var(--evsb-ratio-phone, 1); }
+@media (min-width: 640px) { .evsb-sequence__figure { aspect-ratio: var(--evsb-ratio, 1); } }
+@media (min-width: 1024px) {
+  .evsb-sequence { display: grid; grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr); column-gap: 3.5em; }
+  .evsb-sequence__media { order: 0; }
+  .evsb-sequence__text { justify-content: space-between; gap: var(--ev-gap-heading); }
 }
 
-/* ── ProofGrid: 12 cols, 7/5 ↔ 5/7, captions under the media ───────── */
-.evsb-proof { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2.25em; }
+/* ── ProofGrid: 12 cols, 7/5 ↔ 5/7; phone pairs portraits 2-up ───────── */
+.evsb-proof { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2em 0.75em; }
+.evsb-proof__item { grid-column: 1 / -1; }
+.evsb-proof__item--half { grid-column: span 1; }
 .evsb-proof__figure { aspect-ratio: var(--evsb-ratio-phone, 1); }
-.evsb-proof__caption {
-  display: flex;
-  justify-content: space-between;
-  gap: 1em;
-  margin: 0.75em 0 0;
-  color: var(--ev-fg-55);
-}
-.evsb-proof__index { color: var(--story-blocks-signal); }
-.evsb-note { color: var(--ev-fg-55); }
-.evsb-note__rule { display: block; width: 38px; height: 1px; margin-bottom: 1.45em; background: var(--story-blocks-signal); }
+.evsb-proof__caption { max-width: 26em; margin-top: 0.75em; color: var(--ev-fg-55); }
+/* Show, then explain: the claim follows the images at heading distance. */
+.evsb-rail > .evsb-after-proof { margin-top: var(--ev-gap-heading); }
 @media (min-width: 768px) {
   .evsb-proof { grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 4.65em 2.9em; align-items: center; }
-  .evsb-proof__item, .evsb-note { grid-column: span var(--evsb-span, 6); }
+  .evsb-proof__item, .evsb-proof__item--half { grid-column: span var(--evsb-span, 6); }
   .evsb-proof__figure { aspect-ratio: var(--evsb-ratio, 1); }
-  .evsb-note { align-self: start; }
 }
 @media (hover: hover) {
   .evsb-proof__figure:hover .evsb-figure__img { transform: scale(1.045) translateY(-0.7%); }
 }
 
-/* ── RuledPillars: 1.1 / .95 / .95 ──────────────────────────────────── */
-.evsb-pillars {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  border-bottom: 1px solid var(--ev-line);
-}
-.evsb-pillar { display: grid; align-content: start; padding-block: 1.75em; border-top: 1px solid var(--ev-line); }
-.evsb-pillar__label { color: var(--ev-fg-55); }
-.evsb-pillar__index { color: var(--story-blocks-signal); }
-.evsb-pillar__heading { margin-top: 18px; color: var(--ev-fg); }
-.evsb-pillar__copy { max-width: 40ch; margin-top: 0.75em; color: var(--ev-fg-65); }
-@media (min-width: 1024px) {
-  .evsb-pillars { grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.95fr) minmax(0, 0.95fr); border-top: 1px solid var(--ev-line); }
-  .evsb-pillar { padding: 2.3em 2.3em 2.6em; border-top: 0; }
-  .evsb-pillar:first-child { padding-left: 0; }
-  .evsb-pillar + .evsb-pillar { border-left: 1px solid var(--ev-line); }
-  /* The "file card" air between label and heading. */
-  .evsb-pillar__heading { margin-top: 4.65em; }
-}
-
 /* ── PayoffBand: statement 1.2 / action .8 ──────────────────────────── */
-.evsb-payoff { overflow: hidden; }
-.evsb-payoff:last-child { border-bottom: 1px solid var(--ev-line); }
+/* closest-side keeps the bloom inside the chapter: it never meets an edge. */
 .evsb-payoff--bloom::before {
   content: "";
   position: absolute;
-  top: -6em;
-  right: -6em;
-  width: 26em;
-  height: 26em;
-  border-radius: 999px;
-  background: radial-gradient(closest-side, color-mix(in oklab, var(--story-blocks-accent) 22%, transparent), transparent);
+  inset: 0;
+  background: radial-gradient(closest-side at 50% 78%, color-mix(in oklab, var(--story-blocks-accent-deep) 20%, transparent), transparent);
   pointer-events: none;
 }
+@media (min-width: 1024px) {
+  .evsb-payoff--bloom::before { background: radial-gradient(closest-side at 76% 62%, color-mix(in oklab, var(--story-blocks-accent-deep) 20%, transparent), transparent); }
+}
 .evsb-payoff__grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2.5em; }
-.evsb-payoff__lead { max-width: 52em; margin-top: 1.75em; color: var(--ev-fg-65); font-weight: 400; }
-.evsb-results { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.25em; margin: 2em 0 0; padding: 0; list-style: none; }
-.evsb-result { padding-top: 1em; border-top: 1px solid var(--ev-line); }
-.evsb-result__title { color: var(--ev-fg-90); font-weight: 700; }
-.evsb-result__detail { margin-top: 0.35em; color: var(--ev-fg-55); }
+.evsb-payoff__lead { max-width: 34em; margin-top: 1.75em; color: var(--ev-fg-65); font-weight: 400; }
+.evsb-results { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1em; margin: 2.5em 0 0; padding: 0; list-style: none; }
+.evsb-result__title { color: var(--ev-fg-90); font-weight: 600; }
+.evsb-result__detail { margin-top: 0.2em; color: var(--ev-fg-55); }
 .evsb-payoff__action { display: grid; gap: 0.6em; }
 .evsb-consequence { justify-self: end; color: var(--ev-fg-35); }
 @media (min-width: 640px) {
-  .evsb-results { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .evsb-results { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 2em; }
 }
 @media (min-width: 1024px) {
   .evsb-payoff__grid { grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr); column-gap: 4em; align-items: end; }
-  .evsb-payoff__action { justify-self: stretch; }
 }

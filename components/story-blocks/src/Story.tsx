@@ -1,14 +1,14 @@
 import type { ReactNode } from "react";
 import { cn } from "../foundation";
-import { IndexedRows, PayoffBand, ProofGrid, RuledPillars, StoryIntro } from "./blocks";
+import { IndexedRows, PayoffBand, ProofGrid, StoryIntro } from "./blocks";
 import { StoryCopyProvider } from "./copy";
 import type { StoryBlocksCopy } from "./story-blocks.config";
 import type { StoryChapter } from "./types";
 
 export type StoryProps = {
-  /** Environment of the whole story; chapters alternate between its two bands. */
+  /** Environment of the whole story. A tone cut = a new <Story> with the other tone. */
   tone?: "dark" | "light" | "paper";
-  /** "page" = site chapter rhythm (80 / 120) · "dossier" = inside a portal (48 / 64). */
+  /** "page" = site chapter band (96 / 144 authored) · "dossier" = inside a portal (64 / 96). */
   rhythm?: "page" | "dossier";
   /** Labels (media status); from `buildStoryBlocksConfig(locale).copy`. */
   copy?: StoryBlocksCopy;
@@ -32,10 +32,6 @@ export function renderChapter(chapter: StoryChapter, key?: number | string): Rea
       const { kind: _, ...props } = chapter;
       return <ProofGrid key={key} {...props} />;
     }
-    case "pillars": {
-      const { kind: _, ...props } = chapter;
-      return <RuledPillars key={key} {...props} />;
-    }
     case "payoff": {
       const { kind: _, ...props } = chapter;
       return <PayoffBand key={key} {...props} />;
@@ -43,7 +39,7 @@ export function renderChapter(chapter: StoryChapter, key?: number | string): Rea
   }
 }
 
-/** Root of one story: tone, rhythm, copy. Direct children must be story blocks. */
+/** Root of one story: tone, rhythm, copy. Children are story blocks. */
 export function Story({ tone = "dark", rhythm = "page", copy, chapters, className, children }: StoryProps) {
   const body = (
     <div className={cn("ev-root ev-story-blocks", `ev-tone-${tone}`, className)} data-rhythm={rhythm}>
