@@ -5,7 +5,10 @@ import { Heading, Note, StageFrame, defaultCopy, layersOf, toneClass, useOnce, u
 import type { CompareContent, SelectorStageCopy, Tone } from "./types";
 
 export type CompareToggleProps = CompareContent & {
-  /** "toggle": one frame, Avant | Après. "pair": side by side with a ≠ marker (phone: toggle). */
+  /**
+   * "toggle": a transformation (before / after) wiped on one frame.
+   * "pair": two alternatives read side by side as peers (phone: toggle).
+   */
   mode?: "toggle" | "pair";
   copy?: SelectorStageCopy;
   tone?: Tone;
@@ -18,7 +21,7 @@ export type CompareToggleProps = CompareContent & {
   id?: string;
 };
 
-/** Before / after on the same frame (clip-path wipe), or a side-by-side pair. */
+/** Before / after on the same frame (clip-path wipe), or two alternatives side by side. */
 export function CompareToggle({
   heading,
   body,
@@ -76,17 +79,14 @@ export function CompareToggle({
               const { layers } = layersOf([s]);
               return (
                 <div key={s.id} className="ss-pair__item" data-active={i === index || undefined}>
-                  <div className="ss-pair__frame">
-                    <StageFrame
-                      layers={layers}
-                      activeKey={layers[0].key}
-                      kicker={`${pad(i + 1)} · ${s.label}`}
-                      label={s.caption ?? s.label}
-                      gate={gate}
-                      copy={copy}
-                    />
-                    {i === 0 && <span className="ss-versus" aria-hidden="true">≠</span>}
-                  </div>
+                  <StageFrame
+                    layers={layers}
+                    activeKey={layers[0].key}
+                    kicker={`${pad(i + 1)} · ${s.label}`}
+                    label={s.caption ?? s.label}
+                    gate={gate}
+                    copy={copy}
+                  />
                   {s.detail && <p className="ev-t-body ss-detail">{s.detail}</p>}
                 </div>
               );

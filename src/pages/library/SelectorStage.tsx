@@ -1,20 +1,21 @@
 import { useMemo, type ReactNode } from "react";
 import { CompareToggle, ProofAtlas, SelectorStage as Stage, buildSelectorStageConfig, type Tone } from "../../../components/selector-stage/src";
-import { Index, Readout } from "../../../components/foundation/src";
+import { Readout } from "../../../components/foundation/src";
 import "../../../components/selector-stage/showcase.css";
 import ShowcasePage from "../../library/ShowcasePage";
-import { useLibraryLocale } from "../../library/locale";
+import { useLibraryLocale, type Localized } from "../../library/locale";
 
 /* Four chapters of one fictional client (a renovation studio with a lime-paint
-   line). Colour comes only from the frame's --primary: nothing re-renders on a swatch. */
+   line), one per client job. Colour comes only from the frame's --primary and
+   a locale switch only swaps copy: nothing remounts, state survives both. */
 export default function SelectorStage() {
   return (
     <ShowcasePage
       entryId="selector-stage"
       title={(l) => (l === "fr" ? <>Sélecteur et <em>scène</em></> : <>Selector <em>stage</em></>)}
       intro={{
-        fr: "Un chapitre qui montre une variable à la fois : des rangées pilotent une scène, un avant/après sur le même cadre, un atlas de cadres.",
-        en: "A chapter that shows one variable at a time: rows drive a stage, a before/after on the same frame, an atlas of frames.",
+        fr: "Un chapitre qui fait comparer : le visiteur change une chose, la scène montre ce qu'elle change.",
+        en: "A chapter for comparing: the visitor changes one thing, the stage shows what it changes.",
       }}
       tone="dark"
     >
@@ -23,31 +24,46 @@ export default function SelectorStage() {
   );
 }
 
-const SPECS = {
-  fr: [
-    ["SelectorStage", "sombre · défilement auto · scène photo"],
-    ["CompareToggle", "papier · avant / après sur le même cadre"],
-    ["CompareToggle · pair", "clair · deux plans, scène dessinée"],
-    ["ProofAtlas", "sombre · cadre principal + vignettes"],
-  ],
-  en: [
-    ["SelectorStage", "dark · autoplay · photo stage"],
-    ["CompareToggle", "paper · before / after on one frame"],
-    ["CompareToggle · pair", "light · two plans, drawn stage"],
-    ["ProofAtlas", "dark · main frame + thumbnails"],
-  ],
-} as const;
+const JOBS: { name: string; job: Localized }[] = [
+  {
+    name: "SelectorStage",
+    job: {
+      fr: "Une variable, plusieurs valeurs : les rangées pilotent la scène. Défilement automatique en option, arrêté au premier choix.",
+      en: "One variable, several values: the rows drive the stage. Optional autoplay, stopped by the first choice.",
+    },
+  },
+  {
+    name: "CompareToggle",
+    job: {
+      fr: "Une transformation : avant et après sur le même cadre, pour que seul le changement bouge.",
+      en: "A transformation: before and after on the same frame, so only the change moves.",
+    },
+  },
+  {
+    name: "CompareToggle · pair",
+    job: {
+      fr: "Deux alternatives à peser ensemble : côte à côte, à égalité. Sur mobile, une bascule.",
+      en: "Two alternatives to weigh together: side by side, as equals. On a phone, a toggle.",
+    },
+  },
+  {
+    name: "ProofAtlas",
+    job: {
+      fr: "Les images sont le choix : une même maison, plusieurs cadres.",
+      en: "The pictures are the choice: one house, several frames.",
+    },
+  },
+];
 
 function Band({ n, tone, children }: { n: number; tone: Tone; children: ReactNode }) {
   const { locale } = useLibraryLocale();
-  const [name, meta] = SPECS[locale][n - 1];
+  const { name, job } = JOBS[n];
   return (
     <div className={`ev-root ev-tone-${tone} ssx-band`}>
-      <div className="ev-rail ev-rail--wide ssx-spec">
-        <Index current={n} total={4} className="ssx-spec__index" />
-        <Readout className="ssx-spec__name">{name}</Readout>
-        <Readout>{meta}</Readout>
-      </div>
+      <p className="ev-rail ev-rail--wide ssx-job">
+        <Readout className="ssx-job__name">{name}</Readout>
+        <span className="ev-t-compact ssx-job__text">{job[locale]}</span>
+      </p>
       {children}
     </div>
   );
@@ -55,21 +71,20 @@ function Band({ n, tone, children }: { n: number; tone: Tone; children: ReactNod
 
 function Demo() {
   const { locale } = useLibraryLocale();
-  const config = useMemo(() => buildSelectorStageConfig(locale), [locale]);
-  const { copy, chapters } = config;
+  const { copy, chapters } = useMemo(() => buildSelectorStageConfig(locale), [locale]);
   return (
     <div>
-      <Band n={1} tone="dark">
-        <Stage key={locale} {...chapters.finishes} copy={copy} tone="dark" autoplay={{ dwellMs: 4200 }} />
+      <Band n={0} tone="dark">
+        <Stage {...chapters.finishes} copy={copy} tone="dark" autoplay={{ dwellMs: 4200 }} />
       </Band>
-      <Band n={2} tone="paper">
-        <CompareToggle key={locale} {...chapters.renovation} copy={copy} tone="paper" />
+      <Band n={1} tone="paper">
+        <CompareToggle {...chapters.renovation} copy={copy} tone="paper" />
       </Band>
-      <Band n={3} tone="light">
-        <CompareToggle key={locale} {...chapters.plans} copy={copy} tone="light" mode="pair" />
+      <Band n={2} tone="light">
+        <CompareToggle {...chapters.plans} copy={copy} tone="light" mode="pair" />
       </Band>
-      <Band n={4} tone="dark">
-        <ProofAtlas key={locale} {...chapters.atlas} copy={copy} tone="dark" />
+      <Band n={3} tone="dark">
+        <ProofAtlas {...chapters.atlas} copy={copy} tone="dark" />
       </Band>
     </div>
   );

@@ -51,7 +51,11 @@ export function SelectorStage({
 
   const dwell = typeof autoplay === "object" && autoplay.dwellMs ? autoplay.dwellMs : DEFAULT_DWELL;
   const [auto, setAuto] = useState(Boolean(autoplay));
-  const [hold, setHold] = useState(false);
+  // Only the choices and the stage hold the clock: the autoplay toggle must
+  // not hold the sequence it just resumed.
+  const [hover, setHover] = useState(false);
+  const [focus, setFocus] = useState(false);
+  const hold = hover || focus;
 
   const revealed = useOnce(rootRef);
   const gate = useStageGate(rootRef, options.map((o) => o.media));
@@ -70,19 +74,26 @@ export function SelectorStage({
     if (!strip || strip.offsetParent === null || strip.scrollWidth <= strip.clientWidth) return;
     const chip = strip.querySelectorAll<HTMLElement>("[data-ss-item]")[index];
     if (!chip) return;
-    const target = chip.offsetLeft - (strip.clientWidth - chip.offsetWidth) / 2;
+    const s = strip.getBoundingClientRect();
+    const c = chip.getBoundingClientRect();
+    const target = strip.scrollLeft + (c.left - s.left) - (s.width - c.width) / 2;
     strip.scrollTo({ left: Math.max(0, target), behavior: "smooth" });
   }, [index]);
 
   const { layers, keyOf } = layersOf(options);
   const onKeyDown = radioKeys((i) => select(i, true));
 
-  const holdOn = (e: PointerEvent) => e.pointerType === "mouse" && setHold(true);
-  const holdOff = (e: PointerEvent) => e.pointerType === "mouse" && setHold(false);
-  const focusIn = () => setHold(true);
+  const holdOn = (e: PointerEvent) => e.pointerType === "mouse" && setHover(true);
+  const holdOff = (e: PointerEvent) => e.pointerType === "mouse" && setHover(false);
+  const focusIn = () => setFocus(true);
   const focusOut = (e: FocusEvent<HTMLElement>) => {
-    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setHold(false);
+    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setFocus(false);
   };
+  const toggleAuto = () => {
+    if (!auto) clock.reset();
+    setAuto(!auto);
+  };
+  const groupHold = { onPointerEnter: holdOn, onPointerLeave: holdOff, onFocus: focusIn, onBlur: focusOut };
 
   return (
     <section
@@ -101,9 +112,9 @@ export function SelectorStage({
               {body && <p className="ev-t-body ss-body">{body}</p>}
             </div>
 
-            <div className="ss-selector ss-reveal" style={{ ["--i" as string]: 1 }} onPointerEnter={holdOn} onPointerLeave={holdOff} onFocus={focusIn} onBlur={focusOut}>
+            <div className="ss-selector ss-reveal" style={{ ["--i" as string]: 1 }}>
               {/* ≥ 1024: joined rows */}
-              <div className="ss-rows" role="radiogroup" aria-label={label} onKeyDown={onKeyDown}>
+              <div className="ss-rows" role="radiogroup" aria-label={label} onKeyDown={onKeyDown} {...groupHold}>
                 {options.map((o, i) => {
                   const selected = i === index;
                   return (
@@ -126,7 +137,7 @@ export function SelectorStage({
                 })}
               </div>
               {/* < 1024: chip strip above the stage */}
-              <div ref={stripRef} className="ss-chips" role="radiogroup" aria-label={label} onKeyDown={onKeyDown}>
+              <div ref={stripRef} className="ss-chips" role="radiogroup" aria-label={label} onKeyDown={onKeyDown} {...groupHold}>
                 {options.map((o, i) => (
                   <OptionChip
                     key={o.id}
@@ -142,7 +153,7 @@ export function SelectorStage({
                 ))}
               </div>
               {autoplay && (
-                <button type="button" className="ss-auto" onClick={() => setAuto((a) => !a)}>
+                <button type="button" className="ss-auto" onClick={toggleAuto}>
                   <span className="ss-auto__icon" data-paused={!auto || undefined} aria-hidden="true" />
                   <span className="ev-t-readout">{auto ? copy.autoplayPause : copy.autoplayResume}</span>
                 </button>

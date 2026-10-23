@@ -55,7 +55,9 @@
 
 /* ── Selector: joined rows (≥ 1024) ↔ chip strip (< 1024) ──────────── */
 
-.ss-rows { display: none; border-top: 1px solid var(--ev-fg-12); }
+/* No rules between rows: the 64px pitch, the shared index / label / bar
+   columns and the selected row's box hold them together as one instrument. */
+.ss-rows { display: none; }
 .ss-row {
   display: grid;
   width: 100%;
@@ -65,8 +67,7 @@
   gap: 0.75em;
   margin: 0;
   padding: 1.1em 1.25em 1.1em 1em;
-  border: 0;
-  border-bottom: 1px solid var(--ev-fg-12);
+  border: 1px solid transparent;
   border-radius: 0;
   background: transparent;
   color: inherit;
@@ -85,7 +86,7 @@
   background: var(--ev-fg-12);
   transition: width 300ms var(--ev-ease-cinematic), background-color 300ms var(--ev-ease);
 }
-.ss-row[data-selected] { background: var(--ss-tint); border-bottom-color: var(--ss-border); }
+.ss-row[data-selected] { background: var(--ss-tint); border-color: var(--ss-border); }
 .ss-row[data-selected] .ss-row__index { color: var(--ss-signal); }
 .ss-row[data-selected] .ss-row__label { color: var(--ev-fg); }
 .ss-row[data-selected] .ss-row__bar { width: 22px; background: var(--ss-signal); }
@@ -164,20 +165,19 @@
   transition: object-position 300ms var(--ev-ease), transform 300ms var(--ev-ease);
 }
 
-/* Fade (selector, atlas): crossfade 300ms. */
-.ss-stage[data-transition="fade"] .ss-layer { opacity: 0; transition: opacity 300ms var(--ev-ease); }
-.ss-stage[data-transition="fade"] .ss-layer[data-state="active"] { opacity: 1; }
+/* Fade (selector, atlas): the newest layer fades in over opaque predecessors
+   (z-order = recency, set inline); the rest drop without a transition. */
+.ss-stage[data-transition="fade"] .ss-layer { opacity: 0; }
+.ss-stage[data-transition="fade"] .ss-layer[data-state="under"] { opacity: 1; transition: opacity 300ms var(--ev-ease); }
+.ss-stage[data-transition="fade"] .ss-layer[data-state="active"] { opacity: 1; transition: opacity 300ms var(--ev-ease); }
 
-/* Wipe (compare): the new state clips in over the previous one. */
-.ss-stage[data-transition="wipe"] .ss-layer { z-index: 0; clip-path: inset(0 100% 0 0); }
-.ss-stage[data-transition="wipe"] .ss-layer[data-state="prev"] { z-index: 1; clip-path: inset(0); }
-/* A keyframe (not a transition): it restarts on every activation, even from "prev". */
-.ss-stage[data-transition="wipe"] .ss-layer[data-state="active"] {
-  z-index: 2;
-  clip-path: inset(0);
-  animation: ss-wipe var(--ev-dur-reveal) var(--ev-ease-cinematic) both;
+/* Wipe (compare): sheets over the base clip in left → right and back out
+   right → left; a transition, so a reversal turns around where it is. */
+.ss-stage[data-transition="wipe"] .ss-layer:not([data-base]) {
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path var(--ev-dur-reveal) var(--ev-ease-cinematic);
 }
-@keyframes ss-wipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0); } }
+.ss-stage[data-transition="wipe"] .ss-layer:not([data-base])[data-state="active"] { clip-path: inset(0); }
 
 /* Media gate: nothing shows before every photograph is decoded. */
 .ss-stage__layers { opacity: 0; transition: opacity var(--ev-dur-reveal) var(--ev-ease); }
@@ -236,38 +236,16 @@
   .ss-split--compare { grid-template-areas: "head stage" "controls stage"; grid-template-rows: auto 1fr; row-gap: 2em; }
 }
 
-/* Pair: true peers → equal columns, ≠ on the seam. Phone: toggle on one frame. */
-.ss-pair { position: relative; display: grid; gap: 1.25em; }
+/* Pair: two alternatives as true peers → equal columns. Phone: toggle on one frame. */
+.ss-pair { display: grid; gap: 1.25em; }
 .ss-pair__switch { min-width: 0; }
-.ss-pair__item { position: relative; min-width: 0; }
+.ss-pair__item { min-width: 0; }
 .ss-pair__item:not([data-active]) { display: none; }
 .ss-pair__item .ss-detail { margin-top: 1em; }
-.ss-pair__frame { position: relative; }
-.ss-versus { display: none; }
 @media (min-width: 768px) {
   .ss-pair { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 1.75em; }
   .ss-pair__switch { display: none; }
   .ss-pair__item:not([data-active]) { display: block; }
-  .ss-versus {
-    position: absolute;
-    z-index: 6;
-    top: 50%;
-    right: calc(-0.875 * var(--ev-rem));
-    translate: 50% -50%;
-    display: grid;
-    width: calc(3.2 * var(--ev-rem));
-    height: calc(3.2 * var(--ev-rem));
-    place-items: center;
-    border: 1px solid var(--ss-border);
-    border-radius: 999px;
-    background: var(--ev-bg);
-    color: var(--ss-signal);
-    font-family: var(--ev-font-display);
-    font-size: max(1.25em, 18px);
-    font-weight: 900;
-    line-height: 1;
-    box-shadow: 0 0 0 0.4em var(--ev-bg), 0 12px 30px -12px var(--ss-accent-deep);
-  }
 }
 
 /* ── Atlas ─────────────────────────────────────────────────────────── */

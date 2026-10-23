@@ -65,6 +65,6 @@ export type SelectorStageCopy = {
   /** Autoplay toggle (visible text). */
   autoplayPause: string;
   autoplayResume: string;
-  /** Spoken for the ≠ marker between a pair. */
+  /** Screen-reader link between the two alternatives of a pair: "A compared with B". */
   versus: string;
 };

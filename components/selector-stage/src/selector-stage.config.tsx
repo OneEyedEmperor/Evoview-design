@@ -55,9 +55,10 @@ const COPY: Record<Locale, SelectorStageCopy> = {
   },
 };
 
-/* Reference specimen: a floor plan drawn as a node (any rendered node can be a stage). */
-function PlanDrawing({ variant, labels }: { variant: "before" | "after"; labels: { kitchen: string; living: string; open: string } }) {
-  const after = variant === "after";
+/* Reference specimen: a floor plan drawn as a node (any rendered node can be a
+   stage). Two proposals for one kitchen; what each changes is drawn in the accent. */
+function PlanDrawing({ variant, labels }: { variant: "glass" | "open"; labels: { kitchen: string; living: string; open: string } }) {
+  const after = variant === "open";
   const grid = `ss-plan-grid-${useId().replace(/:/g, "")}`;
   return (
     <svg viewBox="0 0 400 330" role="presentation" style={{ width: "100%", height: "100%", display: "block", background: "#0b0b0c" }}>
@@ -76,7 +77,12 @@ function PlanDrawing({ variant, labels }: { variant: "before" | "after"; labels:
           <path d="M200 46V244" strokeWidth="2" strokeDasharray="6 6" stroke="var(--ss-on-media, #fff)" />
         ) : (
           <>
-            <path d="M200 40V190M200 230V250" strokeWidth="5" />
+            {/* glazed screen on the old partition line, door kept */}
+            <g stroke="var(--ss-on-media, #fff)">
+              <path d="M197 40V190M203 40V190" strokeWidth="1.5" />
+              <path d="M197 76H203M197 114H203M197 152H203" strokeWidth="1.5" />
+            </g>
+            <path d="M200 230V250" strokeWidth="5" />
             <path d="M200 190A40 40 0 0 0 160 230" strokeWidth="1" strokeDasharray="3 3" />
           </>
         )}
@@ -179,23 +185,24 @@ export function buildSelectorStageConfig(locale: Locale): SelectorStageConfig {
       plans: {
         heading: fr ? ["Deux plans.", "Une décision."] : ["Two plans.", "One decision."],
         body: fr
-          ? "Le plan existant et le plan projeté côte à côte : ce qui tombe, ce qui s'ouvre, ce qui reste."
-          : "The existing and the projected plan side by side: what comes down, what opens, what stays.",
-        label: fr ? "Comparer les plans" : "Compare the plans",
+          ? "Deux propositions pour la même cuisine, à lire ensemble : garder deux pièces sous la même lumière, ou n'en faire qu'une."
+          : "Two proposals for the same kitchen, read together: keep two rooms under one light, or make them one.",
+        label: fr ? "Choisir une proposition" : "Choose a proposal",
+        note: fr ? "Plans illustratifs" : "Illustrative plans",
         states: [
           {
-            id: "existing",
-            label: fr ? "Existant" : "Existing",
-            caption: fr ? "Cuisine fermée" : "Closed kitchen",
-            detail: fr ? "Une cloison coupe la cuisine du séjour ; la fenêtre n'éclaire qu'une pièce." : "A partition cuts the kitchen off the living room; the window lights one room only.",
-            render: <PlanDrawing variant="before" labels={planLabels} />,
+            id: "glass",
+            label: fr ? "Verrière" : "Glazed screen",
+            caption: fr ? "Deux pièces, une lumière" : "Two rooms, one light",
+            detail: fr ? "La cloison devient une verrière : la cuisine reste fermée, le séjour reçoit le jour de la fenêtre." : "The partition becomes a glazed screen: the kitchen stays closed, the living room gets the window's daylight.",
+            render: <PlanDrawing variant="glass" labels={planLabels} />,
           },
           {
-            id: "project",
-            label: fr ? "Projet" : "Project",
-            caption: fr ? "Cuisine ouverte" : "Open kitchen",
-            detail: fr ? "La cloison tombe, l'îlot prend l'axe de la fenêtre et le séjour récupère le jour." : "The partition comes down, the island takes the window's axis and the living room gets the daylight.",
-            render: <PlanDrawing variant="after" labels={planLabels} />,
+            id: "open",
+            label: fr ? "Ouverte" : "Open plan",
+            caption: fr ? "Une seule pièce" : "One room",
+            detail: fr ? "La cloison tombe, l'îlot prend l'axe de la fenêtre : cuisine et séjour ne font plus qu'un." : "The partition comes down and the island takes the window's axis: kitchen and living room become one.",
+            render: <PlanDrawing variant="open" labels={planLabels} />,
           },
         ],
       },

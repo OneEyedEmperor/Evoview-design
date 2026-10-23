@@ -1,4 +1,4 @@
-import { useRef, type CSSProperties, type KeyboardEvent, type ReactNode, type RefObject } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode, type RefObject } from "react";
 import { GhostAction, rovingKeyDown } from "../controls";
 import { Readout, cn, useInViewPause, useMediaReady, type MediaReady } from "../foundation";
 import { buildSelectorStageConfig, defaultSelectorStageLocale } from "./selector-stage.config";
@@ -65,28 +65,63 @@ type StageFrameProps = {
   style?: CSSProperties;
 };
 
+const FADE_SETTLE_MS = 340;
+
 /**
- * The 4:3 stage: stacked layers (crossfade 300ms or clip-path wipe), caption
- * inside the frame (readout kicker + label), media-gated with an honest loader.
+ * Fade stacking: the newest layer fades in on top while every layer that was
+ * visible at the switch stays opaque underneath, so fast changes never show
+ * the well through two half-transparent photographs. They drop once the
+ * newest layer has fully arrived.
  */
-export function StageFrame({ layers, activeKey, activeMedia, transition = "fade", kicker, label, gate, copy, edge, className, style }: StageFrameProps) {
-  // Previous layer stays underneath while the new one wipes in.
+function useFadeStack(activeKey: string) {
+  const order = useRef<string[]>([activeKey]);
+  const under = useRef<Set<string>>(new Set());
   const last = useRef(activeKey);
-  const prev = useRef<string | null>(null);
   if (last.current !== activeKey) {
-    prev.current = last.current;
+    const next = new Set(under.current).add(last.current);
+    next.delete(activeKey);
+    under.current = next;
+    order.current = [...order.current.filter((k) => k !== activeKey), activeKey];
     last.current = activeKey;
   }
+  const [, settle] = useState(0);
+  useEffect(() => {
+    if (!under.current.size) return;
+    const t = window.setTimeout(() => {
+      under.current = new Set();
+      settle((n) => n + 1);
+    }, FADE_SETTLE_MS);
+    return () => window.clearTimeout(t);
+  }, [activeKey]);
+  return { z: (k: string) => order.current.indexOf(k) + 1, under: (k: string) => under.current.has(k) };
+}
+
+/**
+ * The 4:3 stage: stacked layers (crossfade or clip-path wipe), caption inside
+ * the frame (readout kicker + label), media-gated with an honest loader.
+ * Wipe: the first layer is the base; later layers are sheets that clip in
+ * over it and clip back out (a reversal mid-wipe turns around in place).
+ */
+export function StageFrame({ layers, activeKey, activeMedia, transition = "fade", kicker, label, gate, copy, edge, className, style }: StageFrameProps) {
+  const stack = useFadeStack(activeKey);
 
   return (
     <figure className={cn("ss-stage", className)} data-transition={transition} data-ready={gate.ready || undefined} style={style}>
       <div className="ss-stage__layers">
-        {layers.map((layer) => {
+        {layers.map((layer, i) => {
           const active = layer.key === activeKey;
-          const state = active ? "active" : layer.key === prev.current ? "prev" : "idle";
           const media = active && activeMedia ? activeMedia : layer.media;
+          const fade = transition === "fade";
+          const state = active ? "active" : fade && stack.under(layer.key) ? "under" : "idle";
           return (
-            <div key={layer.key} className="ss-layer" data-state={state} aria-hidden={active ? undefined : true}>
+            <div
+              key={layer.key}
+              className="ss-layer"
+              data-state={state}
+              data-base={!fade && i === 0 ? "" : undefined}
+              aria-hidden={active ? undefined : true}
+              style={{ zIndex: fade ? stack.z(layer.key) : i }}
+            >
               {media ? (
                 <img
                   src={media.src}

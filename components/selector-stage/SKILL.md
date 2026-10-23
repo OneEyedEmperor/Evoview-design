@@ -1,6 +1,6 @@
 ---
 name: evoview-selector-stage
-description: Evoview selector-stage chapter for client sites — joined selector rows driving a 4:3 stage (chip strip on phone, optional paused autoplay), before/after CompareToggle (same-frame wipe or side-by-side pair with ≠), ProofAtlas (main frame + graded thumbnails). Use when a client page must compare or demonstrate one variable at a time (finishes, menus, formulas, before/after renovation or plating, views of a project). Triggers on "evoview selector stage", "before after", "compare toggle", "proof atlas", "selector stage".
+description: Evoview selector-stage chapter for client sites — joined selector rows driving a 4:3 stage (chip strip on phone, optional paused autoplay), before/after CompareToggle (same-frame wipe, or two alternatives side by side), ProofAtlas (main frame + graded thumbnails). Use when a client page must compare or demonstrate one variable at a time (finishes, menus, formulas, before/after renovation or plating, views of a project). Triggers on "evoview selector stage", "before after", "compare toggle", "proof atlas", "selector stage".
 ---
 
 # Evoview selector stage
@@ -16,8 +16,11 @@ the control language.
 
 1. Open the showcase at 1440 and 390 with the client's accent, then yellow
    and off-white. Pick the piece that fits the claim: one variable among N →
-   `SelectorStage`; two states of one frame → `CompareToggle`; two peers →
-   `mode="pair"`; several frames of one world → `ProofAtlas`.
+   `SelectorStage`; a transformation (before / after, same camera) →
+   `CompareToggle`; two alternatives the visitor weighs together (two
+   proposals, two logos, two offers) → `mode="pair"` — not for before/after;
+   several frames of one world, where the pictures are the choice →
+   `ProofAtlas`.
 2. `components/selector-stage/install.sh /root/.vibehub/projects/<client>`
    (installs / upgrades `controls` and `foundation` first).
 3. Edit only `src/components/selector-stage/selector-stage.config.tsx`:
@@ -37,6 +40,9 @@ the control language.
 
 - One display level per chapter; captions inside the media; selection stays
   multi-signal. Do not box the heading or swap rows for the client's tabs.
+- No rules between rows, columns or captions: spacing separates; the only
+  line in a scene is information (autoplay progress). No `≠` or other
+  ornament on the pair seam.
 - Keep the splits (`.70/1.30`, `1.22/.78`) and the phone mechanism change.
 - No Evoview mark in this chapter; the one linked mark lives in the host's
   chrome, never next to a client CTA.
