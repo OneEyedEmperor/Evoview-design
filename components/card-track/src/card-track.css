@@ -50,7 +50,8 @@
 }
 .ctr-head { margin-bottom: var(--ev-gap-heading); }
 
-.ctr-progress { display: flex; align-items: center; gap: 1.25em; margin-bottom: 2em; }
+/* Under the card row: the rail belongs to the track it measures. */
+.ctr-progress { display: flex; align-items: center; gap: 1.25em; margin-top: 2em; }
 .ctr-progress__rail {
   position: relative;
   height: 2px;
@@ -75,7 +76,7 @@
 .ctr-dots { display: none; }
 @media (max-width: 767px) {
   .ev-card-track[data-mode="snap"] .ctr-progress { display: none; }
-  .ev-card-track[data-mode="snap"] .ctr-dots { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 1.25em; }
+  .ev-card-track[data-mode="snap"] .ctr-dots { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 1.25em; }
 }
 .ctr-dot {
   width: 6px;

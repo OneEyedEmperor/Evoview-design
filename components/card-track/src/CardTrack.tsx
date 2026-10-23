@@ -322,18 +322,6 @@ export function CardTrack({ track, copy, heading, tone, rhythm = "standard", onO
       <div ref={stageRef} className={cn("ctr-stage", rhythm === "standard" ? "ev-chapter" : `ev-chapter ev-chapter--${rhythm}`)}>
         {heading && <div className="ctr-head">{heading}</div>}
 
-        <div className="ctr-progress ev-rail ev-rail--wide" aria-hidden="true">
-          <span className="ctr-progress__rail">
-            <span ref={fillRef} className="ctr-progress__fill" />
-          </span>
-          {showIndex && <Index current={active + 1} total={n} size="lg" className="ctr-progress__index" />}
-        </div>
-        <div className="ctr-dots" aria-hidden="true">
-          {items.map((item, i) => (
-            <span key={item.id} className="ctr-dot" data-current={i === active || undefined} />
-          ))}
-        </div>
-
         <div
           className="ctr-region"
           role="region"
@@ -379,6 +367,20 @@ export function CardTrack({ track, copy, heading, tone, rhythm = "standard", onO
               })}
             </div>
           </div>
+        </div>
+
+        {/* Progress sits under the card row it measures: above it, under a
+            heading, a full-width rail would read as a heading underline. */}
+        <div className="ctr-progress ev-rail ev-rail--wide" aria-hidden="true">
+          <span className="ctr-progress__rail">
+            <span ref={fillRef} className="ctr-progress__fill" />
+          </span>
+          {showIndex && <Index current={active + 1} total={n} size="lg" className="ctr-progress__index" />}
+        </div>
+        <div className="ctr-dots" aria-hidden="true">
+          {items.map((item, i) => (
+            <span key={item.id} className="ctr-dot" data-current={i === active || undefined} />
+          ))}
         </div>
       </div>
     </div>

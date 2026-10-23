@@ -1,5 +1,12 @@
 # card-track changelog
 
+## 1.2.1
+
+- Visual: the progress hairline (+ index) and the phone dots move under the
+  card row. Above the cards, directly under a chapter heading or caption, the
+  full-width rail read as a heading underline (segmentation) rather than
+  progress. No API or config change.
+
 ## 1.2.0
 
 - Visual: the pinned scrub scene is centred, but the space above it is

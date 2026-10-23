@@ -18,9 +18,10 @@ one at a time) and a recognisable Evoview piece. Keep:
 - **Scrub, not carousel arrows.** Desktop: sticky stage, vertical scroll →
   horizontal translate, lerped (.25 per 60 Hz frame, time-based), first card
   on the wide rail, track bleeding right, 2px progress hairline on the wide
-  rail (the chapter's only line: it is information), optional `01 / 04`
-  index. Phone changes the mechanism: native snap at 82vw, dots (18 vs 6)
-  replace the hairline. Do not replace with arrow buttons, autoplay or a
+  rail **under the card row** (the chapter's only line: it is information;
+  above the cards, under a heading, it would read as an underline), optional
+  `01 / 04` index. Phone changes the mechanism: native snap at 82vw, dots
+  (18 vs 6) under the strip replace the hairline. Do not replace with arrow buttons, autoplay or a
   slider lib.
 - **Media first.** Ribbon cards: media ~70 %, information ribbon below with
   the title (Overused 900, uppercase) and ≤ 3 clamped lines; ribbons are equal
@@ -106,7 +107,7 @@ const config = buildCardTrackConfig(locale);
   copy={config.copy}
   tone="dark"                    // "dark" | "light" | "paper"; omit to inherit
   rhythm="cinematic"             // "standard" (default) | "compact" | "cinematic"
-  heading={<MyChapterHeading />} // inside the sticky stage, above the hairline
+  heading={<MyChapterHeading />} // inside the sticky stage, above the cards
   onOpen={(item, index) => openDossier(item.id)}
   length="260vh"                 // optional; default calc(100vh + n × 35vh)
 />
