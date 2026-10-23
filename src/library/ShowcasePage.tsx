@@ -212,6 +212,16 @@ export function ShowcaseVariant({ name, when, index, tone, rhythm = "flush", id,
   );
 }
 
+function topWithin(el: HTMLElement, body: HTMLElement): number {
+  let top = 0;
+  let cur: HTMLElement | null = el;
+  while (cur && cur !== body) {
+    top += cur.offsetTop;
+    cur = cur.offsetParent as HTMLElement | null;
+  }
+  return cur === body ? top : Number.NaN;
+}
+
 const MEDIA = new Set(["IMG", "VIDEO", "CANVAS", "IFRAME", "PICTURE"]);
 
 /* Top of the first ink and bottom of the last (text, media) inside `body`,
@@ -289,6 +299,12 @@ function useInkOffset(ref: RefObject<HTMLElement | null>) {
       const trail = body.offsetHeight - parseFloat(getComputedStyle(body).paddingBottom) - ink.bottom;
       body.style.setProperty("--lib-variant-pad", `${Math.round(ink.top)}px`);
       body.style.setProperty("--lib-variant-trail", `${Math.max(0, Math.round(trail))}px`);
+      // A demo that ends in its own footer (a client page) is the page's
+      // end: no chapter band or frame tail between it and the library footer.
+      const footers = body.querySelectorAll<HTMLElement>("footer");
+      const last = footers[footers.length - 1];
+      const endsInFooter = Boolean(last && last.offsetHeight > 0 && Math.abs(topWithin(last, body) + last.offsetHeight - (body.offsetHeight - parseFloat(getComputedStyle(body).paddingBottom))) <= 2);
+      body.parentElement?.toggleAttribute("data-ends-in-footer", endsInFooter);
     };
     measure();
     const schedule = () => {

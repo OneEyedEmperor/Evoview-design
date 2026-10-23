@@ -643,3 +643,7 @@
 /* Header palette leaving under the navbar: fade rather than show through its glass. */
 .lib-showcase__palette { transition: opacity 180ms var(--lib-ease), visibility 0s linear 0s; }
 .lib-showcase__palette[data-away] { opacity: 0; visibility: hidden; transition: opacity 180ms var(--lib-ease), visibility 0s linear 180ms; }
+
+/* A last demo that ends in its own footer meets the library footer directly. */
+.lib-variant[data-ends-in-footer]:last-child > .lib-variant__body { padding-bottom: 0; }
+.lib-showcase:has(.lib-variant[data-ends-in-footer]:last-child) > .lib-showcase__tail { display: none; }
