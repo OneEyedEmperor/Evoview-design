@@ -1,14 +1,15 @@
 import { useMemo, useState } from "react";
 import { CardTrack, buildCardTrackConfig, type CardTrackDefinition, type CardTrackItem } from "../../../components/card-track/src";
-import { Readout, SectionMarker } from "../../../components/foundation/src";
+import { Readout } from "../../../components/foundation/src";
 import "../../../components/card-track/showcase.css";
-import ShowcasePage from "../../library/ShowcasePage";
-import { useLibraryLocale, type Locale, type Localized } from "../../library/locale";
+import ShowcasePage, { ShowcaseVariant } from "../../library/ShowcasePage";
+import { useLibraryLocale, type Localized } from "../../library/locale";
 
-/* One studio, the two card variants a client chooses between: services on a
-   light chapter (ribbon cards) and the portfolio on a dark one (portrait
-   cards). Colour comes only from the frame's --primary, so a swatch never
-   re-renders the tracks. */
+/* One studio, the two card variants a client chooses between: the portfolio
+   as portrait cards (dark, continuing the header) and the services as
+   ribbon cards (light). The frame owns every space between header, captions
+   and tracks. Colour comes only from the frame's --primary, so a swatch
+   never re-renders the tracks. */
 export default function CardTrackPage() {
   return (
     <ShowcasePage
@@ -27,35 +28,32 @@ export default function CardTrackPage() {
 }
 
 type Chapter = {
-  key: "services" | "portfolio";
+  key: "portfolio" | "services";
+  name: string;
   tone: "light" | "dark";
-  rhythm: "standard" | "cinematic";
-  kicker: Localized;
-  title: Localized;
-  note: Localized;
+  rhythm: "standard" | "compact";
+  when: Localized;
 };
 
 const CHAPTERS: Chapter[] = [
   {
-    key: "services",
-    tone: "light",
-    rhythm: "standard",
-    kicker: { fr: "Services", en: "Services" },
-    title: { fr: "Ce que fait l'atelier", en: "What the studio does" },
-    note: {
-      fr: "Cartes à ruban : l'image d'abord, le texte dessous, toutes à la même hauteur. Faites défiler, la page fait avancer la piste.",
-      en: "Ribbon cards: image first, copy below, all the same height. Scroll, and the page drives the track.",
+    key: "portfolio",
+    name: "CardTrack · portrait",
+    tone: "dark",
+    rhythm: "compact",
+    when: {
+      fr: "Quand l'image est l'argument (projets, lieux, plats) : une carte au premier plan, les autres en retrait, et elle seule lit sa vidéo.",
+      en: "When the image is the argument (projects, places, dishes): one card in focus, the others step back, and only it plays its video.",
     },
   },
   {
-    key: "portfolio",
-    tone: "dark",
-    rhythm: "cinematic",
-    kicker: { fr: "Réalisations", en: "Portfolio" },
-    title: { fr: "Projets livrés", en: "Delivered projects" },
-    note: {
-      fr: "Cartes portrait : une seule au premier plan, les autres en retrait. Elle seule lit sa vidéo.",
-      en: "Portrait cards: one in focus, the others step back. Only that one plays its video.",
+    key: "services",
+    name: "CardTrack · ribbon",
+    tone: "light",
+    rhythm: "standard",
+    when: {
+      fr: "Quand chaque carte a besoin d'une phrase (services, offres) : l'image d'abord, le texte dessous, toutes à la même hauteur.",
+      en: "When each card needs a sentence (services, offers): image first, copy below, all the same height.",
     },
   },
 ];
@@ -71,42 +69,27 @@ function Demo() {
   const [opened, setOpened] = useState<Partial<Record<Chapter["key"], string>>>({});
 
   return (
-    <div className="ctp">
-      {CHAPTERS.map((chapter) => (
-        <CardTrack
-          key={chapter.key}
-          id={`card-track-${chapter.key}`}
-          tone={chapter.tone}
-          rhythm={chapter.rhythm}
-          track={config.tracks[chapter.key] as CardTrackDefinition}
-          copy={config.copy}
-          onOpen={(item: CardTrackItem) => setOpened((o) => ({ ...o, [chapter.key]: item.title }))}
-          heading={<ChapterHeading chapter={chapter} locale={locale} opened={opened[chapter.key]} />}
-        />
-      ))}
-    </div>
-  );
-}
-
-function ChapterHeading({ chapter, locale, opened }: { chapter: Chapter; locale: Locale; opened?: string }) {
-  const id = `ctp-${chapter.key}`;
-  return (
-    <header className="ctp-head ev-rail ev-rail--wide" aria-labelledby={id}>
-      <div className="ctp-head__title">
-        <p className="ctp-head__kicker">
-          <SectionMarker />
-          <Readout>{chapter.kicker[locale]}</Readout>
-        </p>
-        <h2 id={id} className="ev-t-section-feature">
-          {chapter.title[locale]}
-        </h2>
-      </div>
-      <div className="ctp-head__aside">
-        <p className="ctp-head__note">{chapter.note[locale]}</p>
-        <Readout as="p" className="ctp-head__opened" aria-live="polite">
-          {opened ? OPENED[locale](opened) : ""}
-        </Readout>
-      </div>
-    </header>
+    <>
+      {CHAPTERS.map((chapter) => {
+        const title = opened[chapter.key];
+        return (
+          <ShowcaseVariant key={chapter.key} name={chapter.name} when={chapter.when[locale]} tone={chapter.tone} rhythm={chapter.rhythm}>
+            <CardTrack
+              id={`card-track-${chapter.key}`}
+              tone={chapter.tone}
+              rhythm={chapter.rhythm}
+              track={config.tracks[chapter.key] as CardTrackDefinition}
+              copy={config.copy}
+              onOpen={(item: CardTrackItem) => setOpened((o) => ({ ...o, [chapter.key]: item.title }))}
+              heading={
+                <Readout as="p" className="ctp-opened ev-rail ev-rail--wide" aria-live="polite">
+                  {title ? OPENED[locale](title) : ""}
+                </Readout>
+              }
+            />
+          </ShowcaseVariant>
+        );
+      })}
+    </>
   );
 }

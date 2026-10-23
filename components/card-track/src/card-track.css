@@ -31,16 +31,22 @@
 
 /* ── Mechanism ───────────────────────────────────────────────────────── */
 .ev-card-track[data-mode="scrub"] { height: var(--ctr-length); }
-/* Centred in the viewport: the free space above and below replaces the
-   chapter rhythm; the padding is only the minimum (room for a host header). */
+/* Pinned for the scrub. The scene is centred in the viewport, but the space
+   above it never exceeds the chapter's own top rhythm (a short scene keeps
+   its spare room below instead of pushing the cards out of the entry
+   viewport) and never drops under 5em (room for a host header).
+   --ctr-span is the measured content height. */
+.ctr-stage { --ctr-rhythm-top: var(--ev-chapter-standard); }
+.ctr-stage.ev-chapter--compact { --ctr-rhythm-top: var(--ev-chapter-compact); }
+.ctr-stage.ev-chapter--cinematic { --ctr-rhythm-top: var(--ev-chapter-cinematic-top); }
 .ev-card-track[data-mode="scrub"] .ctr-stage {
   position: sticky;
   top: 0;
   display: flex;
   min-height: 100vh;
-  padding-block: 5em 2.5em;
+  padding-block: max(5em, min(var(--ctr-rhythm-top), (100vh - var(--ctr-span, 0px)) / 2)) 2.5em;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
 }
 .ctr-head { margin-bottom: var(--ev-gap-heading); }
 

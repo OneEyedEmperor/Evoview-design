@@ -1,5 +1,19 @@
 # card-track changelog
 
+## 1.2.0
+
+- Visual: the pinned scrub scene is centred, but the space above it is
+  capped at the chapter's own top rhythm (`standard` / `compact` /
+  `cinematic` token, min 5em). A short scene keeps its spare room below
+  instead of pushing the cards out of the entry viewport. Tall scenes are
+  unchanged. Measured content height is exposed as `--ctr-span` on the stage.
+- Fix: the fit check ignored nothing; a `display:none` stage child (e.g. an
+  empty heading hidden by the host) reported top 0, inflated the span and
+  kept the track in snap after a resize. Only rendered children count now.
+- Showcase: captions moved to the frame's `ShowcaseVariant`
+  (`CardTrack · portrait` first on the frame tone, `CardTrack · ribbon` after
+  the tone cut); no page-owned heading or spacing. No config change.
+
 ## 1.1.0
 
 - Fix: the scrub lerp was per frame, so slow frames left the track trailing

@@ -131,10 +131,13 @@ export function CardTrack({ track, copy, heading, tone, rhythm = "standard", onO
       raf = null;
       const overflow = inner.offsetWidth - viewport.clientWidth;
       // Content span + the scrub stage's minimum padding (7.5em) must fit the viewport.
-      const first = stage.firstElementChild?.getBoundingClientRect().top ?? 0;
-      const last = stage.lastElementChild?.getBoundingClientRect().bottom ?? 0;
+      // Rendered children only: a display:none child reports top 0 and would inflate the span.
+      const boxes = Array.from(stage.children, (c) => c.getBoundingClientRect()).filter((r) => r.height > 0);
+      const first = boxes[0]?.top ?? 0;
+      const last = boxes[boxes.length - 1]?.bottom ?? 0;
       const em = Number.parseFloat(getComputedStyle(stage).fontSize) || 16;
       const tooTall = last - first + 7.5 * em > window.innerHeight;
+      stage.style.setProperty("--ctr-span", `${Math.round(last - first)}px`);
       setMode(phone || n < 2 ? (n < 2 ? "static" : "snap") : overflow <= 4 ? "static" : tooTall ? "snap" : "scrub");
       resyncRef.current();
     };

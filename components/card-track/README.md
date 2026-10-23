@@ -7,8 +7,8 @@ stage; on phones the track is a native snap strip. Depends on `foundation`
 and `controls`.
 
 Showcase: `https://evoview-library.said.bet/layouts/card-track` (one studio,
-the two variants: services as ribbon cards on a light chapter, the portfolio
-as portrait cards on a dark one; live accent palette, FR / EN).
+the two variants: the portfolio as portrait cards on a dark chapter, services
+as ribbon cards on a light one; live accent palette, FR / EN).
 
 ## What is Evoview (protected)
 
@@ -91,8 +91,9 @@ Installs / upgrades `controls` and `foundation` first, then copies `src/` to
 React 19, Vite, TypeScript strict; no other dependency. Browsers with CSS
 subgrid, container query units, `:has()` and `overflow: clip` (all evergreen
 since 2023). No ancestor of the track may be a scroll container
-(`overflow: hidden/auto`), or the sticky stage stops sticking. A fixed host
-header up to ~5em fits in the stage's top padding.
+(`overflow: hidden/auto`), or the sticky stage stops sticking. The pinned
+scene is centred with the space above it capped at the chapter's top rhythm
+(never under 5em), so a fixed host header up to ~5em always clears it.
 
 ## API
 
