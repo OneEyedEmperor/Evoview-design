@@ -150,8 +150,10 @@ preloaded open or switch is ready on the gate's first render; keep
 `className?`. Every open mounts a fresh layer, so reopening during the exit
 animation starts from `initialItemId` / `initialEntryId` again.
 CSS knobs on the host (or via `className`): `--dossier-z` (z-index, default
-1000); `--dossier-reserve-bottom` (default 0; ≥ 768 the windowed shell keeps
-this much extra space below it, for host chrome pinned bottom-right).
+1000); `--dossier-reserve-bottom` (default `--ev-modal-reserve-bottom`, then
+0; ≥ 768 the windowed shell keeps this much extra space below it, for host
+chrome pinned bottom-right). Set `--ev-modal-reserve-bottom` once on the host
+to cover this and the `process-sequence` step dossier.
 
 ## Modal contract
 

@@ -1,5 +1,13 @@
 # dossier changelog
 
+## 1.1.2
+
+- `--dossier-reserve-bottom` now defaults to the generic
+  `--ev-modal-reserve-bottom` (shared with the `process-sequence` step
+  dossier), then 0. A host sets one variable for both modals; an explicit
+  `--dossier-reserve-bottom` still wins. Client default unchanged (0). No
+  config changes.
+
 ## 1.1.1
 
 - Requires `foundation` 1.2.0. The idle preload uses `preloadMedia`, so

@@ -658,12 +658,13 @@
 .psd-in--side { animation-name: psd-side; animation-duration: 300ms; }
 
 @media (min-width: 768px) {
-  .psd { padding: 14px; }
+  /* --ev-modal-reserve-bottom (host, default 0): space kept free under the windowed shell for host chrome pinned bottom-right. */
+  .psd { padding: 14px 14px calc(14px + var(--ev-modal-reserve-bottom, 0px)); }
   .psd__shell {
     display: grid;
     grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
     width: min(100%, 64em);
-    height: min(85vh, 720px);
+    height: min(85vh, 720px, calc(100dvh - 28px - var(--ev-modal-reserve-bottom, 0px)));
     border-radius: var(--ev-radius-shell);
     box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12), 0 40px 100px -28px rgba(0, 0, 0, 0.9), 0 30px 120px -40px var(--ev-accent-deep);
     animation: psd-shell-in 420ms var(--ev-ease-cinematic) both;
@@ -693,7 +694,7 @@
   .psd__items { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (min-width: 1280px) {
-  .psd__shell { width: min(100%, 87em); height: min(85vh, 780px); }
+  .psd__shell { width: min(100%, 87em); height: min(85vh, 780px, calc(100dvh - 28px - var(--ev-modal-reserve-bottom, 0px))); }
   .psd__scroll { padding: 3em 3.75em 2em; }
   .psd__foot { padding-inline: 3.75em; }
   .psd__stamp { bottom: 2em; left: 2.2em; }

@@ -125,7 +125,6 @@ function Showcase() {
       </ShowcaseVariant>
 
       <DossierModal
-        className="dsh-modal"
         config={set === "single" ? single : multi}
         open={open !== null}
         onClose={() => setOpen(null)}

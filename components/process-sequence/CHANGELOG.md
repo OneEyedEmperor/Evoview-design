@@ -1,5 +1,12 @@
 # process-sequence changelog
 
+## 1.1.2
+
+- Step dossier, ≥ 768: the windowed shell keeps `--ev-modal-reserve-bottom`
+  (host, default 0) free below itself — lifted and height-capped — for host
+  chrome pinned bottom-right. Same variable as `dossier`. Client default
+  unchanged. No config changes.
+
 ## 1.1.1
 
 - `chapter={false}` now also leaves the background and the top light spill

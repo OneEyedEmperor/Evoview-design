@@ -148,7 +148,9 @@ type ProcessSequenceConfig = {
   suspended (`useSuspendBackground`). It sets no `inert` on the page, so host
   chrome marked `data-ev-keep-interactive` (see `dossier` README) stays
   clickable when stacked above its z-index 1000; it is outside the Tab trap
-  (pointer only while open).
+  (pointer only while open). ≥ 768 the windowed shell keeps
+  `--ev-modal-reserve-bottom` (host CSS variable, default 0, shared with
+  `dossier`) free below itself for such chrome.
 - **Pause model**: the clock runs only while the section is on screen (12 %),
   revealed, the tab visible, no modal open, and the active step's media
   decoded (`useInViewPause` + `useSequenceClock` + `useMediaReady`); resumes

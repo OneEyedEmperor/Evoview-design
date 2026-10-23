@@ -72,10 +72,10 @@
   outline: none;
 }
 
-/* `--dossier-reserve-bottom` (host, default 0): space kept free under the windowed shell for host chrome pinned bottom-right. */
+/* `--dossier-reserve-bottom` (host; default `--ev-modal-reserve-bottom`, shared with the step dossier, then 0): space kept free under the windowed shell for host chrome pinned bottom-right. */
 @media (min-width: 768px) {
-  .ev-root.ev-dossier { --evd-radius: var(--ev-radius-shell); align-items: center; padding: 1em 1em calc(1em + var(--dossier-reserve-bottom, 0px)); }
-  .evd-shell { width: min(92.5em, 100%); height: min(57.5em, calc(100dvh - 2em - var(--dossier-reserve-bottom, 0px))); }
+  .ev-root.ev-dossier { --evd-radius: var(--ev-radius-shell); align-items: center; padding: 1em 1em calc(1em + var(--dossier-reserve-bottom, var(--ev-modal-reserve-bottom, 0px))); }
+  .evd-shell { width: min(92.5em, 100%); height: min(57.5em, calc(100dvh - 2em - var(--dossier-reserve-bottom, var(--ev-modal-reserve-bottom, 0px)))); }
   .evd-dialog {
     border: 1px solid rgb(255 255 255 / 0.08);
     border-radius: var(--evd-radius);

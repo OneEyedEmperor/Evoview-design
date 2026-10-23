@@ -71,8 +71,3 @@
   .dsh-launchers__item:not([data-index="1"]) .dsh-launcher { min-height: 13em; }
   .dsh-launcher[data-wide] { min-height: 24em; }
 }
-
-/* The library's floating palette sits bottom-right over the page while a modal is open: keep the windowed shell clear of it. */
-@media (min-width: 768px) {
-  .dsh-modal { --dossier-reserve-bottom: 72px; }
-}
