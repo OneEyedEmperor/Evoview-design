@@ -41,9 +41,13 @@ export type PrimaryPlateProps = (ButtonLike | AnchorLike) & {
 
 /** The one primary action: white plate (ink plate on light tones), round orb; hover fills with the accent. */
 export function PrimaryPlate({ children, icon, size = "md", block = false, busy = false, className, ...rest }: PrimaryPlateProps) {
+  const copy = useControlsCopy();
   return (
     <Pressable className={cn("ev-controls evc-plate", size === "lg" && "evc-plate--lg", block && "evc-plate--block", className)} busy={busy} {...rest}>
-      <span className="evc-plate__label">{children}</span>
+      <span className="evc-plate__label">
+        {children}
+        {busy && <span className="ev-sr"> ({copy.busy})</span>}
+      </span>
       <span className="evc-plate__orb" aria-hidden="true">
         {busy ? <span className="evc-spinner" /> : (icon ?? <ArrowRight />)}
       </span>

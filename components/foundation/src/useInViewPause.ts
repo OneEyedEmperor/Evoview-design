@@ -43,9 +43,20 @@ export function useInViewPause(ref: RefObject<Element | null>, options: InViewPa
     if (once && live) setLatched(true);
   }, [once, live]);
 
+  // Follow the element itself, not the ref object: a ref whose element mounts
+  // after the first commit (behind a loader) or is replaced by a keyed remount
+  // would otherwise never be observed, or stay bound to the detached node.
+  const [el, setEl] = useState<Element | null>(null);
   useEffect(() => {
-    const el = ref.current;
-    if (!el || done) return;
+    if (ref.current !== el) setEl(ref.current);
+  });
+
+  useEffect(() => {
+    if (!el) {
+      setInView(false);
+      return;
+    }
+    if (done) return;
     if (typeof IntersectionObserver === "undefined") {
       setInView(true);
       return;
@@ -59,7 +70,7 @@ export function useInViewPause(ref: RefObject<Element | null>, options: InViewPa
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [ref, rootMargin, threshold, done]);
+  }, [el, rootMargin, threshold, done]);
 
   return { active: done || live, inView, documentVisible, suspended };
 }

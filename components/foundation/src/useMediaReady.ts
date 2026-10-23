@@ -28,6 +28,8 @@ export type MediaReady = {
 const VIDEO_RE = /\.(mp4|webm|mov|m4v|ogv)(\?|#|$)/i;
 // Sources already decoded this session: a cached switch never flashes the loader.
 const decoded = new Set<string>();
+const DECODE_CAP_MS = 1500;
+const METADATA_FALLBACK_MS = 1200;
 
 const normalise = (sources: MediaSource[]) =>
   sources
@@ -40,8 +42,11 @@ function load(item: { src: string; type: "image" | "video" }, videoEvent: "loade
     img.decoding = "async";
     const promise = new Promise<void>((resolve, reject) => {
       img.onload = () => {
-        if (typeof img.decode === "function") img.decode().then(resolve, resolve);
-        else resolve();
+        if (typeof img.decode !== "function") return resolve();
+        // The bytes are in: a decode() that stalls must not hold the view
+        // until the failure timeout.
+        window.setTimeout(resolve, DECODE_CAP_MS);
+        img.decode().then(resolve, resolve);
       };
       img.onerror = () => reject(new Error(`image failed: ${item.src}`));
     });
@@ -52,8 +57,12 @@ function load(item: { src: string; type: "image" | "video" }, videoEvent: "loade
   video.muted = true;
   video.playsInline = true;
   video.preload = "auto";
+  let metaTimer: number | undefined;
   const promise = new Promise<void>((resolve, reject) => {
     video.addEventListener(videoEvent, () => resolve(), { once: true });
+    // Mobile WebKit and data-saver modes stop a detached probe at metadata:
+    // the first frame only arrives once the real element plays.
+    video.addEventListener("loadedmetadata", () => { metaTimer = window.setTimeout(resolve, METADATA_FALLBACK_MS); }, { once: true });
     video.addEventListener("error", () => reject(new Error(`video failed: ${item.src}`)), { once: true });
   });
   video.src = item.src;
@@ -61,6 +70,7 @@ function load(item: { src: string; type: "image" | "video" }, videoEvent: "loade
   return {
     promise,
     abort: () => {
+      window.clearTimeout(metaTimer);
       video.removeAttribute("src");
       video.load();
     },
@@ -149,6 +159,7 @@ export function useMediaReady(open: boolean, sources: MediaSource[], options: Me
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
 
   // Until the effect catches up with a new source list, report its cached status.
+  if (!open) return { ready: false, slow: false, failed: false, retry, loaded: 0, total: items.length };
   if (state.signature !== signature) {
     const ready = open && allCached;
     return { ready, slow: false, failed: false, retry, loaded: ready ? items.length : 0, total: items.length };

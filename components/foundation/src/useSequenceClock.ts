@@ -9,7 +9,7 @@ export type SequenceClock = {
   done: boolean;
   /** Live 0–1 progress of the current key. */
   progress: () => number;
-  /** Restart the current key from 0. */
+  /** Restart the current key from 0 (remount any `sequenceFillStyle` element). */
   reset: () => void;
 };
 
@@ -93,12 +93,16 @@ export function useSequenceClock(key: string | number, enabled: boolean, duratio
 /**
  * Inline style for a CSS fill animation that follows a clock (pauses with it,
  * resumes at the same point). The animated element must be keyed by
- * `clock.key` and declare an `animation-name` running 0 → full.
+ * `clock.key` (mounted when the key starts) and declare an `animation-name`
+ * running 0 → full.
  */
 export function sequenceFillStyle(clock: Pick<SequenceClock, "duration" | "elapsed" | "running" | "done">): CSSProperties {
   return {
     animationDuration: `${clock.duration}ms`,
-    animationDelay: `${-(clock.done ? clock.duration : clock.elapsed)}ms`,
+    // A CSS animation's own time only advances while it is "running", so it
+    // already holds the elapsed time across pauses. A negative delay of
+    // `elapsed` would count that time twice (the fill jumped ahead on pause).
+    animationDelay: clock.done ? `${-clock.duration}ms` : "0ms",
     animationPlayState: clock.running && !clock.done ? "running" : "paused",
     animationTimingFunction: "linear",
     animationFillMode: "both",

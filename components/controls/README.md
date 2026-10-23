@@ -6,8 +6,10 @@ chips with numbered orbs, white plate with arrow orb, underline fields,
 segmented progress), generalised so every package and client page speaks one
 control language. Depends on `foundation`.
 
-Showcase: `https://evoview-library.said.bet/components/controls` (specimen
-sheet by role, live accent palette, a paper band for light tones).
+Showcase: `https://evoview-library.said.bet/components/controls` (one
+restaurant client: commands over a portal image, choices, a request form, a
+timed sequence under the pause model, a booking flow on paper; live accent
+palette). `StepMark` and `Badge` are not on the page; see the API table.
 
 ## What is Evoview (protected)
 
@@ -85,7 +87,7 @@ Every control root carries `ev-controls`; pass `className` to extend.
 
 | Export | Props (beyond the native element's) |
 | --- | --- |
-| `PrimaryPlate` | `children`, `icon?` (arrow), `size?: "md" 54 \| "lg" 64`, `block?`, `busy?` (spinner, aria-busy, clicks ignored), `href?` → `<a>`, `ref` (button / anchor) |
+| `PrimaryPlate` | `children`, `icon?` (arrow), `size?: "md" 54 \| "lg" 64`, `block?`, `busy?` (spinner, aria-busy, locale `busy` label in the accessible name, clicks ignored), `href?` → `<a>`, `ref` (button / anchor) |
 | `GhostAction` | `children`, `icon?`, `iconPosition?: "start" \| "end"`, `href?` → `<a>`, `ref` |
 | `GlassClose` | `label?` (locale "Fermer"), `showLabel?` (`× FERMER`), `ref: Ref<HTMLButtonElement>` (initial modal focus) |
 | `PagerOrb` | `direction: "prev" \| "next"`, `label?` (name the target), `ref` |

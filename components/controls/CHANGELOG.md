@@ -1,5 +1,16 @@
 # controls changelog
 
+## 1.1.1
+
+Requires `foundation` ≥ 1.1.1 (timed `SegmentedProgress` fill no longer
+jumps ahead on pause). No config changes, no API changes.
+
+- `PrimaryPlate busy` appends the locale's `busy` label ("En cours…") to the
+  accessible name; `copy.busy` existed but was never read.
+- Showcase rewritten (not installed): four role chapters (commands, choices,
+  fields, progress) plus one paper scene, one client, no spec IDs or ruled
+  captions.
+
 ## 1.1.0
 
 Requires `foundation` ≥ 1.1.0. No config changes, no breaking API changes.
