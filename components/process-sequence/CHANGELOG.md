@@ -1,5 +1,13 @@
 # process-sequence changelog
 
+## 1.1.1
+
+- `chapter={false}` now also leaves the background and the top light spill
+  to the host (transparent root, floor bloom only), so the board sits inside
+  a host chapter without a tone seam. No config changes.
+- Showcase: the board mounts with `chapter={false}`; the frame owns the
+  header → board spacing (`--lib-lead`).
+
 ## 1.1.0
 
 Refinement: every element now carries state or content once.

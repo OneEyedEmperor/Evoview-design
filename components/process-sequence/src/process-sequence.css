@@ -26,6 +26,8 @@
   position: relative;
   overflow: clip;
 }
+/* Inside a host chapter (chapter={false}) the host owns padding and background. */
+.ev-process:not(.ev-chapter) { background-color: transparent; }
 .ev-process.ev-tone-light {
   --ps-card: #ffffff;
   --ps-media-bg: #d6d6d6;
@@ -49,6 +51,9 @@
     radial-gradient(80% 45% at 50% -8%, rgba(255, 255, 255, 0.045), transparent 70%);
   -webkit-mask-image: linear-gradient(to bottom, #000 72%, transparent);
   mask-image: linear-gradient(to bottom, #000 72%, transparent);
+}
+.ev-process:not(.ev-chapter) > .ps-field {
+  background: radial-gradient(60% 55% at 88% 104%, color-mix(in oklab, var(--process-deep) 24%, transparent), transparent 72%);
 }
 .ev-tone-light > .ps-field {
   background: radial-gradient(60% 55% at 88% 104%, color-mix(in oklab, var(--process-accent) 9%, transparent), transparent 72%);

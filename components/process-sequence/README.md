@@ -108,7 +108,8 @@ type ProcessSequenceProps = {
   autoplay?: boolean;                 // default true; false = click-driven still board
   onOpen?: (step, index) => void;     // replaces the built-in dossier
   dossier?: boolean;                  // default true (steps with `detail`)
-  chapter?: boolean;                  // cinematic chapter padding, default true
+  chapter?: boolean;                  // default true: cinematic padding + tone background + top spill;
+                                      // false: the host chapter owns padding and background (floor bloom kept)
   id?: string; className?: string;
 };
 

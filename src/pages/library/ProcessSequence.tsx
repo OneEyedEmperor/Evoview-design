@@ -14,8 +14,10 @@ const MEDIA = {
   site: { src: chantier, alt: "" },
 };
 
-/* One client chapter (an architecture studio's method). Colour comes only
-   from the frame's --primary: a swatch never re-renders the board. */
+/* One client chapter (an architecture studio's method). The frame owns the
+   chapter (spacing and environment), so the board mounts with
+   chapter={false}. Colour comes only from the frame's --primary: a swatch
+   never re-renders the board. */
 export default function ProcessSequence() {
   return (
     <ShowcasePage
@@ -36,5 +38,5 @@ export default function ProcessSequence() {
 function Demo() {
   const { locale } = useLibraryLocale();
   const config = useMemo(() => buildProcessSequenceConfig(locale, { media: MEDIA }), [locale]);
-  return <Board config={config} tone="dark" />;
+  return <Board config={config} tone="dark" chapter={false} />;
 }
