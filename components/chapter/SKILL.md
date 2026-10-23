@@ -14,7 +14,8 @@ Read `README.md` ("What is Evoview", attribution, API) and the library's
 ## Procedure
 
 1. Open the showcase at 1440 and 390; switch the palette to the client's
-   accent and to yellow / off-white.
+   accent and to yellow / off-white. Use the specimen to try each planned
+   section's tone / rhythm / heading between dark neighbours.
 2. Plan the page as chapters before writing markup: for each section pick
    tone (alternate near-white / near-black; same-tone neighbour → `compact`),
    rhythm (`cinematic` for a dark entry), rail, heading layout. One
@@ -37,7 +38,8 @@ Read `README.md` ("What is Evoview", attribution, API) and the library's
 ## Rules
 
 - No custom paddings, mid-grey chapters, divider rules or gradient bands
-  between chapters: tone + rhythm separate.
+  between chapters, nor rules inside the footer: tone + rhythm + spacing
+  separate.
 - The inline title mark is the client's; the Evoview wordmark appears once,
   linked, in the footer credit. Never place it next to a client CTA; keep
   CTAs inside chapters.

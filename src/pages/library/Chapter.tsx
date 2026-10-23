@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import {
   Chapter as ChapterShell,
   ChapterFooter,
@@ -6,27 +6,27 @@ import {
   ChapterMark,
   ChapterTicker,
   buildChapterConfig,
-  type ChapterRail,
   type ChapterRhythm,
   type ChapterTone,
 } from "../../../components/chapter/src";
 import { PrimaryPlate, SegmentedControl } from "../../../components/controls/src";
-import { Readout } from "../../../components/foundation/src";
+import { Readout, useInViewPause, useSequenceClock } from "../../../components/foundation/src";
 import "../../../components/chapter/showcase.css";
 import ShowcasePage from "../../library/ShowcasePage";
 import { useLibraryLocale, type Locale } from "../../library/locale";
 
-/* A fictional client page built only from chapters: light → light compact →
-   dark cinematic → paper → footer. Colour comes from the frame's --primary
-   (the palette); nothing here re-renders on a swatch. */
+/* Two scenes. 1 · one chapter the reader sets (tone, rhythm, heading, mark)
+   between the two chapters it really sits between. 2 · the page those
+   chapters belong to, ending on the footer and its Evoview credit. Colour
+   comes from the frame's --primary only; a swatch never re-renders. */
 export default function Chapter() {
   return (
     <ShowcasePage
       entryId="chapter"
       title={(l) => (l === "fr" ? <>Le <em>chapitre</em></> : <>The <em>chapter</em></>)}
       intro={{
-        fr: "La coque de section : titres, rythme et coupes de ton entre chapitres.",
-        en: "The section shell: headings, rhythm and tone cuts between chapters.",
+        fr: "Une page Evoview se découpe en chapitres : chacun choisit son ton, son rythme et son titre, et la coupe de ton remplace tout trait.",
+        en: "An Evoview page is cut into chapters: each picks its tone, rhythm and heading, and the tone cut replaces every rule.",
       }}
       tone="light"
       defaultAccent="#b4532a"
@@ -36,23 +36,67 @@ export default function Chapter() {
   );
 }
 
+type Heading = "centered" | "split" | "feature";
+type Mark = "word" | "logo";
 type View = "plan" | "section" | "elevation";
+type Said = { tone: ChapterTone } | { rhythm: ChapterRhythm } | { heading: Heading } | { mark: Mark } | null;
 
 const T = {
   fr: {
-    demo: "Démo — Atelier Halde, architectes (client fictif)",
-    count: "4 chapitres + pied de page",
+    specimen: {
+      title: "Réglez un chapitre",
+      region: "Spécimen : un chapitre entre ses deux voisins",
+      hint: "Changez un réglage : le chapitre change, ses voisins restent.",
+      controls: {
+        tone: { label: "Ton", options: { light: "Clair", paper: "Papier", dark: "Sombre" } },
+        rhythm: { label: "Rythme", options: { standard: "Standard", compact: "Compact", cinematic: "Cinématique" } },
+        heading: { label: "Titre", options: { centered: "Centré", split: "Scindé", feature: "Vedette" } },
+        mark: { label: "Marque client", options: { word: "Mot", logo: "Logo" } },
+      },
+      say: {
+        tone: {
+          light: "Clair. Entre deux chapitres sombres, la coupe nette sépare : aucun trait.",
+          paper: "Papier. Le blanc franc, pour un chapitre qui doit se détacher d'une page claire.",
+          dark: "Sombre. Entre deux sombres, plus de coupe : passez-le en compact, l'espace seul marque la suite.",
+        },
+        rhythm: {
+          standard: "Standard. 120 au-dessus et au-dessous, 80 sur téléphone.",
+          compact: "Compact. 96 : la suite d'un chapitre du même ton.",
+          cinematic: "Cinématique. 144 au-dessus : l'entrée dans un chapitre sombre.",
+        },
+        heading: {
+          centered: "Centré. Titre, phrase et ligne de repères, sur le rail de lecture.",
+          split: "Scindé. Le titre et son instrument côte à côte, sur le rail large ; l'instrument passe dessous si la place manque.",
+          feature: "Vedette. Un cran plus grand, une seule fois par région de page.",
+        },
+        mark: {
+          word: "Mot. Le nom du client reste écrit dans le titre.",
+          logo: "Logo. La marque du client remplace le mot, à 1,1 fois la hauteur du titre.",
+        },
+      },
+    },
     studio: {
-      title: (mark: ReactNode) => <>L'atelier {mark} en quatre gestes</>,
-      subtitle: "Relever, dessiner, construire, transmettre. Chaque projet traverse les mêmes quatre gestes, à son propre rythme.",
-      ticker: "Phases",
+      title: (name: ReactNode) => <>L'atelier {name} en quatre <em>gestes</em></>,
+      word: "Halde",
+      subtitle: "Relever, dessiner, construire, transmettre : chaque projet traverse les mêmes gestes.",
+      phasesLabel: "Phases",
       phases: [
         ["Relevé", "Le terrain, la lumière, l'existant."],
         ["Esquisse", "Trois pistes, une retenue."],
         ["Chantier", "Une visite par semaine."],
         ["Livraison", "Les clés et le carnet."],
       ],
-      current: "En cours",
+    },
+    page: {
+      title: "La page entière",
+      lead: "Atelier Halde, cabinet d'architectes imaginaire : trois chapitres, puis le pied de page qui signe Evoview.",
+    },
+    light: {
+      title: <>La lumière <em>d'abord</em></>,
+      subtitle: "Avant les murs, on dessine le trajet du soleil dans la pièce.",
+      caption: "Maison du Pré — séjour, de midi au soir",
+      momentsLabel: "Heure du jour",
+      moments: ["Midi", "15 h", "18 h", "Soir"],
     },
     projects: {
       title: "Maison du Pré",
@@ -62,11 +106,6 @@ const T = {
       captions: { plan: "Plan du rez · 1:100", section: "Coupe A–A · 1:100", elevation: "Façade sud · 1:100" },
       place: "Habitat · 2025",
     },
-    light: {
-      title: <>La lumière <em>d'abord</em></>,
-      subtitle: "Avant les murs, on dessine le trajet du soleil dans la pièce.",
-      caption: "Maison du Pré — séjour, fin d'après-midi",
-    },
     visit: {
       title: "Visiter l'atelier",
       subtitle: "Gand, Dok Noord 4. Sur rendez-vous, du mardi au vendredi.",
@@ -74,19 +113,60 @@ const T = {
     },
   },
   en: {
-    demo: "Demo — Atelier Halde, architects (fictional client)",
-    count: "4 chapters + footer",
+    specimen: {
+      title: "Set one chapter",
+      region: "Specimen: one chapter between its two neighbours",
+      hint: "Change a setting: the chapter changes, its neighbours stay.",
+      controls: {
+        tone: { label: "Tone", options: { light: "Light", paper: "Paper", dark: "Dark" } },
+        rhythm: { label: "Rhythm", options: { standard: "Standard", compact: "Compact", cinematic: "Cinematic" } },
+        heading: { label: "Heading", options: { centered: "Centered", split: "Split", feature: "Feature" } },
+        mark: { label: "Client mark", options: { word: "Word", logo: "Logo" } },
+      },
+      say: {
+        tone: {
+          light: "Light. Between two dark chapters, the hard cut separates: no rule.",
+          paper: "Paper. The clean white, for a chapter that must stand off a light page.",
+          dark: "Dark. Between two dark ones there is no cut: make it compact, space alone marks the continuation.",
+        },
+        rhythm: {
+          standard: "Standard. 120 above and below, 80 on phones.",
+          compact: "Compact. 96: the continuation of a same-tone chapter.",
+          cinematic: "Cinematic. 144 above: the entry into a dark chapter.",
+        },
+        heading: {
+          centered: "Centered. Title, sentence and a support line, on the reading rail.",
+          split: "Split. The title beside its instrument, on the wide rail; the instrument drops below when room runs out.",
+          feature: "Feature. One size up, once per page region.",
+        },
+        mark: {
+          word: "Word. The client's name stays written in the title.",
+          logo: "Logo. The client's mark replaces the word, at 1.1× the title height.",
+        },
+      },
+    },
     studio: {
-      title: (mark: ReactNode) => <>The {mark} studio in four moves</>,
-      subtitle: "Survey, draw, build, hand over. Every project goes through the same four moves, at its own pace.",
-      ticker: "Phases",
+      title: (name: ReactNode) => <>The {name} studio in four <em>moves</em></>,
+      word: "Halde",
+      subtitle: "Survey, draw, build, hand over: every project goes through the same moves.",
+      phasesLabel: "Phases",
       phases: [
         ["Survey", "The site, the light, what stands."],
         ["Sketch", "Three options, one kept."],
         ["Build", "One site visit a week."],
         ["Handover", "The keys and the logbook."],
       ],
-      current: "Current",
+    },
+    page: {
+      title: "The whole page",
+      lead: "Atelier Halde, an imaginary architecture studio: three chapters, then the footer that signs Evoview.",
+    },
+    light: {
+      title: <>Light <em>first</em></>,
+      subtitle: "Before the walls, we draw the sun's path through the room.",
+      caption: "Meadow House — living room, noon to evening",
+      momentsLabel: "Time of day",
+      moments: ["Noon", "3 pm", "6 pm", "Evening"],
     },
     projects: {
       title: "Meadow House",
@@ -96,11 +176,6 @@ const T = {
       captions: { plan: "Ground floor plan · 1:100", section: "Section A–A · 1:100", elevation: "South elevation · 1:100" },
       place: "Housing · 2025",
     },
-    light: {
-      title: <>Light <em>first</em></>,
-      subtitle: "Before the walls, we draw the sun's path through the room.",
-      caption: "Meadow House — living room, late afternoon",
-    },
     visit: {
       title: "Visit the studio",
       subtitle: "Ghent, Dok Noord 4. By appointment, Tuesday to Friday.",
@@ -109,106 +184,286 @@ const T = {
   },
 } satisfies Record<Locale, unknown>;
 
-const ACTIVE_PHASE = 1;
+type Copy = (typeof T)[Locale];
+
+const options = <K extends string>(labels: Record<K, string>) =>
+  (Object.keys(labels) as K[]).map((value) => ({ value, label: labels[value] }));
+
+const preventDefault = (e: MouseEvent<HTMLElement>) => e.preventDefault();
 
 function Demo() {
   const { locale } = useLibraryLocale();
   const t = T[locale];
   const config = useMemo(() => {
     const base = buildChapterConfig(locale);
-    return { ...base, brand: { ...base.brand, href: "#studio" } };
+    return {
+      ...base,
+      brand: { ...base.brand, href: "#chd-page" },
+      footer: { ...base.footer, links: base.footer.links.map((link) => ({ ...link, onSelect: preventDefault })) },
+    };
   }, [locale]);
-  const [view, setView] = useState<View>("plan");
-  const views = (Object.keys(t.projects.views) as View[]).map((value) => ({ value, label: t.projects.views[value] }));
 
   return (
     <div className="chd">
-      <div className="lib-rail chd-intro">
-        <Readout>{t.demo}</Readout>
-        <Readout className="chd-intro__count">{t.count}</Readout>
+      <Specimen t={t} brandMark={config.brand.mark} />
+      <header id="chd-page" className="lib-rail chd-scene">
+        <h2 className="chd-scene__title">{t.page.title}</h2>
+        <p className="lib-body chd-scene__lead">{t.page.lead}</p>
+      </header>
+      <Page t={t} />
+      <ChapterFooter config={config} tone="light" />
+    </div>
+  );
+}
+
+/* ── Scene 1 · the specimen ───────────────────────────────────────────── */
+
+function Specimen({ t, brandMark }: { t: Copy; brandMark: ReactNode }) {
+  const s = t.specimen;
+  const [tone, setTone] = useState<ChapterTone>("light");
+  const [rhythm, setRhythm] = useState<ChapterRhythm>("standard");
+  const [heading, setHeading] = useState<Heading>("centered");
+  const [mark, setMark] = useState<Mark>("logo");
+  const [phase, setPhase] = useState(1);
+  const [said, setSaid] = useState<Said>(null);
+  const [flash, setFlash] = useState(0);
+
+  const sentence = !said
+    ? s.hint
+    : "tone" in said
+      ? s.say.tone[said.tone]
+      : "rhythm" in said
+        ? s.say.rhythm[said.rhythm]
+        : "heading" in said
+          ? s.say.heading[said.heading]
+          : s.say.mark[said.mark];
+
+  const phases = t.studio.phases.map(([label]) => label);
+  const name = mark === "logo" ? <ChapterMark label={t.studio.word}>{brandMark}</ChapterMark> : t.studio.word;
+
+  return (
+    <section className="chd-specimen" aria-label={s.region}>
+      <div className="lib-rail chd-specimen__grid">
+        <div className="ev-root ev-tone-light chd-desk">
+          <h2 className="chd-scene__title">{s.title}</h2>
+          <div className="chd-desk__controls">
+            <Setting label={s.controls.tone.label}>
+              <SegmentedControl
+                block
+                label={s.controls.tone.label}
+                options={options(s.controls.tone.options)}
+                value={tone}
+                onChange={(v) => {
+                  setTone(v as ChapterTone);
+                  setSaid({ tone: v as ChapterTone });
+                }}
+              />
+            </Setting>
+            <Setting label={s.controls.rhythm.label}>
+              <SegmentedControl
+                block
+                label={s.controls.rhythm.label}
+                options={options(s.controls.rhythm.options)}
+                value={rhythm}
+                onChange={(v) => {
+                  setRhythm(v as ChapterRhythm);
+                  setSaid({ rhythm: v as ChapterRhythm });
+                  setFlash((n) => n + 1);
+                }}
+              />
+            </Setting>
+            <Setting label={s.controls.heading.label}>
+              <SegmentedControl
+                block
+                label={s.controls.heading.label}
+                options={options(s.controls.heading.options)}
+                value={heading}
+                onChange={(v) => {
+                  setHeading(v as Heading);
+                  setSaid({ heading: v as Heading });
+                }}
+              />
+            </Setting>
+            <Setting label={s.controls.mark.label}>
+              <SegmentedControl
+                block
+                label={s.controls.mark.label}
+                options={options(s.controls.mark.options)}
+                value={mark}
+                onChange={(v) => {
+                  setMark(v as Mark);
+                  setSaid({ mark: v as Mark });
+                }}
+              />
+            </Setting>
+          </div>
+          <p className="ev-t-body chd-desk__say" aria-live="polite">
+            {sentence}
+          </p>
+        </div>
+
+        <div className="chd-frame">
+          <div className="ev-root ev-tone-dark chd-neighbour chd-neighbour--before" aria-hidden="true">
+            <div className="ev-rail ev-rail--wide">
+              <div className="chd-neighbour__crop">
+                <Room moment={2} />
+              </div>
+              <Readout as="p" className="chd-caption">
+                {t.light.caption}
+              </Readout>
+            </div>
+          </div>
+
+          <ChapterShell
+            id="chd-specimen"
+            tone={tone}
+            rhythm={rhythm}
+            rail={heading === "split" ? "wide" : "reading"}
+            className="chd-live"
+          >
+            {flash > 0 && (
+              <>
+                <span key={`t${flash}`} className="chd-band chd-band--top" aria-hidden="true" />
+                <span key={`b${flash}`} className="chd-band chd-band--bottom" aria-hidden="true" />
+              </>
+            )}
+            <ChapterHeading
+              level={3}
+              layout={heading === "split" ? "split" : "centered"}
+              variant={heading === "feature" ? "feature" : "standard"}
+              title={t.studio.title(name)}
+              subtitle={t.studio.subtitle}
+              side={
+                heading === "split" ? (
+                  <SegmentedControl
+                    label={t.studio.phasesLabel}
+                    options={phases.map((label, i) => ({ value: String(i), label }))}
+                    value={String(phase)}
+                    onChange={(v) => setPhase(Number(v))}
+                  />
+                ) : undefined
+              }
+            />
+            <ol className="chd-phases" aria-label={t.studio.phasesLabel}>
+              {t.studio.phases.map(([label, line], i) => (
+                <li key={i} className="chd-phase" aria-current={i === phase ? "step" : undefined}>
+                  <span className="chd-phase__bar" aria-hidden="true" />
+                  <span className="ev-t-label chd-phase__label">{label}</span>
+                  <p className="ev-t-compact chd-phase__line">{line}</p>
+                </li>
+              ))}
+            </ol>
+          </ChapterShell>
+
+          <div className="ev-root ev-tone-dark chd-neighbour chd-neighbour--after" aria-hidden="true">
+            <div className="ev-rail">
+              <div className="ev-chapter__heading ev-chapter__heading--split">
+                <div className="ev-chapter__main">
+                  <p className="ev-chapter__title ev-t-section">
+                    <span className="ev-marker ev-chapter__marker" />
+                    {t.visit.title}
+                  </p>
+                  <p className="ev-chapter__subtitle">{t.visit.subtitle}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
+    </section>
+  );
+}
 
-      <ChapterShell id="studio" tone="light" rhythm="standard" rail="reading">
-        <Spec n={1} tone="light" rhythm="standard" rail="reading" />
-        <ChapterHeading
-          live
-          title={t.studio.title(
-            <ChapterMark label={config.brand.name}>{config.brand.mark}</ChapterMark>,
-          )}
-          subtitle={t.studio.subtitle}
-          support={<ChapterTicker label={t.studio.ticker} items={t.studio.phases.map(([label]) => label)} active={ACTIVE_PHASE} />}
-        />
-        <ol className="chd-phases">
-          {t.studio.phases.map(([label, line], i) => (
-            <li key={label} className="chd-phase" aria-current={i === ACTIVE_PHASE ? "step" : undefined}>
-              <span className="chd-phase__bar" aria-hidden="true" />
-              <Readout className="chd-phase__index">{String(i + 1).padStart(2, "0")}</Readout>
-              <span className="ev-t-label chd-phase__label">{label}</span>
-              <p className="ev-t-compact chd-phase__line">{line}</p>
-              {i === ACTIVE_PHASE && <Readout className="chd-phase__state">{t.studio.current}</Readout>}
-            </li>
-          ))}
-        </ol>
-      </ChapterShell>
+function Setting({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="chd-setting">
+      <Readout className="chd-setting__label" aria-hidden="true">
+        {label}
+      </Readout>
+      {children}
+    </div>
+  );
+}
 
-      <ChapterShell id="projets" tone="light" rhythm="compact" rail="wide">
-        <Spec n={2} tone="light" rhythm="compact" rail="wide" />
-        <ChapterHeading
-          layout="split"
-          title={t.projects.title}
-          subtitle={t.projects.subtitle}
-          side={<SegmentedControl options={views} value={view} onChange={(v) => setView(v as View)} label={t.projects.viewsLabel} />}
-        />
-        <figure className="chd-sheet">
-          <div className="chd-sheet__well">
-            <Drawing key={view} view={view} />
-          </div>
-          <figcaption className="chd-caption">
-            <Readout>
-              {String(views.findIndex((v) => v.value === view) + 1).padStart(2, "0")} / 03 — {t.projects.captions[view]}
-            </Readout>
-            <Readout className="chd-caption__aside">{t.projects.place}</Readout>
-          </figcaption>
-        </figure>
-      </ChapterShell>
+/* ── Scene 2 · the page ───────────────────────────────────────────────── */
 
+const MOMENT_MS = 4200;
+
+function Page({ t }: { t: Copy }) {
+  const [view, setView] = useState<View>("plan");
+  const views = options(t.projects.views);
+  const viewIndex = views.findIndex((v) => v.value === view) + 1;
+
+  /* The sun's path: four moments, advancing only while the room is
+     on-screen, the tab visible and nothing suspends the page. */
+  const roomRef = useRef<HTMLElement>(null);
+  const { active } = useInViewPause(roomRef);
+  const [moment, setMoment] = useState(0);
+  useSequenceClock(moment, active, MOMENT_MS, () => setMoment((m) => (m + 1) % t.light.moments.length));
+
+  return (
+    <>
       <ChapterShell id="lumiere" tone="dark" rhythm="cinematic" rail="wide">
-        <Spec n={3} tone="dark" rhythm="cinematic" rail="wide" />
-        <ChapterHeading variant="feature" title={t.light.title} subtitle={t.light.subtitle} />
-        <figure className="chd-room">
-          <div className="chd-room__scene" role="img" aria-label={t.light.caption}>
-            <span className="chd-room__wall" />
-            <span className="chd-room__window" />
-            <span className="chd-room__beam" />
-            <span className="chd-room__floor" />
-            <span className="chd-room__patch" />
-          </div>
+        <ChapterHeading
+          level={3}
+          live
+          variant="feature"
+          title={t.light.title}
+          subtitle={t.light.subtitle}
+          support={<ChapterTicker label={t.light.momentsLabel} items={t.light.moments} active={moment} />}
+        />
+        <figure ref={roomRef} className="chd-figure">
+          <Room moment={moment} label={t.light.caption} />
           <figcaption className="chd-caption">
             <Readout>{t.light.caption}</Readout>
           </figcaption>
         </figure>
       </ChapterShell>
 
-      <ChapterShell id="visite" tone="paper" rhythm="standard" rail="reading">
-        <Spec n={4} tone="paper" rhythm="standard" rail="reading" />
+      <ChapterShell id="visite" tone="dark" rhythm="compact" rail="reading">
         <ChapterHeading
+          level={3}
           layout="split"
           title={t.visit.title}
           subtitle={t.visit.subtitle}
-          side={<PrimaryPlate href="#visite">{t.visit.cta}</PrimaryPlate>}
+          side={<PrimaryPlate onClick={() => undefined}>{t.visit.cta}</PrimaryPlate>}
         />
       </ChapterShell>
 
-      <ChapterFooter config={config} tone="light" />
-    </div>
+      <ChapterShell id="projets" tone="paper" rhythm="standard" rail="wide">
+        <ChapterHeading
+          level={3}
+          layout="split"
+          title={t.projects.title}
+          subtitle={t.projects.subtitle}
+          side={<SegmentedControl options={views} value={view} onChange={(v) => setView(v as View)} label={t.projects.viewsLabel} />}
+        />
+        <figure className="chd-figure">
+          <div className="chd-sheet">
+            <Drawing key={view} view={view} />
+          </div>
+          <figcaption className="chd-caption">
+            <Readout>
+              {String(viewIndex).padStart(2, "0")} / {String(views.length).padStart(2, "0")} — {t.projects.captions[view]}
+            </Readout>
+            <Readout className="chd-caption__aside">{t.projects.place}</Readout>
+          </figcaption>
+        </figure>
+      </ChapterShell>
+    </>
   );
 }
 
-function Spec({ n, tone, rhythm, rail }: { n: number; tone: ChapterTone; rhythm: ChapterRhythm; rail: ChapterRail }) {
+/* A graded room: the light is the subject; `moment` (0–3) sets the sun. */
+function Room({ moment, label }: { moment: number; label?: string }) {
   return (
-    <Readout as="p" className="chd-spec">
-      <span className="chd-spec__n">{String(n).padStart(2, "0")} / 04</span> tone {tone} · rhythm {rhythm} · rail {rail}
-    </Readout>
+    <div className="chd-room" data-moment={moment} role={label ? "img" : undefined} aria-label={label}>
+      <span className="chd-room__wall" />
+      <span className="chd-room__window" />
+      <span className="chd-room__beam" />
+      <span className="chd-room__floor" />
+      <span className="chd-room__patch" />
+    </div>
   );
 }
 

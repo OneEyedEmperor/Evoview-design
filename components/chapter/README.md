@@ -5,8 +5,10 @@ environments with hard cuts, a fixed rhythm, two rails, one heading anatomy
 and a footer bar that carries the Evoview attribution. This package is that
 shell, neutral and accent-driven. Depends on `foundation`.
 
-Showcase: `https://evoview-library.said.bet/layouts/chapter` (a fictional
-architect's page: light → light compact → dark cinematic → paper → footer).
+Showcase: `https://evoview-library.said.bet/layouts/chapter` — a specimen
+chapter between two dark neighbours with live tone / rhythm / heading / mark
+settings, then a short page of a fictional architect (dark cinematic → dark
+compact → paper → footer).
 Evidence: `docs/extraction/foundations.md` §2–5, A2 / A3 / A9 / A10.
 
 ## What is Evoview (protected)
@@ -29,8 +31,10 @@ do not restyle them to the client's template:
   page region; one accent word at most.
 - **Inline client mark** at 1.1em inside the title (replaces a word). This
   slot belongs to the **client** mark; the Evoview wordmark never goes there.
-- **Footer bar** (A10): hairline on the wide rail, client logo left, legal +
-  links right, Evoview credit at the end.
+- **Footer bar** (A10): on the wide rail, client logo left, legal + links
+  right, Evoview credit at the end. No rule above it or between its groups
+  (RULES §3 overrides the site's measured hairline): the tone cut or the
+  chapter rhythm above separates it, spacing separates the credit.
 
 **Client-adaptable:** content, tone order (within the alternation rule),
 rhythm per chapter, rail per chapter, accent (`--primary`, or `accent` per
@@ -46,8 +50,8 @@ the tone foreground); state is never carried by colour alone.
 ## Attribution (approved placement)
 
 The footer bar is the page's natural chassis: `ChapterFooter` renders the one
-linked `EvoviewMark` (foundation) after a `SITE` readout, separated from the
-legal links by a hairline, `https://evoview.be/` in a new tab with an
+linked `EvoviewMark` (foundation) after a `SITE` readout, set off the legal
+links by a group gap (no rule), `https://evoview.be/` in a new tab with an
 accessible name in the page language. Never inside or next to a client CTA
 (keep CTAs in chapters, not in the footer). On by default
 (`attribution.enabled`); turning it off is the founder's call. If the site
@@ -109,8 +113,10 @@ const config = buildChapterConfig(locale);
 
 Rules: one `ChapterHeading` per `Chapter` (it becomes the section's
 `aria-labelledby`); `<em>` in a title = the accent word. Split: column on
-phones, row `space-between` from 768 (side `flex: 0 0 auto`). Centered: side
-goes under the support line.
+phones, row `space-between` from 768 (side `flex: 0 0 auto`); the heading
+keeps ≥ 380 authored, so a side too wide for the container wraps under it.
+Centered: side goes under the support line. Footer links: `onSelect(event)`
+runs on click; `event.preventDefault()` keeps an `href` from navigating.
 
 ## Navbar package
 
@@ -143,8 +149,9 @@ with sequences use foundation's hooks themselves.
 1. Showcase at 1440 / 1024 / 390: padding 103 / 82.5 / 124–103 (desktop),
    80 / 64 / 96 (phone); titles 29.2 / 34.4 (32.8 at 1024) and 22.6 / 28;
    heading gap 55 / 48; centered subtitle ≈ 507px, split ≈ 327px.
-2. Hard cuts only; no horizontal overflow; nothing under 9px (readouts),
-   12px (compact), 13px (subtitle).
+2. Hard cuts only, no rules between or inside chapters / the footer; no
+   horizontal overflow; nothing under 9px (readouts), 12px (compact), 13px
+   (subtitle). Split heading in a narrow column: side wraps, title intact.
 3. Navbar: light over light / paper chapters, dark from the dark chapter's top
    edge, light again at the next light chapter.
 4. Palette: default, indigo, yellow, off-white — marker, ticker dot, accent

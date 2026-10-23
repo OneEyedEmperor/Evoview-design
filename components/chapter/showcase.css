@@ -1,66 +1,113 @@
 /* Library showcase page for the chapter package (not installed in clients). */
 
-/* The stacked demo ends flush on the library footer. */
+/* The page ends flush on the library footer. */
 .chd { margin-bottom: -5em; }
 @media (min-width: 768px) { .chd { margin-bottom: -7.5em; } }
 
-.chd-intro {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 0.5em 2em;
-  padding-block: 1.25em;
-  border-top: 1px solid var(--lib-line);
-  color: var(--lib-muted);
-}
-.chd-intro__count { color: var(--lib-faint); }
-
-.chd .ev-chapter { position: relative; }
-/* Showcase-only spec line in each chapter's top padding. */
-.chd-spec {
-  position: absolute;
-  top: calc(1.5 * var(--ev-rem));
+.chd-scene__title {
   margin: 0;
-  color: var(--ev-fg-35);
+  font-family: var(--lib-font-display);
+  font-size: 1.45em;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
 }
-.chd-spec__n { margin-right: 1.2em; color: var(--chapter-signal); }
+.chd-scene { padding-block: 6em 2.5em; }
+.chd-scene__lead { max-width: 34em; margin-top: 0.75em; }
+@media (min-width: 768px) { .chd-scene { padding-block: 8em 3em; } }
 
-/* 01 · phases: true peers, equal columns. */
+/* ── Scene 1 · specimen: settings (.37) beside one chapter in its page (.63) */
+.chd-specimen__grid { display: grid; gap: 2em; }
+.chd-desk { display: grid; align-content: start; gap: 1.5em; background: none; }
+.chd-desk__controls { display: grid; gap: 1.25em 2em; }
+@media (min-width: 640px) { .chd-desk__controls { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.chd-setting { display: grid; gap: var(--ev-gap-internal); }
+.chd-setting__label { color: var(--ev-fg-55); }
+.chd-desk .evc-seg__option { padding-inline: 10px; }
+/* Three lines reserved: the frame below does not jump when the sentence changes. */
+.chd-desk__say { min-height: calc(3 * 1.6em); max-width: 30em; color: var(--ev-fg-65); text-wrap: pretty; }
+
+@media (min-width: 1200px) {
+  .chd-specimen__grid { grid-template-columns: minmax(0, 0.37fr) minmax(0, 0.63fr); column-gap: 3.5em; align-items: start; }
+  .chd-desk { position: sticky; top: 92px; padding-top: 2em; }
+  .chd-desk__controls { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* The frame is media clipping: a crop of a page, cut above and below. */
+.chd-frame { position: relative; overflow: hidden; margin-inline: calc(-1 * var(--lib-gutter)); }
+@media (min-width: 768px) { .chd-frame { margin-inline: 0; border-radius: calc(1.5 * var(--ev-rem)); } }
+
+.chd-neighbour { box-sizing: border-box; overflow: hidden; }
+.chd-neighbour--before { padding-bottom: var(--ev-chapter-standard); }
+.chd-neighbour__crop { display: flex; height: calc(5.25 * var(--ev-rem)); align-items: flex-end; overflow: hidden; }
+.chd-neighbour__crop .chd-room { flex: 0 0 auto; width: 100%; }
+.chd-neighbour--after { height: calc(var(--ev-chapter-standard) + 6.5 * var(--ev-rem)); padding-top: var(--ev-chapter-standard); }
+/* The follower obeys the rule the specimen teaches: same tone → compact. */
+.chd-live.ev-tone-dark + .chd-neighbour--after { padding-top: var(--ev-chapter-compact); }
+.chd-neighbour .ev-chapter__heading { margin: 0; }
+
+.chd-live {
+  --chd-pt: var(--ev-chapter-standard);
+  --chd-pb: var(--ev-chapter-standard);
+  position: relative;
+  transition: padding var(--ev-dur-reveal) var(--ev-ease-cinematic);
+}
+.chd-live[data-rhythm="compact"] { --chd-pt: var(--ev-chapter-compact); --chd-pb: var(--ev-chapter-compact); }
+.chd-live[data-rhythm="cinematic"] { --chd-pt: var(--ev-chapter-cinematic-top); --chd-pb: var(--ev-chapter-cinematic-bottom); }
+
+/* Rhythm change: the two padding bands light up once (acknowledge). */
+.chd-band {
+  position: absolute;
+  inset-inline: 0;
+  pointer-events: none;
+  background: color-mix(in oklab, var(--chapter-accent) 12%, transparent);
+  opacity: 0;
+  transition: height var(--ev-dur-reveal) var(--ev-ease-cinematic);
+  animation: chd-band 1.6s var(--ev-ease) both;
+}
+.chd-band--top { top: 0; height: var(--chd-pt); }
+.chd-band--bottom { bottom: 0; height: var(--chd-pb); }
+@keyframes chd-band { 15%, 65% { opacity: 1; } 100% { opacity: 0; } }
+
+/* The four phases: true peers, unboxed; the active one by bar length and ink. */
 .chd-phases {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--ev-gap-neighbour);
+  gap: calc(2 * var(--ev-rem)) var(--ev-gap-neighbour);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 @media (min-width: 768px) { .chd-phases { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-.chd-phase {
-  display: grid;
-  align-content: start;
-  gap: var(--ev-gap-internal);
-  min-height: calc(9 * var(--ev-rem));
-  padding: calc(1.25 * var(--ev-rem));
-  border-radius: var(--ev-radius-surface);
-  background: var(--ev-surface);
-}
-@media (min-width: 768px) { .chd-phase { padding: calc(1.5 * var(--ev-rem)); } }
+.chd-phase { display: grid; align-content: start; gap: var(--ev-gap-internal); }
 .chd-phase__bar {
   width: 7px;
   height: 4px;
-  margin-bottom: calc(0.75 * var(--ev-rem));
+  margin-bottom: calc(0.5 * var(--ev-rem));
   border-radius: 999px;
   background: var(--ev-fg-12);
+  transition: width var(--ev-dur-control) var(--ev-ease), background-color var(--ev-dur-control) ease;
 }
 .chd-phase[aria-current] .chd-phase__bar { width: 22px; background: var(--chapter-signal); }
-.chd-phase__index { color: var(--ev-fg-35); }
-.chd-phase[aria-current] .chd-phase__index { color: var(--chapter-signal); }
+.chd-phase__label { color: var(--ev-fg-55); transition: color var(--ev-dur-control) ease; }
+.chd-phase[aria-current] .chd-phase__label { color: var(--ev-fg); }
 .chd-phase__line { color: var(--ev-fg-55); }
-.chd-phase__state { margin-top: var(--ev-gap-internal); color: var(--ev-fg); }
 
-/* 02 · drawing sheet driven by the split heading's instrument. */
-.chd-sheet { margin: 0; }
-.chd-sheet__well {
+/* ── Scene 2 · the page ───────────────────────────────────────────────── */
+.chd-figure { margin: 0; }
+.chd-caption {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5em 2em;
+  margin-top: calc(1 * var(--ev-rem));
+  color: var(--ev-fg-55);
+}
+.chd-caption__aside { color: var(--ev-fg-35); }
+
+/* Drawing sheet driven by the split heading's instrument. */
+.chd-sheet {
   display: grid;
   aspect-ratio: 16 / 10;
   place-items: center;
@@ -68,7 +115,7 @@
   border-radius: var(--ev-radius-surface);
   background: var(--ev-surface);
 }
-@media (min-width: 768px) { .chd-sheet__well { aspect-ratio: 2.2 / 1; } }
+@media (min-width: 768px) { .chd-sheet { aspect-ratio: 2.2 / 1; } }
 .chd-drawing {
   width: 100%;
   height: 100%;
@@ -85,28 +132,17 @@
 .chd-drawing .chd-d-accent * { stroke: var(--chapter-signal); stroke-width: 1.5; }
 .chd-drawing .chd-d-accent .chd-d-fill { fill: var(--chapter-signal); }
 
-.chd-caption {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 0.5em 2em;
-  margin-top: calc(1 * var(--ev-rem));
-  color: var(--ev-fg-55);
-}
-.chd-caption__aside { color: var(--ev-fg-35); }
-
-/* 03 · a graded room: the light is the subject. */
-.chd-room { margin: 0; }
-.chd-room__scene {
+/* A graded room: the light is the subject; it drifts with the sun. */
+.chd-room {
   position: relative;
   aspect-ratio: 4 / 5;
   overflow: hidden;
   border-radius: var(--ev-radius-surface);
-  background: linear-gradient(180deg, #17171a, #0b0b0c);
-  box-shadow: 0 20px 40px -10px color-mix(in oklab, var(--chapter-accent-deep) 45%, transparent);
+  background: #0b0b0c;
+  box-shadow: 0 20px 40px -10px color-mix(in oklab, var(--ev-accent-deep) 45%, transparent);
 }
-@media (min-width: 768px) { .chd-room__scene { aspect-ratio: 2.2 / 1; } }
-.chd-room__scene > span { position: absolute; display: block; }
+@media (min-width: 768px) { .chd-room { aspect-ratio: 2.2 / 1; } }
+.chd-room > span { position: absolute; display: block; }
 .chd-room__wall { inset: 0 0 26% 0; background: linear-gradient(90deg, #121214 0%, #1b1b1e 58%, #141416 100%); }
 .chd-room__window {
   top: 12%;
@@ -120,8 +156,9 @@
   inset: 12% 27% 0 18%;
   background: linear-gradient(200deg, rgba(244, 241, 234, 0.2), rgba(244, 241, 234, 0) 72%);
   clip-path: polygon(78% 0, 99% 0, 52% 100%, 0 100%);
+  transform-origin: 88% 0;
 }
-.chd-room__floor { inset: 74% 0 0 0; background: linear-gradient(180deg, #0f0f11, #08080a); border-top: 1px solid rgba(255, 255, 255, 0.06); }
+.chd-room__floor { inset: 74% 0 0 0; background: linear-gradient(180deg, #0f0f11, #08080a); }
 .chd-room__patch {
   bottom: 6%;
   left: 22%;
@@ -130,6 +167,17 @@
   background: radial-gradient(closest-side, rgba(244, 241, 234, 0.26), rgba(244, 241, 234, 0));
   transform: skewX(-24deg);
 }
+/* Four moments of the sun; slow, so the drift stays quieter than state. */
+.chd-room__beam,
+.chd-room__patch,
+.chd-room__window { transition: transform 2.4s var(--ev-ease-cinematic), opacity 2.4s ease, filter 2.4s ease; }
+.chd-room[data-moment="0"] .chd-room__beam { transform: skewX(16deg) scaleY(0.78); opacity: 0.7; }
+.chd-room[data-moment="0"] .chd-room__patch { transform: translateX(70%) skewX(-10deg) scaleX(0.6); opacity: 0.8; }
+.chd-room[data-moment="1"] .chd-room__beam { transform: skewX(6deg) scaleY(0.9); opacity: 0.9; }
+.chd-room[data-moment="1"] .chd-room__patch { transform: translateX(34%) skewX(-18deg) scaleX(0.8); }
+.chd-room[data-moment="3"] .chd-room__beam { transform: skewX(-14deg); opacity: 0.4; }
+.chd-room[data-moment="3"] .chd-room__patch { transform: translateX(-30%) skewX(-34deg) scaleX(1.3); opacity: 0.35; }
+.chd-room[data-moment="3"] .chd-room__window { filter: brightness(0.72); }
 @media (max-width: 767.98px) {
   .chd-room__window { left: 58%; width: 22%; height: 44%; }
   .chd-room__beam { inset: 12% 20% 0 6%; }

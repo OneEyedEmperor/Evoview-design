@@ -64,13 +64,17 @@
 .ev-chapter__side { width: 100%; min-width: 0; }
 .ev-chapter__heading--centered .ev-chapter__side { display: flex; justify-content: center; }
 
+/* The heading keeps at least the split subtitle measure (380); a side too
+   wide to sit beside it wraps under it instead of crushing the title. */
 @media (min-width: 768px) {
   .ev-chapter__heading--split {
     flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     column-gap: calc(3 * var(--ev-rem));
   }
+  .ev-chapter__heading--split .ev-chapter__main { flex: 1 1 calc(23.75 * var(--ev-rem)); }
   .ev-chapter__heading--split .ev-chapter__side { width: auto; flex: 0 0 auto; }
 }
 
@@ -113,13 +117,13 @@
   .ev-chapter.ev-chapter--footer { padding-block: calc(2 * var(--ev-rem)); }
 }
 
+/* No rules: the tone cut or the chapter rhythm above separates the bar;
+   inside it, the credit stands off the legal group by a group-band gap. */
 .ev-chapter__footer {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: calc(1 * var(--ev-rem));
-  padding-top: calc(1.25 * var(--ev-rem));
-  border-top: 1px solid var(--ev-line);
   text-align: center;
 }
 .ev-chapter__brand {
@@ -136,7 +140,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: calc(1 * var(--ev-rem));
+  gap: calc(1.5 * var(--ev-rem));
 }
 .ev-chapter__legal { display: flex; flex-direction: column; align-items: center; gap: calc(0.25 * var(--ev-rem)); }
 .ev-chapter__legal .ev-t-compact { color: var(--ev-fg-55); letter-spacing: 0.025em; }
@@ -184,8 +188,7 @@
 @media (min-width: 768px) {
   .ev-chapter__footer { flex-direction: row; justify-content: space-between; gap: calc(2 * var(--ev-rem)); text-align: left; }
   .ev-chapter__brand { font-size: calc(1.75 * var(--ev-rem)); }
-  .ev-chapter__footer-end { flex-direction: row; gap: calc(2 * var(--ev-rem)); }
+  .ev-chapter__footer-end { flex-direction: row; align-items: center; gap: calc(3.5 * var(--ev-rem)); }
   .ev-chapter__legal { align-items: flex-end; text-align: right; }
   .ev-chapter__links { justify-content: flex-end; }
-  .ev-chapter__credit { align-self: stretch; padding-left: calc(2 * var(--ev-rem)); border-left: 1px solid var(--ev-line); }
 }

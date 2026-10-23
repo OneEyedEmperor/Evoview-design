@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { MouseEvent, ReactNode } from "react";
 import { EVOVIEW_URL } from "../foundation";
 
 /* Reference config — the only per-site file. Neutral client: Atelier Halde,
@@ -15,8 +15,8 @@ export type ChapterFooterLink = {
   href?: string;
   /** Opens in a new tab (adds the spoken hint). */
   external?: boolean;
-  /** In-page action, e.g. reopening the cookie banner. */
-  onSelect?: () => void;
+  /** In-page action, e.g. reopening the cookie banner. Receives the click (call `preventDefault()` to keep an `href` from navigating). */
+  onSelect?: (event: MouseEvent<HTMLElement>) => void;
 };
 
 export type ChapterConfig = {
