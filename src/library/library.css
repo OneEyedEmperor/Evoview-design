@@ -315,20 +315,27 @@
 
 /* ---------- Showcase frame ---------- */
 
-/* Frame rhythm (RULES §3, authored × scale through the em): the heading
+/* Frame rhythm (RULES §3, authored × scale via --lib-rem, never em: a
+   custom property resolves em where it is used, i.e. inside packages): the heading
    band holds header → first demo and caption → component; the chapter band
    separates variants. Pages never add their own outer spacing. */
 .lib-showcase {
   --primary: var(--showcase-accent);
   --primary-foreground: var(--showcase-ink);
   --font-heading: "Overused Grotesk", "Inter", sans-serif;
-  --lib-lead: 3em;
-  --lib-chapter: 5em;
+  --lib-lead: calc(3 * var(--lib-rem));
+  --lib-chapter: calc(5 * var(--lib-rem));
   min-height: 100vh;
   transition: --showcase-accent 420ms ease, --showcase-ink 420ms ease;
 }
 @media (min-width: 768px) {
-  .lib-showcase { --lib-lead: 4em; --lib-chapter: 7.5em; }
+  .lib-showcase {
+    --lib-lead: calc(4 * var(--lib-rem));
+    --lib-chapter: calc(7.5 * var(--lib-rem));
+    /* Modal packages keep this free under their window: the floating
+       palette's footprint (bottom offset + 46 px capsule + 12 px air). */
+    --ev-modal-reserve-bottom: calc(max(24px, env(safe-area-inset-bottom)) + 58px);
+  }
 }
 .lib-showcase[data-tone="dark"] { --foreground: oklch(0.98 0 0); --muted-foreground: oklch(0.6 0 0); }
 .lib-showcase[data-tone="light"] { --foreground: #151515; --muted-foreground: #6b6b6b; }
@@ -348,11 +355,11 @@
   .lib-showcase__split { grid-template-columns: 1.28fr 0.72fr; column-gap: 4em; align-items: end; }
 }
 
-/* ShowcaseVariant. A tone cut is its own separator, so a caption opening a
-   new environment gets a chapter band above it; a caption continuing the
-   same environment sits after the previous component's own bottom space.
-   The body is pulled up by the component's built-in top padding so caption
-   → content is always the heading band. */
+/* ShowcaseVariant. A caption opening a new environment gets a chapter band
+   above it (the cut is the separator); one continuing the same environment
+   starts right after the previous body. The body's first ink is held one
+   heading band under the caption and at least one chapter band follows its
+   last ink, both measured (ShowcasePage useInkOffset). */
 .lib-variant {
   --lib-variant-top: var(--lib-chapter);
   --lib-variant-pad: 0px;
@@ -369,7 +376,6 @@
 .lib-variant[data-rhythm="standard"] { --lib-variant-pad: var(--ev-chapter-standard, 0px); }
 .lib-variant[data-rhythm="compact"] { --lib-variant-pad: var(--ev-chapter-compact, 0px); }
 .lib-variant[data-rhythm="cinematic"] { --lib-variant-pad: var(--ev-chapter-cinematic-top, 0px); }
-.lib-variant[data-rhythm="flush"]:not(:last-child) > .lib-variant__body { padding-bottom: var(--lib-chapter); }
 .lib-variant[data-tone="light"], .lib-variant[data-tone="paper"] {
   --lib-fg: var(--lib-ink);
   --lib-muted: rgba(21, 21, 21, 0.66);
@@ -385,6 +391,7 @@
   color: var(--lib-fg);
 }
 .lib-variant__caption {
+  font-size: var(--lib-rem);
   position: relative;
   z-index: 2;
   display: grid;
@@ -394,7 +401,16 @@
 .lib-variant__name { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5em 1em; margin: 0; color: var(--lib-fg); }
 .lib-variant__index { color: var(--lib-signal); }
 .lib-variant__when { max-width: 36em; }
-.lib-variant__body { margin-top: calc(var(--lib-lead) - var(--lib-variant-pad)); }
+/* --lib-variant-pad: measured first-ink offset (ShowcasePage useInkOffset); the rhythm token is only the pre-measure guess. */
+.lib-variant__body {
+  position: relative;
+  margin-top: calc(var(--lib-lead) - var(--lib-variant-pad));
+  /* At least one chapter band under the last ink (measured trail), on
+     either side of a cut; the frame tail already gives it to a last
+     variant on the frame tone. */
+  padding-bottom: max(0px, var(--lib-chapter) - var(--lib-variant-trail, var(--lib-chapter)));
+}
+.lib-variant[data-frame]:last-child > .lib-variant__body { padding-bottom: 0; }
 @media (min-width: 768px) {
   .lib-variant__caption { grid-template-columns: 0.72fr 1.28fr; column-gap: 3.5em; align-items: baseline; }
 }
@@ -589,6 +605,9 @@
 @keyframes lib-pending-in { from { opacity: 0; transform: translateY(8px); } }
 @keyframes lib-pending-run { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
 
+/* Positioned ancestors keep it inside scrollers (an unanchored one widened the phone index). */
+.lib-status { position: relative; }
+.lib-grid { position: relative; }
 .lib-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 .lib-feature__title { color: inherit; text-decoration: none; }

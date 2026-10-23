@@ -183,6 +183,8 @@ export function ShowcaseVariant({ name, when, index, tone, rhythm = "flush", id,
   const frame = useContext(FrameTone);
   const nameId = useId();
   const env = tone ?? frame;
+  const bodyRef = useRef<HTMLDivElement>(null);
+  useInkOffset(bodyRef);
   return (
     <section
       id={id}
@@ -203,9 +205,75 @@ export function ShowcaseVariant({ name, when, index, tone, rhythm = "flush", id,
         </p>
         <p className="lib-body lib-variant__when">{when}</p>
       </header>
-      <div className="lib-variant__body">{children}</div>
+      <div ref={bodyRef} className="lib-variant__body">
+        {children}
+      </div>
     </section>
   );
+}
+
+const MEDIA = new Set(["IMG", "VIDEO", "CANVAS", "IFRAME", "PICTURE"]);
+
+/* Top of the first ink and bottom of the last (text, media) inside `body`,
+   in layout px: offsetTop chains, so reveal transforms still in flight
+   never skew them. */
+function inkBounds(body: HTMLElement): { top: number; bottom: number } | null {
+  let best: number | null = null;
+  let last = 0;
+  let seen = 0;
+  const walker = document.createTreeWalker(body, NodeFilter.SHOW_ELEMENT);
+  for (let node = walker.nextNode() as Element | null; node && seen < 4000; node = walker.nextNode() as Element | null) {
+    seen += 1;
+    const el = node instanceof HTMLElement ? node : node.tagName.toLowerCase() === "svg" ? (node.parentElement as HTMLElement | null) : null;
+    if (!el) continue;
+    const isMedia = MEDIA.has(node.tagName) || (node.tagName.toLowerCase() === "svg" && (node as SVGSVGElement).getBoundingClientRect().width > 40);
+    const hasText = !isMedia && Array.from(node.childNodes).some((c) => c.nodeType === Node.TEXT_NODE && c.textContent?.trim());
+    if (!isMedia && !hasText) continue;
+    const style = getComputedStyle(el);
+    if (style.display === "none" || style.visibility === "hidden" || el.offsetWidth <= 1 || el.offsetHeight <= 1 || style.clipPath.startsWith("inset(50%")) continue;
+    let top = hasText ? parseFloat(style.paddingTop) + parseFloat(style.borderTopWidth) : 0;
+    let cur: HTMLElement | null = el;
+    while (cur && cur !== body) {
+      top += cur.offsetTop;
+      cur = cur.offsetParent as HTMLElement | null;
+    }
+    if (cur !== body) continue; // fixed or outside the body's layout
+    if (best === null || top < best) best = top;
+    last = Math.max(last, top + el.offsetHeight);
+  }
+  return best === null ? null : { top: best, bottom: last };
+}
+
+/* Caption → component is measured, not assumed: whatever top padding a
+   package brings (its chapter rhythm, a capped pinned scene, none), the
+   body is pulled so its first ink sits one heading band under the caption,
+   and padded so at least one chapter band follows its last ink.
+   Re-measured on resize and once fonts settle. */
+function useInkOffset(ref: RefObject<HTMLElement | null>) {
+  useLayoutEffect(() => {
+    const body = ref.current;
+    if (!body) return;
+    let frame = 0;
+    const measure = () => {
+      frame = 0;
+      const ink = inkBounds(body);
+      if (!ink) return;
+      const trail = body.offsetHeight - parseFloat(getComputedStyle(body).paddingBottom) - ink.bottom;
+      body.style.setProperty("--lib-variant-pad", `${Math.round(ink.top)}px`);
+      body.style.setProperty("--lib-variant-trail", `${Math.max(0, Math.round(trail))}px`);
+    };
+    measure();
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(measure);
+    };
+    const ro = new ResizeObserver(schedule);
+    ro.observe(body);
+    document.fonts?.ready.then(schedule);
+    return () => {
+      ro.disconnect();
+      cancelAnimationFrame(frame);
+    };
+  }, [ref]);
 }
 
 /* `data-lib-ready` on the frame once fonts are loaded and every eager image
