@@ -278,50 +278,111 @@ function opensOnOtherGround(body: HTMLElement): boolean {
   return false;
 }
 
+/* Sticky elements report their current stick offset in offsetTop (a pinned
+   scrub scene read mid-scroll would report the scroll distance). Read the
+   in-flow layout instead: sticky elements are made static for the duration
+   of one synchronous read and restored before anything paints. */
+function inFlow<T>(body: HTMLElement, read: () => T): T {
+  const pinned: [HTMLElement, string][] = [];
+  for (const el of Array.from(body.querySelectorAll<HTMLElement>("*"))) {
+    if (getComputedStyle(el).position === "sticky") pinned.push([el, el.style.position]);
+  }
+  for (const [el] of pinned) el.style.position = "static";
+  try {
+    return read();
+  } finally {
+    for (const [el, prev] of pinned) el.style.position = prev;
+  }
+}
+
 /* Caption → component is measured, not assumed: whatever top padding a
    package brings (its chapter rhythm, a capped pinned scene, none), the
    body is pulled so its first ink sits one heading band under the caption,
    and padded so at least one chapter band follows its last ink.
-   Re-measured on resize and once fonts settle. */
+   Measured on mount, once fonts settle, when media inside loads and when
+   the width changes; never continuously. A new value is held back while
+   the reader is scrolled into or past the variant (it would move content
+   around the viewport) and applied once the variant is below its top
+   again. The pull itself is clamped in CSS. */
 function useInkOffset(ref: RefObject<HTMLElement | null>) {
   useLayoutEffect(() => {
     const body = ref.current;
     if (!body) return;
     let frame = 0;
+    let applied = false;
+    let pending: (() => void) | null = null;
+    let width = body.offsetWidth;
+
+    const read = () =>
+      inFlow(body, () => {
+        const ink = inkBounds(body);
+        if (!ink) return null;
+        // Only pull into space that looks like the caption's band: a component
+        // opening on another background (a tone cut of its own) starts one
+        // lead under the caption instead of sliding under it.
+        if (opensOnOtherGround(body)) ink.top = 0;
+        const content = body.offsetHeight - parseFloat(getComputedStyle(body).paddingBottom);
+        // A demo that ends in its own footer (a client page) is the page's
+        // end: no chapter band or frame tail between it and the library footer.
+        const footers = body.querySelectorAll<HTMLElement>("footer");
+        const last = footers[footers.length - 1];
+        const endsInFooter = Boolean(last && last.offsetHeight > 0 && Math.abs(topWithin(last, body) + last.offsetHeight - content) <= 2);
+        return { pad: `${Math.round(ink.top)}px`, trail: `${Math.max(0, Math.round(content - ink.bottom))}px`, endsInFooter };
+      });
+
+    const apply = (next: NonNullable<ReturnType<typeof read>>) => {
+      body.style.setProperty("--lib-variant-pad", next.pad);
+      body.style.setProperty("--lib-variant-trail", next.trail);
+      body.parentElement?.toggleAttribute("data-ends-in-footer", next.endsInFooter);
+      applied = true;
+    };
+
+    const onScroll = () => {
+      if (pending && (body.parentElement ?? body).getBoundingClientRect().top >= 0) {
+        const run = pending;
+        pending = null;
+        run();
+      }
+    };
+
     const measure = () => {
       frame = 0;
-      const ink = inkBounds(body);
-      if (!ink) return;
-      // Only pull into space that looks like the caption's band: a component
-      // opening on another background (a tone cut of its own) starts one
-      // lead under the caption instead of sliding under it.
-      if (opensOnOtherGround(body)) ink.top = 0;
-      const trail = body.offsetHeight - parseFloat(getComputedStyle(body).paddingBottom) - ink.bottom;
-      body.style.setProperty("--lib-variant-pad", `${Math.round(ink.top)}px`);
-      body.style.setProperty("--lib-variant-trail", `${Math.max(0, Math.round(trail))}px`);
-      // A demo that ends in its own footer (a client page) is the page's
-      // end: no chapter band or frame tail between it and the library footer.
-      const footers = body.querySelectorAll<HTMLElement>("footer");
-      const last = footers[footers.length - 1];
-      const endsInFooter = Boolean(last && last.offsetHeight > 0 && Math.abs(topWithin(last, body) + last.offsetHeight - (body.offsetHeight - parseFloat(getComputedStyle(body).paddingBottom))) <= 2);
-      body.parentElement?.toggleAttribute("data-ends-in-footer", endsInFooter);
+      const next = read();
+      if (!next) return;
+      const same =
+        body.style.getPropertyValue("--lib-variant-pad") === next.pad &&
+        body.style.getPropertyValue("--lib-variant-trail") === next.trail &&
+        (body.parentElement?.hasAttribute("data-ends-in-footer") ?? false) === next.endsInFooter;
+      if (same) {
+        pending = null;
+        return;
+      }
+      if (applied && (body.parentElement ?? body).getBoundingClientRect().top < 0) {
+        pending = () => apply(next);
+        return;
+      }
+      apply(next);
     };
+
     measure();
     const schedule = () => {
       if (!frame) frame = requestAnimationFrame(measure);
     };
-    // Media sized only once loaded can move the first ink without resizing
-    // the body (pinned scenes), so loads and DOM changes re-measure too.
-    const ro = new ResizeObserver(schedule);
+    const ro = new ResizeObserver(() => {
+      if (body.offsetWidth === width) return;
+      width = body.offsetWidth;
+      schedule();
+    });
     ro.observe(body);
-    const mo = new MutationObserver(schedule);
-    mo.observe(body, { subtree: true, childList: true, attributes: true, attributeFilter: ["class", "src", "hidden"] });
+    // Media sized only once loaded can move the first ink without resizing
+    // the body (pinned scenes).
     body.addEventListener("load", schedule, true);
+    window.addEventListener("scroll", onScroll, { passive: true });
     document.fonts?.ready.then(schedule);
     return () => {
       ro.disconnect();
-      mo.disconnect();
       body.removeEventListener("load", schedule, true);
+      window.removeEventListener("scroll", onScroll);
       cancelAnimationFrame(frame);
     };
   }, [ref]);

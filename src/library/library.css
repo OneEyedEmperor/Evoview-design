@@ -404,7 +404,8 @@
 /* --lib-variant-pad: measured first-ink offset (ShowcasePage useInkOffset); the rhythm token is only the pre-measure guess. */
 .lib-variant__body {
   position: relative;
-  margin-top: calc(var(--lib-lead) - var(--lib-variant-pad));
+  /* Pull clamped to [0, lead + chapter band]: a bad read can never fold the page. */
+  margin-top: calc(var(--lib-lead) - clamp(0px, var(--lib-variant-pad), var(--lib-lead) + var(--lib-chapter)));
   /* At least one chapter band under the last ink (measured trail), on
      either side of a cut; the frame tail already gives it to a last
      variant on the frame tone. */
