@@ -1,4 +1,4 @@
-import { Suspense, useCallback, useLayoutEffect, useMemo } from "react";
+import { Suspense, useCallback, useMemo } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Navbar, useNavbarLinks } from "../../components/navbar/src";
 import EvoviewLogo from "../../components/navbar/src/brand/EvoviewLogo";
@@ -6,35 +6,28 @@ import { withRoute } from "../../components/navbar/src/navbar.config";
 import { buildLibraryNavbarConfig } from "./library.navbar.config";
 import LocaleToggle from "./LocaleToggle";
 import { useLibraryLocale } from "./locale";
+import { RouteBoundary, RoutePending } from "./routing";
 import "./library.css";
 
 export const EVOVIEW_URL = "https://evoview.be/";
 
-/* Category routes land on the index, scrolled to their chapter. */
-const CHAPTER_ROUTES: Record<string, string> = { "/layouts": "layouts", "/components": "components" };
-
 export default function LibraryLayout() {
   const { locale } = useLibraryLocale();
   const navigate = useNavigate();
-  const { pathname, hash } = useLocation();
+  const { pathname } = useLocation();
   useNavbarLinks(useCallback((to: string) => navigate(to), [navigate]));
 
   const config = useMemo(() => withRoute(buildLibraryNavbarConfig(locale), pathname), [locale, pathname]);
-
-  useLayoutEffect(() => {
-    const chapter = CHAPTER_ROUTES[pathname.replace(/\/+$/, "")];
-    const target = chapter ? document.getElementById(chapter) : hash ? document.getElementById(decodeURIComponent(hash.slice(1))) : null;
-    if (target) target.scrollIntoView({ block: "start" });
-    else window.scrollTo(0, 0);
-  }, [pathname, hash]);
 
   return (
     <div className="ev-library lib-shell">
       <Navbar config={config} />
       <main>
-        <Suspense fallback={<div className="lib-pending" data-nav-tone="dark" />}>
-          <Outlet />
-        </Suspense>
+        <RouteBoundary resetKey={pathname}>
+          <Suspense fallback={<RoutePending />}>
+            <Outlet />
+          </Suspense>
+        </RouteBoundary>
       </main>
       <LibraryFooter />
     </div>

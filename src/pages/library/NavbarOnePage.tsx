@@ -1,54 +1,90 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Navbar } from "../../../components/navbar/src";
 import { navbarConfig } from "../../../components/navbar/examples/evoview.config";
+import { useLibraryLocale, type Localized } from "../../library/locale";
 
-/* The one-page example: tall sections whose ids and tones match the config,
-   so the bar can be watched re-toning and recolouring its pupil while
-   scrolling. Tray selections are echoed in the readout at the bottom. */
+/* The one-page example, full-screen: tall sections whose ids and tones
+   match the config, so the bar can be watched re-toning, lighting the
+   section's pill and recolouring its pupil while scrolling. */
 
-const SECTIONS: { id: string; title: string; dark: boolean; accent: string }[] = [
-  { id: "hero", title: "Hero", dark: true, accent: "#c84a4a" },
-  { id: "processus", title: "Processus", dark: false, accent: "#151515" },
-  { id: "services", title: "Services", dark: false, accent: "#3f51b5" },
-  { id: "intro", title: "Méthode", dark: true, accent: "#ffffff" },
-  { id: "partners", title: "Portfolio", dark: false, accent: "#a94f16" },
-  { id: "contact", title: "Contact", dark: true, accent: "#3f51b5" },
+const config = { ...navbarConfig, vars: { ...navbarConfig.vars, "--nav-font-numeral": '"Satoshi", sans-serif' } };
+
+const SECTIONS: { id: string; title: string; dark: boolean; line: Localized }[] = [
+  {
+    id: "hero",
+    title: "Evoview",
+    dark: true,
+    line: { fr: "Une page, six sections. Faites défiler : la barre suit.", en: "One page, six sections. Scroll: the bar follows." },
+  },
+  {
+    id: "processus",
+    title: "Processus",
+    dark: false,
+    line: { fr: "Section claire : la capsule passe en verre clair.", en: "Light section: the capsule turns to light glass." },
+  },
+  {
+    id: "services",
+    title: "Services",
+    dark: false,
+    line: { fr: "La pilule Services s'allume tant que vous êtes ici.", en: "The Services pill stays lit while you are here." },
+  },
+  {
+    id: "intro",
+    title: "Méthode",
+    dark: true,
+    line: { fr: "Section sombre : verre sombre, la pupille prend la couleur de la section.", en: "Dark section: dark glass, the pupil takes the section's colour." },
+  },
+  {
+    id: "partners",
+    title: "Portfolio",
+    dark: false,
+    line: { fr: "Chaque pilule ouvre son plateau de cartes au survol.", en: "Each pill opens its card tray on hover." },
+  },
+  {
+    id: "contact",
+    title: "Contact",
+    dark: true,
+    line: { fr: "La pilule Contact est l'appel à l'action de la barre.", en: "The Contact pill is the bar's call to action." },
+  },
 ];
 
-export default function Evoview() {
-  const [last, setLast] = useState<string>("—");
+const BACK: Localized = { fr: "Retour à la navbar", en: "Back to the navbar" };
 
-  useEffect(() => {
-    const onSelect = (event: Event) => setLast(JSON.stringify((event as CustomEvent).detail));
-    window.addEventListener("navbar:select", onSelect);
-    return () => window.removeEventListener("navbar:select", onSelect);
-  }, []);
-
+export default function NavbarOnePage() {
+  const { t } = useLibraryLocale();
+  const framed = typeof window !== "undefined" && window.self !== window.top;
   return (
-    <>
-      <Navbar config={navbarConfig} />
+    <div className="ev-library lib-demo-page">
+      <Navbar config={config} />
       <main>
-        {SECTIONS.map((section) => (
-          <section
-            key={section.id}
-            id={section.id}
-            data-nav-tone={section.dark ? "dark" : undefined}
-            className="flex min-h-screen flex-col items-center justify-center gap-4 px-6"
-            style={{ background: section.dark ? "#101011" : "#efefef", color: section.dark ? "#fff" : "#151515" }}
-          >
-            <span className="h-3 w-3 rounded-full" style={{ background: section.accent, boxShadow: section.accent === "#ffffff" ? "0 0 0 1px rgba(0,0,0,.2)" : undefined }} />
-            <h2 className="text-4xl font-bold tracking-tight">{section.title}</h2>
-            <p className="text-sm opacity-60">
-              #{section.id} · {section.dark ? "data-nav-tone=\"dark\"" : "light"}
-            </p>
-          </section>
-        ))}
+        {SECTIONS.map((section, i) => {
+          const Heading = i === 0 ? "h1" : "h2";
+          return (
+            <section
+              key={section.id}
+              id={section.id}
+              data-nav-tone={section.dark ? "dark" : undefined}
+              className="lib-toned lib-demo-page__section"
+              data-tone={section.dark ? "dark" : "light"}
+            >
+              <div className="lib-rail lib-demo-page__copy">
+                <Heading className="lib-display">{section.title}</Heading>
+                <p className="lib-lead">{t(section.line)}</p>
+                {i === SECTIONS.length - 1 &&
+                  (framed ? (
+                    <a href="/navbar" target="_top" className="lib-command lib-command--quiet">
+                      {t(BACK)}
+                    </a>
+                  ) : (
+                    <Link to="/navbar" className="lib-command lib-command--quiet">
+                      {t(BACK)}
+                    </Link>
+                  ))}
+              </div>
+            </section>
+          );
+        })}
       </main>
-      <div className="fixed bottom-4 left-1/2 z-40 flex -translate-x-1/2 items-center gap-4 rounded-full bg-black/80 px-4 py-2 text-xs text-white backdrop-blur">
-        <span>last navbar:select → {last}</span>
-        <Link to="/navbar" className="opacity-60 hover:opacity-100">← library · navbar</Link>
-      </div>
-    </>
+    </div>
   );
 }

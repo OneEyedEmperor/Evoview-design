@@ -6,7 +6,8 @@ import { CATEGORY_LABEL, REGISTRY, entriesOf, getEntry, pad2, type Category, typ
 import StatusTag from "../../library/StatusTag";
 
 /* The library index: one display title, then the two categories as
-   chapters (paper / night), the navbar as a smaller third entry. */
+   chapters (paper / night), the navbar as a smaller third entry. Tone cuts
+   and spacing separate everything; no rules. */
 
 const COPY = {
   fr: {
@@ -16,7 +17,7 @@ const COPY = {
       </>
     ),
     intro: "Les sections et composants des sites Evoview, extraits du site, découplés et prêts à adapter pour chaque client.",
-    count: (n: number, ready: number) => `${pad2(n)} entrées · ${pad2(ready)} prêtes`,
+    count: (n: number, ready: number) => (ready === n ? `${pad2(n)} packages` : `${pad2(n)} packages · ${pad2(ready)} prêts`),
     navbarLinks: { reference: "Démo multi-page", onePage: "Exemple une page" },
   },
   en: {
@@ -26,7 +27,7 @@ const COPY = {
       </>
     ),
     intro: "The sections and components behind Evoview sites, extracted from the site, decoupled and ready to adapt for each client.",
-    count: (n: number, ready: number) => `${pad2(n)} entries · ${pad2(ready)} ready`,
+    count: (n: number, ready: number) => (ready === n ? `${pad2(n)} packages` : `${pad2(n)} packages · ${pad2(ready)} ready`),
     navbarLinks: { reference: "Multi-page demo", onePage: "One-page example" },
   },
 };

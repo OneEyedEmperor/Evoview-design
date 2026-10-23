@@ -10,14 +10,10 @@ export default function ReservationShowcase() {
   return (
     <ShowcasePage
       entryId="reservation"
-      title={() => (
-        <>
-          Evoview <em>Reservation</em> System
-        </>
-      )}
+      title={(l) => <em>{l === "fr" ? "Réservation" : "Reservation"}</em>}
       intro={{
-        fr: "Une demande de réservation en étapes, au rythme de la candidature evoview.be, dans l'accent de chaque client.",
-        en: "A stepped booking request on the evoview.be application chassis, in each client's accent.",
+        fr: "Une demande de réservation en étapes, une question à la fois, dans l'accent de chaque client. Essayez-la : rien n'est envoyé.",
+        en: "A stepped booking request, one question at a time, in each client's accent. Try it: nothing is sent.",
       }}
       tone="dark"
     >
@@ -33,7 +29,7 @@ function Stage() {
   const config = useMemo(() => buildReservationConfig(locale), [locale]);
   return (
     <div className="lib-rail">
-      <div style={{ maxWidth: "56rem", marginInline: "auto", fontFamily: "Inter, sans-serif" }}>
+      <div className="lib-reservation">
         <Reservation key={locale} config={config} />
       </div>
     </div>

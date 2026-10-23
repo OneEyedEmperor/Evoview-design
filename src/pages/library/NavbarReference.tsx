@@ -36,7 +36,18 @@ function rebaseConfig(config: NavbarConfig): NavbarConfig {
   };
 }
 
-const BACK = { fr: "← bibliothèque · navbar", en: "← library · navbar" };
+const COPY = {
+  fr: {
+    line: (page: string) => `La page « ${page} » de la démo. Changez de page avec la barre : la pilule de la page courante reste allumée.`,
+    back: "Retour à la navbar",
+    onePage: "Exemple une page",
+  },
+  en: {
+    line: (page: string) => `The demo's "${page}" page. Move between pages with the bar: the current page's pill stays lit.`,
+    back: "Back to the navbar",
+    onePage: "One-page example",
+  },
+};
 
 export default function NavbarReference() {
   const { locale, setLocale } = useLibraryLocale();
@@ -46,24 +57,34 @@ export default function NavbarReference() {
 
   const config = useMemo(() => withRoute(rebaseConfig(buildNavbarConfig(locale, setLocale)), location.pathname), [locale, setLocale, location.pathname]);
   const local = location.pathname.replace(/\/+$/, "").slice(BASE.length) || "/";
-  const page = PAGES[local];
+  const page = PAGES[local]?.[locale] ?? local;
+  const copy = COPY[locale];
+  // Inside the showcase's preview frame, leaving the demo leaves the frame.
+  const framed = typeof window !== "undefined" && window.self !== window.top;
 
   return (
-    <div data-nav-tone="dark" className="min-h-screen" style={{ background: "#101011", color: "#fff" }}>
+    <div className="ev-library lib-demo-page lib-toned" data-tone="dark" data-nav-tone="dark">
       <Navbar config={config} />
-      <main className="flex min-h-screen flex-col items-center justify-center gap-4 px-6">
-        <span className="h-3 w-3 rounded-full" style={{ background: "#3f51b5" }} />
-        <h1 className="text-4xl font-bold tracking-tight">{page ? page[locale] : local}</h1>
-        <p className="text-sm opacity-60">
-          {local} · {locale}
-        </p>
-        <div className="mt-8 flex flex-wrap justify-center gap-6 text-xs uppercase tracking-widest">
-          <Link to="/navbar" className="opacity-50 hover:opacity-100">
-            {BACK[locale]}
-          </Link>
-          <Link to="/navbar/one-page" className="opacity-50 hover:opacity-100">
-            one-page example →
-          </Link>
+      <main className="lib-demo-page__section">
+        <div className="lib-rail lib-demo-page__copy">
+          <h1 className="lib-display">{page}</h1>
+          <p className="lib-lead">{copy.line(page)}</p>
+          <div className="lib-demo-page__links">
+            {framed ? (
+              <a href="/navbar" target="_top" className="lib-command lib-command--quiet">
+                {copy.back}
+              </a>
+            ) : (
+              <>
+                <Link to="/navbar" className="lib-command lib-command--quiet">
+                  {copy.back}
+                </Link>
+                <Link to="/navbar/one-page" className="lib-command lib-command--quiet">
+                  {copy.onePage}
+                </Link>
+              </>
+            )}
+          </div>
         </div>
       </main>
     </div>

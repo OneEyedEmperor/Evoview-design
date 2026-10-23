@@ -256,6 +256,10 @@
   }
   .lib-grid > li:nth-child(4n + 1), .lib-grid > li:nth-child(4n + 4) { grid-column: span 7; }
   .lib-grid > li:nth-child(4n + 2), .lib-grid > li:nth-child(4n + 3) { grid-column: span 5; }
+  /* 7/5 ↔ 5/7, one shared well height (the 7-column well at 16:10), so
+     each row keeps a single caption line instead of two floating ones. */
+  .lib-grid { container-type: inline-size; }
+  .lib-grid .lib-well { aspect-ratio: auto; height: calc(((100cqw - 11 * 1.5em) / 12 * 7 + 6 * 1.5em) / 1.6); }
 }
 
 .lib-card { display: grid; gap: 0.5em; color: inherit; text-decoration: none; }
@@ -304,17 +308,25 @@
 
 /* ---------- Showcase frame ---------- */
 
+/* Frame rhythm (RULES §3, authored × scale through the em): the heading
+   band holds header → first demo and caption → component; the chapter band
+   separates variants. Pages never add their own outer spacing. */
 .lib-showcase {
   --primary: var(--showcase-accent);
   --primary-foreground: var(--showcase-ink);
   --font-heading: "Overused Grotesk", "Inter", sans-serif;
+  --lib-lead: 3em;
+  --lib-chapter: 5em;
   min-height: 100vh;
   transition: --showcase-accent 420ms ease, --showcase-ink 420ms ease;
+}
+@media (min-width: 768px) {
+  .lib-showcase { --lib-lead: 4em; --lib-chapter: 7.5em; }
 }
 .lib-showcase[data-tone="dark"] { --foreground: oklch(0.98 0 0); --muted-foreground: oklch(0.6 0 0); }
 .lib-showcase[data-tone="light"] { --foreground: #151515; --muted-foreground: #6b6b6b; }
 
-.lib-showcase__head { padding-block: 7.5em 3em; }
+.lib-showcase__head { padding-block: 7.5em var(--lib-lead); }
 .lib-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75em; margin-bottom: 2em; color: var(--lib-faint); }
 .lib-crumbs a { color: var(--lib-muted); text-decoration: none; }
 .lib-crumbs a:hover { color: var(--lib-fg); }
@@ -323,11 +335,61 @@
 .lib-showcase__split { display: grid; gap: 1.5em; }
 .lib-showcase__aside { display: grid; gap: 1.25em; }
 .lib-showcase__meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1em; }
-.lib-showcase__tail { height: 5em; }
+.lib-showcase__tail { height: var(--lib-chapter); }
 @media (min-width: 768px) {
-  .lib-showcase__head { padding-block: 9em 4em; }
+  .lib-showcase__head { padding-top: 9em; }
   .lib-showcase__split { grid-template-columns: 1.28fr 0.72fr; column-gap: 4em; align-items: end; }
-  .lib-showcase__tail { height: 7.5em; }
+}
+
+/* ShowcaseVariant. A tone cut is its own separator, so a caption opening a
+   new environment gets a chapter band above it; a caption continuing the
+   same environment sits after the previous component's own bottom space.
+   The body is pulled up by the component's built-in top padding so caption
+   → content is always the heading band. */
+.lib-variant {
+  --lib-variant-top: var(--lib-chapter);
+  --lib-variant-pad: 0px;
+  padding-top: var(--lib-variant-top);
+}
+.lib-variant[data-tone="dark"] { background: #0e0e0e; }
+.lib-showcase[data-tone="dark"] .lib-variant[data-frame] { background: none; }
+.lib-variant[data-tone="light"] { background: #efefef; }
+.lib-variant[data-tone="paper"] { background: #fff; }
+.lib-variant[data-frame]:first-child,
+.lib-variant[data-tone="dark"] + .lib-variant[data-tone="dark"],
+.lib-variant[data-tone="light"] + .lib-variant[data-tone="light"],
+.lib-variant[data-tone="paper"] + .lib-variant[data-tone="paper"] { --lib-variant-top: 0px; }
+.lib-variant[data-rhythm="standard"] { --lib-variant-pad: var(--ev-chapter-standard, 0px); }
+.lib-variant[data-rhythm="compact"] { --lib-variant-pad: var(--ev-chapter-compact, 0px); }
+.lib-variant[data-rhythm="cinematic"] { --lib-variant-pad: var(--ev-chapter-cinematic-top, 0px); }
+.lib-variant[data-rhythm="flush"]:not(:last-child) > .lib-variant__body { padding-bottom: var(--lib-chapter); }
+.lib-variant[data-tone="light"], .lib-variant[data-tone="paper"] {
+  --lib-fg: var(--lib-ink);
+  --lib-muted: rgba(21, 21, 21, 0.66);
+  --lib-faint: rgba(21, 21, 21, 0.42);
+  --lib-signal: color-mix(in oklab, var(--primary) 62%, var(--lib-ink));
+  color: var(--lib-fg);
+}
+.lib-variant[data-tone="dark"] {
+  --lib-fg: #fff;
+  --lib-muted: rgba(255, 255, 255, 0.65);
+  --lib-faint: rgba(255, 255, 255, 0.38);
+  --lib-signal: var(--primary);
+  color: var(--lib-fg);
+}
+.lib-variant__caption {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 0.6em;
+  justify-items: start;
+}
+.lib-variant__name { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5em 1em; margin: 0; color: var(--lib-fg); }
+.lib-variant__index { color: var(--lib-signal); }
+.lib-variant__when { max-width: 36em; }
+.lib-variant__body { margin-top: calc(var(--lib-lead) - var(--lib-variant-pad)); }
+@media (min-width: 768px) {
+  .lib-variant__caption { grid-template-columns: 0.72fr 1.28fr; column-gap: 4em; align-items: baseline; }
 }
 
 .lib-building { display: grid; gap: 1.5em; }
@@ -408,7 +470,11 @@
   opacity: 0;
   pointer-events: none;
 }
+/* Tablet: caption over a single row (side by side needs ~760 px). */
 @media (min-width: 768px) {
+  .lib-palette__row { max-width: none; flex-wrap: nowrap; }
+}
+@media (min-width: 1024px) {
   .lib-palette { flex-direction: row; gap: 8px; border-radius: 999px; padding: 4px 4px 4px 18px; }
   .lib-palette__caption { padding: 0; text-align: left; white-space: nowrap; }
   .lib-palette__row { max-width: none; flex-wrap: nowrap; }
@@ -461,9 +527,6 @@
   transition: background-color 420ms ease;
 }
 .lib-float__toggle:focus-visible { outline: 2px solid var(--lib-ring); outline-offset: -2px; }
-@media (max-width: 767px) {
-  html[data-ev-suspended] .lib-float { bottom: calc(var(--lib-float-edge) + 76px); }
-}
 @media (min-width: 768px) {
   .lib-float { right: max(24px, env(safe-area-inset-right)); bottom: max(24px, env(safe-area-inset-bottom)); border-radius: 999px; }
   .lib-float__panel, .lib-float[data-open] .lib-float__panel { display: block; }
@@ -475,7 +538,7 @@
 
 /* ---------- Footer ---------- */
 
-.lib-footer { border-top: 1px solid var(--lib-line); padding-block: 3em; }
+.lib-footer { padding-block: 3em; }
 .lib-footer[data-nav-tone="dark"] {
   --lib-fg: #fff;
   --lib-muted: rgba(255, 255, 255, 0.65);
@@ -492,8 +555,65 @@
 .lib-footer__mark:hover svg { opacity: 1; }
 .lib-footer__mark:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; }
 
-.lib-pending { min-height: 100vh; background: var(--lib-night); }
+/* Route loading: the frame's night, a status line where the header will
+   be (after the 350 ms grace, see routing.tsx), a progress hairline. */
+.lib-pending { display: grid; min-height: 100vh; align-content: start; background: var(--lib-night); color: #fff; }
+.lib-pending__status {
+  display: grid;
+  width: min(12em, 60vw);
+  gap: 0.9em;
+  margin: 0;
+  padding-top: 7.5em;
+  color: rgba(255, 255, 255, 0.55);
+  animation: lib-pending-in 600ms var(--lib-ease) both;
+}
+.lib-pending__bar { position: relative; height: 2px; overflow: hidden; border-radius: 2px; background: rgba(255, 255, 255, 0.1); }
+.lib-pending__bar::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 40%;
+  border-radius: inherit;
+  background: rgba(255, 255, 255, 0.7);
+  animation: lib-pending-run 1.2s var(--lib-ease) infinite;
+}
+.lib-pending__failed { display: grid; gap: 1.25em; justify-items: start; padding-top: 7.5em; }
+@media (min-width: 768px) { .lib-pending__status, .lib-pending__failed { padding-top: 9em; } }
+@keyframes lib-pending-in { from { opacity: 0; transform: translateY(8px); } }
+@keyframes lib-pending-run { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+
+.lib-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 .lib-feature__title { color: inherit; text-decoration: none; }
 .lib-feature__title:hover { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 0.12em; text-decoration-color: var(--lib-signal, var(--primary)); }
 .lib-feature__title:focus-visible { outline: 2px solid var(--lib-signal, var(--primary)); outline-offset: 4px; border-radius: 4px; }
+
+/* Reservation showcase: the chassis at its reading width, centred. */
+.lib-reservation { max-width: 56rem; margin-inline: auto; }
+
+/* Full-screen navbar demos (/navbar/reference, /navbar/one-page). */
+.lib-demo-page { min-height: 100vh; background: var(--lib-night); }
+.lib-demo-page__section { display: grid; min-height: 100vh; align-items: center; padding-block: 7.5em 5em; box-sizing: border-box; }
+.lib-demo-page__copy { display: grid; gap: 1.25em; justify-items: start; }
+.lib-demo-page__copy .lib-lead { max-width: 34em; }
+.lib-demo-page__links { display: flex; flex-wrap: wrap; gap: 0.5em; margin-top: 0.75em; }
+
+/* Navbar page: live previews, desktop beside phone at one shared height
+   (column ratio = (900/1440) × (390/844)); phone only below 768. */
+.lib-previews { display: grid; gap: 1.5em; }
+.lib-preview { aspect-ratio: auto; }
+.lib-preview iframe { position: absolute; top: 0; left: 0; border: 0; transform-origin: 0 0; background: var(--lib-night); }
+.lib-preview--desktop { display: none; }
+.lib-preview--phone { width: min(100%, 390px); justify-self: center; }
+.lib-previews__open { margin-top: 1.5em; }
+@media (min-width: 768px) {
+  .lib-previews { grid-template-columns: 1fr 0.2888fr; }
+  .lib-preview--desktop { display: block; }
+  .lib-preview--phone { width: auto; justify-self: stretch; }
+}
+/* The frame edge sits above the iframe (the content paints over the well's inset ring). */
+.lib-preview::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14); pointer-events: none; }
+
+/* Header palette leaving under the navbar: fade rather than show through its glass. */
+.lib-showcase__palette { transition: opacity 180ms var(--lib-ease), visibility 0s linear 0s; }
+.lib-showcase__palette[data-away] { opacity: 0; visibility: hidden; transition: opacity 180ms var(--lib-ease), visibility 0s linear 180ms; }

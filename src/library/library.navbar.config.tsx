@@ -2,12 +2,13 @@ import type { ReactNode } from "react";
 import { Blocks, LayoutTemplate, PanelTop, type LucideIcon } from "lucide-react";
 import EvoviewLogo from "../../components/navbar/src/brand/EvoviewLogo";
 import type { NavbarConfig, NavbarLabels, NavSection, NavTray } from "../../components/navbar/src/types";
-import { Cover } from "./covers";
+import { coverSrc } from "./covers";
 import type { Locale } from "./locale";
 import { CATEGORY_LABEL, CATEGORY_ROUTE, entriesOf, type Category } from "./registry";
 
 /* The library site's own navigation (not the package's reference config):
-   three pills, two cover-card trays fed by the registry. */
+   three pills, two cover-card trays fed by the registry. Covers go in as
+   URLs so the navbar's own decode gate handles them. */
 
 const ACCENT = "#3f51b5";
 const PILL_ACCENT: Record<Category, string> = { layouts: "#8a6aa0", components: "#818cf8", navbar: "#c8a6d9" };
@@ -56,7 +57,7 @@ function trayFor(category: "layouts" | "components", locale: Locale): NavTray {
       meta: entry.meta[locale],
       href: entry.route,
       accent: PILL_ACCENT[category],
-      cover: <Cover id={entry.id} variant="banner" />,
+      cover: coverSrc(entry.id, "banner"),
     })),
   };
 }
@@ -70,7 +71,7 @@ export function buildLibraryNavbarConfig(locale: Locale): NavbarConfig {
     vars: {
       "--nav-accent-ink": "#fff",
       "--nav-font-technical": '"Satoshi", sans-serif',
-      "--nav-font-numeral": '"Gaegu", cursive',
+      "--nav-font-numeral": '"Satoshi", sans-serif',
     },
     sections: SECTIONS,
     initialTone: "dark",

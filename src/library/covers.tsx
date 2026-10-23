@@ -350,22 +350,27 @@ const DRAW: Record<string, Draw> = {
 const PHOTO = new Set(["chapter", "card-track", "process-sequence", "story-blocks", "reservation", "dossier", "selector-stage", "controls", "navbar"]);
 const PHOTO_SIZE: Record<CoverVariant, [number, number]> = { banner: [900, 216], card: [1280, 800] };
 
+export const coverSrc = (id: string, variant: CoverVariant) => (PHOTO.has(id) ? `/library/covers/${id}-${variant}.webp` : undefined);
+
 export function Cover({ id, variant = "card", className }: { id: string; variant?: CoverVariant; className?: string }) {
   const uid = useId().replace(/:/g, "");
-  const [failed, setFailed] = useState(false);
-  if (PHOTO.has(id) && !failed) {
+  // One transient error (dev server busy, flaky network) retries once
+  // before the drawing takes over for good.
+  const [attempt, setAttempt] = useState(0);
+  const src = coverSrc(id, variant);
+  if (src && attempt < 2) {
     const [pw, ph] = PHOTO_SIZE[variant];
     return (
       <img
-        src={`/library/covers/${id}-${variant}.webp`}
+        key={attempt}
+        src={attempt ? `${src}?retry=1` : src}
         alt=""
         width={pw}
         height={ph}
         decoding="async"
-        loading={variant === "card" ? "lazy" : undefined}
         draggable={false}
         className={className ? `lib-cover ${className}` : "lib-cover"}
-        onError={() => setFailed(true)}
+        onError={() => window.setTimeout(() => setAttempt((a) => a + 1), attempt ? 0 : 600)}
       />
     );
   }

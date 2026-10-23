@@ -51,7 +51,7 @@ const DRAFTS: Draft[] = [
     category: "layouts",
     route: "/layouts/story-blocks",
     title: { fr: "Blocs de récit", en: "Story blocks" },
-    meta: { fr: "Intro, rangs indexés, preuves, bandeau final", en: "Intro split, indexed rows, proof grid, payoff" },
+    meta: { fr: "Intro, rangs, preuves, bandeau final", en: "Intro, rows, proof grid, payoff band" },
     status: "ready",
   },
   {
@@ -83,7 +83,7 @@ const DRAFTS: Draft[] = [
     category: "components",
     route: "/components/controls",
     title: { fr: "Contrôles", en: "Controls" },
-    meta: { fr: "Boutons, puces, champs, progression, interrupteur", en: "Buttons, chips, fields, progress, switch" },
+    meta: { fr: "Boutons, puces, champs, progression", en: "Buttons, chips, fields, progress" },
     status: "ready",
   },
   {
@@ -91,7 +91,7 @@ const DRAFTS: Draft[] = [
     category: "navbar",
     route: "/navbar",
     title: { fr: "Navbar", en: "Navbar" },
-    meta: { fr: "Capsule finder, bureau et mobile, plateaux de cartes", en: "Finder capsule, desktop and mobile, cover-card trays" },
+    meta: { fr: "Capsule de verre, pilules et plateaux de cartes", en: "Glass capsule, pills and cover-card trays" },
     status: "ready",
   },
 ];

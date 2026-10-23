@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
+import { createContext, useContext, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
 import { Link } from "react-router-dom";
 import AccentPalette, { CUSTOM_SWATCH, inkFor } from "./AccentPalette";
 import { Cover } from "./covers";
@@ -93,6 +93,7 @@ export default function ShowcasePage({ entryId, title, intro, tone = "dark", def
   const paletteRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const tonedByContent = useHasNavTone(stageRef);
+  const ready = usePageReady(stageRef);
   const dark = tone === "dark" ? "dark" : undefined;
   const paletteProps = {
     swatches,
@@ -109,7 +110,7 @@ export default function ShowcasePage({ entryId, title, intro, tone = "dark", def
      chapter inside it. The stage is marked only while its content declares
      no tone of its own. */
   return (
-    <div className="lib-showcase lib-toned ev-library" data-tone={tone} style={style}>
+    <div className="lib-showcase lib-toned ev-library" data-tone={tone} data-lib-ready={ready ? "" : undefined} style={style}>
       <header className="lib-showcase__head lib-rail" data-nav-tone={dark}>
         <nav aria-label={copy.breadcrumb} className="lib-crumbs lib-voice-state">
           <Link to="/">{copy.library}</Link>
@@ -141,12 +142,93 @@ export default function ShowcasePage({ entryId, title, intro, tone = "dark", def
         )}
       </header>
       <div ref={stageRef} className="lib-showcase__stage" data-nav-tone={tonedByContent ? undefined : dark}>
-        {body}
+        <FrameTone.Provider value={tone}>{body}</FrameTone.Provider>
       </div>
       <div className="lib-showcase__tail" data-nav-tone={dark} aria-hidden="true" />
       {palette && <FloatingPalette {...paletteProps} anchor={paletteRef} tone={tone} accent={accent} />}
     </div>
   );
+}
+
+const FrameTone = createContext<"dark" | "light">("dark");
+
+export type DemoTone = "dark" | "light" | "paper";
+export type DemoRhythm = "flush" | "standard" | "compact" | "cinematic";
+
+type VariantProps = {
+  /** Component (and variant) name, set as a readout: `SelectorStage · paper`. */
+  name: ReactNode;
+  /** One sentence: when a client would choose this configuration. */
+  when: ReactNode;
+  /** Only when it indexes something real (a numbered sequence the reader
+      steps through); never as decoration. */
+  index?: { current: number; total: number };
+  /** Environment of the component below. Omit when it sits on the frame
+      tone or manages several tones itself. */
+  tone?: DemoTone;
+  /** Top padding the component brings (foundation chapter rhythm), so the
+      frame can hold caption → content at the heading band. */
+  rhythm?: DemoRhythm;
+  id?: string;
+  children: ReactNode;
+};
+
+/* One demo of a showcase page: a caption (name readout + when to choose it)
+   over the live component. The frame owns the spacing, so every page has
+   the same rhythm: header → first caption and caption → component sit at
+   the heading band, variants are separated by a chapter band (or by the
+   component's own chapter padding when it has one). No rules, no boxes.
+   Contract: docs/SHOWCASE-CONTRACT.md. */
+export function ShowcaseVariant({ name, when, index, tone, rhythm = "flush", id, children }: VariantProps) {
+  const frame = useContext(FrameTone);
+  const nameId = useId();
+  const env = tone ?? frame;
+  return (
+    <section
+      id={id}
+      aria-labelledby={nameId}
+      className={tone ? `lib-variant ev-tone-${tone}` : "lib-variant"}
+      data-tone={env}
+      data-frame={env === frame ? "" : undefined}
+      data-rhythm={rhythm}
+    >
+      <header className="lib-variant__caption lib-rail">
+        <p id={nameId} className="lib-voice-state lib-variant__name">
+          {index && (
+            <span className="lib-variant__index">
+              {pad2(index.current)} / {pad2(index.total)}
+            </span>
+          )}
+          {name}
+        </p>
+        <p className="lib-body lib-variant__when">{when}</p>
+      </header>
+      <div className="lib-variant__body">{children}</div>
+    </section>
+  );
+}
+
+/* `data-lib-ready` on the frame once fonts are loaded and every eager image
+   in the stage has settled (decoded or failed): the signal scripts wait
+   for (scripts/covers). Lazy images are left to the viewport. Capped at
+   10 s so a stuck request never hides the page from tooling. */
+function usePageReady(ref: RefObject<HTMLElement | null>): boolean {
+  const [ready, setReady] = useState(false);
+  useLayoutEffect(() => {
+    let timer = 0;
+    const started = performance.now();
+    const check = () => {
+      const el = ref.current;
+      const images = el ? Array.from(el.querySelectorAll("img")).filter((img) => img.loading !== "lazy") : [];
+      const settled = images.every((img) => img.complete);
+      const fonts = typeof document.fonts === "undefined" || document.fonts.status === "loaded";
+      if ((el && settled && fonts) || performance.now() - started > 10000) setReady(true);
+      else timer = window.setTimeout(check, 120);
+    };
+    timer = window.setTimeout(check, 120);
+    return () => window.clearTimeout(timer);
+  }, [ref]);
+  return ready;
 }
 
 const TONED = ".ev-tone-dark, .ev-tone-light, .ev-tone-paper, [data-nav-tone]";

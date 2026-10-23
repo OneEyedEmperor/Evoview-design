@@ -50,7 +50,8 @@ import ShowcasePage from "../../library/ShowcasePage";
 </ShowcasePage>
 ```
 
-`tone` defaults to `"dark"`. `children` is either a node or a render
+Title: the registry title (no article), accent word in `<em>`; a one-word
+title is the accent word. `tone` defaults to `"dark"`. `children` is either a node or a render
 function; omit it for the "in construction" state. Prefer a child component
 that reads `useLibraryLocale()` over the render function when the component
 is expensive: a node child is not re-rendered on colour change.
@@ -66,11 +67,53 @@ palette) and wraps children in an element that sets `--primary`,
 Components read the host accent via `var(--primary)` / `var(--primary-foreground)`
 mapped in their own token block, exactly like `components/reservation`.
 
+### Variants and rhythm (`ShowcaseVariant`)
+
+```tsx
+import ShowcasePage, { ShowcaseVariant } from "../../library/ShowcasePage";
+
+<ShowcaseVariant
+  name="SelectorStage · paper"                  // component (· variant), set as a readout
+  when={t({ fr: "…", en: "…" })}                // one sentence: when a client chooses it
+  tone="paper"                                  // environment of the component below; omit on frame tone
+  rhythm="standard"                             // top padding the component brings: flush | standard | compact | cinematic
+  index={{ current: 2, total: 4 }}              // only when it indexes something real
+>
+  <CompareToggle … tone="paper" />
+</ShowcaseVariant>
+```
+
+The frame owns all spacing between header and demos; pages add no outer
+padding, strips or rules of their own.
+
+- Header → first content and caption → component: `--lib-lead` (heading
+  band, 48 / 64 authored). The caption is pulled into the component's own
+  top padding (`rhythm` names the foundation token), so this holds whatever
+  chapter rhythm the component uses.
+- Between variants: a tone cut gets a chapter band (`--lib-chapter`, 80 /
+  120) above the next caption; a same-tone continuation sits after the
+  previous component's own bottom padding (`flush` components get the
+  chapter band added below them).
+- `tone` must match the component root's tone (the caption band takes the
+  same foundation background); a component that switches tones internally
+  is wrapped without `tone`.
+- A page with one demo uses no `ShowcaseVariant` (the header already says
+  what it is).
+
+`data-lib-ready` is set on the frame once fonts are loaded and the stage's
+eager images have settled (≤ 10 s); tooling waits for it (`scripts/covers/`).
+Route chunks are retried once and preloaded on idle; a page that still fails
+shows a retry state inside the layout, never a blank app.
+
 - **Floating palette**: same state, glass capsule bottom-right (phone: an orb
-  that unfolds), shown when the header palette is off-screen or a modal
-  suspends the page. It carries `data-ev-keep-interactive`, which modal
-  packages skip when applying `inert` (documented in `dossier` /
-  `process-sequence` READMEs); pointer only while a modal is open.
+  that unfolds), shown once the header palette reaches the navbar band (the
+  header palette fades there instead of showing through the bar's glass)
+  and, from 768 px, while a modal suspends the page. On a phone it hides
+  while a modal is open (the modal owns the screen, its dock and CTA) and
+  while the navbar's mobile menu is open. It carries
+  `data-ev-keep-interactive`, which modal packages skip when applying
+  `inert` (documented in `dossier` / `process-sequence` READMEs); pointer
+  only while a modal is open.
 - **Nav tone**: the frame marks only its header (and bottom spacer) dark; the
   stage is marked dark only while its content declares no tone. Content tone
   = `data-nav-tone` or foundation `ev-tone-*` on outermost section roots
@@ -79,5 +122,8 @@ mapped in their own token block, exactly like `components/reservation`.
 - **Text accent on light frames** goes through `--lib-signal` (62 % accent
   toward ink, as foundation's `--ev-accent-signal`).
 - **Covers** (`covers.tsx`): screenshot crops in `public/library/covers/
-  <id>-banner.webp` (900×216, navbar trays) and `<id>-card.webp` (1280×800,
-  index wells, graded at rest); the SVG drawing is the fallback.
+  <id>-banner.webp` (900×216, navbar trays, passed as URLs) and
+  `<id>-card.webp` (index wells, graded at rest: 1280×800 for 7-column
+  entries, 1280×1135 for the 2nd/3rd of a category, whose well shares the
+  row height); the SVG drawing is the fallback after one retry. Regenerate
+  with `scripts/covers/shoot.sh [id…]` then `scripts/covers/crop.sh`.
