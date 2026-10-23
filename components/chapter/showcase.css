@@ -1,21 +1,7 @@
 /* Library showcase page for the chapter package (not installed in clients). */
 
-/* The page ends flush on the library footer. */
-.chd { margin-bottom: -5em; }
-@media (min-width: 768px) { .chd { margin-bottom: -7.5em; } }
-
-.chd-scene__title {
-  margin: 0;
-  font-family: var(--lib-font-display);
-  font-size: 1.45em;
-  font-weight: 900;
-  line-height: 1;
-  letter-spacing: -0.02em;
-  text-transform: uppercase;
-}
-.chd-scene { padding-block: 6em 2.5em; }
-.chd-scene__lead { max-width: 34em; margin-top: 0.75em; }
-@media (min-width: 768px) { .chd-scene { padding-block: 8em 3em; } }
+/* Spacing between header, captions and demos belongs to the frame
+   (ShowcaseVariant); nothing here pads the page. */
 
 /* ── Scene 1 · specimen: settings (.37) beside one chapter in its page (.63) */
 .chd-specimen__grid { display: grid; gap: 2em; }
@@ -30,7 +16,7 @@
 
 @media (min-width: 1200px) {
   .chd-specimen__grid { grid-template-columns: minmax(0, 0.37fr) minmax(0, 0.63fr); column-gap: 3.5em; align-items: start; }
-  .chd-desk { position: sticky; top: 92px; padding-top: 2em; }
+  .chd-desk { position: sticky; top: 92px; }
   .chd-desk__controls { grid-template-columns: minmax(0, 1fr); }
 }
 

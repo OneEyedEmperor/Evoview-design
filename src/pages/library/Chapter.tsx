@@ -12,7 +12,7 @@ import {
 import { PrimaryPlate, SegmentedControl } from "../../../components/controls/src";
 import { Readout, useInViewPause, useSequenceClock } from "../../../components/foundation/src";
 import "../../../components/chapter/showcase.css";
-import ShowcasePage from "../../library/ShowcasePage";
+import ShowcasePage, { ShowcaseVariant } from "../../library/ShowcasePage";
 import { useLibraryLocale, type Locale } from "../../library/locale";
 
 /* Two scenes. 1 · one chapter the reader sets (tone, rhythm, heading, mark)
@@ -23,7 +23,7 @@ export default function Chapter() {
   return (
     <ShowcasePage
       entryId="chapter"
-      title={(l) => (l === "fr" ? <>Le <em>chapitre</em></> : <>The <em>chapter</em></>)}
+      title={(l) => <em>{l === "fr" ? "Chapitre" : "Chapter"}</em>}
       intro={{
         fr: "Une page Evoview se découpe en chapitres : chacun choisit son ton, son rythme et son titre, et la coupe de ton remplace tout trait.",
         en: "An Evoview page is cut into chapters: each picks its tone, rhythm and heading, and the tone cut replaces every rule.",
@@ -44,8 +44,8 @@ type Said = { tone: ChapterTone } | { rhythm: ChapterRhythm } | { heading: Headi
 const T = {
   fr: {
     specimen: {
-      title: "Réglez un chapitre",
-      region: "Spécimen : un chapitre entre ses deux voisins",
+      name: "Chapitre · spécimen",
+      when: "Avant de monter une page : choisissez pour chaque section son ton, son rythme, son titre et la place de la marque.",
       hint: "Changez un réglage : le chapitre change, ses voisins restent.",
       controls: {
         tone: { label: "Ton", options: { light: "Clair", paper: "Papier", dark: "Sombre" } },
@@ -88,8 +88,8 @@ const T = {
       ],
     },
     page: {
-      title: "La page entière",
-      lead: "Atelier Halde, cabinet d'architectes imaginaire : trois chapitres, puis le pied de page qui signe Evoview.",
+      name: "Chapitre · page",
+      when: "La page livrée — Atelier Halde, cabinet imaginaire : des chapitres coupés par le ton, une suite compacte, le pied de page qui signe Evoview.",
     },
     light: {
       title: <>La lumière <em>d'abord</em></>,
@@ -114,8 +114,8 @@ const T = {
   },
   en: {
     specimen: {
-      title: "Set one chapter",
-      region: "Specimen: one chapter between its two neighbours",
+      name: "Chapter · specimen",
+      when: "Before building a page: pick each section's tone, rhythm, heading and mark.",
       hint: "Change a setting: the chapter changes, its neighbours stay.",
       controls: {
         tone: { label: "Tone", options: { light: "Light", paper: "Paper", dark: "Dark" } },
@@ -158,8 +158,8 @@ const T = {
       ],
     },
     page: {
-      title: "The whole page",
-      lead: "Atelier Halde, an imaginary architecture studio: three chapters, then the footer that signs Evoview.",
+      name: "Chapter · page",
+      when: "The delivered page — Atelier Halde, an imaginary studio: chapters cut by tone, a compact continuation, the footer that signs Evoview.",
     },
     light: {
       title: <>Light <em>first</em></>,
@@ -204,15 +204,17 @@ function Demo() {
   }, [locale]);
 
   return (
-    <div className="chd">
-      <Specimen t={t} brandMark={config.brand.mark} />
-      <header id="chd-page" className="lib-rail chd-scene">
-        <h2 className="chd-scene__title">{t.page.title}</h2>
-        <p className="lib-body chd-scene__lead">{t.page.lead}</p>
-      </header>
-      <Page t={t} />
-      <ChapterFooter config={config} tone="light" />
-    </div>
+    <>
+      <ShowcaseVariant name={t.specimen.name} when={t.specimen.when} rhythm="flush">
+        <Specimen t={t} brandMark={config.brand.mark} />
+      </ShowcaseVariant>
+      {/* No `tone`: the page cuts dark → dark → paper → light inside; its
+          caption stays on the frame and the first chapter enters with a cut. */}
+      <ShowcaseVariant id="chd-page" name={t.page.name} when={t.page.when} rhythm="flush">
+        <Page t={t} />
+        <ChapterFooter config={config} tone="light" />
+      </ShowcaseVariant>
+    </>
   );
 }
 
@@ -242,10 +244,9 @@ function Specimen({ t, brandMark }: { t: Copy; brandMark: ReactNode }) {
   const name = mark === "logo" ? <ChapterMark label={t.studio.word}>{brandMark}</ChapterMark> : t.studio.word;
 
   return (
-    <section className="chd-specimen" aria-label={s.region}>
+    <div className="chd-specimen">
       <div className="lib-rail chd-specimen__grid">
         <div className="ev-root ev-tone-light chd-desk">
-          <h2 className="chd-scene__title">{s.title}</h2>
           <div className="chd-desk__controls">
             <Setting label={s.controls.tone.label}>
               <SegmentedControl
@@ -328,7 +329,7 @@ function Specimen({ t, brandMark }: { t: Copy; brandMark: ReactNode }) {
               </>
             )}
             <ChapterHeading
-              level={3}
+              level={2}
               layout={heading === "split" ? "split" : "centered"}
               variant={heading === "feature" ? "feature" : "standard"}
               title={t.studio.title(name)}
@@ -370,7 +371,7 @@ function Specimen({ t, brandMark }: { t: Copy; brandMark: ReactNode }) {
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 }
 
@@ -405,7 +406,7 @@ function Page({ t }: { t: Copy }) {
     <>
       <ChapterShell id="lumiere" tone="dark" rhythm="cinematic" rail="wide">
         <ChapterHeading
-          level={3}
+          level={2}
           live
           variant="feature"
           title={t.light.title}
@@ -422,7 +423,7 @@ function Page({ t }: { t: Copy }) {
 
       <ChapterShell id="visite" tone="dark" rhythm="compact" rail="reading">
         <ChapterHeading
-          level={3}
+          level={2}
           layout="split"
           title={t.visit.title}
           subtitle={t.visit.subtitle}
@@ -432,7 +433,7 @@ function Page({ t }: { t: Copy }) {
 
       <ChapterShell id="projets" tone="paper" rhythm="standard" rail="wide">
         <ChapterHeading
-          level={3}
+          level={2}
           layout="split"
           title={t.projects.title}
           subtitle={t.projects.subtitle}
