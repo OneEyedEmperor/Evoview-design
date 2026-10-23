@@ -230,7 +230,7 @@
 .lib-chapter__count { color: var(--lib-faint); }
 @media (min-width: 768px) {
   .lib-chapter { padding-block: 7.5em; }
-  .lib-chapter__head { grid-template-columns: 0.72fr 1.28fr; column-gap: 4em; align-items: end; margin-bottom: 4em; }
+  .lib-chapter__head { grid-template-columns: 0.72fr 1.28fr; column-gap: 3.5em; align-items: end; margin-bottom: 4em; }
   .lib-chapter__head .lib-lead { max-width: 34em; }
 }
 
@@ -396,7 +396,7 @@
 .lib-variant__when { max-width: 36em; }
 .lib-variant__body { margin-top: calc(var(--lib-lead) - var(--lib-variant-pad)); }
 @media (min-width: 768px) {
-  .lib-variant__caption { grid-template-columns: 0.72fr 1.28fr; column-gap: 4em; align-items: baseline; }
+  .lib-variant__caption { grid-template-columns: 0.72fr 1.28fr; column-gap: 3.5em; align-items: baseline; }
 }
 
 .lib-building { display: grid; gap: 1.5em; }

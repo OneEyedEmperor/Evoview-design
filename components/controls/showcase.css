@@ -7,7 +7,7 @@
 .ctl-scene { min-width: 0; background: none; color: var(--ev-fg); }
 .ctl-stage--chapter { padding-block: var(--ev-chapter-standard); }
 @media (min-width: 1024px) {
-  .ctl-stage { display: grid; grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr); column-gap: 4em; }
+  .ctl-stage { display: grid; grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr); column-gap: 3.5em; }
   .ctl-scene { grid-column: 2; }
 }
 
