@@ -13,7 +13,7 @@
 }
 
 .ev-library {
-  --lib-night: #0c0c0d;
+  --lib-night: #0e0e0e; /* = foundation ev-tone-dark --ev-bg, so dark packages meet the frame seamlessly */
   --lib-paper: #efefef;
   --lib-ink: #151515;
   --lib-well: #080808;
