@@ -1,4 +1,4 @@
-import { useEffect, useRef, type CSSProperties, type KeyboardEvent, type PointerEvent, type ReactNode } from "react";
+import { useEffect, useRef, type KeyboardEvent, type ReactNode } from "react";
 import { cn, pad, sequenceFillStyle, type SequenceClock } from "../foundation";
 import type { CompletionMark, ProcessStep, StepMedia, StepState } from "./types";
 
@@ -10,14 +10,14 @@ type ClockLike = Pick<SequenceClock, "duration" | "elapsed" | "running" | "done"
 type StepCardProps = {
   step: ProcessStep;
   index: number;
-  total: number;
   state: StepState;
   /** Charge of the ribbon progress + media drift while active. */
   clock: ClockLike;
   /** Key of the active run (restarts the fill animation). */
   runKey: string;
   mark: CompletionMark;
-  statusLabels: { idle: string; active: string; complete: string };
+  /** Spoken state ("En cours", …); the card shows state through its frame only. */
+  statusLabel: string;
   /** Spoken "Étape 2 sur 4". */
   stepOf: string;
   /** Loader text while the active media decodes (null = ready). */
@@ -27,16 +27,12 @@ type StepCardProps = {
   openHint?: string;
   /** Hidden duplicate used only to reserve height (phone monitor). */
   ghost?: boolean;
-  /** Queue position of the completion shine (consecutive cards 600ms apart). */
-  shineDelay?: number;
 };
 
-export function StepCard({ step, index, total, state, clock, runKey, mark, statusLabels, stepOf, loading, onOpen, openHint, ghost, shineDelay = 0 }: StepCardProps) {
-  const cardRef = useRef<HTMLDivElement>(null);
+export function StepCard({ step, index, state, clock, runKey, mark, statusLabel, stepOf, loading, onOpen, openHint, ghost }: StepCardProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const video = isVideo(step.media);
   const live = state === "active" && clock.running && !ghost;
-  const status = statusLabels[state];
 
   useEffect(() => {
     const v = videoRef.current;
@@ -64,31 +60,11 @@ export function StepCard({ step, index, total, state, clock, runKey, mark, statu
       onOpen?.();
     }
   };
-  // Fine-pointer tilt; never changes the phase or the clock.
-  const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
-    if (e.pointerType !== "mouse") return;
-    const el = cardRef.current;
-    if (!el) return;
-    const r = el.getBoundingClientRect();
-    const x = (e.clientX - r.left) / r.width;
-    const y = (e.clientY - r.top) / r.height;
-    el.style.setProperty("--ps-ry", `${((x - 0.5) * 10).toFixed(2)}deg`);
-    el.style.setProperty("--ps-rx", `${((0.5 - y) * 8).toFixed(2)}deg`);
-    el.style.setProperty("--ps-px", `${(x * 100).toFixed(1)}%`);
-    el.style.setProperty("--ps-py", `${(y * 100).toFixed(1)}%`);
-  };
-  const onPointerLeave = () => {
-    const el = cardRef.current;
-    if (!el) return;
-    el.style.setProperty("--ps-ry", "0deg");
-    el.style.setProperty("--ps-rx", "0deg");
-  };
 
-  const name = `${pad(index + 1)} ${step.title} · ${status}`;
+  const name = `${pad(index + 1)} ${step.title} · ${statusLabel}`;
 
   return (
     <div
-      ref={cardRef}
       className={cn("ps-card", interactive && "ps-card--interactive")}
       data-state={state}
       role={interactive ? "button" : "group"}
@@ -98,8 +74,6 @@ export function StepCard({ step, index, total, state, clock, runKey, mark, statu
       aria-hidden={ghost || undefined}
       onClick={interactive ? onOpen : undefined}
       onKeyDown={interactive ? onKeyDown : undefined}
-      onPointerMove={interactive ? onPointerMove : undefined}
-      onPointerLeave={interactive ? onPointerLeave : undefined}
     >
       <div className="ps-card__inner">
         <div className="ps-card__media">
@@ -115,55 +89,34 @@ export function StepCard({ step, index, total, state, clock, runKey, mark, statu
                 playsInline
                 preload="metadata"
                 aria-hidden="true"
-                style={state === "active" ? fill : undefined}
+                style={fill}
               />
             ) : (
-              <img key={state === "active" ? runKey : "still"} className="ps-card__img" src={step.media.src} alt={step.media.alt ?? ""} decoding="async" draggable={false} style={state === "active" ? fill : undefined} />
+              <img key={state === "active" ? runKey : "still"} className="ps-card__img" src={step.media.src} alt={step.media.alt ?? ""} decoding="async" draggable={false} style={fill} />
             )}
           </div>
           <span className="ps-card__veil" aria-hidden="true" />
-          <span className="ps-card__glow" aria-hidden="true" />
-          <span className="ev-t-readout ps-card__corner" aria-hidden="true">
-            {pad(index + 1)} / {pad(total)}
-          </span>
-          <span className="ps-card__pending" aria-hidden="true">
-            <span className="ev-t-readout-lg">{pad(index + 1)}</span>
-            <span className="ev-t-readout">{statusLabels.idle}</span>
+          <span className="ev-t-readout-lg ps-card__pending" aria-hidden="true">
+            {pad(index + 1)}
           </span>
           {state === "active" && loading && (
             <span className="ev-t-readout ps-card__loader" role="status">
               {loading}
             </span>
           )}
-          {state === "complete" && !ghost && (
-            <>
-              <Mark kind={mark} step={step} index={index} />
-              <span className="ps-card__shine" aria-hidden="true" style={{ "--ps-shine-delay": `${350 + shineDelay}ms` } as CSSProperties} />
-            </>
-          )}
+          {state === "complete" && !ghost && <Mark kind={mark} step={step} index={index} />}
         </div>
         <div className="ps-card__collapse">
           <div className="ps-card__clip">
             <div className="ps-card__band">
               <span className="ps-card__ribbon" aria-hidden="true" />
-              <div className="ps-card__head">
-                <h3 className="ev-t-card ps-card__title">
-                  <span className="ps-card__type">{step.title}</span>
-                </h3>
-                <span className="ev-t-readout ps-card__status" aria-hidden={state !== "active" || undefined}>
-                  {statusLabels.active}
-                  <span className="ps-card__dots ev-ambient" />
-                </span>
-              </div>
+              <h3 className="ev-t-card ps-card__title">
+                <span className="ps-card__type">{step.title}</span>
+              </h3>
               <span className="ps-card__progress" aria-hidden="true">
                 <span key={runKey} className="ps-card__fill" style={fill} />
               </span>
-              <p className="ps-card__desc">
-                <span className="ps-card__text">{step.summary}</span>
-                <span className="ps-card__dash" aria-hidden="true">
-                  —
-                </span>
-              </p>
+              <p className="ps-card__desc">{step.summary}</p>
               <span className="ev-sr">{stepOf}</span>
             </div>
           </div>
@@ -184,7 +137,7 @@ function Mark({ kind, step, index }: { kind: CompletionMark; step: ProcessStep; 
       </svg>
     );
   return (
-    <span className="ps-mark" data-kind={kind === "icon" && !step.mark ? "check" : kind} aria-hidden="true">
+    <span className="ps-mark" aria-hidden="true">
       <svg className="ps-mark__ring" viewBox="0 0 64 64">
         <circle cx="32" cy="32" r="30" pathLength={1} />
       </svg>

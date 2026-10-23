@@ -6,9 +6,8 @@ evidence, future steps are visibly pending; each step opens a split dossier
 that explains it and leads to the client's main action. Depends on
 `foundation` and `controls`.
 
-Showcase: `https://evoview-library.said.bet/layouts/process-sequence` (dark
-chapter with dossier and client icons; light three-step chapter without
-dossier and with numerals; live accent palette).
+Showcase: `https://evoview-library.said.bet/layouts/process-sequence` (one
+dark chapter: four steps, client icons, dossier; live accent palette).
 
 ## What is Evoview (protected)
 
@@ -24,22 +23,25 @@ restyled away:
   steps return to pending.
 - **Two independent column stacks in Z order** (01 02 / 03 04); the grid
   reserves the tallest state, so the chapter never resizes during the cycle.
-- **State as frame** — idle: no frame, dimmed grey media, muted index +
-  "À venir", title at low contrast, "—"; active: 2.5px frame, live media
-  (opens from its centre line, then drifts with the clock), **paper
-  inversion ribbon** wiped in L → R 700 ms, title typed in 800 ms, status
-  pill, 2px progress (desktop), description at +800 ms; complete: 1px accent
-  frame, band collapses (350 ms) to a full-bleed dimmed media tile, centred
-  `completionMark` drawn in ≈ 1 s, one neutral shine (queued 600 ms apart).
+- **State as frame, nothing else** — idle: no frame, dimmed grey media with
+  the muted step numeral, title at low contrast; active: 2.5px frame, live
+  media (opens from its centre line, then drifts with the clock), **paper
+  inversion ribbon** wiped in L → R 700 ms, title typed in 800 ms, 2px
+  progress (desktop), description at +800 ms; complete: 1px accent frame,
+  band collapses (350 ms) to a full-bleed dimmed media tile, centred
+  `completionMark` drawn in ≈ 1 s. No status pills, corner readouts, tilt or
+  shine: state words live in the accessible names only.
 - **Active = contrast, not accent** (paper on dark, ink on light); the accent
   encodes completion only.
-- **Phone changes the mechanism**: 2 × 2 index of 52px controls + one
-  monitor (the active card); no instrument, no card bar.
+- **Phone changes the mechanism**: 2 × 2 index of 52px controls (number +
+  title; a check on completed steps; an odd last control spans the row) +
+  one monitor (the active card); no instrument, no card bar.
 - **Dossier**: stage / sheet 5/12 : 7/12 at every desktop width (never
-  50/50), heading → progress + `02 / 04` → intro → numbered stadium items
-  (2 columns ≥ 1024) → objective → sticky footer; last step's "next" becomes
-  the client CTA. Phone: full sheet, sticky header (numeral, step, title,
-  close) and footer (pager + block plate).
+  50/50), heading → progress cells + `02 / 04` → intro → numbered stadium
+  items (2 columns ≥ 1024) → objective → footer; last step's "next" becomes
+  the client CTA. Phone: full sheet, sticky header (numeral, title, close),
+  cells under the media well, footer (pager + block plate). Sections are
+  separated by spacing and tone, never rules.
 
 Do **not** reintroduce the site's motifs (RULES §8, method extraction §8):
 eye artwork, TV power-on / snow / CRT / scanlines / grain, REC dot, Gaegu
@@ -64,7 +66,9 @@ turning it off is the founder's call. If the host uses `onOpen` instead of the
 built-in dossier, the package shows no mark.
 
 Client-adaptable: steps (3–6), copy, media, marks, durations, CTA, tone,
-accent, fonts via the foundation host tokens.
+accent, fonts via the foundation host tokens. `tone="light"` is for a client
+whose method chapter sits on a near-white page: the ribbon inverts to ink,
+complete frames and marks keep the accent; everything else is identical.
 
 ## Files
 
@@ -77,8 +81,7 @@ accent, fonts via the foundation host tokens.
 | `src/types.ts`, `src/index.ts` | Types, exports | no |
 | `src/process-sequence.css` | `.ev-process` token block, `ps-*` board, `psd*` dossier | no |
 
-`examples/*.webp` (demo media) and `showcase.css` belong to the library page;
-not installed.
+`examples/*.webp` (demo media) belong to the library page; not installed.
 
 ## Install
 
@@ -132,8 +135,7 @@ type ProcessSequenceConfig = {
 
 - **Desktop ≥ 768**: heading split + instrument (segments are buttons: jump
   to a step); 2-col Z stacks, card media 2.15:1. Hover (fine pointer only):
-  tilt ≤ 4–5°, scale 1.015, media push 1.05, accent pointer glow — never
-  changes the phase or pauses the clock. Cards with a dossier are
+  media push 1.04 — never changes the phase or pauses the clock. Cards with a dossier are
   `role="button"` (Enter / Space), `aria-current="step"` on the active one.
 - **Phone < 768**: index controls (jump), one monitor (media 1.79:1, height
   reserved for the tallest step), tap opens the dossier.
@@ -149,7 +151,7 @@ type ProcessSequenceConfig = {
 - **Pause model**: the clock runs only while the section is on screen (12 %),
   revealed, the tab visible, no modal open, and the active step's media
   decoded (`useInViewPause` + `useSequenceClock` + `useMediaReady`); resumes
-  with the remainder. Ambient dots / marker pulse carry `.ev-ambient`.
+  with the remainder. The marker pulse carries `.ev-ambient`.
 - **Motion policy**: no `prefers-reduced-motion` branch (architecture skill).
   Stable states instead: every step reachable by click (instrument, index,
   dossier), the dossier is static once revealed, `autoplay={false}` gives a

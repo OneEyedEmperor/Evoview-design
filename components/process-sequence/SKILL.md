@@ -1,6 +1,6 @@
 ---
 name: evoview-process-sequence
-description: Evoview process-sequence — a timed step board (split heading with segmented instrument, three-state step cards with paper inversion, Z-order column stacks, phone index + monitor) and its step dossier modal, accent-driven from the host --primary. Use when a client page needs to present a method, process, timeline or "how we work" section in the Evoview style. Triggers on "evoview process", "process sequence", "méthode", "how we work section", "step board", "timed steps".
+description: Evoview process-sequence — a timed step board (split heading with segmented instrument, three-state step cards drawn by frame + paper inversion, Z-order column stacks, phone index + monitor) and its step dossier modal, accent-driven from the host --primary. Use when a client page needs to present a method, process, timeline or "how we work" section in the Evoview style. Triggers on "evoview process", "process sequence", "méthode", "how we work section", "step board", "timed steps".
 ---
 
 # Evoview process-sequence
@@ -45,6 +45,10 @@ choreography + the approved mark in the dossier stage). Keep both.
   encodes completion, progress and focus only.
 - Do not convert to equal-height rows, a 50/50 modal, or four stacked cards on
   phone; do not let hover change the phase.
+- State is drawn by frame, ribbon and mark only: do not add status pills,
+  "step N of M" kickers, corner readouts, tilt, shines or separating rules.
+- One board per method. A shorter process is a different config, not a
+  second board on the same page.
 - One linked Evoview mark, in the dossier stage strip; never next to the CTA,
   never invent another destination or add tracking.
 - Never fork for a client: fixes go into the library (`VERSION`,

@@ -143,7 +143,7 @@ export function StepDossier({ steps, index, onIndexChange, onClose, copy, cta, a
   const progress = step && (
     <div className="psd__progress psd-in" style={{ "--d": wide ? "150ms" : "220ms" } as CSSProperties}>
       <SegmentedProgress count={n} current={shown ?? 0} label={copy.dossier.progress} labels={steps.map((s, i) => `${pad(i + 1)} ${s.title}`)} onSelect={go} fill={1} className="psd__cells" />
-      <Index current={(shown ?? 0) + 1} total={n} srLabel={copy.stepOf((shown ?? 0) + 1, n)} />
+      {wide ? <Index current={(shown ?? 0) + 1} total={n} srLabel={copy.stepOf((shown ?? 0) + 1, n)} /> : <span className="ev-sr">{copy.stepOf((shown ?? 0) + 1, n)}</span>}
     </div>
   );
 
@@ -183,10 +183,7 @@ export function StepDossier({ steps, index, onIndexChange, onClose, copy, cta, a
             {!wide && step && (
               <div className="psd__where psd-in" style={{ "--d": "80ms" } as CSSProperties} key={`where-${shown}`}>
                 <span className="psd__where-num">{pad((shown ?? 0) + 1)}</span>
-                <span className="psd__where-text">
-                  <span className="ev-t-readout">{copy.stepOf((shown ?? 0) + 1, n)}</span>
-                  <span className="psd__where-title">{step.title}</span>
-                </span>
+                <span className="psd__where-title">{step.title}</span>
               </div>
             )}
             <GlassClose ref={closeRef} label={copy.dossier.close} onClick={requestClose} className="psd__close" />
@@ -196,7 +193,6 @@ export function StepDossier({ steps, index, onIndexChange, onClose, copy, cta, a
             {step && (
               <div className="psd__content" key={`content-${shown}`}>
                 {!wide && <div className="psd__well psd-in" style={{ "--d": "140ms" } as CSSProperties}>{stage}</div>}
-                {wide && <span className="ev-t-readout psd__kicker psd-in" style={{ "--d": "100ms" } as CSSProperties}>{copy.stepOf((shown ?? 0) + 1, n)}</span>}
                 {!wide && progress}
                 <h2 id={titleId} className="ev-t-heading psd__heading psd-in psd-in--wipe" style={{ "--d": wide ? "100ms" : "280ms" } as CSSProperties}>
                   {(detail?.heading ?? [step.title]).map((line) => (

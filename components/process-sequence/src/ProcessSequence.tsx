@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type RefObject } from "react";
 import { SegmentedProgress } from "../controls";
-import { cn, pad, SectionMarker, useInViewPause, useMediaReady, useSequenceClock } from "../foundation";
+import { Check, cn, pad, SectionMarker, useInViewPause, useMediaReady, useSequenceClock } from "../foundation";
 import { StepCard, isVideo } from "./StepCard";
 import { StepDossier } from "./StepDossier";
 import type { ProcessSequenceConfig, ProcessStep, StepState } from "./types";
@@ -97,36 +97,20 @@ export function ProcessSequence({ config, tone = "dark", autoplay = true, onOpen
 
   useZStack(gridRef, n, wide);
 
-  // Completion shines queue 600ms apart when several cards finish together.
-  const lastShine = useRef(0);
-  const shineDelay = useRef<Record<string, number>>({});
-  const shineFor = (i: number) => {
-    const k = `${cycle}:${i}`;
-    if (shineDelay.current[k] === undefined) {
-      const now = performance.now();
-      const delay = Math.max(0, lastShine.current + 600 - now);
-      shineDelay.current[k] = delay;
-      lastShine.current = now + delay;
-    }
-    return shineDelay.current[k];
-  };
-
   const card = (s: ProcessStep, i: number, ghost = false) => (
     <StepCard
       step={s}
       index={i}
-      total={n}
       state={ghost ? "idle" : stateOf(i)}
       clock={cardClock}
       runKey={runKey}
       mark={config.completionMark ?? "check"}
-      statusLabels={copy.status}
+      statusLabel={copy.status[stateOf(i)]}
       stepOf={copy.stepOf(i + 1, n)}
       loading={i === activeIndex && media.slow ? (media.failed ? copy.dossier.failed : copy.dossier.loading) : null}
       onOpen={openable(s) ? () => open(i) : undefined}
       openHint={copy.openHint}
       ghost={ghost}
-      shineDelay={!ghost && stateOf(i) === "complete" ? shineFor(i) : 0}
     />
   );
 
@@ -156,7 +140,7 @@ export function ProcessSequence({ config, tone = "dark", autoplay = true, onOpen
             <div className="ps-instrument" data-draining={draining || undefined}>
               <ol className="ps-captions" aria-hidden="true">
                 {captions.map((c, i) => (
-                  <li key={`${cycle}:${i}`} className="ev-t-readout" data-on={completedBefore(i) || undefined}>
+                  <li key={i} className="ev-t-readout" data-on={completedBefore(i) || undefined}>
                     <span>{c}</span>
                   </li>
                 ))}
@@ -194,10 +178,9 @@ export function ProcessSequence({ config, tone = "dark", autoplay = true, onOpen
                   <li key={s.id}>
                     <button type="button" className="ps-index__btn" data-state={st} aria-current={st === "active" ? "step" : undefined} onClick={() => jump(i)}>
                       <span className="ps-index__num">{pad(i + 1)}</span>
-                      <span className="ps-index__text">
-                        <span className="ps-index__title">{s.title}</span>
-                        <span className="ev-t-readout ps-index__status">{copy.status[st]}</span>
-                      </span>
+                      <span className="ps-index__title">{s.title}</span>
+                      {st === "complete" && <Check className="ps-index__check" />}
+                      <span className="ev-sr">{copy.status[st]}</span>
                     </button>
                   </li>
                 );
