@@ -126,7 +126,6 @@ export function buildSelectorStageConfig(locale: Locale): SelectorStageConfig {
           ? "Nos peintures à la chaux changent la lumière d'une pièce sans toucher au reste. Choisissez une teinte : le mur change, le décor reste."
           : "Our lime paints change the light in a room without touching anything else. Pick a shade: the wall changes, the room stays.",
         label: fr ? "Choisir une teinte" : "Choose a shade",
-        note: fr ? "Rendus illustratifs · teintes indicatives" : "Illustrative renders · shades indicative",
         options: [
           {
             id: "chalk",
@@ -164,7 +163,6 @@ export function buildSelectorStageConfig(locale: Locale): SelectorStageConfig {
           ? "Une cuisine des années 1980, rouverte sur sa fenêtre d'origine. Rien n'a bougé : ni la fenêtre, ni la porte, ni le cadre."
           : "A 1980s kitchen, reopened onto its original window. Nothing moved: not the window, not the door, not the frame.",
         label: fr ? "Comparer l'état de la cuisine" : "Compare the kitchen",
-        note: fr ? "Cas fictif · images illustratives" : "Fictional case · illustrative images",
         states: [
           {
             id: "before",
@@ -188,7 +186,6 @@ export function buildSelectorStageConfig(locale: Locale): SelectorStageConfig {
           ? "Deux propositions pour la même cuisine, à lire ensemble : garder deux pièces sous la même lumière, ou n'en faire qu'une."
           : "Two proposals for the same kitchen, read together: keep two rooms under one light, or make them one.",
         label: fr ? "Choisir une proposition" : "Choose a proposal",
-        note: fr ? "Plans illustratifs" : "Illustrative plans",
         states: [
           {
             id: "glass",
@@ -212,7 +209,6 @@ export function buildSelectorStageConfig(locale: Locale): SelectorStageConfig {
           ? "La même matière d'une pièce à l'autre : chaux, chêne clair, travertin. Choisissez un cadre."
           : "The same materials from room to room: lime, pale oak, travertine. Pick a frame.",
         label: fr ? "Choisir une vue du chantier" : "Choose a view of the project",
-        note: fr ? "Cas fictif · images illustratives" : "Fictional case · illustrative images",
         items: [
           { id: "kitchen", label: fr ? "Cuisine" : "Kitchen", note: fr ? "Îlot en travertin" : "Travertine island", media: { src: kitchenAfter, alt: fr ? "Cuisine rénovée, îlot en travertin" : "Renovated kitchen, travertine island" } },
           { id: "detail", label: fr ? "Détail" : "Detail", note: fr ? "Poignée en laiton brossé" : "Brushed brass pull", media: { src: atlasDetail, alt: fr ? "Angle d'îlot en travertin et façade en chêne avec poignée en laiton" : "Travertine island corner and oak front with a brass pull" } },

@@ -46,7 +46,10 @@ restyle them to a client's UI kit:
   the active one releases colour inside a 70 % accent ring; no resting frame.
 - **Media gate**: photographs reveal only once decoded (loader after 350ms,
   counter, retry).
-- **Illustrative ≠ result**: demonstrations carry a `note` line ("Cas fictif").
+- **Illustrative ≠ result**: when a chapter shows a demonstration rather
+  than a delivered result, say so once in its `note` slot ("Rendus
+  illustratifs"). Once per page, not under every chapter; real client
+  results need none.
 
 **Accent = the client's** (`--primary` → `--ss-accent`, `--primary-foreground`
 → `--ss-accent-ink`). It drives: row tint / border / bar / index, chip

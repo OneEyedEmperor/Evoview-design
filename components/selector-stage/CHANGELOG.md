@@ -1,5 +1,11 @@
 # selector-stage changelog
 
+## 1.1.2
+
+- Config (reference content only): the four reference chapters no longer
+  fill `note`; the slot stays (`ChapterCopy.note`) for one honest
+  "illustrative" mention per page. Atlas item `note`s are unchanged.
+
 ## 1.1.1
 
 - Borders only for media clipping and selection: unselected rows and resting

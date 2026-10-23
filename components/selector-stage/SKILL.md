@@ -28,7 +28,9 @@ the control language.
    sentences, one `detail` sentence per option), its media in `media/`
    (4:3 for stages, ≥ 1200px wide webp, matched framing for compares —
    same camera, one variable changed), specimens as `render` nodes. Delete
-   unused reference media. Keep `note` on any illustrative content.
+   unused reference media. If content is illustrative (renders, fictional
+   case), say so once on the page via one chapter's `note`; never repeat it
+   under every chapter.
 4. Mount each chapter with `tone` matching the page's chapter sequence (hard
    tone cuts, no mid-grey). Use `chapter={false}` inside an existing section.
    Autoplay only when the options form a sequence worth watching.
