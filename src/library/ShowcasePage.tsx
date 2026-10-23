@@ -350,7 +350,30 @@ function useHasNavTone(ref: RefObject<HTMLElement | null>): boolean {
     let frame = 0;
     const sync = () => {
       frame = 0;
-      const roots = Array.from(el.querySelectorAll<HTMLElement>(TONED)).filter((n) => {
+      /* A dark variant left on the frame tone (no `tone`, so no ev-tone
+         class) declares nothing; once another variant does, the stage stops
+         being marked and the bar would turn light over it. Mark the variant,
+         or only its caption when the component holds light grounds of its
+         own (those regions then speak for themselves). */
+      const wanted = new Set<HTMLElement>();
+      for (const v of Array.from(el.querySelectorAll<HTMLElement>(".lib-variant[data-tone='dark']:not(.ev-tone-dark)"))) {
+        const islands = v.querySelector(".ev-tone-light, .ev-tone-paper, [data-nav-tone]:not([data-nav-tone='dark'])");
+        const target = islands ? v.querySelector<HTMLElement>(".lib-variant__caption") : v;
+        if (target) wanted.add(target);
+      }
+      for (const n of Array.from(el.querySelectorAll<HTMLElement>("[data-nav-tone-variant]"))) {
+        if (!wanted.has(n)) {
+          n.removeAttribute("data-nav-tone");
+          n.removeAttribute("data-nav-tone-variant");
+        }
+      }
+      for (const n of wanted) {
+        if (!n.hasAttribute("data-nav-tone-variant")) {
+          n.setAttribute("data-nav-tone-variant", "");
+          n.setAttribute("data-nav-tone", "dark");
+        }
+      }
+      const roots =Array.from(el.querySelectorAll<HTMLElement>(TONED)).filter((n) => {
         const outer = n.parentElement?.closest(TONED);
         return !outer || outer === el || !el.contains(outer);
       });

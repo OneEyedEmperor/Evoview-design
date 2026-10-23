@@ -68,7 +68,17 @@ export default function FloatingPalette({ anchor, tone, accent, ...palette }: Pr
     return () => io.disconnect();
   }, [anchor]);
 
-  const visible = !menuOpen && (phone ? away && !suspended : away || suspended);
+  // The page's end: the footer carries its own locale toggle bottom-right.
+  const [atFooter, setAtFooter] = useState(false);
+  useEffect(() => {
+    const footer = document.querySelector(".lib-footer");
+    if (!footer || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(([entry]) => setAtFooter(entry.isIntersecting));
+    io.observe(footer);
+    return () => io.disconnect();
+  }, []);
+
+  const visible = !menuOpen && (suspended ? !phone : away && !atFooter);
   useEffect(() => {
     if (!visible) setOpen(false);
   }, [visible]);
