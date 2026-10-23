@@ -31,7 +31,7 @@ while read -r name size cx cy cw ch bx by bw bh; do
   echo "$name cropped"
 done <<'EOF'
 chapter           1280x800   152 150 1136  710   132 330 1174 282
-card-track        1280x1135   30 120  578  512    40 160 1400 336
+card-track        1280x1135   40  92  553  490    40 160 1400 336
 process-sequence  1280x1135  130  40  970  860   130 150 1180 283
 story-blocks      1280x800   120  30 1200  750   136 300 1170 281
 reservation       1280x800   220  50 1000  625   272 368  896 215
