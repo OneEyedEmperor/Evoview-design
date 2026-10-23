@@ -14,21 +14,30 @@
 /* Three lines reserved: the frame below does not jump when the sentence changes. */
 .chd-desk__say { min-height: calc(3 * 1.6em); max-width: 30em; color: var(--ev-fg-65); text-wrap: pretty; }
 
-@media (min-width: 1200px) {
+/* From 1024 the settings sit beside the frame, so the specimen heading
+   shares the first viewport with them (RULES §12). */
+@media (min-width: 1024px) {
   .chd-specimen__grid { grid-template-columns: minmax(0, 0.37fr) minmax(0, 0.63fr); column-gap: 3.5em; align-items: start; }
-  .chd-desk { position: sticky; top: 92px; }
-  .chd-desk__controls { grid-template-columns: minmax(0, 1fr); }
+  .chd-desk { position: sticky; top: 92px; gap: 1.25em; }
+  .chd-desk__controls { grid-template-columns: minmax(0, 1fr); gap: 1em; }
+  .chd-desk__say { min-height: calc(2 * 1.6em); }
 }
+@media (min-width: 1024px) and (max-width: 1279.98px) { .chd-desk .evc-seg__option { padding-inline: 6px; } }
 
 /* The frame is media clipping: a crop of a page, cut above and below. */
 .chd-frame { position: relative; overflow: hidden; margin-inline: calc(-1 * var(--lib-gutter)); }
 @media (min-width: 768px) { .chd-frame { margin-inline: 0; border-radius: calc(1.5 * var(--ev-rem)); } }
 
 .chd-neighbour { box-sizing: border-box; overflow: hidden; }
-.chd-neighbour--before { padding-bottom: var(--ev-chapter-standard); }
-/* Enough of the previous chapter's image to read as an image (window, beam, floor). */
-.chd-neighbour__crop { display: flex; height: calc(12 * var(--ev-rem)); align-items: flex-end; overflow: hidden; }
-.chd-neighbour__crop .chd-room { flex: 0 0 auto; width: 100%; aspect-ratio: 2.2 / 1; }
+/* The previous chapter, reduced to its last image (a whole room as a
+   panorama strip) and a short tail: enough to read as "a dark chapter ends
+   here", short enough that the specimen heading stays in the first
+   viewport. Its own bottom padding is cropped, not demonstrated; the
+   specimen's padding is the one the rhythm bands show. */
+.chd-neighbour--before { --chd-prev-h: calc(6 * var(--ev-rem)); padding-bottom: calc(2.5 * var(--ev-rem)); }
+.chd-neighbour--before .chd-room { aspect-ratio: auto; height: var(--chd-prev-h); border-top-left-radius: 0; border-top-right-radius: 0; }
+@media (min-width: 1024px) { .chd-neighbour--before { --chd-prev-h: calc(3 * var(--ev-rem)); padding-bottom: calc(1.25 * var(--ev-rem)); } }
+@media (min-width: 1280px) { .chd-neighbour--before { --chd-prev-h: calc(5.5 * var(--ev-rem)); padding-bottom: calc(2 * var(--ev-rem)); } }
 .chd-neighbour--after { height: calc(var(--ev-chapter-standard) + 6.5 * var(--ev-rem)); padding-top: var(--ev-chapter-standard); }
 /* The follower obeys the rule the specimen teaches: same tone → compact. */
 .chd-live.ev-tone-dark + .chd-neighbour--after { padding-top: var(--ev-chapter-compact); }

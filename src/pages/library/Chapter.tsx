@@ -45,7 +45,7 @@ const T = {
   fr: {
     specimen: {
       name: "Chapitre · spécimen",
-      when: "Avant de monter une page : choisissez pour chaque section son ton, son rythme, son titre et la place de la marque.",
+      when: "Chaque section choisit son ton, son rythme, son titre et sa marque.",
       hint: "Changez un réglage : le chapitre change, ses voisins restent.",
       controls: {
         tone: { label: "Ton", options: { light: "Clair", paper: "Papier", dark: "Sombre" } },
@@ -111,7 +111,7 @@ const T = {
   en: {
     specimen: {
       name: "Chapter · specimen",
-      when: "Before building a page: pick each section's tone, rhythm, heading and mark.",
+      when: "Each section picks its tone, rhythm, heading and mark.",
       hint: "Change a setting: the chapter changes, its neighbours stay.",
       controls: {
         tone: { label: "Tone", options: { light: "Light", paper: "Paper", dark: "Dark" } },
@@ -298,12 +298,7 @@ function Specimen({ t, brandMark }: { t: Copy; brandMark: ReactNode }) {
         <div className="chd-frame">
           <div className="ev-root ev-tone-dark chd-neighbour chd-neighbour--before" aria-hidden="true">
             <div className="ev-rail ev-rail--wide">
-              <div className="chd-neighbour__crop">
-                <Room moment={2} />
-              </div>
-              <Readout as="p" className="chd-caption">
-                {t.light.caption}
-              </Readout>
+              <Room moment={2} />
             </div>
           </div>
 
