@@ -116,7 +116,7 @@ function Showcase() {
 
       <ShowcaseVariant name={tr(T.single.name, locale)} when={tr(T.single.when, locale)} tone="light" rhythm="standard">
         <div className="ev-root ev-chapter lib-rail dsh-scene dsh-scene--single">
-          <div className="dsh-scene__copy">
+          <div className="dsh-scene__head">
             <h2 className="ev-t-section-feature">{tr(T.single.title, locale)}</h2>
             <p className="ev-t-body dsh-scene__body">{tr(T.single.body, locale)}</p>
           </div>
