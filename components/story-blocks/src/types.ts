@@ -67,8 +67,9 @@ export type ProofGridProps = {
 
 export type PayoffCta = {
   label: ReactNode;
-  /** What the click does, e.g. "Ouvre la réservation". Shown under the plate. */
-  consequence: ReactNode;
+  /** Only when the click does something the label doesn't say (leaves the dossier,
+   *  opens another site). Shown under the plate as its description. */
+  consequence?: ReactNode;
   href?: string;
   target?: string;
   rel?: string;

@@ -170,12 +170,13 @@ export function PayoffBand({ lines, accentLine, lead, results, cta, bloom = true
   const id = useId();
   const consequenceId = useId();
   const { label, consequence, href, target, rel, onClick } = cta;
+  const describedBy = consequence ? consequenceId : undefined;
   const plate = href ? (
-    <PrimaryPlate block href={href} target={target} rel={rel} onClick={onClick} aria-describedby={consequenceId}>
+    <PrimaryPlate block href={href} target={target} rel={rel} onClick={onClick} aria-describedby={describedBy}>
       {label}
     </PrimaryPlate>
   ) : (
-    <PrimaryPlate block onClick={onClick} aria-describedby={consequenceId}>
+    <PrimaryPlate block onClick={onClick} aria-describedby={describedBy}>
       {label}
     </PrimaryPlate>
   );
@@ -207,9 +208,11 @@ export function PayoffBand({ lines, accentLine, lead, results, cta, bloom = true
         </div>
         <Reveal index={2} className="evsb-payoff__action">
           {plate}
-          <span id={consequenceId} className="ev-t-readout evsb-consequence">
-            {consequence}
-          </span>
+          {consequence && (
+            <span id={consequenceId} className="ev-t-readout evsb-consequence">
+              {consequence}
+            </span>
+          )}
         </Reveal>
       </div>
     </Chapter>

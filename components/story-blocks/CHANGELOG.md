@@ -1,5 +1,13 @@
 # story-blocks changelog
 
+## 2.0.2
+
+- Config: `PayoffCta.consequence` is optional; the readout under the plate
+  (and its `aria-describedby`) renders only when set. Use it only when the
+  click does something the label doesn't say (leaving a dossier).
+- Reference stories: both payoffs drop "Ouvre la réservation" / "Opens the
+  booking" (it restated "Réserver …").
+
 ## 2.0.1
 
 - Showcase only: both configurations are `ShowcaseVariant`s (`Story · dark`,

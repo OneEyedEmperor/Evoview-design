@@ -40,8 +40,10 @@ Read `README.md` ("What is Evoview", API, verification) and the library's
 - Never add lines, cards or alternating backgrounds to separate chapters,
   rows, results or captions; space, scale, alignment and tone do it.
 - One title per story, one heading per chapter, 2–3 meaning-broken lines.
-- Exactly one CTA per story (the payoff plate) with an honest consequence
-  label; it points to the client's main action, never to Evoview.
+- Exactly one CTA per story (the payoff plate), labelled with the action;
+  it points to the client's main action, never to Evoview. Set a
+  `consequence` only when the click does something the label doesn't say
+  (leaves a dossier, opens another site); never restate the label.
 - No Evoview mark in these blocks (no chassis); never beside the CTA.
 - Payoff results must be true; client demonstrations say so visibly.
 - Keep the protected proportions, open chapters, media-first phone order

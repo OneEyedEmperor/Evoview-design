@@ -39,7 +39,9 @@ following make them recognisably Evoview and must not be restyled:
 - **Indices only where they index**: sequence rows carry `01…` or a real
   value (`14:00`) in the accent readout; proof images carry no numbers.
 - **One exit**: exactly one primary plate per story (white / ink at rest,
-  accent on hover), full width of its column, consequence label under it.
+  accent on hover), full width of its column, labelled with the action
+  itself. A consequence readout under it only when the click does
+  something the label doesn't say (in a dossier: "Quitte le dossier").
 - **Reveal**: once, y24 / 600ms for text, y45 / 900ms for media, 80ms
   stagger, cinematic easing.
 
@@ -50,7 +52,7 @@ copy, frames or a resting plate. Accent text goes through
 `--ev-accent-signal`, so yellow and off-white still read on paper.
 
 **Client-adaptable**: all copy, media, ratios (per artefact) and spans, the
-CTA destination and consequence, tone per story (`dark` / `light` /
+CTA destination (and an optional consequence), tone per story (`dark` / `light` /
 `paper`), rhythm (`page` / `dossier`), which blocks and in what order,
 fonts via `--font-heading` / `--font-body` / `--font-readout`.
 
@@ -100,7 +102,7 @@ type StoryChapter =
   | { kind: "proof"; heading?: Lines; body?; headingAt?: "start" | "end";
       items: { media; ratio; ratioPhone?; span?; caption? }[] }
   | { kind: "payoff"; lines: ReactNode[]; accentLine?: number; lead?; results?: { title; detail }[];
-      cta: { label; consequence; href?; target?; rel?; onClick? }; bloom?: boolean };
+      cta: { label; consequence?; href?; target?; rel?; onClick? }; bloom?: boolean };
 // Lines = ReactNode | ReactNode[] (one entry per display line)
 ```
 
@@ -158,8 +160,8 @@ their image. Proof images zoom 1.045 on hover (fine pointers only).
 4. 390: hero and sequence media first, portrait proofs 2-up, CTA full width.
 5. Palette: default, indigo, yellow, off-white — indices, dot, accent line,
    bloom recolour without remount; readable on paper.
-6. Keyboard: the plate is reachable, focus ring visible, its consequence is
-   its `aria-describedby`. Hover (fine pointer): plate fills with the accent.
+6. Keyboard: the plate is reachable, focus ring visible; a set consequence
+   is its `aria-describedby`. Hover (fine pointer): plate fills with the accent.
 7. Block an image (devtools / route abort): the well shows the failure text
    and retry; retry reveals the image.
 8. Scroll fast past the story with the tab hidden / restored: parts reveal
