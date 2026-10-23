@@ -1,5 +1,12 @@
 # story-blocks changelog
 
+## 2.0.1
+
+- Showcase only: both configurations are `ShowcaseVariant`s (`Story · dark`,
+  `Story · paper`, `rhythm="cinematic"`), so the frame owns header → demo
+  spacing; `showcase.css` (outer padding, gutter override) removed now that
+  the frame rail is foundation's rail. No package source or config changes.
+
 ## 2.0.0 — no line segmentation (refinement pass, 2026-10-23)
 
 Chapters and their contents are now separated by space, scale, alignment

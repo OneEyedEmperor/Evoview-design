@@ -1,12 +1,12 @@
 import { useMemo } from "react";
 import { Story, buildStoryBlocksConfig } from "../../../components/story-blocks/src";
-import "../../../components/story-blocks/showcase.css";
-import ShowcasePage from "../../library/ShowcasePage";
-import { useLibraryLocale } from "../../library/locale";
+import ShowcasePage, { ShowcaseVariant } from "../../library/ShowcasePage";
+import { useLibraryLocale, type Localized } from "../../library/locale";
 
 /* One fictional winery: the full story on a dark page, then the short close
-   a light page would use. The tone cut between them is the only separator.
-   Colour comes only from the frame's --primary: a swatch never re-renders them. */
+   a light page would use. The frame owns the spacing; the story's chapter
+   band (cinematic top) is absorbed under each caption. Colour comes only
+   from the frame's --primary: a swatch never re-renders them. */
 export default function StoryBlocks() {
   return (
     <ShowcasePage
@@ -23,23 +23,28 @@ export default function StoryBlocks() {
   );
 }
 
-const SHORT = {
-  fr: "Sur une page claire, un récit court : un programme horaire, puis la réservation.",
-  en: "On a light page, a short story: a timed programme, then the booking.",
+const WHEN: Record<"full" | "short", Localized> = {
+  full: {
+    fr: "Quand l'offre mérite une page entière : une ouverture, une séquence, des preuves, puis une seule action.",
+    en: "When the offer deserves a whole page: an opening, a sequence, the proof, then one action.",
+  },
+  short: {
+    fr: "Pour clore une page claire : un programme horaire, puis la réservation.",
+    en: "To close a light page: a timed programme, then the booking.",
+  },
 };
 
 function Stories() {
   const { locale } = useLibraryLocale();
   const config = useMemo(() => buildStoryBlocksConfig(locale), [locale]);
   return (
-    <div className="sbx">
-      <Story tone="dark" copy={config.copy} chapters={config.stories.harvest} />
-      <div className="sbx-short ev-tone-paper">
-        <div className="ev-root sbx-short__note">
-          <p className="ev-rail ev-rail--wide">{SHORT[locale]}</p>
-        </div>
+    <>
+      <ShowcaseVariant name="Story · dark" when={WHEN.full[locale]} rhythm="cinematic">
+        <Story tone="dark" copy={config.copy} chapters={config.stories.harvest} />
+      </ShowcaseVariant>
+      <ShowcaseVariant name="Story · paper" when={WHEN.short[locale]} tone="paper" rhythm="cinematic">
         <Story tone="paper" copy={config.copy} chapters={config.stories.visit} />
-      </div>
-    </div>
+      </ShowcaseVariant>
+    </>
   );
 }

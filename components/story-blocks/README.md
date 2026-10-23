@@ -73,8 +73,6 @@ it. Payoff results must be true.
 | `src/types.ts`, `src/copy.tsx`, `src/index.ts` | types, copy context, exports | no |
 | `src/story-blocks.css` | `.ev-story-blocks` token block, `evsb-*` | no |
 
-`showcase.css` is the library page's sheet; not installed.
-
 ## Install
 
 ```bash
