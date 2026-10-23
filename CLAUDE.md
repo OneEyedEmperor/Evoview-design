@@ -37,15 +37,15 @@ and `controls`; follow `docs/BUILD-BRIEF.md`.
 
 | Component | Status | Skill |
 | --- | --- | --- |
-| `foundation` — tokens, scale, tones, type voices, pause-model hooks, attribution mark | 1.1.0 | `evoview-foundation` |
-| `controls` — plate, ghost, glass close/pager, chips, rows, fields, switch, segmented control/progress (`/components/controls`) | 1.1.0 | `evoview-controls` |
-| `chapter` — section shell, headings, tone cuts, footer with attribution (`/layouts/chapter`) | 1.0.1 | `evoview-chapter` |
-| `card-track` — media card + scroll-scrubbed track (`/layouts/card-track`) | 1.0.1 | `evoview-card-track` |
-| `process-sequence` — timed step board + step dossier (`/layouts/process-sequence`) | 1.0.1 | `evoview-process-sequence` |
-| `story-blocks` — intro split, indexed rows, proof grid, pillars, payoff (`/layouts/story-blocks`) | 1.0.1 | `evoview-story-blocks` |
-| `dossier` — portal modal, selection board, chapter strip, mobile dock (`/components/dossier`) | 1.0.2 | `evoview-dossier` |
-| `selector-stage` — selector ↔ stage, before/after, atlas (`/components/selector-stage`) | 1.0.1 | `evoview-selector-stage` |
-| `navbar` — finder capsule, desktop + mobile, cover-card trays (`/navbar`) | 2.3.0 | `evoview-navbar` |
+| `foundation` — tokens, scale, tones, type voices, pause-model hooks, attribution mark | 1.1.1 | `evoview-foundation` |
+| `controls` — plate, ghost, glass close/pager, chips, rows, fields, switch, segmented control/progress (`/components/controls`) | 1.1.1 | `evoview-controls` |
+| `chapter` — section shell, headings, tone cuts, footer with attribution (`/layouts/chapter`) | 1.1.0 | `evoview-chapter` |
+| `card-track` — media card + scroll-scrubbed track (`/layouts/card-track`) | 1.2.0 | `evoview-card-track` |
+| `process-sequence` — timed step board + step dossier (`/layouts/process-sequence`) | 1.1.1 | `evoview-process-sequence` |
+| `story-blocks` — intro split, indexed sequence, proof collage, payoff (`/layouts/story-blocks`) | 2.0.1 | `evoview-story-blocks` |
+| `dossier` — portal modal, selection board, chapter strip, mobile dock (`/components/dossier`) | 1.1.0 | `evoview-dossier` |
+| `selector-stage` — selector ↔ stage, before/after, atlas (`/components/selector-stage`) | 1.1.1 | `evoview-selector-stage` |
+| `navbar` — finder capsule, desktop + mobile, cover-card trays (`/navbar`) | 2.3.1 | `evoview-navbar` |
 | `reservation` — Evoview booking application, client accent (`/components/reservation`) | 2.8.1 | `evoview-reservation` |
 
 ## Rules for changing a component here
