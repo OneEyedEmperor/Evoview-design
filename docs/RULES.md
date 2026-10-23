@@ -53,8 +53,14 @@ tokens and status, never for containers of copy. Commands are rectangular 12.
 - Rails: reading `70em` (1120), wide `85em` (1360), gutters 20 / 32 / 48 / 64
   authored. Tracks start on the wide rail and bleed right.
 - Three bands that must stay distinct: internal ≈ 8, neighbour ≈ 20, chapter ≈
-  100 (rendered desktop). Separation order: spacing → hairline (1px white/.08 or
-  ink/.10) → tone shift → bordered module. Prefer the earliest that works.
+  100 (rendered desktop). **Spacing is the separator.** Then scale, alignment
+  and tone shifts. Separating lines are cheap segmentation (architecture skill:
+  "prefer clear spatial relationships over extra labels, borders and
+  containers") — do not rule off rows, chapters, columns, results or captions.
+  A hairline is allowed only when it is itself information (a progress track,
+  a timeline, a seam that a reader must see, a chapter strip underline) — at
+  most one per scene, and justify it. Boxes only for hit targets, media
+  clipping and selection state.
 - Chapter rhythm (authored, mobile / desktop): standard 80 / 120, compact 64 /
   96 (same-tone continuation), cinematic 96–80 / 144–120 (dark entry). Heading
   → content 48 / 64.
@@ -145,3 +151,13 @@ Configurable but on by default; README states it is the approved placement.
 | **Layouts** (page sections) | `chapter` — section shell + headings + tone cuts · `card-track` — media card + scroll-scrubbed track · `process-sequence` — timed step board · `story-blocks` — intro split, indexed rows, proof grid, payoff band |
 | **Components** (interactive) | `reservation` (existing) · `dossier` — portal modal with selection board, chapter strip, mobile dock · `selector-stage` — selector ↔ stage + before/after compare · `controls` — buttons, chips, fields, segmented progress, switch |
 | **Navbar** | `/navbar` (the navbar package itself) |
+
+## 12. Showcase pages
+
+A showcase page teaches one package. Within the first viewport a reader must
+understand what the component is, what job it does on a client site, and what
+to look at. Every variant shown must demonstrate a real configuration
+difference a client would choose; drop variants that repeat the same thing
+with less content. Annotation stays minimal and in the page's own voice — no
+spec readouts sprinkled over the demo. Demo media must load reliably every
+time (no flaky gates, no race with the palette or locale).
