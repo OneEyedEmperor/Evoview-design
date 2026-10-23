@@ -1,4 +1,5 @@
 import { useId, useState, type ReactNode } from "react";
+import { COVERS_REV } from "./covers.rev";
 
 /* Abstract structure previews for each library entry, drawn as inline SVG
    in neutral greys (the navbar card renders them monochrome anyway). One
@@ -350,7 +351,7 @@ const DRAW: Record<string, Draw> = {
 const PHOTO = new Set(["chapter", "card-track", "process-sequence", "story-blocks", "reservation", "dossier", "selector-stage", "controls", "navbar"]);
 const PHOTO_SIZE: Record<CoverVariant, [number, number]> = { banner: [900, 216], card: [1280, 800] };
 
-export const coverSrc = (id: string, variant: CoverVariant) => (PHOTO.has(id) ? `/library/covers/${id}-${variant}.webp` : undefined);
+export const coverSrc = (id: string, variant: CoverVariant) => (PHOTO.has(id) ? `/library/covers/${id}-${variant}.webp?v=${COVERS_REV}` : undefined);
 
 export function Cover({ id, variant = "card", className }: { id: string; variant?: CoverVariant; className?: string }) {
   const uid = useId().replace(/:/g, "");
@@ -363,7 +364,7 @@ export function Cover({ id, variant = "card", className }: { id: string; variant
     return (
       <img
         key={attempt}
-        src={attempt ? `${src}?retry=1` : src}
+        src={attempt ? `${src}&retry=1` : src}
         alt=""
         width={pw}
         height={ph}

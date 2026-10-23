@@ -87,13 +87,16 @@ The frame owns all spacing between header and demos; pages add no outer
 padding, strips or rules of their own.
 
 - Header → first content and caption → component: `--lib-lead` (heading
-  band, 48 / 64 authored). The caption is pulled into the component's own
-  top padding (`rhythm` names the foundation token), so this holds whatever
-  chapter rhythm the component uses.
+  band, 48 / 64 authored, in `--lib-rem`, never `em`). The frame measures
+  the component's first ink (layout boxes, re-measured on resize, media
+  load and DOM change) and pulls the body into its own top padding, so
+  this holds whatever padding the package brings; `rhythm` is only the
+  pre-measure guess. A component opening on another ground (its own tone
+  cut) is not pulled: the caption sits one lead above the cut.
 - Between variants: a tone cut gets a chapter band (`--lib-chapter`, 80 /
-  120) above the next caption; a same-tone continuation sits after the
-  previous component's own bottom padding (`flush` components get the
-  chapter band added below them).
+  120) above the next caption; at least one chapter band always follows a
+  variant's last ink (measured), so a same-tone continuation starts right
+  after it.
 - `tone` must match the component root's tone (the caption band takes the
   same foundation background); a component that switches tones internally
   is wrapped without `tone`.
@@ -113,9 +116,13 @@ shows a retry state inside the layout, never a blank app.
   while the navbar's mobile menu is open. It carries
   `data-ev-keep-interactive`, which modal packages skip when applying
   `inert` (documented in `dossier` / `process-sequence` READMEs); pointer
-  only while a modal is open.
+  only while a modal is open. It steps aside while the library footer is
+  in view. From 768 px the frame sets `--ev-modal-reserve-bottom` (its
+  footprint) for modal packages to keep free under their window.
 - **Nav tone**: the frame marks only its header (and bottom spacer) dark; the
-  stage is marked dark only while its content declares no tone. Content tone
+  stage is marked dark only while its content declares no tone. A dark
+  `ShowcaseVariant` without `tone` is marked itself (only its caption when
+  the component holds light grounds). Content tone
   = `data-nav-tone` or foundation `ev-tone-*` on outermost section roots
   (dark roots without `data-nav-tone` are bridged automatically). Nested tone
   elements (cards, modals) are ignored.
@@ -126,4 +133,6 @@ shows a retry state inside the layout, never a blank app.
   `<id>-card.webp` (index wells, graded at rest: 1280×800 for 7-column
   entries, 1280×1135 for the 2nd/3rd of a category, whose well shares the
   row height); the SVG drawing is the fallback after one retry. Regenerate
-  with `scripts/covers/shoot.sh [id…]` then `scripts/covers/crop.sh`.
+  with `scripts/covers/shoot.sh [id…]` then `scripts/covers/crop.sh`, which
+  also stamps `covers.rev.ts` (cache key). Banners carry the tray title on
+  top: crop imagery or structure, not display type.

@@ -6,6 +6,8 @@
 #   <id>-banner.webp  navbar tray card, 900×216.
 # Boxes are CSS px on the 1440×900 @2x capture; the box is cover-fitted to
 # the output size (centre crop), so pick a box near the output ratio.
+# Banners carry the tray card's title on top: crop image or structure, not
+# display type.
 set -euo pipefail
 
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -28,13 +30,16 @@ while read -r name size cx cy cw ch bx by bw bh; do
   crop "$name" banner "$bx" "$by" "$bw" "$bh" 900x216
   echo "$name cropped"
 done <<'EOF'
-chapter           1280x800   120 150 1200 750     0 600 1200 288
-card-track        1280x1135  260 100  880 780     0 330 1440 346
-process-sequence  1280x1135  260  80  900 798     0 260 1440 346
-story-blocks      1280x800   120 120 1200 750   160 490 1140 274
-reservation       1280x800   232  30  976 610    60 330  900 216
-dossier           1280x1135  280  30  900 798   140 190 1200 288
-selector-stage    1280x1135  260  60  900 798   140 330 1176 282
-controls          1280x800   100  80 1200 750   606 446  700 168
-navbar            1280x800   590  10  840 525   600 160  820 197
+chapter           1280x800   152 150 1136  710   132 330 1174 282
+card-track        1280x1135   30 120  578  512    40 160 1400 336
+process-sequence  1280x1135  130  40  970  860   130 150 1180 283
+story-blocks      1280x800   120  30 1200  750   136 300 1170 281
+reservation       1280x800   220  50 1000  625   272 368  896 215
+dossier           1280x1135   86   8  900  798    86 130 1270 305
+selector-stage    1280x1135  136  10 1000  887   576 100  728 175
+controls          1280x800   560  20  800  500   570  32  790 190
+navbar            1280x800   560   0  880  550   600   5  820 197
 EOF
+
+# Cache key for the fixed file names (covers.tsx appends it as ?v=).
+printf '/* Written by scripts/covers/crop.sh. */\nexport const COVERS_REV = "%s";\n' "$(date +%Y%m%d%H%M%S)" > "$ROOT/src/library/covers.rev.ts"
