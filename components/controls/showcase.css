@@ -1,20 +1,14 @@
 /* Showcase-only page for /components/controls (not installed into clients).
-   Chapters separate by spacing and one tone cut; no rules. */
+   The library frame (ShowcaseVariant) owns every gap between captions and
+   scenes; this sheet only lays out the scenes. */
 
-.ctl-sheet { color: var(--ev-fg); }
-
-.ctl-chapter { padding-block: var(--ev-chapter-standard); }
-.ctl-chapter + .ctl-chapter:not(.ctl-chapter--paper) { padding-top: 0; }
-.ctl-chapter__grid { display: grid; gap: var(--ev-gap-heading); }
-.ctl-chapter__head { display: grid; align-content: start; gap: 0.9em; min-width: 0; }
-.ctl-chapter__index { color: var(--ev-fg-35); }
-.ctl-chapter__index .ev-index__current { color: var(--ev-accent-signal); }
-.ctl-chapter__note { max-width: 30em; color: var(--ev-fg-65); }
-.ctl-chapter__scene { min-width: 0; }
-
+/* From 1024 the scene sits on the caption's 1.28 column (same grid, same
+   em as .lib-variant__caption), so caption text and scene share one edge. */
+.ctl-scene { min-width: 0; background: none; color: var(--ev-fg); }
+.ctl-stage--chapter { padding-block: var(--ev-chapter-standard); }
 @media (min-width: 1024px) {
-  .ctl-chapter__grid { grid-template-columns: minmax(0, 0.37fr) minmax(0, 0.63fr); column-gap: 4.5em; }
-  .ctl-chapter__head { position: sticky; top: 7em; align-self: start; }
+  .ctl-stage { display: grid; grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr); column-gap: 4em; }
+  .ctl-scene { grid-column: 2; }
 }
 
 /* Scenes and asks: neighbour spacing between, internal inside. */

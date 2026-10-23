@@ -18,7 +18,7 @@ import {
 } from "../../../components/controls/src";
 import { ArrowLeft, ArrowUpRight, Index, Readout, useInViewPause, useMediaReady, useSequenceClock } from "../../../components/foundation/src";
 import "../../../components/controls/showcase.css";
-import ShowcasePage from "../../library/ShowcasePage";
+import ShowcasePage, { ShowcaseVariant } from "../../library/ShowcasePage";
 import { useLibraryLocale, type Locale, type Localized } from "../../library/locale";
 
 /* One client (a restaurant house), four roles of the control language, one
@@ -28,7 +28,7 @@ export default function Controls() {
   return (
     <ShowcasePage
       entryId="controls"
-      title={(l) => (l === "fr" ? <>Les <em>contrôles</em></> : <>The <em>controls</em></>)}
+      title={(l) => (l === "fr" ? <em>Contrôles</em> : <em>Controls</em>)}
       intro={{
         fr: "Les pièces que chaque composant Evoview partage : agir, choisir, remplir, suivre le temps. Changez l'accent, elles suivent la marque du client.",
         en: "The pieces every Evoview component shares: act, choose, fill in, follow time. Change the accent and they follow the client's brand.",
@@ -43,43 +43,43 @@ export default function Controls() {
 const DOSSIER = "/library/dossier/";
 const tr = <V,>(v: Localized<V>, l: Locale) => v[l];
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const TOTAL = 5;
+const STEPS = 5;
 
 const T = {
-  chapters: [
+  roles: [
     {
-      title: { fr: "Une seule action primaire", en: "One primary action" },
-      note: {
-        fr: "La plaque blanche porte la décision et prend l'accent au survol. L'action texte et la navigation en verre restent en retrait, au-dessus de l'image.",
-        en: "The white plate carries the decision and takes the accent on hover. The text action and the glass navigation stay back, over the image.",
+      name: { fr: "Commandes", en: "Commands" },
+      when: {
+        fr: "Une seule action primaire par écran : la plaque blanche porte la décision, l'action texte et la navigation en verre restent en retrait.",
+        en: "One primary action per screen: the white plate carries the decision, the text action and the glass navigation stay back.",
       },
     },
     {
-      title: { fr: "Des choix qui se lisent", en: "Choices that read" },
-      note: {
-        fr: "Une puce pour un mot, une rangée quand l'option a besoin d'un détail, des segments pour changer l'état d'un même cadre. Une sélection, c'est une bordure, une teinte et une marque : jamais la couleur seule.",
-        en: "A chip for a word, a row when the option needs a detail, segments to change the state of one frame. Selection is a border, a tint and a mark: never colour alone.",
+      name: { fr: "Choix", en: "Choices" },
+      when: {
+        fr: "Une puce pour un mot, une rangée quand l'option a besoin d'un détail, des segments pour changer l'état d'un même cadre ; jamais la couleur seule.",
+        en: "A chip for a word, a row when the option needs a detail, segments to change the state of one frame; never colour alone.",
       },
     },
     {
-      title: { fr: "Des champs sans boîtes", en: "Fields without boxes" },
-      note: {
-        fr: "Un soulignement, une étiquette, une valeur à 16 px. L'erreur se dit en mots, et l'envoi reste indisponible tant que la demande est incomplète.",
-        en: "An underline, a label, a 16px value. Errors are spelled out, and sending stays unavailable while the request is incomplete.",
+      name: { fr: "Champs", en: "Fields" },
+      when: {
+        fr: "Des soulignements plutôt que des boîtes : l'erreur se dit en mots et l'envoi attend une demande complète.",
+        en: "Underlines rather than boxes: errors are spelled out and sending waits for a complete request.",
       },
     },
     {
-      title: { fr: "Le temps se voit", en: "Time you can see" },
-      note: {
-        fr: "Des segments égaux : le courant se charge, les achevés prennent l'accent. L'horloge s'arrête hors écran, onglet masqué ou au survol, et reprend là où elle était.",
-        en: "Equal segments: the current one charges, completed ones take the accent. The clock stops off-screen, in a hidden tab or on hover, and resumes where it was.",
+      name: { fr: "Progression", en: "Progress" },
+      when: {
+        fr: "Quand le site avance seul : le segment courant se charge, l'horloge s'arrête hors écran, onglet masqué ou au survol.",
+        en: "When the site moves on its own: the current segment charges, the clock stops off-screen, in a hidden tab or on hover.",
       },
     },
     {
-      title: { fr: "Sur un site clair", en: "On a light site" },
-      note: {
-        fr: "Le même langage sur papier : la plaque s'inverse, les traits d'accent se foncent pour rester lisibles, même en jaune ou en blanc cassé.",
-        en: "The same language on paper: the plate inverts, accent strokes deepen to stay legible, even in yellow or off-white.",
+      name: { fr: "Parcours · papier", en: "Flow · paper" },
+      when: {
+        fr: "Le même langage sur un site clair : la plaque s'inverse, l'accent se fonce pour rester lisible, même en jaune.",
+        en: "The same language on a light site: the plate inverts, the accent deepens to stay legible, even in yellow.",
       },
     },
   ],
@@ -185,30 +185,26 @@ function Sheet() {
   const { locale } = useLibraryLocale();
   return (
     <ControlsProvider config={buildControlsConfig(locale)}>
-      <div className="ev-root ctl-sheet">
-        <Chapter n={1} locale={locale}><Commands locale={locale} /></Chapter>
-        <Chapter n={2} locale={locale}><Choices locale={locale} /></Chapter>
-        <Chapter n={3} locale={locale}><Fields locale={locale} /></Chapter>
-        <Chapter n={4} locale={locale}><Timed locale={locale} /></Chapter>
-        <Chapter n={5} locale={locale} paper><PaperFlow locale={locale} /></Chapter>
-      </div>
+      <Role n={0} locale={locale}><Commands locale={locale} /></Role>
+      <Role n={1} locale={locale}><Choices locale={locale} /></Role>
+      <Role n={2} locale={locale}><Fields locale={locale} /></Role>
+      <Role n={3} locale={locale}><Timed locale={locale} /></Role>
+      <Role n={4} locale={locale} paper><PaperFlow locale={locale} /></Role>
     </ControlsProvider>
   );
 }
 
-function Chapter({ n, locale, paper = false, children }: { n: number; locale: Locale; paper?: boolean; children: ReactNode }) {
-  const c = T.chapters[n - 1];
+/* The frame owns the spacing; the scene sits on the caption's 1.28 column.
+   The paper scene brings its own chapter padding (rhythm "standard") so the
+   tone band closes below the flow. */
+function Role({ n, locale, paper = false, children }: { n: number; locale: Locale; paper?: boolean; children: ReactNode }) {
+  const r = T.roles[n];
   return (
-    <section className={paper ? "ev-tone-paper ctl-chapter ctl-chapter--paper" : "ctl-chapter"} aria-labelledby={`ctl-ch-${n}`}>
-      <div className="lib-rail ctl-chapter__grid">
-        <header className="ctl-chapter__head">
-          <Index current={n} total={TOTAL} size="lg" className="ctl-chapter__index" />
-          <h2 id={`ctl-ch-${n}`} className="ev-t-section">{tr(c.title, locale)}</h2>
-          <p className="ev-t-body ctl-chapter__note">{tr(c.note, locale)}</p>
-        </header>
-        <div className="ctl-chapter__scene">{children}</div>
+    <ShowcaseVariant name={tr(r.name, locale)} when={tr(r.when, locale)} tone={paper ? "paper" : undefined} rhythm={paper ? "standard" : "flush"}>
+      <div className={paper ? "lib-rail ctl-stage ctl-stage--chapter" : "lib-rail ctl-stage"}>
+        <div className={paper ? "ev-root ev-tone-paper ctl-scene" : "ev-root ctl-scene"}>{children}</div>
       </div>
-    </section>
+    </ShowcaseVariant>
   );
 }
 
@@ -427,7 +423,7 @@ function PaperFlow({ locale }: { locale: Locale }) {
   const [email, setEmail] = useState("");
   const [sms, setSms] = useState(false);
   const [busy, run] = useBusy();
-  const done = step >= TOTAL;
+  const done = step >= STEPS;
   const canContinue = step === 2 ? guests !== null : step === 3 ? time !== null : EMAIL_RE.test(email.trim());
   const restart = () => {
     setStep(2);
@@ -437,7 +433,7 @@ function PaperFlow({ locale }: { locale: Locale }) {
 
   return (
     <div className="ctl-flow">
-      <SegmentedProgress label={tr(fl.label, locale)} count={TOTAL} current={step} labels={steps} captions onSelect={setStep} canSelect={(i) => !done && i >= 2 && i < step} />
+      <SegmentedProgress label={tr(fl.label, locale)} count={STEPS} current={step} labels={steps} captions onSelect={setStep} canSelect={(i) => !done && i >= 2 && i < step} />
       <div className="ctl-flow__step" key={step}>
         {step === 2 && (
           <>
@@ -473,7 +469,7 @@ function PaperFlow({ locale }: { locale: Locale }) {
         ) : (
           <>
             <GhostAction icon={<ArrowLeft />} disabled={step <= 2 || busy} onClick={() => setStep((s) => s - 1)}>{tr(fl.back, locale)}</GhostAction>
-            <PrimaryPlate disabled={!canContinue} busy={busy} onClick={() => (step === 4 ? run(() => setStep(TOTAL)) : setStep((s) => s + 1))}>
+            <PrimaryPlate disabled={!canContinue} busy={busy} onClick={() => (step === 4 ? run(() => setStep(STEPS)) : setStep((s) => s + 1))}>
               {step === 4 ? tr(T.fields.send, locale) : tr(fl.next, locale)}
             </PrimaryPlate>
           </>
