@@ -12,6 +12,6 @@ export {
 export { useInViewPause, type InViewPause, type InViewPauseOptions } from "./useInViewPause";
 export { useMediaQuery } from "./useMediaQuery";
 export { useSequenceClock, sequenceFillStyle, type SequenceClock } from "./useSequenceClock";
-export { useMediaReady, type MediaReady, type MediaReadyOptions, type MediaSource } from "./useMediaReady";
+export { useMediaReady, preloadMedia, type MediaReady, type MediaReadyOptions, type MediaSource } from "./useMediaReady";
 export { Readout, Index, SectionMarker, EvoviewMark, EvoviewLogo } from "./primitives";
 export { ArrowRight, ArrowLeft, ArrowUpRight, Check, Close, Chevron } from "./icons";

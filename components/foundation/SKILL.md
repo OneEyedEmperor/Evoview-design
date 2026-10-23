@@ -22,7 +22,8 @@ library's `STRATEGY.md` + `docs/RULES.md` first.
   `ln -sfn ../foundation/src components/<name>/foundation`, import from
   `../foundation`, author structure on `--ev-rem` tokens / `em` inside the
   root, use the type classes, gate every loop and clock with
-  `useInViewPause` + `useSequenceClock`, gate media with `useMediaReady`, put
+  `useInViewPause` + `useSequenceClock`, gate media with `useMediaReady`
+  (warm likely views with `preloadMedia` on idle / intent), put
   the one `<EvoviewMark>` in the header strip. `install.sh` must call
   `../foundation/install.sh` first.
 

@@ -89,6 +89,7 @@ sequenceFillStyle(clock): CSSProperties  // CSS fill that pauses with the clock;
 // Media gate
 useMediaReady(open, sources, { graceMs = 350, minVisibleMs = 500, timeoutMs = 20000, video = "loadeddata" })
   → { ready, slow, failed, retry, loaded, total }
+preloadMedia(sources, video = "loadeddata"): Promise<void>   // decode ahead of a gate (idle / intent)
 ```
 
 `useMediaReady` sources: URLs or `{ src, type }` (type guessed from the
@@ -98,6 +99,12 @@ state + `retry` when `failed`, reveal on `ready` (`ready` is false the
 moment `open` turns false). Images count as ready on load + `decode()`
 (decode capped at 1.5s); a video probe that stops at metadata (mobile
 WebKit, data saver) counts as ready 1.2s after `loadedmetadata`.
+`preloadMedia` decodes into the same session memory (images at low fetch
+priority, shared in-flight requests, failures not remembered), so a gate
+whose sources were preloaded is `ready` on its first render — no grace gap,
+no loader. Call it on idle or on intent (hover / focus of a launcher) for
+views the visitor is likely to open; it cannot be cancelled, so do not feed
+it large videos speculatively.
 
 Primitives: `<Readout size?>`, `<Index current total srLabel? size?>`,
 `<SectionMarker live?>`, `<EvoviewMark label href?>`, `<EvoviewLogo>`.

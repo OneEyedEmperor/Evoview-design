@@ -1,5 +1,14 @@
 # foundation changelog
 
+## 1.2.0
+
+- Added `preloadMedia(sources, video = "loadeddata")`: decodes sources into
+  the same session memory `useMediaReady` reads, so a gate whose sources
+  were preloaded is `ready` on its first render (no grace gap, no loader).
+  Images at low fetch priority; concurrent calls share in-flight requests;
+  failures are not remembered. Exported from the package index.
+- No config changes; `useMediaReady` behaviour unchanged.
+
 ## 1.1.1
 
 No config changes, no API changes. Fixes:

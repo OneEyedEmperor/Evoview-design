@@ -36,10 +36,11 @@ const normalise = (sources: MediaSource[]) =>
     .filter((s): s is string | { src: string; type?: "image" | "video" } => !!s)
     .map((s) => (typeof s === "string" ? { src: s, type: VIDEO_RE.test(s) ? ("video" as const) : ("image" as const) } : { src: s.src, type: s.type ?? (VIDEO_RE.test(s.src) ? "video" : "image") }));
 
-function load(item: { src: string; type: "image" | "video" }, videoEvent: "loadeddata" | "canplaythrough"): { promise: Promise<void>; abort: () => void } {
+function load(item: { src: string; type: "image" | "video" }, videoEvent: "loadeddata" | "canplaythrough", priority?: "low"): { promise: Promise<void>; abort: () => void } {
   if (item.type === "image") {
     const img = new Image();
     img.decoding = "async";
+    if (priority) (img as HTMLImageElement & { fetchPriority?: string }).fetchPriority = priority;
     const promise = new Promise<void>((resolve, reject) => {
       img.onload = () => {
         if (typeof img.decode !== "function") return resolve();
@@ -75,6 +76,32 @@ function load(item: { src: string; type: "image" | "video" }, videoEvent: "loade
       video.load();
     },
   };
+}
+
+const inflight = new Map<string, Promise<void>>();
+
+/**
+ * Decode sources ahead of their gate (idle preload, hover intent), into the
+ * same session memory the gate reads: a `useMediaReady` whose sources are all
+ * preloaded is ready on its first render. Images are fetched at low priority;
+ * concurrent calls share in-flight requests. Resolves once every source has
+ * settled; failures are not remembered (the gate retries them).
+ */
+export function preloadMedia(sources: MediaSource[], video: "loadeddata" | "canplaythrough" = "loadeddata"): Promise<void> {
+  const pending = normalise(sources)
+    .filter((item) => !decoded.has(item.src))
+    .map((item) => {
+      const known = inflight.get(item.src);
+      if (known) return known;
+      const promise = load(item, video, "low")
+        .promise.then(() => {
+          decoded.add(item.src);
+        }, () => undefined)
+        .finally(() => inflight.delete(item.src));
+      inflight.set(item.src, promise);
+      return promise;
+    });
+  return Promise.all(pending).then(() => undefined);
 }
 
 /**

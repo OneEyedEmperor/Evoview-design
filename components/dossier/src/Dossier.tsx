@@ -11,7 +11,7 @@ import {
   type ReactNode,
   type RefObject,
 } from "react";
-import { ArrowLeft, ArrowRight, EvoviewMark, cn, inkFor, pad, useMediaReady, useSuspendBackground } from "../foundation";
+import { ArrowLeft, ArrowRight, EvoviewMark, cn, inkFor, pad, preloadMedia, useMediaReady, useSuspendBackground } from "../foundation";
 import { GlassClose, PagerOrb } from "../controls";
 import { SelectionBoard } from "./Board";
 import { ChapterRevealContext, type ChapterReveal } from "./Chapters";
@@ -634,8 +634,8 @@ function useChapterReveal(bodyRef: RefObject<HTMLDivElement | null>): ChapterRev
   );
 }
 
-/* Warm the browser cache with every item's board media once the page is idle: the gate then resolves
-   from cache inside its grace period, so opening or switching universes rarely shows the loader.
+/* Decode every item's board media once the page is idle (foundation `preloadMedia`, the gate's own
+   memory): opening or switching to a preloaded universe is ready on the gate's first render.
    Images only (videos are left to the gate); first tile of each item first. */
 function useIdlePreload(config: DossierConfig | null) {
   const list = useMemo(() => {
@@ -648,23 +648,13 @@ function useIdlePreload(config: DossierConfig | null) {
   const signature = list.join("|");
   useEffect(() => {
     if (!signature) return;
-    const sources = signature.split("|");
-    const images: HTMLImageElement[] = [];
-    const run = () => {
-      for (const src of sources) {
-        const img = new Image();
-        img.decoding = "async";
-        (img as HTMLImageElement & { fetchPriority?: string }).fetchPriority = "low";
-        img.src = src;
-        images.push(img);
-      }
-    };
+    const sources = signature.split("|").map((src) => ({ src, type: "image" as const }));
+    const run = () => void preloadMedia(sources);
     const hasIdle = typeof window.requestIdleCallback === "function";
     const handle = hasIdle ? window.requestIdleCallback(run, { timeout: 2500 }) : window.setTimeout(run, 1200);
     return () => {
       if (hasIdle) window.cancelIdleCallback(handle);
       else window.clearTimeout(handle);
-      images.length = 0;
     };
   }, [signature]);
 }

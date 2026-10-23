@@ -1,5 +1,11 @@
 # dossier changelog
 
+## 1.1.1
+
+- Requires `foundation` 1.2.0. The idle preload uses `preloadMedia`, so
+  preloaded universes open and switch with the gate ready on its first
+  render (no hold, no grace gap). No config changes.
+
 ## 1.1.0
 
 Fixes (the "loads only half of the time" report):

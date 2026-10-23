@@ -143,9 +143,10 @@ type DossierConfig = {
 
 `<Dossier>` props: `config`, `open`, `onClose` (every close path calls it; set
 `open` false), `initialItemId?`, `initialEntryId?` (deep link), `preload?`
-(default `true`: once the page is idle, warm the browser cache with every
-item's board images, first tile of each item first, so opens and switches
-resolve inside the gate's grace; keep `<Dossier>` mounted while closed),
+(default `true`: once the page is idle, decode every item's board images
+with foundation `preloadMedia`, first tile of each item first, so a
+preloaded open or switch is ready on the gate's first render; keep
+`<Dossier>` mounted while closed),
 `className?`. Every open mounts a fresh layer, so reopening during the exit
 animation starts from `initialItemId` / `initialEntryId` again.
 CSS knobs on the host (or via `className`): `--dossier-z` (z-index, default
