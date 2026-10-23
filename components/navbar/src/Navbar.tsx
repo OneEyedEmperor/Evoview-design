@@ -17,6 +17,8 @@ export default function Navbar({ config }: { config: NavbarConfig }) {
   useIdleTrayPreload(config);
 
   const activeKey = config.activeKey ?? config.deck.find((entry) => entry.section === section)?.key;
+  // Multi-page: the live pill is this page; one-page: the section in view.
+  const current = config.activeKey !== undefined ? "page" : "location";
 
   return (
     <header
@@ -31,8 +33,8 @@ export default function Navbar({ config }: { config: NavbarConfig }) {
       } as CSSProperties}
     >
       <div className="nav-rail relative z-20 flex w-full items-center justify-center">
-        <NavFinderMobile config={config} accent={color} />
-        <NavFinder config={config} activeKey={activeKey} accent={color} />
+        <NavFinderMobile config={config} activeKey={activeKey} current={current} accent={color} />
+        <NavFinder config={config} activeKey={activeKey} current={current} accent={color} />
       </div>
     </header>
   );

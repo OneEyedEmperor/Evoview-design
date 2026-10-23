@@ -20,8 +20,9 @@
   /* Small caps captions (tray meta, counters). Falls back to the body font;
      a site with a dedicated technical face sets --font-technical. */
   --nav-font-technical: var(--font-technical, var(--nav-font-body));
-  /* The large index numeral on desktop tray cards (Evoview: "Gaegu"). */
-  --nav-font-numeral: var(--font-numeral, var(--nav-font-heading));
+  /* The large index numeral on desktop tray cards: the readout face unless
+     the site sets one (evoview.be's own art direction uses "Gaegu"). */
+  --nav-font-numeral: var(--font-numeral, var(--nav-font-technical));
   /* Rail width the capsule centres in. */
   --nav-max-width: var(--container-nav, 62.5rem);
   /* The desktop finder is sized in em against a capped base: it follows the
@@ -1167,13 +1168,28 @@
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--nav-orb-accent) 26%, transparent);
   transition: background-color 160ms ease, box-shadow 160ms ease;
 }
-.nav-finder--mobile .nav-deck-pill:not(.nav-deck-pill--cta):is(:active, [aria-expanded="true"])::before {
+.nav-finder--mobile .nav-deck-pill:not(.nav-deck-pill--cta):is(:active, [aria-expanded="true"], [data-current="true"])::before {
   background-color: color-mix(in srgb, var(--nav-orb-accent) 14%, transparent);
   box-shadow:
     inset 0 0 0 1px color-mix(in srgb, var(--nav-orb-accent) 70%, transparent),
     0 0 14px -4px color-mix(in srgb, var(--nav-orb-accent) 55%, transparent);
 }
 .nav-finder--mobile .nav-deck-pill:not(.nav-deck-pill--cta)::after { display: none; }
+/* The live tile: the pressed wash and hairline, plus a short indicator bar
+   so the state does not rest on colour alone (aria-current carries it to
+   assistive tech). On the CTA plate the bar takes the plate's ink. */
+.nav-deck-current {
+  position: absolute;
+  left: 50%;
+  bottom: 0.3125em;
+  width: 1.375em;
+  height: 2px;
+  border-radius: 1px;
+  translate: -50% 0;
+  background: var(--nav-orb-accent);
+  pointer-events: none;
+}
+.nav-deck-pill--cta .nav-deck-current { background: currentColor; }
 .nav-finder--mobile .nav-deck-pill:not([data-icon="method"])[aria-expanded="true"] .nav-blinking-eye > :first-child {
   animation: nav-eye-double-blink 2.4s ease-in-out infinite;
 }

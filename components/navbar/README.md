@@ -94,8 +94,9 @@ One-page site: export a constant `navbarConfig` with `sections` filled and
   by reference). The config object itself may be rebuilt per locale/route.
 - Fonts: reads `--font-heading`, `--font-body`, `--font-technical`,
   `--font-numeral` from `:root`; falls back to Overused Grotesk / Inter /
-  body / heading. Load whatever the fallback resolves to, or set the
-  variables (Evoview's card numeral is Gaegu 700).
+  body / the technical (readout) face. Load whatever the fallback resolves
+  to, or set the variables. Gaegu numerals are evoview.be's own art
+  direction (the example config only); do not carry them to clients.
 - Anchors and routes (deck pills and tray entries with `href`) are plain
   `<a href>`. A client router must intercept them: `useNavbarLinks(navigate)`.
   Server rendering works (`renderToString`).
@@ -192,7 +193,9 @@ In the browser (agent-browser or browser-bridge), at the client dev URL:
    to stay 16px inside the viewport, trays stay inside it too.
 3. **390×844**: tap MENU → capsule unfolds down, pills slide in from their
    edges, MENU morphs smoothly to the close word (no snap at the end), page
-   dims and does not scroll. CTA fills the last row. Tap a pill → navigates
+   dims and does not scroll. CTA fills the last row. The live page's tile
+   shows the stronger hairline and the short indicator bar, with
+   `aria-current` (same pill as desktop). Tap a pill → navigates
    (or its tray unfolds). Escape/backdrop closes; page position unchanged.
 4. Language pill (if any): flips copy in place, menu stays open, thumb
    slides, page does not jump.

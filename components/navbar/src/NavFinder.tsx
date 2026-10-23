@@ -135,7 +135,7 @@ function useFinderState() {
   return { open, tray, openNow, hoverOpen, close, closeFromAction, releaseHover, scheduleClose, cancelClose, showTray, hideTray, holdScrollClose };
 }
 
-export default function NavFinder({ config, activeKey, accent }: { config: NavbarConfig; activeKey: string | undefined; accent: string }) {
+export default function NavFinder({ config, activeKey, current, accent }: { config: NavbarConfig; activeKey: string | undefined; current: "page" | "location"; accent: string }) {
   const { open, tray, openNow, hoverOpen, close, closeFromAction, releaseHover, scheduleClose, cancelClose, showTray, hideTray, holdScrollClose } = useFinderState();
   const anchorRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLElement>(null);
@@ -417,6 +417,7 @@ export default function NavFinder({ config, activeKey, accent }: { config: Navba
                     "data-deck-pill": entry.key,
                     "data-icon": typeof entry.icon === "string" ? entry.icon : "custom",
                     "data-current": activeKey === entry.key || undefined,
+                    "aria-current": activeKey === entry.key ? current : undefined,
                     "aria-expanded": hasTray ? tray === entry.key : undefined,
                     "aria-controls": hasTray ? trayId : undefined,
                     "aria-label": entry.content ? entry.label : undefined,

@@ -1,5 +1,18 @@
 # navbar changelog
 
+## 2.3.1
+
+- Mobile now marks the live pill (`activeKey`, or the section in view):
+  the tile takes the pressed wash + 70 % hairline and a 1.375em × 2px
+  indicator bar under the label (plate ink on the CTA), so the state is not
+  colour-only. Both finders set `aria-current` (`page` on multi-page sites,
+  `location` on one-page sites); desktop's lit gloss is unchanged.
+- `--nav-font-numeral` now falls back to the readout face
+  (`--nav-font-technical`) instead of the heading face. Gaegu stays only in
+  `examples/evoview.config.tsx` (evoview.be's art direction).
+- Config changes: none. A client that wants the old numeral sets
+  `vars["--nav-font-numeral"]`.
+
 ## 2.3.0 — cover-card trays, route entries (evoview.be finder, 2026-10-22)
 
 Ported from the evoview.be working tree (`src/components/nav/*`) and its

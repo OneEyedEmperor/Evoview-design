@@ -19,7 +19,7 @@ const FOCUSABLE = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1
 /** Must match the `min-width` at which navbar.css swaps the two finders. */
 export const DESKTOP_QUERY = "(min-width: 768px)";
 
-export default function NavFinderMobile({ config, accent }: { config: NavbarConfig; accent: string }) {
+export default function NavFinderMobile({ config, activeKey, current, accent }: { config: NavbarConfig; activeKey: string | undefined; current: "page" | "location"; accent: string }) {
   const [open, setOpen] = useState(false);
   const [tray, setTray] = useState<string | null>(null);
   // The tray last shown: outlives `tray` through the collapse.
@@ -226,19 +226,27 @@ export default function NavFinderMobile({ config, accent }: { config: NavbarConf
               <div className="nav-deck nav-deck--mobile">
                 {deck.map((entry, index) => {
                   const hasTray = Boolean(trays[entry.key]);
+                  const isCurrent = activeKey === entry.key;
                   const shared = {
                     "data-deck-pill": entry.key,
                     "data-icon": typeof entry.icon === "string" ? entry.icon : "custom",
+                    "data-current": isCurrent || undefined,
+                    "aria-current": isCurrent ? current : undefined,
                     "aria-expanded": hasTray ? tray === entry.key : undefined,
                     "aria-controls": hasTray ? trayId : undefined,
                     "aria-label": entry.content ? entry.label : undefined,
                     className: `nav-deck-pill nav-control-focus${entry.cta ? " nav-deck-pill--cta" : ""}`,
                     style: { "--nav-orb-accent": entry.accent, "--nav-entry-index": index } as CSSProperties,
                   };
-                  const content = entry.content ?? (
+                  const content = (
                     <>
-                      <DeckIcon icon={entry.icon} />
-                      <span className="nav-deck-label">{entry.label}</span>
+                      {entry.content ?? (
+                        <>
+                          <DeckIcon icon={entry.icon} />
+                          <span className="nav-deck-label">{entry.label}</span>
+                        </>
+                      )}
+                      {isCurrent && <span aria-hidden="true" className="nav-deck-current" />}
                     </>
                   );
                   return entry.href ? (
