@@ -22,19 +22,26 @@
   --lib-font-display: "Overused Grotesk", "Inter", sans-serif;
   --lib-font-body: "Montserrat", system-ui, sans-serif;
   --lib-font-state: "Satoshi", "Montserrat", sans-serif;
+  /* Foundation's scale and gutter, restated in px (the index and footer do
+     not load foundation.css) so the frame and every package `.ev-rail`
+     share one rail: --ev-rem = 16px × --ev-scale, gutter 20 px → 2 / 3 / 4
+     rem at 640 / 1024 / 1280. Keep in step with foundation.css. */
+  --lib-rem: 16px;
   --lib-gutter: 20px;
-  /* Rendered Evoview proportions (RULES §0), in px so nesting never compounds. */
-  font-size: 16px;
+  font-size: var(--lib-rem);
   font-family: var(--lib-font-body);
 }
+@media (min-width: 640px) {
+  .ev-library { --lib-gutter: calc(2 * var(--lib-rem)); }
+}
 @media (min-width: 768px) {
-  .ev-library { font-size: 13.76px; --lib-gutter: 32px; }
+  .ev-library { --lib-rem: 13.76px; }
 }
 @media (min-width: 1024px) {
-  .ev-library { font-size: clamp(13.76px, 0.9357vw, 14.6px); --lib-gutter: 48px; }
+  .ev-library { --lib-rem: clamp(13.76px, 0.935673vw, 14.5968px); --lib-gutter: calc(3 * var(--lib-rem)); }
 }
-@media (min-width: 1440px) {
-  .ev-library { --lib-gutter: 64px; }
+@media (min-width: 1280px) {
+  .ev-library { --lib-gutter: calc(4 * var(--lib-rem)); }
 }
 
 .lib-shell { min-height: 100vh; background: var(--lib-night); }
@@ -65,7 +72,7 @@
 .lib-rail {
   box-sizing: border-box;
   width: 100%;
-  max-width: calc(85em + 2 * var(--lib-gutter));
+  max-width: calc(85 * var(--lib-rem) + 2 * var(--lib-gutter));
   margin-inline: auto;
   padding-inline: var(--lib-gutter);
 }
