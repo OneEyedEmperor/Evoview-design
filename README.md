@@ -15,15 +15,15 @@ installs `foundation` (and `controls` where used) first.
 | Pill | Package | Version |
 | --- | --- | --- |
 | Layouts | [chapter](components/chapter/README.md) | 1.1.0 |
-| Layouts | [card-track](components/card-track/README.md) | 1.2.0 |
-| Layouts | [process-sequence](components/process-sequence/README.md) | 1.1.1 |
-| Layouts | [story-blocks](components/story-blocks/README.md) | 2.0.1 |
+| Layouts | [card-track](components/card-track/README.md) | 1.2.1 |
+| Layouts | [process-sequence](components/process-sequence/README.md) | 1.1.2 |
+| Layouts | [story-blocks](components/story-blocks/README.md) | 2.0.2 |
 | Components | [reservation](components/reservation/README.md) | 2.8.1 |
-| Components | [dossier](components/dossier/README.md) | 1.1.0 |
-| Components | [selector-stage](components/selector-stage/README.md) | 1.1.1 |
+| Components | [dossier](components/dossier/README.md) | 1.1.2 |
+| Components | [selector-stage](components/selector-stage/README.md) | 1.1.2 |
 | Components | [controls](components/controls/README.md) | 1.1.1 |
 | Navbar | [navbar](components/navbar/README.md) | 2.3.1 |
-| — | [foundation](components/foundation/README.md) (base, not showcased) | 1.1.1 |
+| — | [foundation](components/foundation/README.md) (base, not showcased) | 1.2.0 |
 
 Design rules: [docs/RULES.md](docs/RULES.md).
 

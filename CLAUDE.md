@@ -37,14 +37,14 @@ and `controls`; follow `docs/BUILD-BRIEF.md`.
 
 | Component | Status | Skill |
 | --- | --- | --- |
-| `foundation` — tokens, scale, tones, type voices, pause-model hooks, attribution mark | 1.1.1 | `evoview-foundation` |
+| `foundation` — tokens, scale, tones, type voices, pause-model hooks, attribution mark | 1.2.0 | `evoview-foundation` |
 | `controls` — plate, ghost, glass close/pager, chips, rows, fields, switch, segmented control/progress (`/components/controls`) | 1.1.1 | `evoview-controls` |
 | `chapter` — section shell, headings, tone cuts, footer with attribution (`/layouts/chapter`) | 1.1.0 | `evoview-chapter` |
-| `card-track` — media card + scroll-scrubbed track (`/layouts/card-track`) | 1.2.0 | `evoview-card-track` |
-| `process-sequence` — timed step board + step dossier (`/layouts/process-sequence`) | 1.1.1 | `evoview-process-sequence` |
-| `story-blocks` — intro split, indexed sequence, proof collage, payoff (`/layouts/story-blocks`) | 2.0.1 | `evoview-story-blocks` |
-| `dossier` — portal modal, selection board, chapter strip, mobile dock (`/components/dossier`) | 1.1.0 | `evoview-dossier` |
-| `selector-stage` — selector ↔ stage, before/after, atlas (`/components/selector-stage`) | 1.1.1 | `evoview-selector-stage` |
+| `card-track` — media card + scroll-scrubbed track (`/layouts/card-track`) | 1.2.1 | `evoview-card-track` |
+| `process-sequence` — timed step board + step dossier (`/layouts/process-sequence`) | 1.1.2 | `evoview-process-sequence` |
+| `story-blocks` — intro split, indexed sequence, proof collage, payoff (`/layouts/story-blocks`) | 2.0.2 | `evoview-story-blocks` |
+| `dossier` — portal modal, selection board, chapter strip, mobile dock (`/components/dossier`) | 1.1.2 | `evoview-dossier` |
+| `selector-stage` — selector ↔ stage, before/after, atlas (`/components/selector-stage`) | 1.1.2 | `evoview-selector-stage` |
 | `navbar` — finder capsule, desktop + mobile, cover-card trays (`/navbar`) | 2.3.1 | `evoview-navbar` |
 | `reservation` — Evoview booking application, client accent (`/components/reservation`) | 2.8.1 | `evoview-reservation` |
 
@@ -74,4 +74,5 @@ and destination work. Do not leave this context only in the library repo.
 Facts learned about this codebase, maintained by Vibehub. Everything from this heading to the end of the list below is regenerated on every write: add to it with POST /api/memory (destination=project), never by editing here, because a hand edit inside it is refused as drift. Prose elsewhere in this file is hand-written and yours to edit.
 
 - docs/RULES.md is binding for every package (evidence in docs/extraction/*); the evoview site's EVOVIEW-VISUAL-GRAMMAR.md is outdated — authority is rendered site (measured) > working-tree source > grammar doc. <!--vh:b3d83440-->
+- Concurrent agent edits make the vhdev showcase full-reload/remount pages (fake blank views, stuck reveals); confirm intermittent bugs on a production preview (pnpm build && pnpm preview on a spare port, stop only that PID). <!--vh:a8750c48-->
 <!-- vibehub:knowledge:end -->
