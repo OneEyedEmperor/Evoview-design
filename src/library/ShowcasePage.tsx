@@ -230,7 +230,9 @@ function inkBounds(body: HTMLElement): { top: number; bottom: number } | null {
     const hasText = !isMedia && Array.from(node.childNodes).some((c) => c.nodeType === Node.TEXT_NODE && c.textContent?.trim());
     if (!isMedia && !hasText) continue;
     const style = getComputedStyle(el);
-    if (style.display === "none" || style.visibility === "hidden" || el.offsetWidth <= 1 || el.offsetHeight <= 1 || style.clipPath.startsWith("inset(50%")) continue;
+    // Layout boxes, not paint: media gated until decoded and copy waiting
+    // for its reveal already occupy their place.
+    if (style.display === "none" || el.offsetWidth <= 1 || el.offsetHeight <= 1 || style.clipPath.startsWith("inset(50%")) continue;
     let top = hasText ? parseFloat(style.paddingTop) + parseFloat(style.borderTopWidth) : 0;
     let cur: HTMLElement | null = el;
     while (cur && cur !== body) {
@@ -242,6 +244,28 @@ function inkBounds(body: HTMLElement): { top: number; bottom: number } | null {
     last = Math.max(last, top + el.offsetHeight);
   }
   return best === null ? null : { top: best, bottom: last };
+}
+
+const opaque = (color: string) => color !== "transparent" && !/rgba\(.*,\s*0\)$/.test(color);
+const channels = (color: string) => (color.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
+// Near-blacks #0c0c0d / #0e0e0e / #101011 are one environment (RULES §3).
+const sameGround = (a: string, b: string) => {
+  const [x, y] = [channels(a), channels(b)];
+  return x.length === 3 && y.length === 3 && x.every((v, i) => Math.abs(v - y[i]) <= 6);
+};
+
+function opensOnOtherGround(body: HTMLElement): boolean {
+  const band = getComputedStyle(body.parentElement ?? body).backgroundColor;
+  let el = body.firstElementChild as HTMLElement | null;
+  for (let depth = 0; el && depth < 6; depth += 1) {
+    // A full-width ground only; a well or card at the top is not a cut.
+    if (el.offsetHeight > 0 && el.offsetWidth >= body.offsetWidth * 0.9 && el.offsetTop <= 1) {
+      const bg = getComputedStyle(el).backgroundColor;
+      if (opaque(bg)) return !sameGround(bg, opaque(band) ? band : getComputedStyle(document.querySelector(".lib-showcase") ?? body).backgroundColor);
+    }
+    el = el.firstElementChild as HTMLElement | null;
+  }
+  return false;
 }
 
 /* Caption → component is measured, not assumed: whatever top padding a
@@ -258,6 +282,10 @@ function useInkOffset(ref: RefObject<HTMLElement | null>) {
       frame = 0;
       const ink = inkBounds(body);
       if (!ink) return;
+      // Only pull into space that looks like the caption's band: a component
+      // opening on another background (a tone cut of its own) starts one
+      // lead under the caption instead of sliding under it.
+      if (opensOnOtherGround(body)) ink.top = 0;
       const trail = body.offsetHeight - parseFloat(getComputedStyle(body).paddingBottom) - ink.bottom;
       body.style.setProperty("--lib-variant-pad", `${Math.round(ink.top)}px`);
       body.style.setProperty("--lib-variant-trail", `${Math.max(0, Math.round(trail))}px`);
@@ -266,11 +294,18 @@ function useInkOffset(ref: RefObject<HTMLElement | null>) {
     const schedule = () => {
       if (!frame) frame = requestAnimationFrame(measure);
     };
+    // Media sized only once loaded can move the first ink without resizing
+    // the body (pinned scenes), so loads and DOM changes re-measure too.
     const ro = new ResizeObserver(schedule);
     ro.observe(body);
+    const mo = new MutationObserver(schedule);
+    mo.observe(body, { subtree: true, childList: true, attributes: true, attributeFilter: ["class", "src", "hidden"] });
+    body.addEventListener("load", schedule, true);
     document.fonts?.ready.then(schedule);
     return () => {
       ro.disconnect();
+      mo.disconnect();
+      body.removeEventListener("load", schedule, true);
       cancelAnimationFrame(frame);
     };
   }, [ref]);
