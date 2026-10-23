@@ -10,8 +10,10 @@ A1/A2/A11, `portfolio-contact.md` A3) and decoupled. Depends on `foundation`
 and `controls`.
 
 Showcase: `https://evoview-library.said.bet/components/dossier` (Maison
-Ardoise, a fictional restaurant: 3 universes × 4 experiences, FR/EN, live
-palette, per-universe accent switch, loader specimen).
+Ardoise, a fictional restaurant, in the two configurations a client chooses
+between: three universes behind a pager with a deep link and the
+per-universe accent switch, and a single-universe dossier launched from a
+light page; FR/EN, live palette).
 
 ```
 desktop ≥ 1024 (shell 92.5em × min(57.5em, 100vh − 2em), radius shell)
@@ -27,31 +29,42 @@ phone: [glass capsule: CLIENT │ TITLE · EVOVIEW (×)] … body … [‹ | 01 
 Read `STRATEGY.md`. These make the dossier recognisably Evoview; do not
 restyle them to the client's UI kit:
 
-- **Header strip (chassis signature)**: client identity │ kicker / title
+- **Header strip (chassis signature)**: client identity · kicker / title
   readout (Satoshi 700 uppercase, kicker accent-mixed) · item pager (glass
-  orbs, label, location bars) · the Evoview mark · labelled glass close.
+  orbs, label, location bars; only with two or more items) · the Evoview
+  mark · labelled glass close. Grouped by space, no divider rules.
 - **Selection board**: exactly four tiles, 7/5 over 4/8 on 12 columns, rows
   1.2fr / .8fr; 2×2 at 600–1023; four rows on phones. Graded media
   (desaturated, darkened) releasing colour on hover / focus / touch-cycle
   focus, accent border + bottom edge + numeral, shine sweep, scrim, title
   bottom-left. Numerals in the display face (not Gaegu).
-- **Chapter strip**: `Sommaire` + numbered tabs, active underline = reading
-  progress, past tabs full, completion toast at ≥ 90 % pointing at the next tab.
+- **Chapter strip**: `Sommaire` + numbered tabs; the per-tab 3px track is the
+  strip's one line and its fill is the reading progress (past tabs full);
+  completion toast at ≥ 90 % under the tab it opens, with a 12px accent stem.
 - **Phone chrome**: floating glass capsule + 3-column glass dock
   (`prev/home · 01 / 04 + bars · next`), both leaving on scroll-down and
   returning on scroll-up, near the top or on focus; spring press + touch bloom.
-- **Open chapters**: unboxed, separated by spacing + 1px rule + alternating
-  `#0c0c0d / #101011`; claim → artefact → one sentence; `.72 / 1.28` heading /
-  copy, `.7 / 1.3` side / stage, `1.2 / .8` payoff; captions inside media;
-  one display level per chapter; one exit CTA per story.
-- **Media gate**: a view is revealed only once its media is decoded; loader
-  after 350 ms, count `02 / 04`, one module per medium, 1px accent bar, retry.
+- **Open chapters**: unboxed, separated by space and the alternating
+  `#0c0c0d / #101011` — no rules between chapters, rows, results or columns
+  (RULES §3); claim → artefact → one sentence; `.72 / 1.28` heading / copy,
+  `.7 / 1.3` side / stage, `1.2 / .8` payoff; captions inside media; one
+  display level per chapter; one exit CTA per story. Row indices only for a
+  real sequence (`ChapterRows numbered`).
+- **Media gate**: a view is revealed only once its media is decoded. The body
+  keeps the previous view (inert, dimmed after 140 ms) until the next one is
+  ready, so a switch never cuts to an empty body; loader after 350 ms over
+  it, count `02 / 04`, one module per medium, 1px accent bar, retry. The only
+  empty moment is a first open on a cold cache, inside the shell's entrance.
 - **Modal contract**: below.
 - **Motion**: open = opacity + scale .965 + clip inset, 620 ms cinematic;
   close 340 ms; board tiles converge (±34px, blur 5 → 0) staggered 100 ms;
-  detail enters y 10 → 0; chapters reveal y 16 → 0 once, stagger 80; item
-  switch = 260 ms dark cut. Not the CRT power-on, channel OSD or scan grid
-  (Evoview's own art direction).
+  detail enters y 10 → 0 from opacity .35; chapters below the intro reveal
+  y 16 → 0 once, stagger 80, when their top passes 90 % of the body (every
+  chapter above that line reveals too, so jumps never leave one hidden);
+  item switch = 260 ms dark cut at the moment the board changes. Entrances
+  fill backwards only: if an animation does not run, the content is visible.
+  Not the CRT power-on, channel OSD or scan grid (Evoview's own art
+  direction).
 
 **Accent = the client's.** The dossier reads the host `--primary` /
 `--primary-foreground`; an item may set its own (`item.accent`), applied as
@@ -129,8 +142,15 @@ type DossierConfig = {
 ```
 
 `<Dossier>` props: `config`, `open`, `onClose` (every close path calls it; set
-`open` false), `initialItemId?`, `initialEntryId?` (deep link), `className?`.
-`--dossier-z` sets the layer's z-index (default 1000).
+`open` false), `initialItemId?`, `initialEntryId?` (deep link), `preload?`
+(default `true`: once the page is idle, warm the browser cache with every
+item's board images, first tile of each item first, so opens and switches
+resolve inside the gate's grace; keep `<Dossier>` mounted while closed),
+`className?`. Every open mounts a fresh layer, so reopening during the exit
+animation starts from `initialItemId` / `initialEntryId` again.
+CSS knobs on the host (or via `className`): `--dossier-z` (z-index, default
+1000); `--dossier-reserve-bottom` (default 0; ≥ 768 the windowed shell keeps
+this much extra space below it, for host chrome pinned bottom-right).
 
 ## Modal contract
 
@@ -142,9 +162,13 @@ type DossierConfig = {
   the inert walk (stay clickable; stack them above `--dossier-z`). They are
   outside the Tab trap, so pointer only while open. For host dev/showcase
   tools (the library's floating accent palette); client sites never render it.
-- Focus to the close on open; Tab trapped; focus restored to the launcher on
-  close; a view swap that removes the focused control returns focus to the
-  dialog; returning to the overview focuses the tile you came from.
+- Focus to the close on open; Tab trapped; a view swap that removes the
+  focused control returns focus to the dialog; returning to the overview
+  focuses the tile you came from.
+- **Close**: the page is released as soon as the exit starts (inert, scroll
+  lock and suspension lifted, focus back on the launcher, the fading layer
+  lets clicks through); the content stays on screen through the 340 ms exit;
+  the layer is removed on `animationend` or after 700 ms at most.
 - **Escape = one level** (detail → overview → close), handled at document
   level. Backdrop click = one level. The close button closes everything.
 - **History**: the overview and the detail each own an entry; browser / OS
@@ -178,17 +202,24 @@ is suspended while open.
 
 1. `pnpm build`; showcase at 1440, 1024, 390: shell 1272 × 791 and header 77
    at 1440×900; board rows 387 / 258; no horizontal overflow; no text under
-   9px (readouts) / 11px (labels) / 13px (body).
-2. Palette: indigo, yellow, off-white — strip underline, tab chip, tile
+   9px (readouts) / 11px (labels) / 13px (body); no rule lines inside the
+   detail (only the strip track, the toast stem, loader count and bar).
+2. Repeated opens never show an empty body: cold reload → open each universe,
+   enter an entry, jump-scroll (End / scrollbar), switch tabs, pager / dock,
+   Escape / Back, reopen during the exit animation (must open the clicked
+   universe), deep link. Check in a production build (`vite build` +
+   `vite preview`), not only the dev server (HMR reloads).
+3. Palette: indigo, yellow, off-white — strip underline, tab chip, tile
    border/edge, bars, loader modules, caption dot all readable. Per-item
    accent switch recolours per universe.
-3. Keyboard: open → focus on close; Tab cycles inside; Enter on a tile opens
+4. Keyboard: open → focus on close; Tab cycles inside; Enter on a tile opens
    the detail (focus moves into it); Escape → overview (tile refocused) →
    closed (launcher refocused).
-4. Back button: detail → overview → closed; URL unchanged; deep link opens
+5. Back button: detail → overview → closed; URL unchanged; deep link opens
    on the detail and Back returns to its overview.
-5. Desktop: scroll a detail to the end → toast to the next tab; pager switches
-   items with a dark cut. Phone: capsule + dock leave on scroll-down and
-   return on scroll-up; dock next goes through entries then items.
-6. Touch cycle on a phone: 2 s per tile, pauses while touched / tab hidden.
-7. Attribution: one linked mark in the header strip, named, new tab.
+6. Desktop: scroll a detail to the end → toast under the next tab; pager
+   switches items with a dark cut. Phone: capsule + dock leave on scroll-down
+   and return on scroll-up; dock next goes through entries then items. One
+   item: no pager; the last entry's next returns to the overview.
+7. Touch cycle on a phone: 2 s per tile, pauses while touched / tab hidden.
+8. Attribution: one linked mark in the header strip, named, new tab.

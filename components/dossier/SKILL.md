@@ -15,11 +15,13 @@ pause model.
 ## Procedure
 
 1. Open the showcase at 1440 and 390; open a universe, enter an experience,
-   scroll to the toast, press Escape twice; switch the palette to the client's
-   accent and to yellow / off-white.
-2. Map the client's offer to items × 4 entries. The board is for choosing
-   between exactly four destinations; if an item has fewer, do not pad it —
-   ask, or use another component.
+   scroll to the toast, press Escape twice; open the single-universe variant
+   (no pager); switch the palette to the client's accent and to yellow /
+   off-white.
+2. Map the client's offer to items × 4 entries: several families → several
+   items (pager); one offer → one item. The board is for choosing between
+   exactly four destinations; if an item has fewer, do not pad it — ask, or
+   use another component.
 3. `components/dossier/install.sh /root/.vibehub/projects/<client>`
    (installs / upgrades `controls` and `foundation` first).
 4. Edit only `src/components/dossier/dossier.config.tsx`: brand (client logo
@@ -28,9 +30,13 @@ pause model.
    `DossierChapter` + `ChapterHead` / `ChapterFigure` / `ChapterSplit` /
    `ChapterRows` / `ChapterSpecimen` / `ChapterPayoff` (or story-blocks), one
    exit CTA per story (the client's action, `PrimaryPlate`), copy FR/EN from
-   the client's wording. Mark demonstrations "Exemple / Sample".
+   the client's wording. Separate with space and the a / b tone alternation,
+   never rules; number rows only when they are a sequence. Demonstrations
+   carry their "example" note (`ChapterSpecimen note`).
 5. Mount `<Dossier>` near the page root (no transformed ancestor), launchers
-   set `open` + `initialItemId` (optionally `initialEntryId`).
+   set `open` + `initialItemId` (optionally `initialEntryId`). It preloads the
+   board media on idle (`preload`, default on); keep it mounted while closed.
+   If the host pins chrome bottom-right, set `--dossier-reserve-bottom`.
 6. Keep `attribution.enabled = true`, `href` = `https://evoview.be/`; never
    move the mark next to the client CTA or add other marks.
 7. Verify with the README checklist at 1440 / 1024 / 390, then log an

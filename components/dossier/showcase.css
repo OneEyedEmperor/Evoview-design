@@ -1,20 +1,17 @@
-/* Showcase-only sheet for /components/dossier (not installed into clients). */
+/* Showcase-only sheet for /components/dossier (not installed into clients).
+   The frame owns all spacing around the variants; this sheet only lays out
+   each client scene. No rules: space, scale and tone separate. */
 
-.dsh { color: var(--ev-fg); }
-.dsh ol { margin: 0; padding: 0; list-style: none; }
-
-.dsh-section { display: grid; gap: 2.5em; padding-block: 3.5em; border-top: 1px solid var(--ev-line); }
-.dsh-section:first-child { border-top: 0; padding-top: 0; }
-.dsh-head { display: grid; align-content: start; gap: 1em; }
-.dsh-head__index { display: flex; align-items: baseline; gap: 1.1em; color: var(--ev-fg-55); }
-.dsh-head__index .ev-index { color: var(--ev-fg-35); }
-.dsh-head__index .ev-index__current { color: var(--ev-accent-signal); }
-.dsh-head__body { max-width: 34em; color: var(--ev-fg-65); }
-
-/* 01 — client context: copy .72 | launchers 1.28 (the proof). */
-.dsh-context__copy { display: grid; align-content: start; justify-items: start; gap: 1.1em; }
-.dsh-context__kicker { color: var(--ev-accent-signal); }
-.dsh-context__switch { width: 100%; max-width: 30em; margin-top: 0.5em; padding-top: 0.75em; border-top: 1px solid var(--ev-line); }
+/* A client page segment: copy .72 | launchers 1.28 (the proof). */
+.dsh-scene { display: grid; gap: 2.5em; color: var(--ev-fg); }
+.dsh-scene__copy { display: grid; align-content: start; justify-items: start; gap: 1.25em; }
+.dsh-scene__copy h2 { margin: 0; }
+.dsh-scene__body { max-width: 34em; margin: 0; color: var(--ev-fg-65); }
+.dsh-scene__choice { width: 100%; max-width: 30em; margin-top: 1.75em; }
+@media (min-width: 1024px) {
+  .dsh-scene { grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr); column-gap: 4em; align-items: start; }
+  .dsh-scene--single { align-items: center; }
+}
 
 .dsh-launchers { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
 .dsh-launcher {
@@ -27,7 +24,7 @@
   padding: 0;
   border: 1px solid color-mix(in oklab, var(--ev-accent-signal) 26%, transparent);
   border-radius: var(--ev-radius-surface);
-  background: var(--ev-well);
+  background: #080808;
   color: #fff;
   font: inherit;
   text-align: left;
@@ -35,21 +32,20 @@
   isolation: isolate;
   transition: border-color 240ms var(--ev-ease), transform 180ms var(--ev-ease);
 }
+.dsh-launcher[data-wide] { min-height: 21em; }
 .dsh-launcher__media { position: absolute; z-index: -1; inset: 0; }
 .dsh-launcher__media img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(0.6) saturate(0.5) contrast(1.06) brightness(0.62); transform: scale(1.001); transition: filter 300ms var(--ev-ease), transform 500ms var(--ev-ease-cinematic); }
-.dsh-launcher::after { content: ""; position: absolute; z-index: -1; inset: 0; background: linear-gradient(to top, rgb(0 0 0 / 0.88), rgb(0 0 0 / 0.1) 70%); }
-.dsh-launcher__meta { display: grid; align-self: end; gap: 0.6em; padding: 1.4em 1.5em 0; }
+.dsh-launcher::after { content: ""; position: absolute; z-index: -1; inset: 0; background: linear-gradient(to top, rgb(0 0 0 / 0.9), rgb(0 0 0 / 0.1) 72%); }
+.dsh-launcher__meta { display: grid; align-self: end; justify-items: start; gap: 0.55em; padding: 1.5em 1.5em 0; }
 .dsh-launcher__index { color: rgb(255 255 255 / 0.6); }
-.dsh-launcher__count { color: var(--ev-accent-signal); }
+.dsh-launcher__entries { max-width: 32em; color: rgb(255 255 255 / 0.68); }
 .dsh-launcher__cta {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1em;
-  margin-top: 1.1em;
-  padding: 0.9em 1.5em 1.1em;
-  border-top: 1px solid rgb(255 255 255 / 0.12);
-  color: rgb(255 255 255 / 0.75);
+  padding: 1.5em 1.5em 1.25em;
+  color: rgb(255 255 255 / 0.78);
   font-family: var(--ev-font-readout);
   font-size: max(0.6875em, 10px);
   font-weight: 700;
@@ -73,20 +69,10 @@
   .dsh-launchers__item[data-index="3"] { grid-column: span 5; }
   .dsh-launchers__item[data-index="1"] .dsh-launcher { height: 100%; min-height: 27em; }
   .dsh-launchers__item:not([data-index="1"]) .dsh-launcher { min-height: 13em; }
-}
-@media (min-width: 1024px) {
-  .dsh-section { padding-block: 5em; }
-  .dsh-context { grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr); column-gap: 4em; align-items: start; }
-  .dsh-split { grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr); column-gap: 4em; align-items: start; }
+  .dsh-launcher[data-wide] { min-height: 24em; }
 }
 
-/* 03 — loader specimen in a framed well. */
-.dsh-loader-copy { display: grid; align-content: start; justify-items: start; gap: 1.75em; }
-.dsh-loader {
-  position: relative;
-  min-height: 22em;
-  overflow: hidden;
-  border: 1px solid var(--ev-line);
-  border-radius: var(--ev-radius-surface);
+/* The library's floating palette sits bottom-right over the page while a modal is open: keep the windowed shell clear of it. */
+@media (min-width: 768px) {
+  .dsh-modal { --dossier-reserve-bottom: 72px; }
 }
-.dsh-loader .evd-loader { position: relative; min-height: 22em; padding: 40px 24px; animation: none; }

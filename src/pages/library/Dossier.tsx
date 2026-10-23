@@ -1,22 +1,23 @@
 import { useMemo, useState } from "react";
-import { ControlsProvider, GhostAction, SegmentedControl, Switch, buildControlsConfig } from "../../../components/controls/src";
-import { ArrowRight, Index, Readout, pad } from "../../../components/foundation/src";
-import { ChapterRows, Dossier as DossierModal, DossierLoader, buildDossierConfig, type DossierConfig } from "../../../components/dossier/src";
+import { ControlsProvider, GhostAction, Switch, buildControlsConfig } from "../../../components/controls/src";
+import { ArrowRight, pad } from "../../../components/foundation/src";
+import { Dossier as DossierModal, buildDossierConfig, type DossierConfig, type DossierItem } from "../../../components/dossier/src";
 import "../../../components/dossier/showcase.css";
-import ShowcasePage from "../../library/ShowcasePage";
+import ShowcasePage, { ShowcaseVariant } from "../../library/ShowcasePage";
 import { useLibraryLocale, type Locale, type Localized } from "../../library/locale";
 
-/* /components/dossier — a client page (Maison Ardoise) launching the dossier,
-   its modal contract, and the loader as a specimen. Colour comes from the
-   frame's --primary; nothing re-renders on a swatch. */
+/* /components/dossier — one fictional restaurant (Maison Ardoise) in the two
+   configurations a client actually chooses between: several universes behind
+   a pager, or a single offer. Colour comes from the frame's --primary (or the
+   per-universe accents); a locale switch only swaps copy, nothing remounts. */
 export default function DossierPage() {
   return (
     <ShowcasePage
       entryId="dossier"
-      title={(l) => (l === "fr" ? <>Le <em>dossier</em></> : <>The <em>dossier</em></>)}
+      title={() => <em>Dossier</em>}
       intro={{
-        fr: "Une modale portail pour toute offre en plusieurs parties : un tableau de sélection, des chapitres à lire, un retour toujours fiable.",
-        en: "A portal modal for any multi-part offer: a selection board, chapters to read, a return that always works.",
+        fr: "Pour une offre en plusieurs parties : le visiteur choisit, lit, puis agit — sans quitter la page, et revient toujours où il était.",
+        en: "For an offer in several parts: visitors choose, read, then act — without leaving the page, and always come back where they were.",
       }}
       tone="dark"
     >
@@ -26,55 +27,38 @@ export default function DossierPage() {
 }
 
 const T = {
-  context: {
-    index: { fr: "Sur un site client", en: "On a client site" },
-    kicker: { fr: "Maison Ardoise · restaurant fictif", en: "Maison Ardoise · fictional restaurant" },
+  multi: {
+    name: { fr: "Dossier · plusieurs univers", en: "Dossier · several universes" },
+    when: {
+      fr: "Une offre en plusieurs familles. Chaque univers ouvre un sommaire de quatre expériences, racontées en chapitres ; le pager passe d'un univers à l'autre sans fermer.",
+      en: "An offer in several families. Each universe opens an overview of four experiences, told in chapters; the pager moves between universes without closing.",
+    },
     title: { fr: "Trois façons de passer la soirée.", en: "Three ways to spend the evening." },
     body: {
-      fr: "Chaque univers ouvre un dossier : quatre expériences au sommaire, puis des chapitres à lire. Le visiteur reste sur la page, et revient toujours où il était.",
-      en: "Each universe opens a dossier: four experiences on the overview, then chapters to read. Visitors stay on the page and always come back where they were.",
+      fr: "La table, le bar, les salons : chaque univers se découvre en quatre expériences, avec ce qu'il faut savoir avant de venir et une seule action à la fin.",
+      en: "The table, the bar, the private rooms: each universe unfolds in four experiences, with what to know before coming and one action at the end.",
     },
-    entries: { fr: "4 expériences", en: "4 experiences" },
-    open: { fr: "Ouvrir le dossier", en: "Open the dossier" },
-    openAria: (label: string, l: Locale) => (l === "fr" ? `Ouvrir le dossier : ${label}` : `Open the dossier: ${label}`),
-    deep: { fr: "Lien direct : menu dégustation", en: "Deep link: tasting menu" },
-    accentLabel: { fr: "Un accent par univers", en: "One accent per universe" },
+    deep: { fr: "Voir directement le menu dégustation", en: "Go straight to the tasting menu" },
+    accent: { fr: "Un accent par univers", en: "One accent per universe" },
     accentHint: {
-      fr: "Désactivé, le dossier suit l'accent de la palette, en direct. Activé, chaque univers impose sa propre couleur.",
-      en: "Off, the dossier follows the palette accent, live. On, each universe brings its own colour.",
+      fr: "Activé, chaque univers donne sa couleur au dossier. Désactivé, le dossier suit l'accent du site, ici la palette.",
+      en: "On, each universe gives the dossier its colour. Off, the dossier follows the site accent, here the palette.",
     },
   },
-  contract: {
-    index: { fr: "Contrat de la modale", en: "Modal contract" },
-    title: { fr: "Toujours savoir où l'on est. Toujours pouvoir revenir.", en: "Always know where you are. Always get back." },
-    rows: {
-      fr: [
-        ["Échap", "Remonte d'un niveau : chapitre → sommaire → fermeture."],
-        ["Retour", "Le bouton retour du navigateur suit la même logique."],
-        ["Focus", "Arrive sur Fermer, reste dans la modale, revient au lanceur."],
-        ["Page", "Inerte et suspendue derrière : ses animations s'arrêtent."],
-        ["Mobile", "Capsule et dock en verre ; ils s'effacent à la lecture."],
-      ],
-      en: [
-        ["Escape", "Goes up one level: chapter → overview → close."],
-        ["Back", "The browser's Back button follows the same logic."],
-        ["Focus", "Lands on Close, stays in the modal, returns to the launcher."],
-        ["Page", "Inert and suspended behind: its loops stop."],
-        ["Mobile", "Glass capsule and dock; they step aside while reading."],
-      ],
+  single: {
+    name: { fr: "Dossier · un seul univers", en: "Dossier · one universe" },
+    when: {
+      fr: "Une seule offre en quatre parties. Sans univers à parcourir, l'en-tête perd son pager et la fin de lecture ramène au sommaire.",
+      en: "A single offer in four parts. With no universe to browse, the header drops its pager and the end of a read returns to the overview.",
     },
-  },
-  loader: {
-    index: { fr: "Chargement honnête", en: "Honest loading" },
-    title: { fr: "Rien ne s'affiche avant d'être prêt.", en: "Nothing shows before it is ready." },
+    title: { fr: "Privatiser la maison.", en: "Have the house to yourselves." },
     body: {
-      fr: "Le loader n'apparaît qu'après 350 ms d'attente, compte les médias décodés et propose de réessayer en cas d'échec.",
-      en: "The loader only appears after 350 ms, counts the decoded media and offers a retry on failure.",
+      fr: "Dîner privé, déjeuner d'affaires, réception dans la cour, atelier : quatre formules, une seule demande.",
+      en: "Private dinner, business lunch, courtyard reception, workshop: four formats, one request.",
     },
-    state: { fr: "État du loader", en: "Loader state" },
-    loading: { fr: "En cours", en: "Loading" },
-    failed: { fr: "Échec", en: "Failed" },
   },
+  explore: { fr: "Découvrir", en: "Explore" },
+  openAria: (label: string, l: Locale) => (l === "fr" ? `Découvrir : ${label}` : `Explore: ${label}`),
 } satisfies Record<string, unknown>;
 
 const tr = <V,>(v: Localized<V>, l: Locale) => v[l];
@@ -84,135 +68,89 @@ const COVERS: Record<string, string> = {
   bar: "/library/dossier/bar-cocktails.webp",
   salons: "/library/dossier/salon-private.webp",
 };
+const SINGLE_COVER = "/library/dossier/salon-reception.webp";
+
+type Open = { set: "multi" | "single"; item: string; entry?: string };
 
 function Showcase() {
   const { locale } = useLibraryLocale();
   const [itemAccents, setItemAccents] = useState(false);
-  const [open, setOpen] = useState<{ item: string; entry?: string } | null>(null);
+  const [open, setOpen] = useState<Open | null>(null);
+  // The set of the last open, kept through the exit animation.
+  const [set, setSet] = useState<Open["set"]>("multi");
 
-  const config = useMemo<DossierConfig>(() => {
+  const multi = useMemo<DossierConfig>(() => {
     const base = buildDossierConfig(locale);
     return itemAccents ? base : { ...base, items: base.items.map((item) => ({ ...item, accent: undefined })) };
   }, [locale, itemAccents]);
+  const single = useMemo<DossierConfig>(() => ({ ...multi, items: multi.items.filter((item) => item.id === "salons") }), [multi]);
+
+  const launch = (next: Open) => {
+    setSet(next.set);
+    setOpen(next);
+  };
 
   return (
     <ControlsProvider config={buildControlsConfig(locale)}>
-      <div className="ev-root ev-tone-dark dsh">
-        <div className="lib-rail">
-          <ClientContext config={config} locale={locale} itemAccents={itemAccents} onAccents={setItemAccents} onOpen={(item, entry) => setOpen({ item, entry })} />
-          <Contract locale={locale} />
-          <LoaderSpecimen locale={locale} />
+      <ShowcaseVariant name={tr(T.multi.name, locale)} when={tr(T.multi.when, locale)} rhythm="standard">
+        <div className="ev-root ev-chapter lib-rail dsh-scene">
+          <div className="dsh-scene__copy">
+            <h2 className="ev-t-section-feature">{tr(T.multi.title, locale)}</h2>
+            <p className="ev-t-body dsh-scene__body">{tr(T.multi.body, locale)}</p>
+            <GhostAction icon={<ArrowRight />} iconPosition="end" onClick={() => launch({ set: "multi", item: "table", entry: "tasting" })}>
+              {tr(T.multi.deep, locale)}
+            </GhostAction>
+            <div className="dsh-scene__choice">
+              <Switch checked={itemAccents} onCheckedChange={setItemAccents} label={tr(T.multi.accent, locale)} description={tr(T.multi.accentHint, locale)} />
+            </div>
+          </div>
+          <ul className="dsh-launchers">
+            {multi.items.map((item, i) => (
+              <li key={item.id} className="dsh-launchers__item" data-index={i + 1}>
+                <Launcher item={item} cover={COVERS[item.id]} index={`${pad(i + 1)} / ${pad(multi.items.length)}`} locale={locale} onOpen={() => launch({ set: "multi", item: item.id })} />
+              </li>
+            ))}
+          </ul>
         </div>
-        <DossierModal
-          config={config}
-          open={open !== null}
-          onClose={() => setOpen(null)}
-          initialItemId={open?.item}
-          initialEntryId={open?.entry}
-        />
-      </div>
+      </ShowcaseVariant>
+
+      <ShowcaseVariant name={tr(T.single.name, locale)} when={tr(T.single.when, locale)} tone="light" rhythm="standard">
+        <div className="ev-root ev-chapter lib-rail dsh-scene dsh-scene--single">
+          <div className="dsh-scene__copy">
+            <h2 className="ev-t-section-feature">{tr(T.single.title, locale)}</h2>
+            <p className="ev-t-body dsh-scene__body">{tr(T.single.body, locale)}</p>
+          </div>
+          <Launcher item={single.items[0]} cover={SINGLE_COVER} locale={locale} wide onOpen={() => launch({ set: "single", item: "salons" })} />
+        </div>
+      </ShowcaseVariant>
+
+      <DossierModal
+        className="dsh-modal"
+        config={set === "single" ? single : multi}
+        open={open !== null}
+        onClose={() => setOpen(null)}
+        initialItemId={open?.item}
+        initialEntryId={open?.entry}
+      />
     </ControlsProvider>
   );
 }
 
-function SectionHead({ n, label, title, body }: { n: number; label: string; title: string; body?: string }) {
+function Launcher({ item, cover, index, locale, wide = false, onOpen }: { item: DossierItem; cover: string; index?: string; locale: Locale; wide?: boolean; onOpen: () => void }) {
   return (
-    <header className="dsh-head">
-      <div className="dsh-head__index">
-        <Index current={n} total={3} size="lg" />
-        <Readout>{label}</Readout>
-      </div>
-      <h2 className="ev-t-section">{title}</h2>
-      {body && <p className="ev-t-body dsh-head__body">{body}</p>}
-    </header>
-  );
-}
-
-function ClientContext({ config, locale, itemAccents, onAccents, onOpen }: { config: DossierConfig; locale: Locale; itemAccents: boolean; onAccents: (v: boolean) => void; onOpen: (item: string, entry?: string) => void }) {
-  const t = T.context;
-  return (
-    <section className="dsh-section dsh-context" aria-labelledby="dsh-context">
-      <div className="dsh-context__copy">
-        <div className="dsh-head__index">
-          <Index current={1} total={3} size="lg" />
-          <Readout>{tr(t.index, locale)}</Readout>
-        </div>
-        <Readout className="dsh-context__kicker">{tr(t.kicker, locale)}</Readout>
-        <h2 id="dsh-context" className="ev-t-section-feature">{tr(t.title, locale)}</h2>
-        <p className="ev-t-body dsh-head__body">{tr(t.body, locale)}</p>
-        <GhostAction icon={<ArrowRight />} iconPosition="end" onClick={() => onOpen("table", "tasting")}>
-          {tr(t.deep, locale)}
-        </GhostAction>
-        <div className="dsh-context__switch">
-          <Switch checked={itemAccents} onCheckedChange={onAccents} label={tr(t.accentLabel, locale)} description={tr(t.accentHint, locale)} />
-        </div>
-      </div>
-      <ul className="dsh-launchers">
-        {config.items.map((item, i) => (
-          <li key={item.id} className="dsh-launchers__item" data-index={i + 1}>
-            <button type="button" className="dsh-launcher" aria-label={T.context.openAria(item.label, locale)} onClick={() => onOpen(item.id)}>
-              <span className="dsh-launcher__media">
-                <img src={COVERS[item.id]} alt="" decoding="async" />
-              </span>
-              <span className="dsh-launcher__meta">
-                <span className="ev-t-readout dsh-launcher__index">{pad(i + 1)} / {pad(config.items.length)}</span>
-                <span className="ev-t-card dsh-launcher__title">{item.label}</span>
-                <span className="ev-t-readout dsh-launcher__count">{tr(t.entries, locale)}</span>
-              </span>
-              <span className="dsh-launcher__cta">
-                <span>{tr(t.open, locale)}</span>
-                <ArrowRight />
-              </span>
-            </button>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
-function Contract({ locale }: { locale: Locale }) {
-  const t = T.contract;
-  return (
-    <section className="dsh-section dsh-split" aria-label={tr(t.index, locale)}>
-      <SectionHead n={2} label={tr(t.index, locale)} title={tr(t.title, locale)} />
-      <ChapterRows className="dsh-rows" rows={tr(t.rows, locale).map(([label, detail]) => ({ label, detail }))} />
-    </section>
-  );
-}
-
-function LoaderSpecimen({ locale }: { locale: Locale }) {
-  const t = T.loader;
-  const [state, setState] = useState("loading");
-  const copy = buildDossierConfig(locale).copy.loader;
-  return (
-    <section className="dsh-section dsh-split" aria-label={tr(t.index, locale)}>
-      <div className="dsh-loader-copy">
-        <SectionHead n={3} label={tr(t.index, locale)} title={tr(t.title, locale)} body={tr(t.body, locale)} />
-        <SegmentedControl
-          label={tr(t.state, locale)}
-          value={state}
-          onChange={setState}
-          options={[
-            { value: "loading", label: tr(t.loading, locale) },
-            { value: "failed", label: tr(t.failed, locale) },
-          ]}
-        />
-      </div>
-      <div className="evd-scope dsh-loader">
-        <DossierLoader
-          kicker={copy.overviewKicker(1)}
-          title={copy.title}
-          status={copy.status}
-          loaded={2}
-          total={4}
-          spoken={copy.spoken(2, 4)}
-          failed={state === "failed"}
-          failedText={copy.failed}
-          retryLabel={copy.retry}
-          onRetry={() => setState("loading")}
-        />
-      </div>
-    </section>
+    <button type="button" className="dsh-launcher" data-wide={wide || undefined} aria-label={T.openAria(item.label, locale)} onClick={onOpen}>
+      <span className="dsh-launcher__media">
+        <img src={cover} alt="" decoding="async" />
+      </span>
+      <span className="dsh-launcher__meta">
+        {index && <span className="ev-t-readout dsh-launcher__index">{index}</span>}
+        <span className="ev-t-card dsh-launcher__title">{item.label}</span>
+        <span className="ev-t-compact dsh-launcher__entries">{item.entries.map((e) => e.label ?? e.title).join(" · ")}</span>
+      </span>
+      <span className="dsh-launcher__cta" aria-hidden="true">
+        <span>{tr(T.explore, locale)}</span>
+        <ArrowRight />
+      </span>
+    </button>
   );
 }

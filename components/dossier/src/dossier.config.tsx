@@ -103,9 +103,8 @@ type ItemData = {
 const T = {
   practical: { fr: "En pratique.", en: "In practice." },
   practicalNote: { fr: "Les informations utiles avant de venir.", en: "What to know before you come." },
-  specimenLabel: { fr: "Exemple", en: "Sample" },
   consequence: { fr: "Quitte le dossier", en: "Leaves the dossier" },
-  kicker: { fr: "Maison Ardoise · Expériences", en: "Maison Ardoise · Experiences" },
+  kicker: { fr: "Expériences", en: "Experiences" },
   attribution: { fr: "Site conçu par Evoview — evoview.be (nouvel onglet)", en: "Site designed by Evoview — evoview.be (new tab)" },
 };
 
@@ -498,7 +497,7 @@ function buildItem(data: ItemData, locale: Locale): DossierItem {
           </DossierChapter>
           <DossierChapter tone="b">
             <ChapterSplit aside={<ChapterHead title={e.specimen.heading[locale]} body={e.specimen.body[locale]} />}>
-              <ChapterSpecimen label={T.specimenLabel[locale]} note={e.specimen.note[locale]}>
+              <ChapterSpecimen note={e.specimen.note[locale]}>
                 <ChapterRows rows={e.specimen.rows[locale].map(([label, detail]) => ({ label, detail }))} />
               </ChapterSpecimen>
             </ChapterSplit>

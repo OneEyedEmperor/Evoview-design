@@ -1,17 +1,22 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { createContext, useContext, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { cn, pad } from "../foundation";
 import type { DossierMedia } from "./types";
 import { isVideo } from "./hooks";
 
 /* Open chapters for a dossier detail: claim → artefact → one interpreting
-   sentence. Chapters are unboxed; they separate by spacing, a hairline and an
-   alternating near-black. Any block library (e.g. story-blocks) may replace
-   the inner pieces; keep DossierChapter as the shell. */
+   sentence. Chapters are unboxed; they separate by spacing and an
+   alternating near-black, never by rules. Any block library (e.g.
+   story-blocks) may replace the inner pieces; keep DossierChapter as the
+   shell. */
+
+/** Provided by the dossier body: registers a chapter for its scroll-driven reveal; returns the unregister. */
+export type ChapterReveal = (el: HTMLElement, reveal: () => void) => () => void;
+export const ChapterRevealContext = createContext<ChapterReveal | null>(null);
 
 export type DossierChapterProps = {
   /** "a" #0c0c0d, "b" #101011 (alternate them), "paper" light chapter inside the dark shell. */
   tone?: "a" | "b" | "paper";
-  /** "intro" opens the story (tighter top), "payoff" closes it (bloom). */
+  /** "intro" opens the story (tighter top, enters with the detail), "payoff" closes it (bloom). */
   variant?: "intro" | "standard" | "payoff";
   className?: string;
   children: ReactNode;
@@ -19,26 +24,14 @@ export type DossierChapterProps = {
 
 export function DossierChapter({ tone = "a", variant = "standard", className, children }: DossierChapterProps) {
   const ref = useRef<HTMLElement>(null);
-  const [revealed, setRevealed] = useState(false);
-  useEffect(() => {
+  const register = useContext(ChapterRevealContext);
+  // The intro enters with the detail itself; outside a dossier body there is no choreography.
+  const [revealed, setRevealed] = useState(variant === "intro" || !register);
+  useLayoutEffect(() => {
     const el = ref.current;
-    if (!el || revealed) return;
-    if (typeof IntersectionObserver === "undefined") {
-      setRevealed(true);
-      return;
-    }
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          setRevealed(true);
-          io.disconnect();
-        }
-      },
-      { rootMargin: "0px 0px -10% 0px" },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [revealed]);
+    if (!el || revealed || !register) return;
+    return register(el, () => setRevealed(true));
+  }, [register, revealed]);
   return (
     <section ref={ref} className={cn("evd-chapter", `evd-chapter--${variant}`, tone === "paper" && "ev-tone-light", className)} data-tone={tone} data-revealed={revealed || undefined}>
       <div className="evd-rail">{children}</div>
@@ -114,10 +107,10 @@ export function ChapterSplit({ aside, children }: { aside: ReactNode; children: 
 
 export type ChapterRow = { label: ReactNode; detail: ReactNode; index?: string };
 
-/** Numbered rows with hairlines: index · label · detail. */
-export function ChapterRows({ rows, numbered = true, className }: { rows: ChapterRow[]; numbered?: boolean; className?: string }) {
+/** Rows separated by spacing: label · detail, with an accent index only when the rows are a sequence. */
+export function ChapterRows({ rows, numbered = false, className }: { rows: ChapterRow[]; numbered?: boolean; className?: string }) {
   return (
-    <ol className={cn("evd-rows", !numbered && "evd-rows--plain", className)}>
+    <ol className={cn("evd-rows", numbered && "evd-rows--numbered", className)}>
       {rows.map((row, i) => (
         <li key={i} className="evd-rows__row">
           {numbered && <span className="ev-t-readout evd-rows__index">{row.index ?? pad(i + 1)}</span>}
@@ -129,11 +122,10 @@ export function ChapterRows({ rows, numbered = true, className }: { rows: Chapte
   );
 }
 
-/** Paper specimen inside the dark shell: a demonstration of a client artefact (menu, card, plan). */
-export function ChapterSpecimen({ label, note, children }: { label?: string; note?: string; children: ReactNode }) {
+/** Paper specimen inside the dark shell: a demonstration of a client artefact (menu, card, plan). The note says it is an example. */
+export function ChapterSpecimen({ note, children }: { note?: string; children: ReactNode }) {
   return (
     <div className="ev-tone-paper evd-specimen">
-      {label && <span className="ev-t-readout evd-specimen__label">{label}</span>}
       {children}
       {note && <p className="ev-t-compact evd-specimen__note">{note}</p>}
     </div>

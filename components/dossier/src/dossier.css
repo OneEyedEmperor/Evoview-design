@@ -26,6 +26,8 @@
   background: transparent;
   color: var(--ev-fg);
 }
+/* The exit animation is visual only: the page behind is already released and clickable. */
+.ev-dossier[data-phase="closing"] { pointer-events: none; }
 :where(.ev-dossier button) { margin: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; letter-spacing: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 .ev-dossier :where(h1, h2, h3, h4, p, ol, dl, dd, figure) { margin: 0; }
 .ev-dossier :where(ol) { padding: 0; list-style: none; }
@@ -70,9 +72,10 @@
   outline: none;
 }
 
+/* `--dossier-reserve-bottom` (host, default 0): space kept free under the windowed shell for host chrome pinned bottom-right. */
 @media (min-width: 768px) {
-  .ev-root.ev-dossier { --evd-radius: var(--ev-radius-shell); align-items: center; padding: 1em; }
-  .evd-shell { width: min(92.5em, 100%); height: min(57.5em, calc(100dvh - 2em)); }
+  .ev-root.ev-dossier { --evd-radius: var(--ev-radius-shell); align-items: center; padding: 1em 1em calc(1em + var(--dossier-reserve-bottom, 0px)); }
+  .evd-shell { width: min(92.5em, 100%); height: min(57.5em, calc(100dvh - 2em - var(--dossier-reserve-bottom, 0px))); }
   .evd-dialog {
     border: 1px solid rgb(255 255 255 / 0.08);
     border-radius: var(--evd-radius);
@@ -118,11 +121,10 @@
     radial-gradient(circle at 25% -60%, rgb(255 255 255 / 0.24), transparent 54%),
     linear-gradient(90deg, color-mix(in oklab, var(--dossier-accent) 10%, transparent), transparent 55%);
 }
-.evd-header__identity { display: flex; min-width: 0; flex: 1 1 auto; align-items: center; gap: 10px; }
+.evd-header__identity { display: flex; min-width: 0; flex: 1 1 auto; align-items: center; gap: 16px; }
 .evd-header__brand { display: inline-flex; max-width: 8.5em; flex: 0 0 auto; align-items: center; color: var(--ev-fg); white-space: nowrap; }
 .evd-header__brand > svg, .evd-header__brand > img { display: block; height: 18px; width: auto; max-width: 100%; }
 .evd-header__brand .ev-t-readout-lg { font-size: 11px; letter-spacing: 0.16em; }
-.evd-header__divider { width: 1px; height: 22px; flex: 0 0 auto; background: linear-gradient(to bottom, transparent, rgb(255 255 255 / 0.22), transparent); }
 .evd-header__meta { display: flex; min-width: 0; flex-direction: column; gap: 4px; }
 .evd-header__kicker,
 .evd-header__title {
@@ -136,9 +138,8 @@
 }
 .evd-header__kicker { color: color-mix(in oklab, var(--dossier-signal) 55%, rgb(255 255 255 / 0.6)); font-size: 9px; letter-spacing: 0.16em; line-height: 1; }
 .evd-header__title { color: var(--ev-fg-90); font-size: 10px; letter-spacing: 0.11em; line-height: 1.1; }
-.evd-header__end { display: flex; flex: 0 0 auto; align-items: center; gap: 10px; }
+.evd-header__end { display: flex; flex: 0 0 auto; align-items: center; gap: 14px; }
 .ev-dossier .evd-mark svg { width: 60px; }
-.evd-header__divider--end { height: 18px; }
 /* Phones: one line of meta (the dock carries the location); the full readout stays spoken. */
 .evd-header__title-short { display: none; }
 @media (max-width: 599px) {
@@ -148,8 +149,8 @@
   .evd-header__title-short { display: inline; }
   .evd-header__brand .ev-t-readout-lg { font-size: 10px; letter-spacing: 0.12em; }
   .evd-header__bar { gap: 8px; }
-  .evd-header__identity { gap: 8px; }
-  .evd-header__end { gap: 8px; }
+  .evd-header__identity { gap: 12px; }
+  .evd-header__end { gap: 10px; }
   .ev-dossier .evd-mark svg { width: 54px; }
 }
 
@@ -163,7 +164,7 @@
 @media (min-width: 600px) and (max-width: 1023px) {
   .evd-header { padding: max(10px, env(safe-area-inset-top)) 24px 8px; }
   .evd-header__bar { min-height: 58px; padding: 7px 7px 7px 18px; }
-  .evd-header__identity { gap: 13px; }
+  .evd-header__identity { gap: 18px; }
   .evd-header__title { font-size: 11px; }
   .evd-close.evd-close { width: 44px; height: 44px; border-radius: 15px; }
 }
@@ -174,7 +175,6 @@
     inset: auto;
     flex: 0 0 auto;
     padding: 14px 2.3em;
-    border-bottom: 1px solid rgb(255 255 255 / 0.07);
     background: rgb(12 12 13 / 0.95);
     pointer-events: auto;
     transition: none;
@@ -194,11 +194,10 @@
     backdrop-filter: none;
   }
   .evd-header__bar::before { display: none; }
-  .evd-header__identity { gap: 16px; }
-  .evd-header__divider { height: 16px; }
+  .evd-header__identity { gap: 24px; }
   .evd-header__meta { gap: 3px; }
   .evd-header__title { font-size: 11px; }
-  .evd-header__end { justify-self: end; gap: 16px; }
+  .evd-header__end { justify-self: end; gap: 24px; }
   .ev-dossier .evd-mark svg { width: 72px; }
   .evd-close.evd-close { width: auto; height: 44px; padding: 0 16px 0 13px; border-radius: var(--ev-radius-control); }
   .evd-close .ev-t-label { display: inline; }
@@ -235,7 +234,6 @@
     z-index: 20;
     display: flex;
     flex: 0 0 auto;
-    border-bottom: 1px solid rgb(255 255 255 / 0.08);
     background: var(--dossier-shell);
   }
   .evd-strip__overview,
@@ -247,7 +245,6 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    border-right: 1px solid rgb(255 255 255 / 0.1);
     color: rgb(255 255 255 / 0.65);
     font-family: var(--ev-font-display);
     font-size: 11px;
@@ -266,9 +263,9 @@
     gap: 9px;
     padding: 8px 10px 11px;
     color: rgb(255 255 255 / 0.48);
-    background: linear-gradient(rgb(255 255 255 / 0.09), rgb(255 255 255 / 0.09)) bottom / 100% 3px no-repeat;
+    /* The track is the strip's one line: segmented per tab (a 4px gap shows where one ends), filled by reading progress. */
+    background: linear-gradient(rgb(255 255 255 / 0.09), rgb(255 255 255 / 0.09)) bottom left / calc(100% - 4px) 3px no-repeat;
   }
-  .evd-strip__tab + .evd-strip__tab { border-left: 1px solid rgb(255 255 255 / 0.06); }
   .evd-strip__num {
     display: inline-flex;
     min-width: 22px;
@@ -292,7 +289,7 @@
   .evd-strip__tab[data-state="past"] { color: rgb(255 255 255 / 0.72); }
   .evd-strip__progress {
     position: absolute;
-    inset: auto 0 0;
+    inset: auto 4px 0 0;
     height: 3px;
     background: var(--dossier-signal);
     transform: scaleX(0);
@@ -306,8 +303,11 @@
   .evd-strip button:focus-visible { outline: 2px solid var(--dossier-signal); outline-offset: -4px; }
 
   /* Completion toast: under the next tab, white card with an accent hairline. */
-  .evd-toast { position: absolute; top: calc(100% + 12px); right: 16px; animation: evd-toast-in 420ms var(--ev-ease-cinematic) both; }
-  .evd-toast::before { content: ""; position: absolute; top: -12px; right: 22px; width: 1px; height: 12px; background: var(--dossier-signal); }
+  /* Under the tab it opens (the last entry's toast, which leaves for the next universe or the overview, sits under the last tab). The 12px accent stem points at that tab. */
+  .evd-toast { position: absolute; top: calc(100% + 12px); animation: evd-toast-in 420ms var(--ev-ease-cinematic) both; }
+  .evd-toast[data-anchor="end"] { right: 16px; }
+  .evd-toast::before { content: ""; position: absolute; top: -12px; left: 22px; width: 1px; height: 12px; background: var(--dossier-signal); }
+  .evd-toast[data-anchor="end"]::before { right: 22px; left: auto; }
   .evd-toast button {
     display: flex;
     align-items: center;
@@ -370,9 +370,13 @@
     background: radial-gradient(circle closest-side, color-mix(in oklab, var(--dossier-accent) 9%, transparent), color-mix(in oklab, var(--dossier-accent) 5%, transparent) 55%, transparent 100%);
   }
 }
-.evd-overview, .evd-detail { position: relative; z-index: 1; }
-.evd-detail { outline: none; animation: evd-detail-in 340ms var(--ev-ease-cinematic) 50ms both; }
-@keyframes evd-detail-in { from { opacity: 0; transform: translateY(10px); } }
+.evd-overview, .evd-detail { position: relative; z-index: 1; transition: opacity 220ms var(--ev-ease); }
+/* Entrances fill backwards only: if an animation never runs, the view is still visible. */
+.evd-detail { outline: none; animation: evd-detail-in 340ms var(--ev-ease-cinematic) 40ms backwards; }
+@keyframes evd-detail-in { from { opacity: 0.35; transform: translateY(10px); } }
+/* The previous view stays on screen until the next one's media is decoded; dimmed after a beat so warm swaps never flicker. */
+.evd-body[data-pending] > .evd-overview,
+.evd-body[data-pending] > .evd-detail { opacity: 0.5; transition-delay: 140ms; }
 @media (max-width: 1023px) {
   .ev-dossier[data-view="detail"] .evd-body {
     padding-top: max(64px, calc(env(safe-area-inset-top) + 58px));
@@ -409,10 +413,11 @@
   border-radius: var(--ev-radius-surface);
   background: var(--ev-well);
   text-align: left;
-  opacity: 0;
   transition: border-color 240ms var(--ev-ease), box-shadow 280ms var(--ev-ease), transform var(--ev-dur-fast) var(--ev-ease);
 }
-.evd-board[data-revealed] .evd-tile { animation: evd-tile-in 560ms var(--ev-ease-cinematic) both; animation-delay: calc((var(--evd-n, 1) - 1) * 100ms); }
+/* Hidden only before the reveal; the convergence fills backwards, so a skipped animation still leaves the tiles visible. */
+.evd-board:not([data-revealed]) .evd-tile { opacity: 0; }
+.evd-board[data-revealed] .evd-tile { animation: evd-tile-in 560ms var(--ev-ease-cinematic) backwards; animation-delay: calc((var(--evd-n, 1) - 1) * 100ms); }
 .evd-tile[data-index="1"] { --evd-n: 1; --evd-dx: -34px; --evd-dy: -18px; }
 .evd-tile[data-index="2"] { --evd-n: 2; --evd-dx: 34px; --evd-dy: -18px; }
 .evd-tile[data-index="3"] { --evd-n: 3; --evd-dx: -34px; --evd-dy: 18px; }
@@ -578,7 +583,7 @@
   animation: evd-fade-in 240ms ease both;
 }
 .evd-loader__panel { width: 100%; max-width: 460px; }
-.evd-loader__head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; padding-bottom: 16px; border-bottom: 1px solid rgb(255 255 255 / 0.1); }
+.evd-loader__head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
 .evd-loader__kicker { display: block; color: var(--ev-fg-55); }
 .evd-loader__title {
   display: block;
@@ -699,16 +704,6 @@
 @keyframes evd-bloom-b { 0% { opacity: 1; transform: translate3d(-50%, -50%, 0) scale(0.3); } 100% { opacity: 0; transform: translate3d(-50%, -50%, 0) scale(1.35); } }
 .evd-dock__item:active { color: #fff; background: rgb(255 255 255 / 0.055); transform: translate3d(0, 1px, 0) scale(0.965); transition-duration: 70ms; }
 .evd-dock__item:focus-visible { outline: 2px solid var(--dossier-signal); outline-offset: -3px; }
-.evd-dock__item[data-side="end"]::before,
-.evd-dock__location::before {
-  content: "";
-  position: absolute;
-  top: 13px;
-  bottom: 13px;
-  left: 0;
-  width: 1px;
-  background: linear-gradient(to bottom, transparent, rgb(255 255 255 / 0.18), transparent);
-}
 .evd-dock__icon { display: flex; width: 20px; height: 20px; flex: 0 0 auto; align-items: center; justify-content: center; transition: transform 460ms cubic-bezier(0.22, 1.7, 0.36, 1); }
 .evd-dock__icon svg { width: 18px; height: 18px; }
 .evd-dock__item:active .evd-dock__icon { transform: scale(0.84); transition-duration: 70ms; }
@@ -767,24 +762,24 @@
 }
 @media (min-width: 1024px) { .evd-dock { display: none; } }
 
-/* ── Open chapters (detail). */
+/* ── Open chapters (detail). Separated by space and the a / b near-black alternation, never by rules. */
 .evd-chapter {
   position: relative;
-  padding-block: 48px;
-  border-top: 1px solid rgb(255 255 255 / 0.08);
+  padding-block: 56px;
   background: var(--dossier-shell);
 }
 .evd-chapter[data-tone="b"] { background: var(--dossier-alt); }
-.evd-chapter[data-tone="paper"] { border-top-color: transparent; background: #eeecef; color: var(--ev-fg); }
-.evd-chapter--intro { padding-top: 24px; border-top: 0; background: transparent; }
+.evd-chapter[data-tone="paper"] { background: #eeecef; color: var(--ev-fg); }
+.evd-chapter--intro { padding-top: 24px; background: transparent; }
 .evd-rail { position: relative; display: grid; width: 100%; max-width: calc(85em + 48px); gap: 32px; margin-inline: auto; padding-inline: 24px; }
 @media (min-width: 1024px) {
-  .evd-chapter { padding-block: 4em; }
+  .evd-chapter { padding-block: 4.5em; }
   .evd-chapter--intro { padding-top: 2em; }
   .evd-rail { max-width: calc(85em + 7em); gap: 3.5em; padding-inline: 3.5em; }
 }
-.evd-chapter .evd-rail > * { opacity: 0; transform: translateY(16px); transition: opacity 600ms var(--ev-ease-cinematic), transform 600ms var(--ev-ease-cinematic); }
-.evd-chapter[data-revealed] .evd-rail > * { opacity: 1; transform: none; }
+/* Reveal once (y 16 → 0, stagger 80). Hidden only while explicitly pending, so content never depends on a transition running. */
+.evd-chapter .evd-rail > * { transition: opacity 600ms var(--ev-ease-cinematic), transform 600ms var(--ev-ease-cinematic); }
+.evd-chapter:not([data-revealed]) .evd-rail > * { opacity: 0; transform: translateY(16px); }
 .evd-chapter[data-revealed] .evd-rail > :nth-child(2) { transition-delay: 80ms; }
 .evd-chapter[data-revealed] .evd-rail > :nth-child(3) { transition-delay: 160ms; }
 .evd-chapter[data-revealed] .evd-rail > :nth-child(4) { transition-delay: 240ms; }
@@ -834,30 +829,31 @@
   .evd-split__stage { order: 0; }
 }
 
-.evd-rows { display: grid; border-top: 1px solid var(--ev-line); }
-.evd-rows__row { display: grid; grid-template-columns: 2.5em minmax(0, 1fr); gap: 6px 12px; padding-block: 16px; border-bottom: 1px solid var(--ev-line); }
+/* Rows: label over detail on phones, label · detail columns from 768; rows separated by the neighbour band. */
+.evd-rows { display: grid; gap: 20px; }
+.evd-rows__row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.evd-rows--numbered .evd-rows__row { grid-template-columns: 2.5em minmax(0, 1fr); column-gap: 12px; }
 .evd-rows__index { grid-row: 1 / span 2; color: var(--ev-accent-signal); padding-top: 2px; }
 .evd-rows__label { color: var(--ev-fg); }
 .evd-rows__detail { color: var(--ev-fg-65); font-family: var(--ev-font-body); font-size: max(1em, 13px); line-height: 1.5; }
-.evd-rows--plain .evd-rows__row { grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 768px) {
-  .evd-rows__row { grid-template-columns: 3.5em 11em minmax(0, 1fr); align-items: baseline; padding-block: 1.3em; }
+  .evd-rows { gap: 1.6em; }
+  .evd-rows__row { grid-template-columns: 11em minmax(0, 1fr); column-gap: 1.5em; align-items: baseline; }
+  .evd-rows--numbered .evd-rows__row { grid-template-columns: 3.5em 11em minmax(0, 1fr); }
   .evd-rows__index { grid-row: auto; }
-  .evd-rows--plain .evd-rows__row { grid-template-columns: 11em minmax(0, 1fr); }
 }
 
 .evd-specimen {
   display: grid;
-  gap: 16px;
-  padding: 24px 20px;
+  gap: 28px;
+  padding: 28px 22px 24px;
   border-radius: var(--ev-radius-surface);
   background: #f4f3f1;
   color: var(--ev-fg);
   box-shadow: 0 30px 70px -40px rgb(0 0 0 / 0.9);
 }
-.evd-specimen__label { color: var(--ev-fg-55); }
 .evd-specimen__note { color: var(--ev-fg-55); font-style: italic; }
-@media (min-width: 1024px) { .evd-specimen { padding: 2.5em 2.75em; } }
+@media (min-width: 1024px) { .evd-specimen { gap: 2.5em; padding: 2.75em 3em 2.5em; } }
 
 .evd-chapter--payoff { overflow: hidden; }
 .evd-chapter--payoff::before {
@@ -876,13 +872,13 @@
 .evd-payoff__line { display: block; }
 .evd-payoff__line--accent { color: var(--dossier-signal); }
 .evd-payoff__lead { max-width: 45em; color: var(--ev-fg-90); font-weight: 400; }
-.evd-payoff__results { display: grid; margin: 0; padding-top: 16px; border-top: 1px solid var(--ev-line); gap: 16px; }
+.evd-payoff__results { display: grid; margin: 8px 0 0; gap: 20px; }
 .evd-payoff__results > div { display: flex; flex-direction: column-reverse; gap: 4px; }
 .evd-payoff__results dt { color: var(--ev-fg-55); }
 .evd-payoff__value { margin: 0; color: var(--ev-fg); font-family: var(--ev-font-display); font-size: max(1.75em, 24px); font-weight: 900; letter-spacing: -0.02em; line-height: 1; }
 .evd-payoff__action { display: grid; gap: 12px; align-content: end; }
 .evd-payoff__consequence { justify-self: end; color: var(--ev-fg-35); }
-@media (min-width: 768px) { .evd-payoff__results { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 17px; } }
+@media (min-width: 768px) { .evd-payoff__results { margin-top: 1.25em; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25em; } }
 @media (min-width: 1024px) {
   .evd-payoff { grid-template-columns: 1.2fr 0.8fr; column-gap: 4em; align-items: end; }
 }
