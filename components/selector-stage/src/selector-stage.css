@@ -13,6 +13,8 @@
   /* Marks over media (always on a dark scrim): lifted toward white so an ink accent still reads. */
   --ss-on-media: color-mix(in oklab, var(--ss-accent) 62%, #fff);
   --ss-ratio: 4 / 3;
+  --ss-list: var(--ev-surface-list, color-mix(in oklab, var(--ev-fg) 4%, var(--ev-bg)));
+  --ss-list-alt: var(--ev-surface-list-alt, color-mix(in oklab, var(--ev-fg) 6%, var(--ev-bg)));
 
   position: relative;
   color: var(--ev-fg);
@@ -55,10 +57,12 @@
 
 /* ── Selector: joined rows (≥ 1024) ↔ chip strip (< 1024) ──────────── */
 
-/* No rules between rows: the 64px pitch, the shared index / label / bar
-   columns and the selected row's box hold them together as one instrument. */
-.ss-rows { display: none; }
+/* A text list, so segmented by tone (RULES §3): joined rows on alternating
+   list surfaces inside one surface-radius panel, no rules. Selection (tint,
+   inset box, bar, text contrast) is painted on top of the row's surface. */
+.ss-rows { display: none; border-radius: var(--ev-radius-surface); }
 .ss-row {
+  --ss-row-bg: var(--ss-list);
   display: grid;
   width: 100%;
   min-height: 64px;
@@ -69,7 +73,7 @@
   padding: 1.1em 1.25em 1.1em 1em;
   border: 0;
   border-radius: 0;
-  background: transparent;
+  background: var(--ss-row-bg);
   color: inherit;
   font: inherit;
   text-align: left;
@@ -77,6 +81,10 @@
   -webkit-tap-highlight-color: transparent;
   transition: background-color 300ms var(--ev-ease), box-shadow 300ms var(--ev-ease);
 }
+.ss-row:nth-child(even) { --ss-row-bg: var(--ss-list-alt); }
+/* Ends follow the panel radius so the selection box is never cut by it. */
+.ss-row:first-child { border-start-start-radius: var(--ev-radius-surface); border-start-end-radius: var(--ev-radius-surface); }
+.ss-row:last-child { border-end-start-radius: var(--ev-radius-surface); border-end-end-radius: var(--ev-radius-surface); }
 .ss-row__index { color: var(--ev-fg-35); transition: color 300ms var(--ev-ease); }
 .ss-row__label { font-size: max(0.8125em, 12px); color: var(--ev-fg-55); transition: color 300ms var(--ev-ease); }
 .ss-row__bar {
@@ -87,13 +95,13 @@
   transition: width 300ms var(--ev-ease-cinematic), background-color 300ms var(--ev-ease);
 }
 /* Selection box: the only frame a row ever gets. */
-.ss-row[data-selected] { background: var(--ss-tint); box-shadow: inset 0 0 0 1px var(--ss-border); }
+.ss-row[data-selected] { background: linear-gradient(var(--ss-tint), var(--ss-tint)) var(--ss-row-bg); box-shadow: inset 0 0 0 1px var(--ss-border); }
 .ss-row[data-selected] .ss-row__index { color: var(--ss-signal); }
 .ss-row[data-selected] .ss-row__label { color: var(--ev-fg); }
 .ss-row[data-selected] .ss-row__bar { width: 22px; background: var(--ss-signal); }
 @media (hover: hover) {
   .ss-row:not([data-selected]):hover .ss-row__label { color: var(--ev-fg-90); }
-  .ss-row:not([data-selected]):hover { background: color-mix(in oklab, var(--ev-fg) 3%, transparent); }
+  .ss-row:not([data-selected]):hover { background: color-mix(in oklab, var(--ev-fg) 4%, var(--ss-row-bg)); }
 }
 .ss-row:focus-visible { outline: 2px solid var(--ss-signal); outline-offset: -2px; }
 

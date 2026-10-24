@@ -1,5 +1,16 @@
 # selector-stage changelog
 
+## 1.2.0
+
+- Requires `foundation` 1.3.0 (`--ev-surface-list` / `--ev-surface-list-alt`;
+  fallbacks mix 4 % / 6 % foreground into the tone background).
+- Selector rows are a text list on tonal surfaces (RULES §3): joined rows
+  alternate the two list surfaces inside a surface-radius panel; first/last
+  rows follow the panel radius. Selection (tint over the surface, inset
+  box, 22px bar, text contrast) and hover paint on top of the surface.
+- Phone chip strip unchanged (choosable tokens, not a text list). No config
+  changes.
+
 ## 1.1.2
 
 - Config (reference content only): the four reference chapters no longer

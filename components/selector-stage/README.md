@@ -28,9 +28,9 @@ restyle them to a client's UI kit:
   (`VUE · 02`) + label. No free-floating kickers.
 - **Asymmetric splits**: `.70 / 1.30` selector/stage, `.72 / 1.28`
   heading/copy, `1.22 / .78` atlas. Equal columns only for the pair (true peers).
-- **Joined rows, radius 0**, ≥ 64px, no rules between them: the row pitch,
-  the shared index / label / bar columns and the selected row's box make
-  them one instrument. Selection is multi-signal: 22 % accent tint + 65 %
+- **Joined rows, radius 0**, ≥ 64px, segmented by tone (RULES §3): rows
+  alternate `--ev-surface-list` / `--ev-surface-list-alt` inside one
+  surface-radius panel (ends follow the radius), no rules. Selection is multi-signal: 22 % accent tint + 65 %
   border + indicator bar 22px vs 7px + text contrast + `aria-checked`
   (radio). Never colour alone. The only line in a scene is information
   (the autoplay progress on the stage edge).
