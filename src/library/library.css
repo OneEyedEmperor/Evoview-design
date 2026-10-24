@@ -482,12 +482,50 @@
     transition: background-color 280ms var(--lib-ease);
   }
   .lib-grid .lib-card .lib-well { border-radius: 0.5em; }
-  .lib-grid .lib-card__caption { gap: 0.35em; padding: 0.4em 0.5em 0.4em 0.75em; background: none; }
+  .lib-grid .lib-card__caption { gap: 0.35em; padding: 0.4em 0.5em 0.4em 1.75em; background: none; }
+  /* Side by side here: the seam is vertical, inside the tile. */
+  .lib-grid .lib-card { --lib-card-seam: 0.25em; --lib-orb: 2.1em; --lib-orb-ring: var(--lib-tile); }
+  .lib-grid .lib-card__orb { top: 50%; left: calc(-0.5 * var(--lib-card-seam) - 0.5 * var(--lib-orb)); translate: 0 -50%; }
+  .lib-grid .lib-card__meta:has(> :only-child) { justify-content: flex-start; }
   .lib-grid .lib-card .lib-body { font-size: 13px; line-height: 1.4; }
   .lib-grid .lib-card .lib-card__meta { gap: 0.5em; }
 }
 .lib-card__meta { display: flex; align-items: center; justify-content: space-between; gap: 1em; }
-.lib-card__index { color: var(--lib-faint); }
+/* Order as a number-only orb (RULES §1) centred on the seam between well
+   and caption; its ring is the seam's own colour, so it reads as set into
+   the gap rather than stuck on top. */
+.lib-card { --lib-card-seam: 0.375em; --lib-orb: 2.5em; --lib-orb-ring: var(--lib-seam-tone); }
+.lib-toned[data-tone="dark"] { --lib-seam-tone: var(--lib-night); }
+.lib-toned[data-tone="light"] { --lib-seam-tone: var(--lib-paper); }
+.lib-card__caption { position: relative; }
+.lib-card__meta:has(> :only-child) { justify-content: flex-end; }
+.lib-card__orb {
+  position: absolute;
+  z-index: 1;
+  top: calc(-0.5 * var(--lib-card-seam) - 0.5 * var(--lib-orb));
+  left: 1.25em;
+  display: grid;
+  width: var(--lib-orb);
+  height: var(--lib-orb);
+  place-items: center;
+  border-radius: 999px;
+  background: var(--lib-fg);
+  box-shadow: 0 0 0 0.3em var(--lib-orb-ring);
+  color: var(--lib-seam-tone);
+  font-family: var(--lib-font-state);
+  font-size: max(13px, 1em);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  transition: background-color 280ms var(--lib-ease), color 280ms var(--lib-ease);
+}
+@media (min-width: 768px) {
+  .lib-card__orb { left: 1.6em; }
+}
+@media (hover: hover) {
+  .lib-card:hover .lib-card__orb { background: var(--primary); color: var(--primary-foreground); }
+}
+.lib-card:focus-visible .lib-card__orb { background: var(--primary); color: var(--primary-foreground); }
 .lib-card__title {
   margin: 0;
   font-family: var(--lib-font-display);

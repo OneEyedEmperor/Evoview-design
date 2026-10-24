@@ -26,10 +26,16 @@ remain the evidence and the source of exact values.
 | --- | --- | --- |
 | What it is | Overused Grotesk 900, UPPERCASE, tracking −.015 → −.035em, LH .85–1.1 | display, titles, headings, card titles |
 | Why / how | Montserrat 400 (lead 500–600), sentence case, LH 1.55–1.6 | body, lead, captions, option labels |
-| Where / state | Satoshi 700, UPPERCASE, tracking +.12 → +.20em, tabular | indices `01`, `01 / 04`, status, counters, kickers inside captions |
+| Where / state | Satoshi 700, UPPERCASE, tracking +.12 → +.20em, tabular | status, kickers inside captions |
 
 Labels/controls: Overused 700 UPPERCASE +.05 → +.25em. Questions to the visitor
 are sentence case; brand statements are uppercase.
+
+**No small counting tags.** Never label items with position readouts such as
+`01 / 04` or `02 / 03`. When an item's order matters, show the bare number
+(`1`, `2`…, no padding, no total) in a round orb attached to the item; on a
+media card the orb is centred on the gap between the media and its caption
+ribbon, overlapping both.
 
 Scale at 390 → 1440 (rendered): immersive display 33.6 → 57.8 · overlay title
 33.6 → 46.8 · overlay heading 28 → 39.9 · section title feature 28 → 34.4 ·
@@ -124,7 +130,7 @@ objects before shrinking legibility. Touch targets ≥ 44. Check 1440, 1024, 390
 ## 8. Signature vs motif
 
 Keep (Evoview authorship): asymmetric splits, three-voice type, radius-by-role
-with square-against-round, indexed everything (`01 / 04`), state-as-frame,
+with square-against-round, numbered order as orbs (§1), state-as-frame,
 paper-inversion active state, chapter strip with scroll progress, glass chrome,
 media-gated reveals, timed sequences with the pause model.
 Do **not** clone into neutral packages: eye artwork, REC dots, CRT/TV power-on,

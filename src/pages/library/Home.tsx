@@ -169,7 +169,7 @@ export default function Home() {
               <ol className="lib-grid">
                 {entries.map((entry, i) => (
                   <li key={entry.id}>
-                    <EntryCard entry={entry} index={i + 1} total={entries.length} />
+                    <EntryCard entry={entry} index={i + 1} />
                   </li>
                 ))}
               </ol>
@@ -191,17 +191,14 @@ export default function Home() {
           </header>
           <ol className="lib-grid lib-grid--navbar">
             <li>
-              <EntryCard entry={navbar} index={1} total={1 + NAVBAR_DEMOS.length} />
+              <EntryCard entry={navbar} />
             </li>
             <li>
               <ol className="lib-demos">
-                {NAVBAR_DEMOS.map((demo, i) => (
+                {NAVBAR_DEMOS.map((demo) => (
                   <li key={demo.route}>
                     <Link to={demo.route} className="lib-demo">
                       <span className="lib-card__meta">
-                        <span className="lib-voice-state lib-card__index">
-                          {pad2(i + 2)} / {pad2(1 + NAVBAR_DEMOS.length)}
-                        </span>
                         <span className="lib-voice-state lib-status">{copy.demo}</span>
                       </span>
                       <span className="lib-demo__copy">
@@ -273,7 +270,7 @@ function HeroPanel({ id, alt, index }: { id: string; alt: string; index: number 
   );
 }
 
-function EntryCard({ entry, index, total }: { entry: RegistryEntry; index: number; total: number }) {
+function EntryCard({ entry, index }: { entry: RegistryEntry; index?: number }) {
   const { t } = useLibraryLocale();
   return (
     <Link to={entry.route} className="lib-card">
@@ -281,10 +278,12 @@ function EntryCard({ entry, index, total }: { entry: RegistryEntry; index: numbe
         <Cover id={entry.id} />
       </div>
       <div className="lib-card__caption">
-        <div className="lib-card__meta">
-          <span className="lib-voice-state lib-card__index">
-            {pad2(index)} / {pad2(total)}
+        {index !== undefined && (
+          <span className="lib-card__orb" aria-hidden="true">
+            {index}
           </span>
+        )}
+        <div className="lib-card__meta">
           <StatusTag status={entry.status} version={entry.version} />
         </div>
         <h3 className="lib-card__title">{t(entry.title)}</h3>
