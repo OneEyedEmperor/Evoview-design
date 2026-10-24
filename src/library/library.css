@@ -233,7 +233,7 @@
   display: block;
   margin-left: -0.04em;
   font-family: var(--lib-font-display);
-  font-size: 26.4cqi;
+  font-size: 22.5cqi;
   font-weight: 900;
   line-height: 0.8;
   letter-spacing: -0.035em;
@@ -356,6 +356,10 @@
 @keyframes lib-hero-shine { from { transform: translateX(-100%); } to { transform: translateX(235%); } }
 
 @media (max-width: 767px) {
+  /* Phones: the card strip slots in right under the lockup. */
+  .lib-hero__grid { gap: 2em; }
+  .lib-hero__main { display: contents; }
+  .lib-hero__intro, .lib-hero__index { order: 1; }
   .lib-hero__panel { border-radius: 0.75em; }
   .lib-hero__media { border-radius: calc(0.75em - 1px); }
 }
