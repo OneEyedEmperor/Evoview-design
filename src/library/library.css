@@ -411,13 +411,15 @@
 }
 
 .lib-chapter { padding-block: 5em; scroll-margin-top: 0; }
-.lib-chapter__head { display: grid; gap: 1em; margin-bottom: 3em; }
+/* Centred head over the symmetric grid it introduces: kicker, title, lead
+   on one axis, the lead held to a short measure so it sits under the title. */
+.lib-chapter__head { display: grid; gap: 1em; justify-items: center; margin-bottom: 3em; text-align: center; }
 .lib-chapter__kicker { margin: 0 0 1em; color: var(--lib-signal, var(--primary)); }
 .lib-chapter__count { color: var(--lib-faint); }
+.lib-chapter__head .lib-lead { max-width: 30em; text-wrap: balance; }
 @media (min-width: 768px) {
   .lib-chapter { padding-block: 7.5em; }
-  .lib-chapter__head { grid-template-columns: 0.72fr 1.28fr; column-gap: 3.5em; align-items: end; margin-bottom: 4em; }
-  .lib-chapter__head .lib-lead { max-width: 34em; }
+  .lib-chapter__head { gap: 1.25em; margin-bottom: 4em; }
 }
 
 /* A category's packages are peers, so an equal grid: every choice visible

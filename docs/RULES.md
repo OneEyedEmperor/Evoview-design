@@ -33,9 +33,26 @@ are sentence case; brand statements are uppercase.
 
 **No small counting tags.** Never label items with position readouts such as
 `01 / 04` or `02 / 03`. When an item's order matters, show the bare number
-(`1`, `2`…, no padding, no total) in a round orb attached to the item; on a
-media card the orb is centred on the gap between the media and its caption
-ribbon, overlapping both.
+(`1`, `2`…, no padding, no total) in a round orb attached to the item.
+
+**Ordered cards: the orb-seam card (priority pattern).** Default for any
+ordered set of cards; choose it before inventing another card. Reference:
+`EntryCard` in `src/pages/library/Home.tsx`, `.lib-card*` in
+`src/library/library.css`.
+- Media well (`1em` radius) and caption ribbon (tonal tile a step off the
+  environment, `1em` radius) as two surfaces split by a seam ≈ `.375em`.
+- Orb Ø `2.5em`, centred on the seam, overlapping well and ribbon, aligned to
+  the ribbon's text start. Bare number in the state voice; foreground plate
+  (white on night, ink on paper), number in the environment colour, a `.3em`
+  ring in the seam's colour so it reads as set into the gap. Hover/focus
+  fills it with the accent (`--primary` / `--primary-foreground`). Decorative
+  (`aria-hidden`); order stays in the DOM order.
+- Ribbon: optional status/version top-right, card title, one-line meta.
+- Peers in an equal grid (2-up from 768), rows stretched to one height.
+- Phone (< 768): one tonal row tile per card, thumbnail `.8` : caption `1.2`,
+  `.5em` padding (thumbnail radius `.5em`, concentric); the seam turns
+  vertical and the orb (Ø `2.1em`, ring in the tile colour) sits centred on
+  it. Every card stays visible — no horizontal strip.
 
 Scale at 390 → 1440 (rendered): immersive display 33.6 → 57.8 · overlay title
 33.6 → 46.8 · overlay heading 28 → 39.9 · section title feature 28 → 34.4 ·
@@ -130,7 +147,7 @@ objects before shrinking legibility. Touch targets ≥ 44. Check 1440, 1024, 390
 ## 8. Signature vs motif
 
 Keep (Evoview authorship): asymmetric splits, three-voice type, radius-by-role
-with square-against-round, numbered order as orbs (§1), state-as-frame,
+with square-against-round, numbered order as orbs and the orb-seam card (§1), state-as-frame,
 paper-inversion active state, chapter strip with scroll progress, glass chrome,
 media-gated reveals, timed sequences with the pause model.
 Do **not** clone into neutral packages: eye artwork, REC dots, CRT/TV power-on,
