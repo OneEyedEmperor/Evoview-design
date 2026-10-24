@@ -200,16 +200,15 @@
 .lib-hero__mark { display: block; line-height: 0; }
 /* Brand artwork in its own colours: black parts turn white on night, the
    purple MARKETING line stays, lifted only enough to read on #0e0e0e. */
-.lib-hero__mark svg { display: block; width: 35.2cqi; height: auto; overflow: visible; }
+.lib-hero__mark svg { display: block; width: 46cqi; height: auto; overflow: visible; }
 .lib-hero__mark svg [fill="#000000"] { fill: #fff; }
 .lib-hero__mark svg [fill="#6b517a"] { fill: color-mix(in oklab, #6b517a 72%, #fff); }
-/* Sized so word + section bars fill the lockup's measure edge to edge
-   (mark scaled with it, 46 : 22.5). */
+/* Sized to fill the lockup's measure, so the word always runs edge to edge. */
 .lib-hero__word {
   display: block;
   margin-left: -0.04em;
   font-family: var(--lib-font-display);
-  font-size: 17.2cqi;
+  font-size: 22.5cqi;
   font-weight: 900;
   line-height: 0.8;
   letter-spacing: -0.035em;
@@ -217,21 +216,22 @@
   white-space: nowrap;
 }
 /* Section bars: one per page section, only the current one lit (signal),
-   the rest a step off the ground. Sized in the title's em, centred on its
-   cap height (cap ≈ .72em). */
+   the rest a step off the ground. The title becomes a two-row grid sized
+   by its text, so the bar row spans exactly the title's width; thickness
+   and air are in the title's em. */
+.lib-chapter__head .lib-title:has(> .lib-bars) { display: grid; justify-self: center; }
+.lib-hero__word:has(> .lib-bars) { display: grid; justify-self: start; }
 .lib-bars {
-  --lib-bar-w: 0.5em;
-  --lib-bar-h: 0.18em;
-  --lib-bar-gap: 0.1em;
-  display: inline-flex;
+  --lib-bar-h: 0.12em;
+  --lib-bar-gap: 0.06em;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--lib-bar-gap);
-  margin-left: 0.3em;
-  vertical-align: calc(0.36em - var(--lib-bar-h) / 2);
+  margin-top: 0.12em;
 }
 .lib-bars__bar {
   position: relative;
   overflow: hidden;
-  width: var(--lib-bar-w);
   height: var(--lib-bar-h);
   border-radius: 999px;
   background: var(--lib-line-strong);
@@ -247,7 +247,8 @@
   transition: transform 900ms var(--lib-ease-cine) 150ms;
 }
 .lib-bars[data-seen] .lib-bars__bar[data-on]::after { transform: none; }
-.lib-hero__word .lib-bars { --lib-bar-w: 0.26em; --lib-bar-h: 0.085em; --lib-bar-gap: 0.06em; margin-left: 0.14em; }
+/* The display word's line box is tight (LH .8): less air, finer bars. */
+.lib-hero__word .lib-bars { --lib-bar-h: 0.055em; --lib-bar-gap: 0.035em; margin: 0.1em 0 0 0.04em; }
 
 .lib-hero__intro { display: grid; gap: 1.25em; justify-items: start; }
 .lib-hero__intro .lib-lead { max-width: 30em; }
