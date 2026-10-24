@@ -214,14 +214,173 @@
 
 .lib-home { --primary: #818cf8; --primary-foreground: #101011; }
 
-.lib-hero { padding-block: 8.5em 5em; }
-.lib-hero__grid { display: grid; gap: 1.5em; }
-.lib-hero__count { margin: 0 0 1.5em; color: var(--lib-faint); }
-.lib-hero__aside { display: grid; gap: 1.5em; justify-items: start; }
+/* The lockup (logo over a full-measure LIBRARY) is the subject; the shelves
+   index the chapters; the method cards sit to the side as a staggered 2×2
+   mosaic (a four-up strip on phones), supporting rather than leading. */
+.lib-hero { --lib-hero-gap: 0.5em; padding-block: 6.5em 3.5em; overflow: hidden; }
+.lib-hero__grid { display: grid; gap: 2.5em; }
+.lib-hero__main { display: grid; gap: 2em; min-width: 0; }
+.lib-hero__count { margin: 0 0 -0.75em; color: var(--lib-faint); }
+.lib-hero__lockup { display: grid; gap: 0.15em; margin: 0; container-type: inline-size; }
+.lib-hero__mark { display: block; line-height: 0; }
+/* Brand artwork in its own colours: black parts turn white on night, the
+   purple MARKETING line stays, lifted only enough to read on #0e0e0e. */
+.lib-hero__mark svg { display: block; width: 46cqi; height: auto; overflow: visible; }
+.lib-hero__mark svg [fill="#000000"] { fill: #fff; }
+.lib-hero__mark svg [fill="#6b517a"] { fill: color-mix(in oklab, #6b517a 72%, #fff); }
+/* Sized to fill the lockup's measure, so the word always runs edge to edge. */
+.lib-hero__word {
+  display: block;
+  margin-left: -0.04em;
+  font-family: var(--lib-font-display);
+  font-size: 26.4cqi;
+  font-weight: 900;
+  line-height: 0.8;
+  letter-spacing: -0.035em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.lib-hero__intro { display: grid; gap: 1.25em; justify-items: start; }
+.lib-hero__intro .lib-lead { max-width: 30em; }
+
+/* Shelves: a text list, so tiles on a tonal step off the night (RULES §3). */
+.lib-hero__index { display: grid; gap: 0.375em; }
+.lib-hero__shelf {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: baseline;
+  gap: 1em;
+  min-height: 44px;
+  padding: 0.9em 1.1em;
+  border-radius: 1em;
+  background: #141416;
+  color: var(--lib-fg);
+  text-decoration: none;
+  transition: background-color 280ms var(--lib-ease);
+}
+.lib-hero__shelf:hover { background: #1b1b1e; }
+.lib-hero__shelf:focus-visible { outline: 2px solid var(--lib-signal); outline-offset: 2px; }
+.lib-hero__shelf-index { color: var(--lib-signal); }
+.lib-hero__shelf-label {
+  font-family: var(--lib-font-display);
+  font-size: 1.15em;
+  font-weight: 900;
+  letter-spacing: -0.015em;
+  text-transform: uppercase;
+}
+.lib-hero__shelf-count {
+  color: var(--lib-muted);
+  font-family: var(--lib-font-display);
+  font-size: 1.15em;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Panels = the Evoview method card in its finished state (site:
+   IntroSection PhaseCard, showCompleted): 1px purple frame, image graded
+   grey at .85 over #0b0b10, .72 dim + centre falloff, phase eye, one shine. */
+.lib-hero__collage {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--lib-hero-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lib-hero__panel {
+  padding: 1px;
+  border-radius: 1em;
+  background: rgb(99 75 114 / 0.4);
+  box-shadow: 0 6px 18px -8px rgb(0 0 0 / 0.35), 0 2px 6px -2px rgb(0 0 0 / 0.25);
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 600ms var(--lib-ease), transform 900ms var(--lib-ease-cine);
+  transition-delay: calc(var(--lib-stagger, 0) * 80ms);
+}
+.lib-hero__panel[data-ready] { opacity: 1; transform: none; }
+.lib-hero__media {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 1;
+  border-radius: calc(1em - 1px);
+  background: #0b0b10;
+  container-type: inline-size;
+}
+.lib-hero__media img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  user-select: none;
+  opacity: 0.85;
+  filter: grayscale(1) contrast(1.2) brightness(1.06);
+}
+.lib-hero__dim {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle farthest-corner at 50% 50%, transparent 38%, rgb(0 0 0 / 0.22) 62%, rgb(0 0 0 / 0.5) 100%),
+    rgb(0 0 0 / 0.72);
+  opacity: 0;
+  transition: opacity 700ms ease-out calc(260ms + var(--lib-stagger, 0) * 80ms);
+}
+.lib-hero__panel[data-ready] .lib-hero__dim { opacity: 1; }
+.lib-hero__eye {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.lib-eye { height: 30cqw; width: auto; overflow: visible; opacity: 0.8; }
+.lib-eye[data-artwork="3"] { height: calc(30cqw * 1.15); }
+.lib-eye[data-artwork="4"] { height: calc(30cqw * 1.3225); }
+.lib-eye__stroke { stroke-dasharray: 1; stroke-dashoffset: 1; animation: lib-eye-draw 1s cubic-bezier(0.4, 0, 0.2, 1) both; }
+.lib-eye__finish { opacity: 0; animation: lib-eye-finish 180ms ease-out var(--eye-finish) forwards; }
+@keyframes lib-eye-draw { to { stroke-dashoffset: 0; } }
+@keyframes lib-eye-finish { to { opacity: 1; } }
+.lib-hero__shine { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.lib-hero__shine::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 45%;
+  background: linear-gradient(105deg, transparent 28%, rgb(214 196 255 / 0.07) 40%, rgb(255 255 255 / 0.24) 50%, rgb(196 226 255 / 0.07) 60%, transparent 72%);
+  transform: translateX(-100%);
+  animation: lib-hero-shine 1260ms cubic-bezier(0.45, 0, 0.25, 1) both;
+  animation-delay: calc(1400ms + var(--lib-stagger, 0) * 200ms);
+}
+@keyframes lib-hero-shine { from { transform: translateX(-100%); } to { transform: translateX(235%); } }
+
+@media (max-width: 767px) {
+  .lib-hero__panel { border-radius: 0.75em; }
+  .lib-hero__media { border-radius: calc(0.75em - 1px); }
+}
+
 @media (min-width: 768px) {
-  .lib-hero { padding-block: 11em 7.5em; }
-  .lib-hero__grid { grid-template-columns: 1.28fr 0.72fr; column-gap: 4em; align-items: end; }
-  .lib-hero__aside { padding-bottom: 0.4em; }
+  .lib-hero { --lib-hero-gap: 1em; padding-block: 8em 5em; }
+  .lib-hero__grid { grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--lib-gutter); align-items: end; }
+  .lib-hero__main { grid-column: 1 / span 7; gap: 2.5em; }
+  .lib-hero__intro { grid-template-columns: minmax(0, 1fr) auto; align-items: end; column-gap: 2em; }
+  .lib-hero__index { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .lib-hero__shelf { grid-template-columns: 1fr auto; grid-template-rows: auto auto; row-gap: 1.6em; padding: 1em 1.2em 1.1em; }
+  .lib-hero__shelf-index { grid-column: 1; grid-row: 1; }
+  .lib-hero__shelf-count { grid-column: 2; grid-row: 1; font-size: 1em; }
+  .lib-hero__shelf-label { grid-column: 1 / -1; grid-row: 2; font-size: 1.3em; }
+  /* Second column dropped half a card; the padding keeps that overhang
+     inside the grid so the mosaic still bottoms out with the shelves. */
+  .lib-hero__collage {
+    grid-column: 8 / -1;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding-bottom: calc((100% - var(--lib-hero-gap)) / 4 + var(--lib-hero-gap) / 2);
+  }
+  .lib-hero__collage > li:nth-child(even) { translate: 0 calc(50% + var(--lib-hero-gap) / 2); }
+}
+@media (min-width: 1024px) {
+  .lib-hero__collage { grid-column: 9 / -1; }
 }
 
 .lib-chapter { padding-block: 5em; scroll-margin-top: 0; }
