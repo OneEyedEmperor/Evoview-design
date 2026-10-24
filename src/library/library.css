@@ -227,7 +227,8 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--lib-bar-gap);
-  margin-top: 0.12em;
+  /* Enough air that the row reads as the seam between title and lead. */
+  margin-top: 0.42em;
 }
 .lib-bars__bar {
   position: relative;
@@ -241,14 +242,14 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: var(--lib-signal);
+  background: var(--lib-fg);
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 900ms var(--lib-ease-cine) 150ms;
 }
 .lib-bars[data-seen] .lib-bars__bar[data-on]::after { transform: none; }
 /* The display word's line box is tight (LH .8): less air, finer bars. */
-.lib-hero__word .lib-bars { --lib-bar-h: 0.055em; --lib-bar-gap: 0.035em; margin: 0.1em 0 0 0.04em; }
+.lib-hero__word .lib-bars { --lib-bar-h: 0.055em; --lib-bar-gap: 0.035em; margin: 0.2em 0 0 0.04em; }
 
 .lib-hero__intro { display: grid; gap: 1.25em; justify-items: start; }
 .lib-hero__intro .lib-lead { max-width: 30em; }
