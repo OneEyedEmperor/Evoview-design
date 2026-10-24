@@ -105,6 +105,9 @@
   --ev-line: rgba(255, 255, 255, 0.08);
   --ev-line-strong: rgba(255, 255, 255, 0.2);
   --ev-surface: #121214;
+  /* Text-list surfaces (RULES §3): a quiet step off the environment, then a second step. */
+  --ev-surface-list: #141416;
+  --ev-surface-list-alt: #18181a;
   --ev-well: #080808;
   --ev-glass: rgba(20, 20, 22, 0.62);
   --ev-glass-line: rgba(255, 255, 255, 0.2);
@@ -131,6 +134,8 @@
   --ev-line: rgba(21, 21, 21, 0.1);
   --ev-line-strong: rgba(21, 21, 21, 0.26);
   --ev-surface: #ffffff;
+  --ev-surface-list: #f8f8f6;
+  --ev-surface-list-alt: #fcfcfb;
   --ev-well: #e4e4e4;
   --ev-glass: rgba(255, 255, 255, 0.66);
   --ev-glass-line: rgba(21, 21, 21, 0.14);
@@ -147,6 +152,9 @@
   --ev-bg: #ffffff;
   --ev-bg-alt: #efefef;
   --ev-surface: #f4f4f3;
+  /* Nothing is lighter than #fff: paper lists step down. */
+  --ev-surface-list: #f5f5f3;
+  --ev-surface-list-alt: #f0f0ee;
 }
 .ev-tone-dark { color-scheme: dark; }
 .ev-tone-light, .ev-tone-paper { color-scheme: light; }

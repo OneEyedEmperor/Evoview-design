@@ -1,5 +1,15 @@
 # foundation changelog
 
+## 1.3.0
+
+- Tone tokens `--ev-surface-list` / `--ev-surface-list-alt`: the two
+  text-list surfaces of RULES §3 (lists of text are segmented by tone, never
+  by rules or bare spacing). Dark `#141416` / `#18181a` and light
+  `#f8f8f6` / `#fcfcfb` step up from the environment; paper `#f5f5f3` /
+  `#f0f0ee` steps down. Use for tiles (radius `surface`, small gap) or
+  joined alternating rows (radius 0 inside a `surface` group).
+- No config changes; existing tokens unchanged.
+
 ## 1.2.0
 
 - Added `preloadMedia(sources, video = "loadeddata")`: decodes sources into
