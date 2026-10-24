@@ -308,8 +308,11 @@ function EntryCard({ entry, order }: { entry: RegistryEntry; order?: { index: nu
       </div>
       <div className="lib-card__caption">
         {order && (
-          <span className="lib-card__orb" aria-hidden="true">
-            <ProgressRing value={order.index / order.total} className="lib-ring--orb" />
+          <span
+            className="lib-card__orb"
+            aria-hidden="true"
+            style={{ "--lib-orb-at": `${(360 * order.index) / order.total}deg` } as CSSProperties}
+          >
             <span className="lib-card__orb-n">{order.index}</span>
           </span>
         )}

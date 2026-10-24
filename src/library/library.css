@@ -6,6 +6,11 @@
   inherits: true;
   initial-value: #818cf8;
 }
+@property --lib-orb-fill {
+  syntax: "<angle>";
+  inherits: true;
+  initial-value: 0deg;
+}
 @property --showcase-ink {
   syntax: "<color>";
   inherits: true;
@@ -496,11 +501,30 @@
 @media (min-width: 768px) {
   .lib-card__orb { left: 1.6em; }
 }
-.lib-card__orb > * { grid-area: 1 / 1; }
-@media (hover: hover) {
-  .lib-card:hover .lib-card__orb { background: var(--primary); color: var(--primary-foreground); }
+/* Position as filled quadrants: clockwise from the top-left, one quarter
+   per step in the accent, the rest the plate. Hover/focus fills the rest. */
+.lib-card__orb {
+  --lib-orb-fill: var(--lib-orb-at, 0deg);
+  background: conic-gradient(from -90deg, var(--primary) 0 var(--lib-orb-fill), var(--lib-fg) 0);
+  transition: --lib-orb-fill 420ms var(--lib-ease-cine);
 }
-.lib-card:focus-visible .lib-card__orb { background: var(--primary); color: var(--primary-foreground); }
+/* The number takes the same split inverted (accent ink over the filled
+   quarters, the plate's ink elsewhere), so it reads at any fill. Full-orb
+   box so both conics share one centre. */
+.lib-card__orb-n {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  background: conic-gradient(from -90deg, var(--primary-foreground) 0 var(--lib-orb-fill), var(--lib-seam-tone) 0);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+@media (hover: hover) {
+  .lib-card:hover .lib-card__orb { --lib-orb-fill: 360deg; }
+}
+.lib-card:focus-visible .lib-card__orb { --lib-orb-fill: 360deg; }
 
 /* Progress ring: track a step off its ground, arc in the signal, drawn in
    once on screen (ProgressRing sets data-seen). */
@@ -515,18 +539,6 @@
   transition: stroke-dashoffset 1200ms var(--lib-ease-cine) 150ms, stroke 280ms var(--lib-ease);
 }
 .lib-ring[data-seen] .lib-ring__fill { stroke-dashoffset: var(--lib-ring-rest); }
-/* Inside the orb: around the number, on the orb's plate. */
-.lib-ring--orb {
-  width: 84%;
-  height: 84%;
-  --lib-ring-stroke: 1.7;
-  --lib-ring-track: color-mix(in srgb, var(--lib-seam-tone) 16%, transparent);
-  --lib-ring-arc: var(--primary);
-}
-.lib-card:is(:hover, :focus-visible) .lib-ring--orb {
-  --lib-ring-track: color-mix(in srgb, var(--primary-foreground) 22%, transparent);
-  --lib-ring-arc: var(--primary-foreground);
-}
 /* Beside a title: cap height, on the baseline, one gap of air. */
 .lib-ring--title {
   display: inline-block;
