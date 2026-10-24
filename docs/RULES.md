@@ -88,6 +88,17 @@ tokens and status, never for containers of copy. Commands are rectangular 12.
   a timeline, a seam that a reader must see, a chapter strip underline) — at
   most one per scene, and justify it. Boxes only for hit targets, media
   clipping and selection state.
+- **Section bars (optional, situational).** A row of bars under a title, one
+  per section of the page, only the current section's bar lit, the others a
+  step off the ground. Never required; use it where the page's sections are
+  worth locating. The row spans exactly the title's text width (title as a
+  two-row grid sized by its text), thickness ≈ `.12em` of the title (finer
+  on display words), rounded ends, gap ≈ `.06em`; the lit bar draws in once
+  on screen. Lit colour: the accent by default; when the row serves as the
+  separator between the title and its lead (air ≈ `.42em` above), the
+  foreground instead (ink on paper, white on night), and it counts as the
+  scene's one allowed separator. Reference: `SectionBars` in
+  `src/pages/library/Home.tsx`, `.lib-bars*` in `src/library/library.css`.
 - **Text lists are segmented by tone, not lines and not bare spacing.** A list
   of text items (steps, schedule, facts, results, practical info) must never
   render as a column of plain text. Each item sits on a surface a step off the
