@@ -118,6 +118,13 @@ keeps ≥ 380 authored, so a side too wide for the container wraps under it.
 Centered: side goes under the support line. Footer links: `onSelect(event)`
 runs on click; `event.preventDefault()` keeps an `href` from navigating.
 
+Text lists (RULES §3): the package renders none that need tonal surfaces.
+`ChapterTicker` is one inline state line (where / state voice, active item
+marked), not a column of items. The footer links are navigation, carried by
+their underline. Lists that a chapter *hosts* (steps, schedule, facts) are
+content: put them on `--ev-surface-list` / `--ev-surface-list-alt` tiles or
+rows, never bare.
+
 ## Navbar package
 
 Each chapter writes `data-nav-tone="dark" | "light"` on its own element; the
