@@ -1,5 +1,28 @@
 # story-blocks changelog
 
+## 2.1.0 — text lists on tonal surfaces (RULES §3)
+
+Requires `foundation` 1.3.0 (`--ev-surface-list` / `-alt`; a `color-mix`
+fallback keeps older foundations readable).
+
+Config changes:
+
+- `IndexedRows.surface?: "tiles" | "rows"` — default `"tiles"` with
+  `media`, `"rows"` without.
+
+Visual:
+
+- Sequence rows: each step on its own tile (`--ev-surface-list`, radius
+  `surface`, 8px gap), staggered reveal. From 1024 the sequence image's
+  ratio is a minimum, so it grows to the last tile's baseline when the
+  column runs taller (1024 was 110px off).
+- Text-only rows (schedules): one rounded surface of joined rows
+  alternating `-list` / `-list-alt`, time · label · detail on one line from
+  768; revealed as one surface.
+- Payoff results: three peer tiles; on phones one joined surface, title and
+  detail on one line, rows alternating. Revealed as one group.
+- Row index column sizes to the tabular readout (`auto`), gap 1.25em.
+
 ## 2.0.2
 
 - Config: `PayoffCta.consequence` is optional; the readout under the plate

@@ -42,6 +42,10 @@ export type IndexedRowsProps = {
   /** One proof beside the sequence: it takes the larger side (first on phones); the heading
    *  tops it and the rows end on its baseline. Without media the rows sit beside the heading. */
   media?: StoryMedia & { ratio?: number; ratioPhone?: number };
+  /** Tonal segmentation of the list (never rules): "tiles" = one surface per item with a
+   *  small gap (steps) · "rows" = joined alternating rows in one rounded surface (schedules,
+   *  timetables). Default: tiles beside media, rows without. */
+  surface?: "tiles" | "rows";
 };
 
 export type ProofItem = {

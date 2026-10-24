@@ -1,6 +1,6 @@
 ---
 name: evoview-story-blocks
-description: Evoview editorial story blocks for client pages and dossiers — title/lead split over a 16:10 hero proof with in-media caption, an indexed sequence beside its image or its heading, an asymmetric 7/5 ↔ 5/7 proof collage that can lead before its claim, a payoff band with one CTA — open chapters separated by space, scale, alignment and tone only (no rules, no zebra bands), accent-driven from the host --primary. Use when a client page needs to tell an offer, a process, a place or a closing call to action in the Evoview style. Triggers on "evoview story", "story blocks", "story intro", "indexed rows", "proof grid", "proof collage", "payoff band".
+description: Evoview editorial story blocks for client pages and dossiers — title/lead split over a 16:10 hero proof with in-media caption, an indexed sequence beside its image or its heading, an asymmetric 7/5 ↔ 5/7 proof collage that can lead before its claim, a payoff band with one CTA — open chapters separated by space, scale, alignment and tone only (no rules, no zebra bands), text lists on quiet tonal tiles or joined rows, accent-driven from the host --primary. Use when a client page needs to tell an offer, a process, a place or a closing call to action in the Evoview style. Triggers on "evoview story", "story blocks", "story intro", "indexed rows", "proof grid", "proof collage", "payoff band".
 ---
 
 # Evoview story blocks
@@ -37,8 +37,13 @@ Read `README.md` ("What is Evoview", API, verification) and the library's
 
 ## Rules
 
-- Never add lines, cards or alternating backgrounds to separate chapters,
-  rows, results or captions; space, scale, alignment and tone do it.
+- Never add lines, cards or alternating backgrounds to separate chapters;
+  space, scale, alignment and tone do it.
+- Lists of text are never bare: they sit on the foundation list surfaces
+  (built in). Pick `surface` per list: `"tiles"` for steps (default beside
+  media), `"rows"` for schedules / timetables (default without media).
+  Results are tiles. Never restyle the surfaces with borders or stronger
+  contrast; if a list is short of content, cut it rather than pad it.
 - One title per story, one heading per chapter, 2–3 meaning-broken lines.
 - Exactly one CTA per story (the payoff plate), labelled with the action;
   it points to the client's main action, never to Evoview. Set a

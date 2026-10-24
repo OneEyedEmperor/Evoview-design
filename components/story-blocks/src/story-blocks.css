@@ -13,6 +13,9 @@
   --story-blocks-bg: var(--ev-bg);
   /* Media wells stay dark in every tone: captions sit on a dark scrim. */
   --story-blocks-well: #080808;
+  /* Text lists sit on tonal surfaces (RULES §3), never on rules or bare ground. */
+  --story-blocks-list: var(--ev-surface-list, color-mix(in oklab, var(--ev-fg) 4%, var(--ev-bg)));
+  --story-blocks-list-alt: var(--ev-surface-list-alt, color-mix(in oklab, var(--ev-fg) 6%, var(--ev-bg)));
   /* The chapter band: the only thing between two chapters. */
   --story-blocks-chapter: var(--ev-chapter-cinematic-top);
 
@@ -144,20 +147,40 @@
   box-shadow: 0 0 16px var(--story-blocks-accent);
 }
 
-/* ── IndexedRows: index · label (card voice) over its detail ────────── */
-.evsb-rows { display: grid; gap: 1.6em; margin: 0; padding: 0; list-style: none; }
+/* ── IndexedRows: index · label (card voice) over its detail, on tone ── */
+.evsb-rows { display: grid; margin: 0; padding: 0; list-style: none; }
 .evsb-row {
   display: grid;
-  grid-template-columns: 3.5em minmax(0, 1fr);
-  column-gap: 0.75em;
+  /* Tabular readouts: every row's index column resolves to the same width. */
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 1.25em;
   row-gap: 0.45em;
   align-items: baseline;
+  padding: 1.15em 1.35em 1.25em 1.15em;
+  background: var(--story-blocks-list);
 }
 .evsb-row__index { color: var(--story-blocks-signal); white-space: nowrap; }
 .evsb-row__label { color: var(--ev-fg); }
 .evsb-row__detail { grid-column: 2; max-width: 30em; color: var(--ev-fg-65); }
 /* Phone body is 16px: step the detail down so the label keeps its lead. */
 @media (max-width: 767px) { .evsb-row__detail { font-size: 0.875em; } }
+
+/* Tiles: one surface per step, a small gap between them. */
+.evsb-rows[data-surface="tiles"] { gap: 0.5em; }
+.evsb-rows[data-surface="tiles"] > .evsb-row { border-radius: var(--ev-radius-surface); }
+
+/* Joined rows: one rounded surface, rows alternate a step (schedules). */
+.evsb-rows[data-surface="rows"] { overflow: hidden; border-radius: var(--ev-radius-surface); }
+.evsb-rows[data-surface="rows"] > .evsb-row { padding-block: 1.3em 1.4em; }
+.evsb-rows[data-surface="rows"] > .evsb-row:nth-child(even) { background: var(--story-blocks-list-alt); }
+@media (min-width: 768px) {
+  /* Wide column: time · label · detail on one line, like a programme. */
+  .evsb-rows[data-surface="rows"] > .evsb-row {
+    grid-template-columns: 4.25em minmax(0, 8.5em) minmax(0, 1fr);
+    padding: 1.45em 1.75em 1.5em 1.5em;
+  }
+  .evsb-rows[data-surface="rows"] .evsb-row__detail { grid-column: 3; }
+}
 
 /* Beside its proof: media on the larger side; the heading tops it and the
    rows end on its baseline. Phone and tablet: media first. */
@@ -170,6 +193,9 @@
   .evsb-sequence { display: grid; grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr); column-gap: 3.5em; }
   .evsb-sequence__media { order: 0; }
   .evsb-sequence__text { justify-content: space-between; gap: var(--ev-gap-heading); }
+  /* The ratio is a minimum: when the steps run taller, the image grows to their baseline. */
+  .evsb-sequence__figure { aspect-ratio: auto; height: 100%; }
+  .evsb-sequence__figure::before { content: ""; display: block; padding-top: calc(100% / var(--evsb-ratio, 1)); }
 }
 
 /* ── ProofGrid: 12 cols, 7/5 ↔ 5/7; phone pairs portraits 2-up ───────── */
@@ -203,13 +229,30 @@
 }
 .evsb-payoff__grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2.5em; }
 .evsb-payoff__lead { max-width: 34em; margin-top: 1.75em; color: var(--ev-fg-65); font-weight: 400; }
-.evsb-results { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1em; margin: 2.5em 0 0; padding: 0; list-style: none; }
+/* Results: true peers, one tonal tile each. */
+.evsb-results { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.5em; margin: 2.5em 0 0; padding: 0; list-style: none; }
+.evsb-result { padding: 1.05em 1.25em 1.15em; border-radius: var(--ev-radius-surface); background: var(--story-blocks-list); }
 .evsb-result__title { color: var(--ev-fg-90); font-weight: 600; }
 .evsb-result__detail { margin-top: 0.2em; color: var(--ev-fg-55); }
 .evsb-payoff__action { display: grid; gap: 0.6em; }
 .evsb-consequence { justify-self: end; color: var(--ev-fg-35); }
 @media (min-width: 640px) {
-  .evsb-results { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 2em; }
+  .evsb-results { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+/* Phone: three stacked tiles weigh more than the action; join them into one
+   surface, title and detail on one line, rows alternating a step. */
+@media (max-width: 639px) {
+  .evsb-results { gap: 0; overflow: hidden; border-radius: var(--ev-radius-surface); }
+  .evsb-result {
+    display: grid;
+    grid-template-columns: 7.5em minmax(0, 1fr);
+    column-gap: 1em;
+    align-items: baseline;
+    padding: 0.95em 1.25em 1em;
+    border-radius: 0;
+  }
+  .evsb-result:nth-child(even) { background: var(--story-blocks-list-alt); }
+  .evsb-result__detail { margin-top: 0; }
 }
 @media (min-width: 1024px) {
   .evsb-payoff__grid { grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr); column-gap: 4em; align-items: end; }

@@ -65,23 +65,45 @@ export function StoryIntro({ title, lead, body, media, caption, align = "end" }:
   );
 }
 
-function RowList({ rows }: { rows: readonly IndexedRow[] }) {
+function RowContent({ row, i }: { row: IndexedRow; i: number }) {
   return (
-    <ol className="evsb-rows">
+    <>
+      <span className="ev-t-readout evsb-row__index" aria-hidden={row.index === undefined ? true : undefined}>
+        {row.index ?? pad(i + 1)}
+      </span>
+      <h3 className="ev-t-card evsb-row__label">{row.label}</h3>
+      <p className="ev-t-body evsb-row__detail">{row.detail}</p>
+    </>
+  );
+}
+
+/** Tiles reveal one by one; joined rows reveal as one surface (no gaps open between them). */
+function RowList({ rows, surface }: { rows: readonly IndexedRow[]; surface: "tiles" | "rows" }) {
+  if (surface === "rows") {
+    return (
+      <Reveal className="evsb-rows-group">
+        <ol className="evsb-rows" data-surface="rows">
+          {rows.map((row, i) => (
+            <li key={i} className="evsb-row">
+              <RowContent row={row} i={i} />
+            </li>
+          ))}
+        </ol>
+      </Reveal>
+    );
+  }
+  return (
+    <ol className="evsb-rows" data-surface="tiles">
       {rows.map((row, i) => (
         <Reveal as="li" key={i} index={i} className="evsb-row">
-          <span className="ev-t-readout evsb-row__index" aria-hidden={row.index === undefined ? true : undefined}>
-            {row.index ?? pad(i + 1)}
-          </span>
-          <h3 className="ev-t-card evsb-row__label">{row.label}</h3>
-          <p className="ev-t-body evsb-row__detail">{row.detail}</p>
+          <RowContent row={row} i={i} />
         </Reveal>
       ))}
     </ol>
   );
 }
 
-export function IndexedRows({ heading, body, rows, media }: IndexedRowsProps) {
+export function IndexedRows({ heading, body, rows, media, surface = media ? "tiles" : "rows" }: IndexedRowsProps) {
   const id = useId();
   const head = (
     <Reveal>
@@ -99,7 +121,7 @@ export function IndexedRows({ heading, body, rows, media }: IndexedRowsProps) {
         <div className="evsb-sequence">
           <div className="evsb-sequence__text">
             {head}
-            <RowList rows={rows} />
+            <RowList rows={rows} surface={surface} />
           </div>
           <Reveal
             kind="media"
@@ -117,7 +139,7 @@ export function IndexedRows({ heading, body, rows, media }: IndexedRowsProps) {
     <Chapter id={id} className="evsb-rows-chapter">
       <div className="evsb-split" data-align="start">
         {head}
-        <RowList rows={rows} />
+        <RowList rows={rows} surface={surface} />
       </div>
     </Chapter>
   );
@@ -196,14 +218,16 @@ export function PayoffBand({ lines, accentLine, lead, results, cta, bloom = true
             </Reveal>
           )}
           {results && results.length > 0 && (
-            <ul className="evsb-results">
-              {results.map((result, i) => (
-                <Reveal as="li" key={i} index={i + 2} className="evsb-result">
-                  <h3 className="ev-t-lead evsb-result__title">{result.title}</h3>
-                  <p className="ev-t-compact evsb-result__detail">{result.detail}</p>
-                </Reveal>
-              ))}
-            </ul>
+            <Reveal index={2}>
+              <ul className="evsb-results">
+                {results.map((result, i) => (
+                  <li key={i} className="evsb-result">
+                    <h3 className="ev-t-lead evsb-result__title">{result.title}</h3>
+                    <p className="ev-t-compact evsb-result__detail">{result.detail}</p>
+                  </li>
+                ))}
+              </ul>
+            </Reveal>
           )}
         </div>
         <Reveal index={2} className="evsb-payoff__action">

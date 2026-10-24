@@ -5,13 +5,15 @@ page chapter or a dossier: a title / lead split over a hero proof, an
 indexed sequence (beside its proof or its heading), an asymmetric proof
 collage, and a payoff band with one action. Chapters are told apart by
 space, scale, alignment and tone — no rules, no boxes around prose, no
-zebra bands. Depends on `foundation` and `controls`.
+zebra bands; lists of text sit on quiet tonal surfaces. Depends on
+`foundation` (≥ 1.3.0 for the list surfaces) and `controls`.
 
 Showcase: `https://evoview-library.said.bet/layouts/story-blocks` (a
 fictional winery: the full story on a dark page, then the short close a
 light page would use; live accent palette; FR / EN).
 Evidence: `docs/extraction/service-dossiers.md` A3, A6, A8, A10, §4.3,
-rules 5–8, 13, 16; `docs/RULES.md` §3 (spacing is the separator).
+rules 5–8, 13, 16; `docs/RULES.md` §3 (spacing is the separator; text
+lists segmented by tone).
 
 ## What is Evoview (protected)
 
@@ -23,6 +25,14 @@ following make them recognisably Evoview and must not be restyled:
   neighbours 20–48, internal ≈ 8. Never add hairlines, rules, cards or
   alternating backgrounds to segment; a tone cut (dark ↔ paper) is the
   strongest separator and is made by starting a new `<Story>`.
+- **Text lists on tone, never bare**: every list of text sits on the
+  foundation list surfaces (`--ev-surface-list` / `-alt`, ≈ 3–6 % off the
+  environment, no borders, same text ladder). Steps beside their image are
+  **tiles** (radius `surface`, 8px gap); a schedule is **joined rows** in
+  one rounded surface, alternating a step, time · label · detail on one line
+  from 768; payoff results are three peer **tiles** that join into one
+  alternating surface on phones. Lists with media per item (proof collage)
+  are exempt.
 - **Asymmetric proportions on a shared edge**: title / copy `.72 / 1.28`;
   the 1.28 column's left edge is shared by the intro lead, the sequence
   media and the heading-split copy. Proof collage 7/5 ↔ 5/7 on 12 columns;
@@ -34,8 +44,8 @@ following make them recognisably Evoview and must not be restyled:
   the payoff statement.
 - **Display ladder**: one title per story (`ev-t-title`), one heading per
   chapter (`ev-t-heading`), one payoff statement (`ev-t-display`), 2–3 short
-  lines broken by meaning. Scale replaces rules inside lists: row labels in
-  the card voice (Overused 900) over body-size detail.
+  lines broken by meaning. Inside lists, row labels in the card voice
+  (Overused 900) over body-size detail.
 - **Indices only where they index**: sequence rows carry `01…` or a real
   value (`14:00`) in the accent readout; proof images carry no numbers.
 - **One exit**: exactly one primary plate per story (white / ink at rest,
@@ -98,7 +108,8 @@ type StoryMedia = { src; alt; position?; positionPhone?; fit?: "cover" | "contai
 type StoryChapter =
   | { kind: "intro"; title: Lines; lead; body?; media: StoryMedia; caption?: { kicker?; title }; align?: "end" | "start" }
   | { kind: "rows"; heading: Lines; body?; rows: { label; detail; index? }[];
-      media?: StoryMedia & { ratio?; ratioPhone? } }
+      media?: StoryMedia & { ratio?; ratioPhone? };
+      surface?: "tiles" | "rows" }   // default: tiles beside media, rows without
   | { kind: "proof"; heading?: Lines; body?; headingAt?: "start" | "end";
       items: { media; ratio; ratioPhone?; span?; caption? }[] }
   | { kind: "payoff"; lines: ReactNode[]; accentLine?: number; lead?; results?: { title; detail }[];
@@ -121,9 +132,13 @@ Each block is a `<section aria-labelledby>` on the wide rail; headings are
 `h2`, row labels / results `h3`. Automatic row indices are `aria-hidden`
 (the `ol` carries order); a custom `index` is read.
 
-Sequence: with `media`, text `.72` | media `1.28` (ratio default 1); the
-heading tops the media and the rows end on its baseline. Without media,
-heading (+ body) `.72` | rows `1.28`.
+Sequence: with `media`, text `.72` | media `1.28`; the heading tops the
+media and the last tile ends on its baseline. From 1024 the ratio (default
+1) is a minimum: when the tiles run taller (narrow columns, long details)
+the image grows with them. Without media, heading (+ body) `.72` | joined
+rows `1.28`. `surface` overrides the default per list: tiles for steps,
+rows for schedules and timetables. Tiles reveal one by one; joined rows and
+the results reveal as one surface.
 Proof collage: items flow on 12 columns, default spans 7/5 then 5/7
 (vertically centred, so mixed ratios stagger); `span` overrides. Phone: one
 column; two consecutive portrait items (`ratio < 1`) share a row.
@@ -133,10 +148,10 @@ column; two consecutive portrait items (`ratio < 1`) share a row.
 | | ≥ 1024 | 640–1023 | < 640 (phone) |
 | --- | --- | --- | --- |
 | Intro | `.72 / 1.28`, hero 16:10 under | stacked, media first, 4:3 | media first, 4:5, copy below |
-| Sequence + media | `.72 / 1.28`, rows on the media baseline | media first (ratio), then text | media first (`ratioPhone`), then text |
-| Sequence, text only | heading `.72` / rows `1.28` | stacked | stacked; detail 14px under a 17.6px label |
+| Sequence + media | `.72 / 1.28`, tiles end on the media baseline (media grows if needed) | media first (ratio), then tiles | media first (`ratioPhone`), then tiles; detail 14px under a 17.6px label |
+| Sequence, text only | heading `.72` / joined rows `1.28`, one line per row | stacked, one line per row from 768 | stacked; label over detail inside each row |
 | Proof | 12 col, gaps 64 × 40 | 12 col from 768 | 2 col: portraits pair, others full |
-| Payoff | `1.2 / .8`, CTA bottom-aligned | stacked, results 3-up | stacked, CTA full width |
+| Payoff | `1.2 / .8`, CTA bottom-aligned, results 3 tiles | stacked, results 3 tiles | stacked, results one joined surface (title · detail per row), CTA full width |
 
 ## Motion and pause model
 
@@ -154,7 +169,9 @@ their image. Proof images zoom 1.045 on hover (fine pointers only).
 1. `pnpm build`; showcase at 1440, 1024, 390: no horizontal overflow, no
    text under 9px (readouts), 12px (compact), 13px (body).
 2. No segmenting lines anywhere: `getComputedStyle` borders on `.evsb-*`
-   are 0; chapters share one background per story.
+   are 0; chapters share one background per story; every `.evsb-row` and
+   `.evsb-result` paints `--ev-surface-list` (or `-alt` on even joined rows).
+   1440 / 1024: last sequence tile bottom = media bottom.
 3. 1440: intro columns ≈ 405 / 720, hero 16:10, chapter band ≈ 124px,
    payoff ≈ 670 / 445; display 57.8, title 46.8, heading 39.9.
 4. 390: hero and sequence media first, portrait proofs 2-up, CTA full width.
