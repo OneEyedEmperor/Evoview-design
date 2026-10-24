@@ -200,15 +200,16 @@
 .lib-hero__mark { display: block; line-height: 0; }
 /* Brand artwork in its own colours: black parts turn white on night, the
    purple MARKETING line stays, lifted only enough to read on #0e0e0e. */
-.lib-hero__mark svg { display: block; width: 46cqi; height: auto; overflow: visible; }
+.lib-hero__mark svg { display: block; width: 38.6cqi; height: auto; overflow: visible; }
 .lib-hero__mark svg [fill="#000000"] { fill: #fff; }
 .lib-hero__mark svg [fill="#6b517a"] { fill: color-mix(in oklab, #6b517a 72%, #fff); }
-/* Sized to fill the lockup's measure, so the word always runs edge to edge. */
+/* Sized so word + section ring fill the lockup's measure edge to edge
+   (mark scaled with it, 46 : 22.5). */
 .lib-hero__word {
   display: block;
   margin-left: -0.04em;
   font-family: var(--lib-font-display);
-  font-size: 22.5cqi;
+  font-size: 18.9cqi;
   font-weight: 900;
   line-height: 0.8;
   letter-spacing: -0.035em;
@@ -495,10 +496,46 @@
 @media (min-width: 768px) {
   .lib-card__orb { left: 1.6em; }
 }
+.lib-card__orb > * { grid-area: 1 / 1; }
 @media (hover: hover) {
   .lib-card:hover .lib-card__orb { background: var(--primary); color: var(--primary-foreground); }
 }
 .lib-card:focus-visible .lib-card__orb { background: var(--primary); color: var(--primary-foreground); }
+
+/* Progress ring: track a step off its ground, arc in the signal, drawn in
+   once on screen (ProgressRing sets data-seen). */
+.lib-ring { display: block; overflow: visible; --lib-ring-track: var(--lib-line-strong); --lib-ring-arc: var(--lib-signal); --lib-ring-stroke: 2.4; }
+.lib-ring__track, .lib-ring__fill { fill: none; stroke-width: var(--lib-ring-stroke); }
+.lib-ring__track { stroke: var(--lib-ring-track); transition: stroke 280ms var(--lib-ease); }
+.lib-ring__fill {
+  stroke: var(--lib-ring-arc);
+  stroke-linecap: round;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  transition: stroke-dashoffset 1200ms var(--lib-ease-cine) 150ms, stroke 280ms var(--lib-ease);
+}
+.lib-ring[data-seen] .lib-ring__fill { stroke-dashoffset: var(--lib-ring-rest); }
+/* Inside the orb: around the number, on the orb's plate. */
+.lib-ring--orb {
+  width: 84%;
+  height: 84%;
+  --lib-ring-stroke: 1.7;
+  --lib-ring-track: color-mix(in srgb, var(--lib-seam-tone) 16%, transparent);
+  --lib-ring-arc: var(--primary);
+}
+.lib-card:is(:hover, :focus-visible) .lib-ring--orb {
+  --lib-ring-track: color-mix(in srgb, var(--primary-foreground) 22%, transparent);
+  --lib-ring-arc: var(--primary-foreground);
+}
+/* Beside a title: cap height, on the baseline, one gap of air. */
+.lib-ring--title {
+  display: inline-block;
+  width: 0.7em;
+  height: 0.7em;
+  margin-left: 0.22em;
+  vertical-align: baseline;
+}
+.lib-hero__word .lib-ring--title { margin-left: 0.14em; --lib-ring-stroke: 1.5; }
 .lib-card__title {
   margin: 0;
   font-family: var(--lib-font-display);

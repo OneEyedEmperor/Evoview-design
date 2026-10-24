@@ -55,6 +55,9 @@ const HERO_PANELS: { id: string; alt: Localized }[] = [
   { id: "strategie-marketing", alt: { fr: "Stratégie marketing", en: "Marketing strategy" } },
 ];
 
+/* Hero, the category chapters, navbar: each title carries its share. */
+const SECTIONS = 4;
+
 const CHAPTERS: { category: Exclude<Category, "navbar">; tone: "light" | "dark"; lead: Localized }[] = [
   {
     category: "layouts",
@@ -88,7 +91,10 @@ export default function Home() {
               <span className="lib-hero__mark">
                 <EvoviewLogo alt="Evoview" />
               </span>
-              <span className="lib-hero__word">Library</span>
+              <span className="lib-hero__word">
+                Library
+                <ProgressRing value={1 / SECTIONS} className="lib-ring--title" />
+              </span>
             </h1>
             <div className="lib-hero__intro">
               <p className="lib-lead">{copy.intro}</p>
@@ -136,7 +142,7 @@ export default function Home() {
         </div>
       </section>
 
-      {CHAPTERS.map((chapter) => {
+      {CHAPTERS.map((chapter, c) => {
         const entries = entriesOf(chapter.category);
         return (
           <section
@@ -151,13 +157,14 @@ export default function Home() {
               <header className="lib-chapter__head">
                 <h2 id={`${chapter.category}-title`} className="lib-title">
                   {t(CATEGORY_LABEL[chapter.category])}
+                  <ProgressRing value={(c + 2) / SECTIONS} className="lib-ring--title" />
                 </h2>
                 <p className="lib-lead">{t(chapter.lead)}</p>
               </header>
               <ol className="lib-grid">
                 {entries.map((entry, i) => (
                   <li key={entry.id}>
-                    <EntryCard entry={entry} index={i + 1} />
+                    <EntryCard entry={entry} order={{ index: i + 1, total: entries.length }} />
                   </li>
                 ))}
               </ol>
@@ -171,6 +178,7 @@ export default function Home() {
           <header className="lib-chapter__head">
             <h2 id="navbar-title" className="lib-title">
               {t(CATEGORY_LABEL.navbar)}
+              <ProgressRing value={1} className="lib-ring--title" />
             </h2>
             <p className="lib-lead">{t(NAVBAR_LEAD)}</p>
           </header>
@@ -255,7 +263,43 @@ function HeroPanel({ id, alt, index }: { id: string; alt: string; index: number 
   );
 }
 
-function EntryCard({ entry, index }: { entry: RegistryEntry; index?: number }) {
+/* Progress as a ring: the arc fills `value` (0–1), drawn in once the ring
+   is on screen. */
+function ProgressRing({ value, className }: { value: number; className?: string }) {
+  const ref = useRef<SVGSVGElement>(null);
+  const [seen, setSeen] = useState(false);
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) {
+          setSeen(true);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.6 },
+    );
+    io.observe(node);
+    return () => io.disconnect();
+  }, []);
+  return (
+    <svg
+      ref={ref}
+      viewBox="0 0 24 24"
+      className={className ? `lib-ring ${className}` : "lib-ring"}
+      data-seen={seen || undefined}
+      style={{ "--lib-ring-rest": 100 - value * 100 } as CSSProperties}
+      aria-hidden="true"
+      focusable="false"
+    >
+      <circle className="lib-ring__track" cx="12" cy="12" r="10" />
+      <circle className="lib-ring__fill" cx="12" cy="12" r="10" pathLength={100} transform="rotate(-90 12 12)" />
+    </svg>
+  );
+}
+
+function EntryCard({ entry, order }: { entry: RegistryEntry; order?: { index: number; total: number } }) {
   const { t } = useLibraryLocale();
   return (
     <Link to={entry.route} className="lib-card">
@@ -263,9 +307,10 @@ function EntryCard({ entry, index }: { entry: RegistryEntry; index?: number }) {
         <Cover id={entry.id} />
       </div>
       <div className="lib-card__caption">
-        {index !== undefined && (
+        {order && (
           <span className="lib-card__orb" aria-hidden="true">
-            {index}
+            <ProgressRing value={order.index / order.total} className="lib-ring--orb" />
+            <span className="lib-card__orb-n">{order.index}</span>
           </span>
         )}
         <div className="lib-card__meta">
