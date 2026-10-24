@@ -26,7 +26,7 @@ remain the evidence and the source of exact values.
 | --- | --- | --- |
 | What it is | Overused Grotesk 900, UPPERCASE, tracking −.015 → −.035em, LH .85–1.1 | display, titles, headings, card titles |
 | Why / how | Montserrat 400 (lead 500–600), sentence case, LH 1.55–1.6 | body, lead, captions, option labels |
-| Where / state | Satoshi 700, UPPERCASE, tracking +.12 → +.20em, tabular | status, kickers inside captions |
+| Where / state | Satoshi 700, UPPERCASE, tracking +.12 → +.20em, tabular | status, versions, compact labels |
 
 Labels/controls: Overused 700 UPPERCASE +.05 → +.25em. Questions to the visitor
 are sentence case; brand statements are uppercase.
@@ -34,6 +34,10 @@ are sentence case; brand statements are uppercase.
 **No small counting tags.** Never label items with position readouts such as
 `01 / 04` or `02 / 03`. When an item's order matters, show the bare number
 (`1`, `2`…, no padding, no total) in a round orb attached to the item.
+
+**No kicker tags.** No small state-voice labels over or before titles
+(`01 — Sections de page`, `02 — Interactive`, a lone `01` index before a
+heading), numbered or not. The title and its lead carry the section.
 
 **Ordered cards: the orb-seam card (priority pattern).** Default for any
 ordered set of cards; choose it before inventing another card. Reference:
@@ -118,7 +122,7 @@ Environment (tone) · Object (surfaces: `#080808` wells, `#121214` selection,
 white ribbon, glass for chrome only) · Information (white ladder 100/90/65/55/35
 or ink ladder) · **Signal = the accent**. The accent drives: selection (1px
 border + 14–22 % tint + mark + aria), active indicator (22 vs 7 px bar, dots
-18 vs 6), progress fill, focus ring, indices/kickers, status dot, ≤10 % panel
+18 vs 6), progress fill, focus ring, number orbs on hover/focus, status dot, ≤10 % panel
 wash, bloom shadows (deep accent), primary-button **hover** fill, one display
 word. Never: backgrounds, body text, surfaces, primary button at rest (white
 plate / ink). Selection is never colour-only. Light accents (yellow, white) must

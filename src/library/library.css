@@ -220,7 +220,6 @@
 .lib-hero { --lib-hero-gap: 0.5em; padding-block: 6.5em 3.5em; overflow: hidden; }
 .lib-hero__grid { display: grid; gap: 2.5em; }
 .lib-hero__main { display: grid; gap: 2em; min-width: 0; }
-.lib-hero__count { margin: 0 0 -0.75em; color: var(--lib-faint); }
 .lib-hero__lockup { display: grid; gap: 0.15em; margin: 0; container-type: inline-size; }
 .lib-hero__mark { display: block; line-height: 0; }
 /* Brand artwork in its own colours: black parts turn white on night, the
@@ -250,7 +249,7 @@
 .lib-dir__shelf { display: grid; align-content: start; gap: 0.75em; min-width: 0; }
 .lib-dir__head {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: 1fr auto;
   align-items: baseline;
   gap: 0.9em;
   min-height: 44px;
@@ -259,7 +258,6 @@
   text-decoration: none;
 }
 .lib-dir__head:focus-visible { outline: 2px solid var(--lib-signal); outline-offset: 2px; border-radius: 0.5em; }
-.lib-dir__index { color: var(--lib-signal); }
 .lib-dir__label {
   font-family: var(--lib-font-display);
   font-size: 1.5em;
@@ -411,11 +409,9 @@
 }
 
 .lib-chapter { padding-block: 5em; scroll-margin-top: 0; }
-/* Centred head over the symmetric grid it introduces: kicker, title, lead
-   on one axis, the lead held to a short measure so it sits under the title. */
+/* Centred head over the symmetric grid it introduces: title and lead on
+   one axis, the lead held to a short measure so it sits under the title. */
 .lib-chapter__head { display: grid; gap: 1em; justify-items: center; margin-bottom: 3em; text-align: center; }
-.lib-chapter__kicker { margin: 0 0 1em; color: var(--lib-signal, var(--primary)); }
-.lib-chapter__count { color: var(--lib-faint); }
 .lib-chapter__head .lib-lead { max-width: 30em; text-wrap: balance; }
 @media (min-width: 768px) {
   .lib-chapter { padding-block: 7.5em; }

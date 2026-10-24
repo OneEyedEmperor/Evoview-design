@@ -5,7 +5,7 @@ import { Cover } from "../../library/covers";
 import HeroEye from "../../library/hero/HeroEye";
 import LocaleToggle from "../../library/LocaleToggle";
 import { useLibraryLocale, type Localized } from "../../library/locale";
-import { CATEGORY_LABEL, REGISTRY, entriesOf, getEntry, pad2, type Category, type RegistryEntry } from "../../library/registry";
+import { CATEGORY_LABEL, entriesOf, getEntry, pad2, type Category, type RegistryEntry } from "../../library/registry";
 import StatusTag from "../../library/StatusTag";
 
 /* The library index, built for picking: the hero ends in a directory of
@@ -17,14 +17,12 @@ import StatusTag from "../../library/StatusTag";
 const COPY = {
   fr: {
     intro: "Les sections et composants des sites Evoview, extraits du site, découplés et prêts à adapter pour chaque client.",
-    count: (n: number, ready: number) => (ready === n ? `${pad2(n)} packages` : `${pad2(n)} packages · ${pad2(ready)} prêts`),
     indexLabel: "Sommaire de la bibliothèque",
     collageLabel: "La méthode Evoview",
     demo: "Démo",
   },
   en: {
     intro: "The sections and components behind Evoview sites, extracted from the site, decoupled and ready to adapt for each client.",
-    count: (n: number, ready: number) => (ready === n ? `${pad2(n)} packages` : `${pad2(n)} packages · ${pad2(ready)} ready`),
     indexLabel: "Library contents",
     collageLabel: "The Evoview method",
     demo: "Demo",
@@ -58,11 +56,10 @@ const HERO_PANELS: { id: string; alt: Localized }[] = [
   { id: "strategie-marketing", alt: { fr: "Stratégie marketing", en: "Marketing strategy" } },
 ];
 
-const CHAPTERS: { category: Exclude<Category, "navbar">; tone: "light" | "dark"; kicker: Localized; lead: Localized }[] = [
+const CHAPTERS: { category: Exclude<Category, "navbar">; tone: "light" | "dark"; lead: Localized }[] = [
   {
     category: "layouts",
     tone: "light",
-    kicker: { fr: "01 — Sections de page", en: "01 — Page sections" },
     lead: {
       fr: "Les compositions qui portent une page : coque de chapitre, piste de cartes, séquence minutée, blocs de récit.",
       en: "The compositions a page is built from: chapter shell, card track, timed sequence, story blocks.",
@@ -71,7 +68,6 @@ const CHAPTERS: { category: Exclude<Category, "navbar">; tone: "light" | "dark";
   {
     category: "components",
     tone: "dark",
-    kicker: { fr: "02 — Interactifs", en: "02 — Interactive" },
     lead: {
       fr: "Les pièces que le visiteur manipule, chacune à l'accent du client : réservation, dossier, sélecteur, contrôles.",
       en: "The pieces a visitor operates, each in the client's accent: reservation, dossier, selector, controls.",
@@ -82,7 +78,6 @@ const CHAPTERS: { category: Exclude<Category, "navbar">; tone: "light" | "dark";
 export default function Home() {
   const { locale, t } = useLibraryLocale();
   const copy = COPY[locale];
-  const ready = REGISTRY.filter((e) => e.status === "ready").length;
   const navbar = getEntry("navbar");
 
   return (
@@ -90,7 +85,6 @@ export default function Home() {
       <section className="lib-hero lib-toned" data-tone="dark" data-nav-tone="dark">
         <div className="lib-rail lib-hero__grid">
           <div className="lib-hero__main">
-            <p className="lib-voice-state lib-hero__count">{copy.count(REGISTRY.length, ready)}</p>
             <h1 className="lib-hero__lockup">
               <span className="lib-hero__mark">
                 <EvoviewLogo alt="Evoview" />
@@ -110,13 +104,12 @@ export default function Home() {
             ))}
           </ul>
           <nav className="lib-dir" aria-label={copy.indexLabel}>
-            {HERO_SHELVES.map((category, i) => {
+            {HERO_SHELVES.map((category) => {
               const entries = entriesOf(category);
               const demos = category === "navbar" ? NAVBAR_DEMOS : [];
               return (
                 <div key={category} className="lib-dir__shelf">
                   <Link to={{ hash: category }} className="lib-dir__head">
-                    <span className="lib-voice-state lib-dir__index">{pad2(i + 1)}</span>
                     <span className="lib-dir__label">{t(CATEGORY_LABEL[category])}</span>
                     <span className="lib-voice-state lib-dir__count">{pad2(entries.length)}</span>
                   </Link>
@@ -158,12 +151,9 @@ export default function Home() {
           >
             <div className="lib-rail">
               <header className="lib-chapter__head">
-                <div>
-                  <p className="lib-voice-state lib-chapter__kicker">{t(chapter.kicker)}</p>
-                  <h2 id={`${chapter.category}-title`} className="lib-title">
-                    {t(CATEGORY_LABEL[chapter.category])}
-                  </h2>
-                </div>
+                <h2 id={`${chapter.category}-title`} className="lib-title">
+                  {t(CATEGORY_LABEL[chapter.category])}
+                </h2>
                 <p className="lib-lead">{t(chapter.lead)}</p>
               </header>
               <ol className="lib-grid">
@@ -181,12 +171,9 @@ export default function Home() {
       <section id="navbar" aria-labelledby="navbar-title" className="lib-chapter lib-toned" data-tone="light">
         <div className="lib-rail">
           <header className="lib-chapter__head">
-            <div>
-              <p className="lib-voice-state lib-chapter__kicker">03 — Navigation</p>
-              <h2 id="navbar-title" className="lib-title">
-                {t(CATEGORY_LABEL.navbar)}
-              </h2>
-            </div>
+            <h2 id="navbar-title" className="lib-title">
+              {t(CATEGORY_LABEL.navbar)}
+            </h2>
             <p className="lib-lead">{t(NAVBAR_LEAD)}</p>
           </header>
           <ol className="lib-grid lib-grid--navbar">
