@@ -61,6 +61,16 @@ tokens and status, never for containers of copy. Commands are rectangular 12.
   a timeline, a seam that a reader must see, a chapter strip underline) — at
   most one per scene, and justify it. Boxes only for hit targets, media
   clipping and selection state.
+- **Text lists are segmented by tone, not lines and not bare spacing.** A list
+  of text items (steps, schedule, facts, results, practical info) must never
+  render as a column of plain text. Each item sits on a surface a step off the
+  environment (dark: e.g. `#141416` / `#18181a` on `#0e0e0e`; paper/light:
+  e.g. `#f4f4f2` / `#e9e9e6` on `#fff` / `#efefef`) — either every item on its
+  own tonal tile with a small gap, or alternating tonal rows. Surface radius
+  follows role (`surface` for tiles, 0 for joined rows), no borders. The
+  contrast between surface and environment is subtle (≈ 3–6 % lightness), the
+  text ladder stays the same. Lists with media per item are exempt (the media
+  segments them).
 - Chapter rhythm (authored, mobile / desktop): standard 80 / 120, compact 64 /
   96 (same-tone continuation), cinematic 96–80 / 144–120 (dark entry). Heading
   → content 48 / 64.
