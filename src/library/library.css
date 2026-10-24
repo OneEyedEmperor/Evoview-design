@@ -6,11 +6,6 @@
   inherits: true;
   initial-value: #818cf8;
 }
-@property --lib-orb-fill {
-  syntax: "<angle>";
-  inherits: true;
-  initial-value: 0deg;
-}
 @property --showcase-ink {
   syntax: "<color>";
   inherits: true;
@@ -205,22 +200,55 @@
 .lib-hero__mark { display: block; line-height: 0; }
 /* Brand artwork in its own colours: black parts turn white on night, the
    purple MARKETING line stays, lifted only enough to read on #0e0e0e. */
-.lib-hero__mark svg { display: block; width: 38.6cqi; height: auto; overflow: visible; }
+.lib-hero__mark svg { display: block; width: 35.2cqi; height: auto; overflow: visible; }
 .lib-hero__mark svg [fill="#000000"] { fill: #fff; }
 .lib-hero__mark svg [fill="#6b517a"] { fill: color-mix(in oklab, #6b517a 72%, #fff); }
-/* Sized so word + section ring fill the lockup's measure edge to edge
+/* Sized so word + section bars fill the lockup's measure edge to edge
    (mark scaled with it, 46 : 22.5). */
 .lib-hero__word {
   display: block;
   margin-left: -0.04em;
   font-family: var(--lib-font-display);
-  font-size: 18.9cqi;
+  font-size: 17.2cqi;
   font-weight: 900;
   line-height: 0.8;
   letter-spacing: -0.035em;
   text-transform: uppercase;
   white-space: nowrap;
 }
+/* Section bars: one per page section, only the current one lit (signal),
+   the rest a step off the ground. Sized in the title's em, centred on its
+   cap height (cap ≈ .72em). */
+.lib-bars {
+  --lib-bar-w: 0.5em;
+  --lib-bar-h: 0.18em;
+  --lib-bar-gap: 0.1em;
+  display: inline-flex;
+  gap: var(--lib-bar-gap);
+  margin-left: 0.3em;
+  vertical-align: calc(0.36em - var(--lib-bar-h) / 2);
+}
+.lib-bars__bar {
+  position: relative;
+  overflow: hidden;
+  width: var(--lib-bar-w);
+  height: var(--lib-bar-h);
+  border-radius: 999px;
+  background: var(--lib-line-strong);
+}
+.lib-bars__bar[data-on]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--lib-signal);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 900ms var(--lib-ease-cine) 150ms;
+}
+.lib-bars[data-seen] .lib-bars__bar[data-on]::after { transform: none; }
+.lib-hero__word .lib-bars { --lib-bar-w: 0.26em; --lib-bar-h: 0.085em; --lib-bar-gap: 0.06em; margin-left: 0.14em; }
+
 .lib-hero__intro { display: grid; gap: 1.25em; justify-items: start; }
 .lib-hero__intro .lib-lead { max-width: 30em; }
 
@@ -501,53 +529,10 @@
 @media (min-width: 768px) {
   .lib-card__orb { left: 1.6em; }
 }
-/* Position as filled quadrants: clockwise from the top-left, one quarter
-   per step in the accent, the rest the plate. Hover/focus fills the rest. */
-.lib-card__orb {
-  --lib-orb-fill: var(--lib-orb-at, 0deg);
-  background: conic-gradient(from -90deg, var(--primary) 0 var(--lib-orb-fill), var(--lib-fg) 0);
-  transition: --lib-orb-fill 420ms var(--lib-ease-cine);
-}
-/* The number takes the same split inverted (accent ink over the filled
-   quarters, the plate's ink elsewhere), so it reads at any fill. Full-orb
-   box so both conics share one centre. */
-.lib-card__orb-n {
-  display: grid;
-  width: 100%;
-  height: 100%;
-  place-items: center;
-  background: conic-gradient(from -90deg, var(--primary-foreground) 0 var(--lib-orb-fill), var(--lib-seam-tone) 0);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
 @media (hover: hover) {
-  .lib-card:hover .lib-card__orb { --lib-orb-fill: 360deg; }
+  .lib-card:hover .lib-card__orb { background: var(--primary); color: var(--primary-foreground); }
 }
-.lib-card:focus-visible .lib-card__orb { --lib-orb-fill: 360deg; }
-
-/* Progress ring: track a step off its ground, arc in the signal, drawn in
-   once on screen (ProgressRing sets data-seen). */
-.lib-ring { display: block; overflow: visible; --lib-ring-track: var(--lib-line-strong); --lib-ring-arc: var(--lib-signal); --lib-ring-stroke: 2.4; }
-.lib-ring__track, .lib-ring__fill { fill: none; stroke-width: var(--lib-ring-stroke); }
-.lib-ring__track { stroke: var(--lib-ring-track); transition: stroke 280ms var(--lib-ease); }
-.lib-ring__fill {
-  stroke: var(--lib-ring-arc);
-  stroke-linecap: round;
-  stroke-dasharray: 100;
-  stroke-dashoffset: 100;
-  transition: stroke-dashoffset 1200ms var(--lib-ease-cine) 150ms, stroke 280ms var(--lib-ease);
-}
-.lib-ring[data-seen] .lib-ring__fill { stroke-dashoffset: var(--lib-ring-rest); }
-/* Beside a title: cap height, on the baseline, one gap of air. */
-.lib-ring--title {
-  display: inline-block;
-  width: 0.7em;
-  height: 0.7em;
-  margin-left: 0.22em;
-  vertical-align: baseline;
-}
-.lib-hero__word .lib-ring--title { margin-left: 0.14em; --lib-ring-stroke: 1.5; }
+.lib-card:focus-visible .lib-card__orb { background: var(--primary); color: var(--primary-foreground); }
 .lib-card__title {
   margin: 0;
   font-family: var(--lib-font-display);
