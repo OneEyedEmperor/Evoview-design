@@ -214,9 +214,9 @@
 
 .lib-home { --primary: #818cf8; --primary-foreground: #101011; }
 
-/* The lockup (logo over a full-measure LIBRARY) is the subject; the shelves
-   index the chapters; the method cards sit to the side as a staggered 2×2
-   mosaic (a four-up strip on phones), supporting rather than leading. */
+/* The lockup (logo over a full-measure LIBRARY) is the subject, the method
+   cards a four-up strip beside it (6/6); under both, the directory: every
+   package as a direct choice, three equal shelves. */
 .lib-hero { --lib-hero-gap: 0.5em; padding-block: 6.5em 3.5em; overflow: hidden; }
 .lib-hero__grid { display: grid; gap: 2.5em; }
 .lib-hero__main { display: grid; gap: 2em; min-width: 0; }
@@ -243,38 +243,68 @@
 .lib-hero__intro { display: grid; gap: 1.25em; justify-items: start; }
 .lib-hero__intro .lib-lead { max-width: 30em; }
 
-/* Shelves: a text list, so tiles on a tonal step off the night (RULES §3). */
-.lib-hero__index { display: grid; gap: 0.375em; }
-.lib-hero__shelf {
+/* Directory: three equal shelves (true peers). Each shelf's head jumps to
+   its chapter; its packages are a text list, so each sits on its own tonal
+   tile (RULES §3), one height for every row so the shelves read across. */
+.lib-dir { display: grid; gap: 2em; }
+.lib-dir__shelf { display: grid; align-content: start; gap: 0.75em; min-width: 0; }
+.lib-dir__head {
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: baseline;
-  gap: 1em;
+  gap: 0.9em;
   min-height: 44px;
-  padding: 0.9em 1.1em;
+  padding-inline: 0.25em;
+  color: var(--lib-fg);
+  text-decoration: none;
+}
+.lib-dir__head:focus-visible { outline: 2px solid var(--lib-signal); outline-offset: 2px; border-radius: 0.5em; }
+.lib-dir__index { color: var(--lib-signal); }
+.lib-dir__label {
+  font-family: var(--lib-font-display);
+  font-size: 1.5em;
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+.lib-dir__count { color: var(--lib-faint); }
+@media (hover: hover) {
+  .lib-dir__head .lib-dir__label { transition: color 180ms var(--lib-ease); }
+  .lib-dir__head:hover .lib-dir__label { color: var(--lib-signal); }
+}
+.lib-dir__list { display: grid; gap: 0.375em; margin: 0; padding: 0; list-style: none; }
+.lib-dir__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1em;
+  min-height: 3.6em;
+  padding: 0 1.1em 0 1.2em;
+  box-sizing: border-box;
   border-radius: 1em;
   background: #141416;
   color: var(--lib-fg);
   text-decoration: none;
   transition: background-color 280ms var(--lib-ease);
 }
-.lib-hero__shelf:hover { background: #1b1b1e; }
-.lib-hero__shelf:focus-visible { outline: 2px solid var(--lib-signal); outline-offset: 2px; }
-.lib-hero__shelf-index { color: var(--lib-signal); }
-.lib-hero__shelf-label {
+.lib-dir__item[data-kind="demo"] { background: #111113; }
+.lib-dir__item[data-kind="demo"] .lib-dir__name { color: var(--lib-muted); }
+.lib-dir__name {
+  min-width: 0;
   font-family: var(--lib-font-display);
-  font-size: 1.15em;
+  font-size: 1.05em;
   font-weight: 900;
-  letter-spacing: -0.015em;
+  letter-spacing: -0.01em;
   text-transform: uppercase;
+  transition: color 180ms var(--lib-ease);
 }
-.lib-hero__shelf-count {
-  color: var(--lib-muted);
-  font-family: var(--lib-font-display);
-  font-size: 1.15em;
-  font-weight: 900;
-  font-variant-numeric: tabular-nums;
+.lib-dir__item .lib-status { color: var(--lib-faint); }
+@media (hover: hover) {
+  .lib-dir__item:hover { background: #1c1c1f; }
+  .lib-dir__item:hover .lib-dir__name { color: var(--lib-fg); }
 }
+.lib-dir__item:focus-visible { outline: 2px solid var(--lib-signal); outline-offset: 2px; }
 
 /* Panels = the Evoview method card in its finished state (site:
    IntroSection PhaseCard, showCompleted): 1px purple frame, image graded
@@ -359,32 +389,25 @@
   /* Phones: the card strip slots in right under the lockup. */
   .lib-hero__grid { gap: 2em; }
   .lib-hero__main { display: contents; }
-  .lib-hero__intro, .lib-hero__index { order: 1; }
+  .lib-hero__intro, .lib-dir { order: 1; }
+  .lib-dir { margin-top: 0.5em; }
   .lib-hero__panel { border-radius: 0.75em; }
   .lib-hero__media { border-radius: calc(0.75em - 1px); }
 }
 
 @media (min-width: 768px) {
   .lib-hero { --lib-hero-gap: 1em; padding-block: 8em 5em; }
-  .lib-hero__grid { grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--lib-gutter); align-items: end; }
-  .lib-hero__main { grid-column: 1 / span 7; gap: 2.5em; }
+  .lib-hero__grid { grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--lib-gutter); row-gap: 4em; align-items: end; }
+  .lib-hero__main { grid-column: 1 / span 6; gap: 2.5em; }
   .lib-hero__intro { grid-template-columns: minmax(0, 1fr) auto; align-items: end; column-gap: 2em; }
-  .lib-hero__index { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .lib-hero__shelf { grid-template-columns: 1fr auto; grid-template-rows: auto auto; row-gap: 1.6em; padding: 1em 1.2em 1.1em; }
-  .lib-hero__shelf-index { grid-column: 1; grid-row: 1; }
-  .lib-hero__shelf-count { grid-column: 2; grid-row: 1; font-size: 1em; }
-  .lib-hero__shelf-label { grid-column: 1 / -1; grid-row: 2; font-size: 1.3em; }
-  /* Second column dropped half a card; the padding keeps that overhang
-     inside the grid so the mosaic still bottoms out with the shelves. */
-  .lib-hero__collage {
-    grid-column: 8 / -1;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    padding-bottom: calc((100% - var(--lib-hero-gap)) / 4 + var(--lib-hero-gap) / 2);
-  }
-  .lib-hero__collage > li:nth-child(even) { translate: 0 calc(50% + var(--lib-hero-gap) / 2); }
+  .lib-hero__collage { grid-column: 7 / -1; }
+  .lib-dir { grid-column: 1 / -1; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 1em; }
 }
-@media (min-width: 1024px) {
-  .lib-hero__collage { grid-column: 9 / -1; }
+@media (min-width: 768px) and (max-width: 1023px) {
+  /* Six columns would crush the lockup: it takes the row, the strip follows. */
+  .lib-hero__main, .lib-hero__collage { grid-column: 1 / -1; }
+  .lib-dir__item { padding-inline: 1em 0.9em; }
+  .lib-dir__name { font-size: 0.95em; }
 }
 
 .lib-chapter { padding-block: 5em; scroll-margin-top: 0; }
@@ -397,39 +420,19 @@
   .lib-chapter__head .lib-lead { max-width: 34em; }
 }
 
+/* A category's packages are peers, so an equal grid: every choice visible
+   at once (phones: a column of row tiles, thumbnail beside caption; from
+   768: 2-up, one well ratio, captions on one line per row). */
 .lib-grid {
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 82vw;
-  gap: 1em;
-  margin: 0 calc(-1 * var(--lib-gutter));
-  padding: 0 var(--lib-gutter) 0.5em;
+  gap: 0.5em;
+  margin: 0;
+  padding: 0;
   list-style: none;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scroll-snap-type: x mandatory;
-  scroll-padding-inline: var(--lib-gutter);
-  scrollbar-width: none;
 }
-.lib-grid::-webkit-scrollbar { display: none; }
-.lib-grid > li { scroll-snap-align: start; min-width: 0; }
+.lib-grid > li { min-width: 0; }
 @media (min-width: 768px) {
-  .lib-grid {
-    grid-auto-flow: row;
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-    grid-auto-columns: auto;
-    gap: 4em 1.5em;
-    align-items: start;
-    margin: 0;
-    padding: 0;
-    overflow: visible;
-  }
-  .lib-grid > li:nth-child(4n + 1), .lib-grid > li:nth-child(4n + 4) { grid-column: span 7; }
-  .lib-grid > li:nth-child(4n + 2), .lib-grid > li:nth-child(4n + 3) { grid-column: span 5; }
-  /* 7/5 ↔ 5/7, one shared well height (the 7-column well at 16:10), so
-     each row keeps a single caption line instead of two floating ones. */
-  .lib-grid { container-type: inline-size; }
-  .lib-grid .lib-well { aspect-ratio: auto; height: calc(((100cqw - 11 * 1.5em) / 12 * 7 + 6 * 1.5em) / 1.6); }
+  .lib-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2.5em 1.5em; align-items: stretch; }
 }
 
 .lib-card { display: grid; gap: 0.5em; color: inherit; text-decoration: none; }
@@ -443,6 +446,45 @@
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 600ms var(--lib-ease-cine);
+}
+/* Index captions sit on a tile a step off the chapter tone (RULES §3: text
+   lists segmented by tone). Stretched so each row's tiles share one height. */
+.lib-toned[data-tone="dark"] { --lib-tile: #161618; --lib-tile-hover: #1b1b1e; }
+.lib-toned[data-tone="light"] { --lib-tile: #e4e4e1; --lib-tile-hover: #dcdcd8; }
+.lib-grid .lib-card { height: 100%; grid-template-rows: auto 1fr; gap: 0.375em; }
+.lib-grid .lib-card .lib-well { margin-bottom: 0; }
+.lib-card__caption {
+  display: grid;
+  align-content: start;
+  gap: 0.5em;
+  padding: 1.1em 1.25em 1.3em;
+  border-radius: 1em;
+  background: var(--lib-tile);
+  transition: background-color 280ms var(--lib-ease);
+}
+@media (min-width: 768px) {
+  .lib-card__caption { padding: 1.4em 1.6em 1.6em; gap: 0.6em; }
+}
+@media (hover: hover) {
+  .lib-card:hover .lib-card__caption { background: var(--lib-tile-hover); }
+}
+/* Phones: one tile per choice, thumbnail (concentric: 1em − .5em pad)
+   beside the caption, so the whole category reads in one screen. */
+@media (max-width: 767px) {
+  .lib-grid .lib-card {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    grid-template-rows: none;
+    align-items: center;
+    gap: 0.25em;
+    padding: 0.5em;
+    border-radius: 1em;
+    background: var(--lib-tile);
+    transition: background-color 280ms var(--lib-ease);
+  }
+  .lib-grid .lib-card .lib-well { border-radius: 0.5em; }
+  .lib-grid .lib-card__caption { gap: 0.35em; padding: 0.4em 0.5em 0.4em 0.75em; background: none; }
+  .lib-grid .lib-card .lib-body { font-size: 13px; line-height: 1.4; }
+  .lib-grid .lib-card .lib-card__meta { gap: 0.5em; }
 }
 .lib-card__meta { display: flex; align-items: center; justify-content: space-between; gap: 1em; }
 .lib-card__index { color: var(--lib-faint); }
@@ -466,14 +508,46 @@
 .lib-card:focus-visible .lib-well::after { transform: scaleX(1); }
 .lib-card:focus-visible .lib-well > .lib-cover { filter: none; }
 
-/* The navbar entry: smaller, one row, media first. */
-.lib-feature { padding-block: 4em; }
-.lib-feature__row { display: grid; gap: 1.5em; }
-.lib-feature__copy { display: grid; gap: 0.75em; align-content: start; justify-items: start; }
-.lib-feature__links { display: flex; flex-wrap: wrap; gap: 0.5em; margin-top: 0.75em; }
+/* Navbar chapter: the package card 6/6 with its two demos, stacked so the
+   pair spans exactly the card's height. */
+.lib-demos { display: grid; gap: 0.5em; height: 100%; margin: 0; padding: 0; list-style: none; }
+.lib-demo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto 1fr;
+  gap: 1em 1.5em;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 1.1em 1.25em 1.3em;
+  border-radius: 1em;
+  background: var(--lib-tile);
+  color: inherit;
+  text-decoration: none;
+  transition: background-color 280ms var(--lib-ease);
+}
+.lib-demo > .lib-card__meta { grid-column: 1 / -1; }
+.lib-demo__copy { display: grid; gap: 0.5em; align-self: end; }
+.lib-demo__go {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  align-self: end;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--lib-fg);
+  color: var(--lib-paper);
+  transition: background-color 280ms var(--lib-ease), color 280ms var(--lib-ease);
+}
+.lib-demo__go svg { width: 18px; height: 18px; transition: transform 280ms var(--lib-ease); }
+.lib-demo:focus-visible { outline: 2px solid var(--lib-signal); outline-offset: 3px; }
+@media (hover: hover) {
+  .lib-demo:hover { background: var(--lib-tile-hover); }
+  .lib-demo:hover .lib-demo__go { background: var(--primary); color: var(--primary-foreground); }
+  .lib-demo:hover .lib-demo__go svg { transform: translateX(2px); }
+}
 @media (min-width: 768px) {
-  .lib-feature { padding-block: 6em; }
-  .lib-feature__row { grid-template-columns: 5fr 7fr; column-gap: 3em; align-items: center; }
+  .lib-demos { grid-template-rows: 1fr 1fr; gap: 1.5em; }
+  .lib-demo { padding: 1.4em 1.6em 1.6em; }
 }
 
 /* ---------- Showcase frame ---------- */
@@ -773,10 +847,6 @@
 .lib-status { position: relative; }
 .lib-grid { position: relative; }
 .lib-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-
-.lib-feature__title { color: inherit; text-decoration: none; }
-.lib-feature__title:hover { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 0.12em; text-decoration-color: var(--lib-signal, var(--primary)); }
-.lib-feature__title:focus-visible { outline: 2px solid var(--lib-signal, var(--primary)); outline-offset: 4px; border-radius: 4px; }
 
 /* Reservation showcase: the chassis at its reading width, centred. */
 .lib-reservation { max-width: 56rem; margin-inline: auto; }
