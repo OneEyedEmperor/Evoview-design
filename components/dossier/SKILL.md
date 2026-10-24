@@ -31,8 +31,10 @@ pause model.
    `ChapterRows` / `ChapterSpecimen` / `ChapterPayoff` (or story-blocks), one
    exit CTA per story (the client's action, `PrimaryPlate`), copy FR/EN from
    the client's wording. Separate with space and the a / b tone alternation,
-   never rules; number rows only when they are a sequence. Demonstrations
-   carry their "example" note (`ChapterSpecimen note`).
+   never rules. Every text list goes on tonal surfaces, never bare text:
+   `ChapterRows` (one panel, alternating rows — info sheets, programmes) or
+   `surface="tiles"` (peers); number rows only when they are a sequence.
+   Demonstrations carry their "example" note (`ChapterSpecimen note`).
 5. Mount `<Dossier>` near the page root (no transformed ancestor), launchers
    set `open` + `initialItemId` (optionally `initialEntryId`). It preloads the
    board media on idle (`preload`, default on); keep it mounted while closed.

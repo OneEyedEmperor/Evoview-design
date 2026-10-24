@@ -764,12 +764,16 @@
 
 /* ── Open chapters (detail). Separated by space and the a / b near-black alternation, never by rules. */
 .evd-chapter {
+  /* Text-list surfaces (RULES §3): a quiet step off this chapter's tone, then a second step.
+     Declared on the chapter so they resolve against its own tone (a, b or paper). */
+  --dossier-list: var(--ev-surface-list, #141416);
+  --dossier-list-alt: var(--ev-surface-list-alt, #18181a);
   position: relative;
   padding-block: 56px;
   background: var(--dossier-shell);
 }
-.evd-chapter[data-tone="b"] { background: var(--dossier-alt); }
-.evd-chapter[data-tone="paper"] { background: #eeecef; color: var(--ev-fg); }
+.evd-chapter[data-tone="b"] { --dossier-list: #18181a; --dossier-list-alt: #1c1c1e; background: var(--dossier-alt); }
+.evd-chapter[data-tone="paper"] { --dossier-list: #f6f5f6; --dossier-list-alt: #fbfbfb; background: #eeecef; color: var(--ev-fg); }
 .evd-chapter--intro { padding-top: 24px; background: transparent; }
 .evd-rail { position: relative; display: grid; width: 100%; max-width: calc(85em + 48px); gap: 32px; margin-inline: auto; padding-inline: 24px; }
 @media (min-width: 1024px) {
@@ -829,31 +833,59 @@
   .evd-split__stage { order: 0; }
 }
 
-/* Rows: label over detail on phones, label · detail columns from 768; rows separated by the neighbour band. */
-.evd-rows { display: grid; gap: 20px; }
-.evd-rows__row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
-.evd-rows--numbered .evd-rows__row { grid-template-columns: 2.5em minmax(0, 1fr); column-gap: 12px; }
+/* Rows: text lists on tonal surfaces, no rules, same text ladder (RULES §3).
+   "rows" (default): one rounded panel, rows alternating a step — an info sheet, a programme.
+   "tiles": one surface per item with a small gap — peers read one by one.
+   Label over detail on phones; label · detail on one line from 768. */
+.evd-rows { display: grid; margin: 0; padding: 0; list-style: none; }
+.evd-rows__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+  padding: 1em 1.25em 1.1em;
+  background: var(--dossier-list);
+}
+.evd-rows[data-surface="rows"] { overflow: hidden; border-radius: var(--ev-radius-surface); }
+.evd-rows[data-surface="rows"] > .evd-rows__row:nth-child(even) { background: var(--dossier-list-alt); }
+.evd-rows[data-surface="tiles"] { gap: 0.5em; }
+.evd-rows[data-surface="tiles"] > .evd-rows__row { border-radius: var(--ev-radius-surface); }
+.evd-rows--numbered .evd-rows__row { grid-template-columns: auto minmax(0, 1fr); column-gap: 1em; }
 .evd-rows__index { grid-row: 1 / span 2; color: var(--ev-accent-signal); padding-top: 2px; }
 .evd-rows__label { color: var(--ev-fg); }
 .evd-rows__detail { color: var(--ev-fg-65); font-family: var(--ev-font-body); font-size: max(1em, 13px); line-height: 1.5; }
+/* A list placed straight on the rail sits under the heading's copy column (the 1.28 side), not across the whole rail. */
+@media (min-width: 1024px) {
+  .evd-rail > .evd-rows { width: calc((100% - 3.5em) * 1.28 / 2); justify-self: end; }
+}
 @media (min-width: 768px) {
-  .evd-rows { gap: 1.6em; }
-  .evd-rows__row { grid-template-columns: 11em minmax(0, 1fr); column-gap: 1.5em; align-items: baseline; }
-  .evd-rows--numbered .evd-rows__row { grid-template-columns: 3.5em 11em minmax(0, 1fr); }
+  .evd-rows__row { grid-template-columns: 11em minmax(0, 1fr); column-gap: 1.5em; align-items: baseline; padding: 1.2em 1.75em 1.3em 1.5em; }
+  .evd-rows--numbered .evd-rows__row { grid-template-columns: 2.5em 11em minmax(0, 1fr); }
   .evd-rows__index { grid-row: auto; }
 }
 
+/* Paper specimen (a client artefact: menu, programme). The card is the panel: its rows run edge
+   to edge and band a step down from the paper; the example note closes it on the paper itself. */
 .evd-specimen {
   display: grid;
   gap: 28px;
   padding: 28px 22px 24px;
+  overflow: hidden;
   border-radius: var(--ev-radius-surface);
   background: #f4f3f1;
   color: var(--ev-fg);
   box-shadow: 0 30px 70px -40px rgb(0 0 0 / 0.9);
 }
+.evd-specimen:has(> .evd-rows) { gap: 0; padding: 0; }
+.evd-specimen > .evd-rows { --dossier-list: #f4f3f1; --dossier-list-alt: #eae8e4; border-radius: 0; }
+.evd-specimen > .evd-rows > .evd-rows__row:first-child { padding-top: 1.5em; }
 .evd-specimen__note { color: var(--ev-fg-55); font-style: italic; }
-@media (min-width: 1024px) { .evd-specimen { gap: 2.5em; padding: 2.75em 3em 2.5em; } }
+/* The note is set smaller than the rows: px padding keeps its text on the rows' left edge. */
+.evd-specimen:has(> .evd-rows) > .evd-specimen__note { padding: 16px 20px 20px; }
+@media (min-width: 768px) { .evd-specimen:has(> .evd-rows) > .evd-specimen__note { padding: 18px 24px 22px calc(1.5 * 16px * var(--ev-scale, 1)); } }
+@media (min-width: 1024px) {
+  .evd-specimen { gap: 2.5em; padding: 2.75em 3em 2.5em; }
+  .evd-specimen > .evd-rows > .evd-rows__row:first-child { padding-top: 1.75em; }
+}
 
 .evd-chapter--payoff { overflow: hidden; }
 .evd-chapter--payoff::before {
@@ -872,13 +904,28 @@
 .evd-payoff__line { display: block; }
 .evd-payoff__line--accent { color: var(--dossier-signal); }
 .evd-payoff__lead { max-width: 45em; color: var(--ev-fg-90); font-weight: 400; }
-.evd-payoff__results { display: grid; margin: 8px 0 0; gap: 20px; }
-.evd-payoff__results > div { display: flex; flex-direction: column-reverse; gap: 4px; }
-.evd-payoff__results dt { color: var(--ev-fg-55); }
+/* Results: true peers, one tonal tile each. Phone: three stacked tiles would outweigh the action —
+   one joined panel, value · label on one line, rows alternating a step. */
+.evd-payoff__results { display: grid; margin: 8px 0 0; overflow: hidden; border-radius: var(--ev-radius-surface); }
+.evd-payoff__results > div {
+  display: grid;
+  grid-template-columns: 5.5em minmax(0, 1fr);
+  column-gap: 1em;
+  align-items: baseline;
+  padding: 0.95em 1.25em 1em;
+  background: var(--dossier-list);
+}
+.evd-payoff__results > div:nth-child(even) { background: var(--dossier-list-alt); }
+.evd-payoff__results dt { grid-column: 2; grid-row: 1; color: var(--ev-fg-55); }
+.evd-payoff__results dd { grid-column: 1; grid-row: 1; }
 .evd-payoff__value { margin: 0; color: var(--ev-fg); font-family: var(--ev-font-display); font-size: max(1.75em, 24px); font-weight: 900; letter-spacing: -0.02em; line-height: 1; }
 .evd-payoff__action { display: grid; gap: 12px; align-content: end; }
 .evd-payoff__consequence { justify-self: end; color: var(--ev-fg-35); }
-@media (min-width: 768px) { .evd-payoff__results { margin-top: 1.25em; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25em; } }
+@media (min-width: 768px) {
+  .evd-payoff__results { margin-top: 1.25em; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5em; overflow: visible; border-radius: 0; }
+  .evd-payoff__results > div,
+  .evd-payoff__results > div:nth-child(even) { display: flex; flex-direction: column-reverse; justify-content: flex-end; gap: 6px; padding: 1.1em 1.35em 1.2em; border-radius: var(--ev-radius-surface); background: var(--dossier-list); }
+}
 @media (min-width: 1024px) {
   .evd-payoff { grid-template-columns: 1.2fr 0.8fr; column-gap: 4em; align-items: end; }
 }

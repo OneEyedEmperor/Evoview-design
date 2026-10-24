@@ -50,6 +50,16 @@ restyle them to the client's UI kit:
   `.7 / 1.3` side / stage, `1.2 / .8` payoff; captions inside media; one
   display level per chapter; one exit CTA per story. Row indices only for a
   real sequence (`ChapterRows numbered`).
+- **Text lists on tonal surfaces** (RULES §3): never bare text, never lines.
+  `ChapterRows` defaults to one rounded panel whose rows alternate a step
+  (`--dossier-list` / `--dossier-list-alt`, resolved per chapter tone from
+  foundation's `--ev-surface-list*`), label · detail on one line from 768,
+  under the heading's copy column from 1024; `surface="tiles"` gives one
+  rounded tile per item for peers. In a `ChapterSpecimen` the paper card is
+  the panel: rows run edge to edge and band a step down, the example note
+  closes it. Payoff results are peer tiles (one joined alternating panel on
+  phones). No borders; same text ladder; radius by role (surface for panels
+  and tiles, 0 for joined rows). Lists with media per item are exempt.
 - **Media gate**: a view is revealed only once its media is decoded. The body
   keeps the previous view (inert, dimmed after 140 ms) until the next one is
   ready, so a switch never cuts to an empty body; loader after 350 ms over

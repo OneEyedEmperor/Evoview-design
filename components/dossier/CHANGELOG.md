@@ -1,5 +1,25 @@
 # dossier changelog
 
+## 1.2.0
+
+Text lists on tonal surfaces (RULES §3; uses foundation 1.3.0
+`--ev-surface-list*`, with fallbacks):
+- `ChapterRows`: one rounded panel, rows alternating a step, label · detail
+  on one line from 768; placed straight on a chapter rail it sits under the
+  heading's copy column from 1024. New `surface` prop: `"rows"` (default) or
+  `"tiles"` (one rounded tile per item).
+- `ChapterSpecimen` with rows: the paper card is the panel — rows edge to
+  edge, banding a step down; the example note closes the card.
+- `ChapterPayoff` results: peer tiles; on phones one joined panel, value ·
+  label on one line, rows alternating.
+- Surfaces resolve per chapter tone (`--dossier-list` / `--dossier-list-alt`
+  on `.evd-chapter`: a, b and paper each step off their own ground). No
+  borders, same text ladder.
+
+Config / API changes: `ChapterRows` gains `surface?: "rows" | "tiles"`
+(default `"rows"`); `ChapterRowsProps` exported. The reference config is
+unchanged (practical info and specimens use the default).
+
 ## 1.1.2
 
 - `--dossier-reserve-bottom` now defaults to the generic

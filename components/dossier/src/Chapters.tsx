@@ -107,10 +107,19 @@ export function ChapterSplit({ aside, children }: { aside: ReactNode; children: 
 
 export type ChapterRow = { label: ReactNode; detail: ReactNode; index?: string };
 
-/** Rows separated by spacing: label · detail, with an accent index only when the rows are a sequence. */
-export function ChapterRows({ rows, numbered = false, className }: { rows: ChapterRow[]; numbered?: boolean; className?: string }) {
+export type ChapterRowsProps = {
+  rows: ChapterRow[];
+  /** Accent index column, only when the rows are a sequence. */
+  numbered?: boolean;
+  /** Tonal surfaces (RULES §3): "rows" one panel, rows alternating a step (info sheets, programmes); "tiles" one surface per item (peers). */
+  surface?: "rows" | "tiles";
+  className?: string;
+};
+
+/** A text list on tonal surfaces: label · detail, no rules. */
+export function ChapterRows({ rows, numbered = false, surface = "rows", className }: ChapterRowsProps) {
   return (
-    <ol className={cn("evd-rows", numbered && "evd-rows--numbered", className)}>
+    <ol className={cn("evd-rows", numbered && "evd-rows--numbered", className)} data-surface={surface}>
       {rows.map((row, i) => (
         <li key={i} className="evd-rows__row">
           {numbered && <span className="ev-t-readout evd-rows__index">{row.index ?? pad(i + 1)}</span>}

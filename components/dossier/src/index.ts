@@ -17,6 +17,7 @@ export {
   type ChapterHeadProps,
   type ChapterFigureProps,
   type ChapterRow,
+  type ChapterRowsProps,
   type ChapterPayoffProps,
 } from "./Chapters";
 export { buildDossierConfig, dossierCopy } from "./dossier.config";
