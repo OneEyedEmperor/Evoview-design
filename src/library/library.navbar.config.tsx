@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
-import { Blocks, LayoutTemplate, PanelTop, type LucideIcon } from "lucide-react";
+import { Blocks, Languages, LayoutTemplate, PanelTop, type LucideIcon } from "lucide-react";
+import { NavLangSwitch } from "../../components/navbar/src";
 import EvoviewLogo from "../../components/navbar/src/brand/EvoviewLogo";
 import type { NavbarConfig, NavbarLabels, NavSection, NavTray } from "../../components/navbar/src/types";
 import { coverSrc } from "./covers";
-import type { Locale } from "./locale";
+import { LOCALES, type Locale } from "./locale";
 import { CATEGORY_LABEL, CATEGORY_ROUTE, entriesOf, type Category } from "./registry";
 
 /* The library site's own navigation (not the package's reference config):
@@ -40,6 +41,11 @@ const LABELS: Record<Locale, NavbarLabels> = {
   },
 };
 
+const LANG: Record<Locale, string> = {
+  fr: "Langue : français. Passer en anglais",
+  en: "Language: English. Switch to French",
+};
+
 const UNIT: Record<"layouts" | "components", Record<Locale, string>> = {
   layouts: { fr: "layouts", en: "layouts" },
   components: { fr: "composants", en: "components" },
@@ -62,7 +68,8 @@ function trayFor(category: "layouts" | "components", locale: Locale): NavTray {
   };
 }
 
-export function buildLibraryNavbarConfig(locale: Locale): NavbarConfig {
+export function buildLibraryNavbarConfig(locale: Locale, onLocaleChange: (locale: Locale) => void): NavbarConfig {
+  const other: Locale = locale === "fr" ? "en" : "fr";
   return {
     logo: <EvoviewLogo alt="" />,
     homeHref: "/",
@@ -79,10 +86,17 @@ export function buildLibraryNavbarConfig(locale: Locale): NavbarConfig {
       { key: "layouts", label: CATEGORY_LABEL.layouts[locale], icon: mark(LayoutTemplate), href: CATEGORY_ROUTE.layouts, accent: PILL_ACCENT.layouts },
       { key: "components", label: CATEGORY_LABEL.components[locale], icon: mark(Blocks), href: CATEGORY_ROUTE.components, accent: PILL_ACCENT.components },
       { key: "navbar", label: CATEGORY_LABEL.navbar[locale], icon: mark(PanelTop), href: CATEGORY_ROUTE.navbar, accent: PILL_ACCENT.navbar },
+      { key: "lang", label: LANG[locale], icon: mark(Languages), content: <NavLangSwitch locale={locale} locales={LOCALES} icon={mark(Languages)} />, keepOpen: true, accent: ACCENT },
     ],
     trays: {
       layouts: trayFor("layouts", locale),
       components: trayFor("components", locale),
+    },
+    onSection: (entry, event) => {
+      if (entry.key === "lang") {
+        event.preventDefault();
+        onLocaleChange(other);
+      }
     },
   };
 }

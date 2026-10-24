@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import EvoviewLogo from "../../../components/foundation/src/brand/EvoviewLogo";
 import { Cover } from "../../library/covers";
 import HeroEye from "../../library/hero/HeroEye";
-import LocaleToggle from "../../library/LocaleToggle";
 import { useLibraryLocale, type Localized } from "../../library/locale";
 import { CATEGORY_LABEL, entriesOf, getEntry, pad2, type Category, type RegistryEntry } from "../../library/registry";
 import StatusTag from "../../library/StatusTag";
@@ -93,7 +92,6 @@ export default function Home() {
             </h1>
             <div className="lib-hero__intro">
               <p className="lib-lead">{copy.intro}</p>
-              <LocaleToggle />
             </div>
           </div>
           <ul className="lib-hero__collage" aria-label={copy.collageLabel}>

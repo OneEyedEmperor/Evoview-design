@@ -150,30 +150,6 @@
 }
 .lib-status__version { color: var(--lib-faint); }
 
-.lib-locale {
-  display: inline-flex;
-  padding: 3px;
-  border: 1px solid var(--lib-line-strong);
-  border-radius: 999px;
-}
-.lib-locale button {
-  min-width: 44px;
-  min-height: 38px;
-  padding: 0 0.9em;
-  border-radius: 999px;
-  color: var(--lib-muted);
-  font-family: var(--lib-font-state);
-  font-size: max(11px, 0.72em);
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  cursor: pointer;
-  transition: background-color 180ms var(--lib-ease), color 180ms var(--lib-ease);
-}
-.lib-locale button:hover { color: var(--lib-fg); }
-.lib-locale button[aria-pressed="true"] { background: var(--lib-fg); color: var(--lib-night); }
-.lib-toned[data-tone="light"] .lib-locale button[aria-pressed="true"] { color: var(--lib-paper); }
-.lib-locale button:focus-visible { outline: 2px solid var(--lib-signal, var(--primary)); outline-offset: 2px; }
-
 .lib-command {
   display: inline-flex;
   align-items: center;
@@ -397,7 +373,6 @@
   .lib-hero { --lib-hero-gap: 1em; padding-block: 8em 5em; }
   .lib-hero__grid { grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--lib-gutter); row-gap: 4em; align-items: end; }
   .lib-hero__main { grid-column: 1 / span 6; gap: 2.5em; }
-  .lib-hero__intro { grid-template-columns: minmax(0, 1fr) auto; align-items: end; column-gap: 2em; }
   .lib-hero__collage { grid-column: 7 / -1; }
   .lib-dir { grid-column: 1 / -1; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 1em; }
 }

@@ -4,7 +4,6 @@ import { Navbar, useNavbarLinks } from "../../components/navbar/src";
 import EvoviewLogo from "../../components/navbar/src/brand/EvoviewLogo";
 import { withRoute } from "../../components/navbar/src/navbar.config";
 import { buildLibraryNavbarConfig } from "./library.navbar.config";
-import LocaleToggle from "./LocaleToggle";
 import { useLibraryLocale } from "./locale";
 import { RouteBoundary, RoutePending } from "./routing";
 import "./library.css";
@@ -12,12 +11,12 @@ import "./library.css";
 export const EVOVIEW_URL = "https://evoview.be/";
 
 export default function LibraryLayout() {
-  const { locale } = useLibraryLocale();
+  const { locale, setLocale } = useLibraryLocale();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   useNavbarLinks(useCallback((to: string) => navigate(to), [navigate]));
 
-  const config = useMemo(() => withRoute(buildLibraryNavbarConfig(locale), pathname), [locale, pathname]);
+  const config = useMemo(() => withRoute(buildLibraryNavbarConfig(locale, setLocale), pathname), [locale, setLocale, pathname]);
 
   return (
     <div className="ev-library lib-shell">
@@ -49,7 +48,6 @@ function LibraryFooter() {
           <EvoviewLogo alt="" />
         </a>
         <p className="lib-body lib-footer__line">{copy.line}</p>
-        <LocaleToggle />
       </div>
     </footer>
   );

@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import AccentPalette, { CUSTOM_SWATCH, inkFor } from "./AccentPalette";
 import { Cover } from "./covers";
 import FloatingPalette from "./FloatingPalette";
-import LocaleToggle from "./LocaleToggle";
 import { useLibraryLocale, type Locale, type Localized } from "./locale";
 import { CATEGORY_LABEL, CATEGORY_ROUTE, getEntry, pad2, positionOf } from "./registry";
 import StatusTag from "./StatusTag";
@@ -131,7 +130,6 @@ export default function ShowcasePage({ entryId, title, intro, tone = "dark", def
             <p className="lib-lead">{intro[locale]}</p>
             <div className="lib-showcase__meta">
               <StatusTag status={entry.status} version={entry.version} />
-              <LocaleToggle />
             </div>
           </div>
         </div>
