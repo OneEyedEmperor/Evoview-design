@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState, type FocusEvent, type PointerEvent } from "react";
 import { OptionChip } from "../controls";
-import { cn, pad, sequenceFillStyle, useInViewPause, useSequenceClock } from "../foundation";
+import { cn, pad, sequenceFillStyle, StepGauge, useInViewPause, useSequenceClock } from "../foundation";
 import { Heading, Note, StageFrame, defaultCopy, layersOf, radioKeys, toneClass, useOnce, useStageGate } from "./stage";
 import type { SelectorStageContent, SelectorStageCopy, Tone } from "./types";
 
@@ -129,7 +129,7 @@ export function SelectorStage({
                       className="ss-row"
                       onClick={() => select(i, true)}
                     >
-                      <span className="ev-t-readout ss-row__index" aria-hidden="true">{pad(i + 1)}</span>
+                      <StepGauge current={i + 1} total={options.length} className="ss-row__gauge" />
                       <span className="ev-t-label ss-row__label">{o.label}</span>
                       <span className="ss-row__bar" aria-hidden="true" />
                     </button>

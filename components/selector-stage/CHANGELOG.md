@@ -1,5 +1,13 @@
 # selector-stage changelog
 
+## 1.3.0
+
+- Requires `foundation` 1.4.0 (`StepGauge`).
+- Joined selector rows (≥ 1024) show their position as a vertical step
+  gauge (RULES §1) instead of `01`…`04`: dim until the row is selected,
+  then in the signal. Chip strip (< 1024) unchanged.
+- No config changes.
+
 ## 1.2.0
 
 - Requires `foundation` 1.3.0 (`--ev-surface-list` / `--ev-surface-list-alt`;

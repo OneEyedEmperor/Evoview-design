@@ -108,7 +108,10 @@ views the visitor is likely to open; it cannot be cancelled, so do not feed
 it large videos speculatively.
 
 Primitives: `<Readout size?>`, `<Index current total srLabel? size?>`,
-`<SectionMarker live?>`, `<EvoviewMark label href?>`, `<EvoviewLogo>`.
+`<StepGauge current total srLabel?>` (stacked-list position as a vertical
+battery filled from the bottom; the norm for list rows, RULES §1; colour =
+`currentColor`), `<SectionMarker live?>`, `<EvoviewMark label href?>`,
+`<EvoviewLogo>`.
 Icons: `ArrowRight`, `ArrowLeft`, `ArrowUpRight`, `Check`, `Close`,
 `Chevron dir`.
 

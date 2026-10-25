@@ -1,6 +1,6 @@
 import { useId, type CSSProperties, type ReactNode } from "react";
 import { PrimaryPlate } from "../controls";
-import { cn, pad } from "../foundation";
+import { cn, StepGauge } from "../foundation";
 import { Reveal, StoryFigure, renderLines } from "./parts";
 import type { IndexedRow, IndexedRowsProps, Lines, PayoffBandProps, ProofGridProps, ProofItem, StoryIntroProps } from "./types";
 
@@ -65,12 +65,15 @@ export function StoryIntro({ title, lead, body, media, caption, align = "end" }:
   );
 }
 
-function RowContent({ row, i }: { row: IndexedRow; i: number }) {
+/* Authored indices (times, codes) stay text; plain order is a step gauge. */
+function RowContent({ row, i, total }: { row: IndexedRow; i: number; total: number }) {
   return (
     <>
-      <span className="ev-t-readout evsb-row__index" aria-hidden={row.index === undefined ? true : undefined}>
-        {row.index ?? pad(i + 1)}
-      </span>
+      {row.index === undefined ? (
+        <StepGauge current={i + 1} total={total} className="evsb-row__gauge" />
+      ) : (
+        <span className="ev-t-readout evsb-row__index">{row.index}</span>
+      )}
       <h3 className="ev-t-card evsb-row__label">{row.label}</h3>
       <p className="ev-t-body evsb-row__detail">{row.detail}</p>
     </>
@@ -85,7 +88,7 @@ function RowList({ rows, surface }: { rows: readonly IndexedRow[]; surface: "til
         <ol className="evsb-rows" data-surface="rows">
           {rows.map((row, i) => (
             <li key={i} className="evsb-row">
-              <RowContent row={row} i={i} />
+              <RowContent row={row} i={i} total={rows.length} />
             </li>
           ))}
         </ol>
@@ -96,7 +99,7 @@ function RowList({ rows, surface }: { rows: readonly IndexedRow[]; surface: "til
     <ol className="evsb-rows" data-surface="tiles">
       {rows.map((row, i) => (
         <Reveal as="li" key={i} index={i} className="evsb-row">
-          <RowContent row={row} i={i} />
+          <RowContent row={row} i={i} total={rows.length} />
         </Reveal>
       ))}
     </ol>

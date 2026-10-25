@@ -46,8 +46,9 @@ following make them recognisably Evoview and must not be restyled:
   chapter (`ev-t-heading`), one payoff statement (`ev-t-display`), 2–3 short
   lines broken by meaning. Inside lists, row labels in the card voice
   (Overused 900) over body-size detail.
-- **Indices only where they index**: sequence rows carry `01…` or a real
-  value (`14:00`) in the accent readout; proof images carry no numbers.
+- **Indices only where they index**: sequence rows carry their position as
+  a step gauge (foundation `StepGauge`, filled from the bottom, accent) or a
+  real value (`14:00`) in the accent readout; proof images carry no numbers.
 - **One exit**: exactly one primary plate per story (white / ink at rest,
   accent on hover), full width of its column, labelled with the action
   itself. A consequence readout under it only when the click does

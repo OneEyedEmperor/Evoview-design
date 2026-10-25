@@ -52,7 +52,8 @@ restyle them to a client's UI kit:
   results need none.
 
 **Accent = the client's** (`--primary` → `--ss-accent`, `--primary-foreground`
-→ `--ss-accent-ink`). It drives: row tint / border / bar / index, chip
+→ `--ss-accent-ink`). It drives: row tint / border / bar / step gauge
+(foundation `StepGauge`, lit when selected), chip
 selection, segmented thumb, stage border, caption kicker, autoplay progress,
 active thumb, the change drawn in a specimen, one heading word (`<em>`),
 focus rings. Never

@@ -1,5 +1,14 @@
 # story-blocks changelog
 
+## 2.2.0 — step gauge on sequence rows (RULES §1)
+
+Requires `foundation` 1.4.0 (`StepGauge`).
+
+- `IndexedRows` rows without an authored `index` show their position as a
+  vertical step gauge (filled from the bottom, accent) instead of `01`…`04`.
+  Rows with `index` (times, codes) keep the text readout.
+- No config changes.
+
 ## 2.1.0 — text lists on tonal surfaces (RULES §3)
 
 Requires `foundation` 1.3.0 (`--ev-surface-list` / `-alt`; a `color-mix`

@@ -1,5 +1,14 @@
 # foundation changelog
 
+## 1.4.0
+
+- `StepGauge({ current, total, srLabel?, className? })` + `.ev-gauge`: a
+  row's position in a stacked list as a vertical battery, one cell per
+  item, filled from the bottom (RULES §1, the norm for list rows instead of
+  `01`…`04`). Lit cells use `currentColor`; tune with `--ev-gauge-h / -w /
+  -pad / -gap / -empty`.
+- No config changes; existing exports unchanged.
+
 ## 1.3.0
 
 - Tone tokens `--ev-surface-list` / `--ev-surface-list-alt`: the two

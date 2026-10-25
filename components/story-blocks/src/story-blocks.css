@@ -160,6 +160,8 @@
   background: var(--story-blocks-list);
 }
 .evsb-row__index { color: var(--story-blocks-signal); white-space: nowrap; }
+/* Gauge spans the label + first detail line, top-aligned with the label. */
+.evsb-row__gauge { grid-row: 1 / span 2; align-self: start; margin-top: 0.1em; color: var(--story-blocks-signal); }
 .evsb-row__label { color: var(--ev-fg); }
 .evsb-row__detail { grid-column: 2; max-width: 30em; color: var(--ev-fg-65); }
 /* Phone body is 16px: step the detail down so the label keeps its lead. */
@@ -180,6 +182,7 @@
     padding: 1.45em 1.75em 1.5em 1.5em;
   }
   .evsb-rows[data-surface="rows"] .evsb-row__detail { grid-column: 3; }
+  .evsb-rows[data-surface="rows"] .evsb-row__gauge { grid-row: auto; margin-top: 0; align-self: center; }
 }
 
 /* Beside its proof: media on the larger side; the heading tops it and the

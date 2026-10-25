@@ -35,6 +35,15 @@ are sentence case; brand statements are uppercase.
 `01 / 04` or `02 / 03`. When an item's order matters, show the bare number
 (`1`, `2`…, no padding, no total) in a round orb attached to the item.
 
+**Stacked lists: the step gauge (norm).** When a vertical list carries its
+order at the head of each row (steps, options, stages), the position is a
+vertical battery, not `01`…`04`: one cell per item, filled from the bottom
+up to the row's position (2 of 4 = half). `StepGauge` from `foundation`
+(`.ev-gauge`, sized in the row's em); lit cells in the list's signal (or
+the row's state colour, e.g. dim until selected), empty cells `--ev-fg-12`.
+Authored values that are not order (times, codes) stay text. Inside an
+`<ol>` it is decorative; elsewhere pass `srLabel`.
+
 **No kicker tags.** No small state-voice labels over or before titles
 (`01 — Sections de page`, `02 — Interactive`, a lone `01` index before a
 heading), numbered or not. The title and its lead carry the section.
