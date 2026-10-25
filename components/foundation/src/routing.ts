@@ -183,15 +183,33 @@ export function useRouteHistory<V>({ view, routes, hrefFor, onNavigate, history 
       window.history.go(-steps);
     };
 
+    /** The entry's view is a view of this modal and lives at the current URL. */
+    const atCurrentUrl = (entry: Entry<V>) => {
+      try {
+        const href = live.current.hrefFor?.(entry.view);
+        return href !== undefined && keyOf(entry.view) === entry.key && hrefPath(href) === normPath(window.location.pathname);
+      } catch {
+        return false;
+      }
+    };
+
     const onPop = () => {
       const entry = readEntry<V>();
-      const ours = entry !== null && owner.current !== null && entry.owner === owner.current;
+      let ours = entry !== null && owner.current !== null && entry.owner === owner.current;
       const wanted = pending.current;
       if (wanted) {
         window.clearTimeout(wanted.timer);
         pending.current = null;
       }
-      if (!ours || (wanted && wanted.target === null)) {
+      // A view entry made by an earlier document of this page (left for
+      // another site, or reloaded, then traversed back into without the
+      // bfcache): nothing is open and its view lives at this URL, so it is
+      // this modal's. Adopt it; the URL match keeps other modals' entries out.
+      if (!ours && !wanted && entry !== null && applied.current === null && atCurrentUrl(entry)) {
+        owner.current = entry.owner;
+        ours = true;
+      }
+      if (!ours || entry === null || (wanted && wanted.target === null)) {
         if (ours) write("replace", null, 0);
         depth.current = 0;
         applied.current = null;

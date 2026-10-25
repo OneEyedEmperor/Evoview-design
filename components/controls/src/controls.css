@@ -34,6 +34,8 @@
 }
 :where(.ev-controls) :where(button:disabled, [aria-disabled="true"]) { cursor: default; }
 :where(a.ev-controls) { text-decoration: none; }
+/* Links inside controls (view links: progress cells, pagers) press like buttons. */
+:where(a.ev-controls, .ev-controls a) { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 
 /* ── Commands ───────────────────────────────────────────────────────── */
 

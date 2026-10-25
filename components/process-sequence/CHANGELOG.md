@@ -1,5 +1,16 @@
 # process-sequence changelog
 
+## 1.3.1
+
+Requires `controls` ≥ 1.3.0 and `foundation` ≥ 1.6.1 (`install.sh`
+installs both). No config changes, no API changes, same markup.
+
+- `StepDossier`: the step cells are controls `SegmentedProgress` with
+  `hrefFor` (the local link copy is gone) and the phone's previous pager is
+  controls `PagerOrb` with `href`.
+- Through foundation 1.6.1: a step URL reached by Forward after the page
+  was left and re-entered (no bfcache) opens its dossier again.
+
 ## 1.3.0
 
 Crawlable views (`docs/CRAWLABLE-MODALS.md`). Requires `foundation` ≥ 1.6.0.

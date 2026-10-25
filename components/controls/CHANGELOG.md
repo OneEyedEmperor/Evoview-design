@@ -1,5 +1,21 @@
 # controls changelog
 
+## 1.3.0
+
+View links for crawlable modals (`docs/CRAWLABLE-MODALS.md` §4). Requires
+`foundation` ≥ 1.6.0 (`followRouteLink`). No config changes; existing usage
+renders the same markup.
+
+- `SegmentedProgress`: `hrefFor?(index)`. A selectable cell with a URL
+  renders `<a class="evc-progress__hit" href>` (plain click → `onSelect`
+  through `followRouteLink`, modified click opens the URL); other cells stay
+  buttons (`disabled` when not selectable).
+- `PagerOrb`: `href?` renders `<a>` with the same classes (`PagerOrbProps` is
+  now button-or-anchor, like `PrimaryPlate` / `GhostAction`).
+- `GlassClose` unchanged: closing is never a view link.
+- CSS: `:where(a.ev-controls, .ev-controls a)` gets `touch-action:
+  manipulation` and no tap highlight, like buttons.
+
 ## 1.2.0
 
 Requires `foundation` ≥ 1.5.0 (`OrbFill`). No config changes, no API

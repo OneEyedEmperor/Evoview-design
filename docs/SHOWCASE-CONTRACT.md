@@ -44,7 +44,10 @@ const [view, setView] = useState(() => (path ? dossierRoutes.parse(config, path)
 
 Seed the view from `path` once; the modal's `useRouteHistory` keeps the URL
 in step (its `pushState` bypasses the router, Back / Forward reach both).
-Launchers are links to `hrefFor(view)` with `followRouteLink`. A new
+Launchers are links to `hrefFor(view)` with `followRouteLink`. Call
+`useShowcaseViewOpen(view !== null)` (from `ShowcasePage`) where the view
+state lives: while a view is open the page title renders as an `h2` with
+the same class, so the view's `h1` is the only one (contract §4). A new
 deep-link page: add it to `DEEP_LINK_PAGES` and give its route `/*` in
 `App.tsx`.
 

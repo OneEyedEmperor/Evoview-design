@@ -137,8 +137,10 @@ ROUTE_LAYER_NOSCRIPT_CSS                  // <noscript><style> for prerendered v
 deeper = push, same level = replace, up = Back (lands on the ancestor of
 the view on screen), close = Back past every level. A page loaded on the
 view's URL first rewrites its entry to `hrefFor(null)`. Reload / Forward
-onto its own entries adopts them; Forward after a close reopens through
-`onNavigate` (keep the modal mounted). History state: `evRoute` (spread
+onto its own entries adopts them, also entries left by an earlier document
+of the page (no bfcache) when nothing is open and `hrefFor(entry.view)` is
+the current URL; Forward after a close reopens through `onNavigate` (keep
+the modal mounted). History state: `evRoute` (spread
 over the existing state, so router keys survive). Without `hrefFor` the
 entries keep the current URL.
 

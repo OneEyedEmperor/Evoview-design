@@ -5,7 +5,7 @@ import releve from "../../../components/process-sequence/examples/releve.webp";
 import esquisse from "../../../components/process-sequence/examples/esquisse.webp";
 import permis from "../../../components/process-sequence/examples/permis.webp";
 import chantier from "../../../components/process-sequence/examples/chantier.webp";
-import ShowcasePage from "../../library/ShowcasePage";
+import ShowcasePage, { useShowcaseViewOpen } from "../../library/ShowcasePage";
 import { useLibraryLocale } from "../../library/locale";
 import { useShowcaseSubpath } from "../../library/routing";
 
@@ -44,5 +44,6 @@ function Demo() {
   const config = useMemo(() => buildProcessSequenceConfig(locale, { media: MEDIA }), [locale]);
   const hrefFor = useMemo(() => routeHrefs(base, processSequenceRoutes.key), [base]);
   const [view, setView] = useState<ProcessSequenceView | null>(() => (path ? processSequenceRoutes.parse(config, path) : null));
+  useShowcaseViewOpen(view !== null);
   return <Board config={config} tone="dark" chapter={false} view={view} onNavigate={setView} hrefFor={hrefFor} />;
 }

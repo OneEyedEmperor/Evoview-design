@@ -90,7 +90,7 @@ Every control root carries `ev-controls`; pass `className` to extend.
 | `PrimaryPlate` | `children`, `icon?` (arrow), `size?: "md" 54 \| "lg" 64`, `block?`, `busy?` (spinner, aria-busy, locale `busy` label in the accessible name, clicks ignored), `href?` → `<a>`, `ref` (button / anchor) |
 | `GhostAction` | `children`, `icon?`, `iconPosition?: "start" \| "end"`, `href?` → `<a>`, `ref` |
 | `GlassClose` | `label?` (locale "Fermer"), `showLabel?` (`× FERMER`), `ref: Ref<HTMLButtonElement>` (initial modal focus) |
-| `PagerOrb` | `direction: "prev" \| "next"`, `label?` (name the target), `ref` |
+| `PagerOrb` | `direction: "prev" \| "next"`, `label?` (name the target), `href?` → `<a>` (a modal view's URL; `onClick={(e) => followRouteLink(e, go)}`; no target → no `href`, `disabled`), `ref` |
 | `OptionChip` | `selected?`, `index?` (number padded; omitted = empty ring), `size?: "md" 48 \| "lg" 58`, `ref`; toggle (`aria-pressed`) unless `role="radio"` |
 | `ChipGroup` | `options: ChoiceOption[]`, `label`, `numbered?`, `size?`, single: `value: string \| null`, `onChange(value)`; multi: `multiple`, `value: string[]`, `onChange(values)`, `max?` (counter ticks, extra options locked) |
 | `OptionRow` | `selected?`, `index?`, `icon?` (28px, keeps its colours), `label`, `hint?`, `ref` |
@@ -104,7 +104,7 @@ Every control root carries `ev-controls`; pass `className` to extend.
 | `FieldGrid` | one column, two from a 560px-wide container; `wide` fields span |
 | `Switch` | `checked`, `onCheckedChange`, `label`, `description?`, `disabled?`, `id?`, `ref` — the whole row is the switch |
 | `SegmentedControl` | `options: { value, label }[]`, `value`, `onChange`, `label`, `block?`. Thumb = accent pulled a quarter toward the signal, plus a signal ring: reads on paper with near-white / yellow accents. |
-| `SegmentedProgress` | `count`, `current` (0-based), `label`, `labels?`, `isComplete?(i)`, `size?: "sm" 3px \| "lg" 6px shell`, `fill?` 0–1 (default 1: current cell full) or `clock?` (from `useSequenceClock`), `onSelect?(i)` + `canSelect?(i)` (buttons, 44px hit), `captions?` (hidden < 520px): `true` / `"all"` every label · `"complete"` a caption locks on when its cell completes · `(i, state) => ReactNode \| null` (`null` = empty slot, height kept) |
+| `SegmentedProgress` | `count`, `current` (0-based), `label`, `labels?`, `isComplete?(i)`, `size?: "sm" 3px \| "lg" 6px shell`, `fill?` 0–1 (default 1: current cell full) or `clock?` (from `useSequenceClock`), `onSelect?(i)` + `canSelect?(i)` (buttons, 44px hit), `hrefFor?(i)` (selectable cells with a URL render `<a href>`, plain click → `onSelect`, modified click native; `docs/CRAWLABLE-MODALS.md` §4), `captions?` (hidden < 520px): `true` / `"all"` every label · `"complete"` a caption locks on when its cell completes · `(i, state) => ReactNode \| null` (`null` = empty slot, height kept) |
 | `rovingKeyDown(e, select(index, item), itemSelector = "[data-evc-item]")` | Roving-tabindex radiogroup keys for a custom group's `onKeyDown`: arrows (wrap) / Home / End move focus over enabled items and select; `index` counts all matched items. |
 | `ControlsProvider`, `useControlsCopy`, `buildControlsConfig(locale)` | labels |
 

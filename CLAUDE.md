@@ -39,11 +39,11 @@ and `controls`; follow `docs/BUILD-BRIEF.md`.
 
 | Component | Status | Skill |
 | --- | --- | --- |
-| `foundation` — tokens, scale, tones, type voices, pause-model hooks, attribution mark, step gauge, orb + text liquid fill, SSR + crawlable-modal routing | 1.6.0 | `evoview-foundation` |
-| `controls` — plate, ghost, glass close/pager, chips, rows, fields, switch, segmented control/progress (`/components/controls`) | 1.2.0 | `evoview-controls` |
+| `foundation` — tokens, scale, tones, type voices, pause-model hooks, attribution mark, step gauge, orb + text liquid fill, SSR + crawlable-modal routing | 1.6.1 | `evoview-foundation` |
+| `controls` — plate, ghost, glass close/pager, chips, rows, fields, switch, segmented control/progress, view links (`/components/controls`) | 1.3.0 | `evoview-controls` |
 | `chapter` — section shell, headings, tone cuts, footer with attribution (`/layouts/chapter`) | 1.1.0 | `evoview-chapter` |
 | `card-track` — media card + scroll-scrubbed track (`/layouts/card-track`) | 1.2.1 | `evoview-card-track` |
-| `process-sequence` — timed step board + step dossier (`/layouts/process-sequence`) | 1.2.0 | `evoview-process-sequence` |
+| `process-sequence` — timed step board + step dossier, crawlable step views (`/layouts/process-sequence`) | 1.3.1 | `evoview-process-sequence` |
 | `story-blocks` — intro split, indexed sequence, proof collage, payoff (`/layouts/story-blocks`) | 2.2.0 | `evoview-story-blocks` |
 | `dossier` — portal modal, selection board, chapter strip, mobile dock (`/components/dossier`) | 1.3.0 | `evoview-dossier` |
 | `selector-stage` — selector ↔ stage, before/after, atlas (`/components/selector-stage`) | 1.4.0 | `evoview-selector-stage` |

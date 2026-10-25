@@ -107,24 +107,22 @@ export function GlassClose({ label, showLabel = false, className, ...rest }: Gla
   );
 }
 
-export type PagerOrbProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-  ref?: Ref<HTMLButtonElement>;
+export type PagerOrbProps = (ButtonLike | AnchorLike) & {
   direction: "prev" | "next";
   /** Accessible name; "Précédent" / "Suivant" by default. Name the target when known. */
   label?: string;
 };
 
-/** Round glass pager (previous / next item in a portal header). */
+/** Round glass pager (previous / next item in a portal header). With `href` it is a link (a modal view's URL: pair it with `followRouteLink` in `onClick`); without a target, render it without `href` and `disabled`. */
 export function PagerOrb({ direction, label, className, ...rest }: PagerOrbProps) {
   const copy = useControlsCopy();
   return (
-    <button
-      type="button"
+    <Pressable
       className={cn("ev-controls evc-glass evc-pager", `evc-pager--${direction}`, className)}
       aria-label={label ?? (direction === "prev" ? copy.previous : copy.next)}
       {...rest}
     >
       <Chevron dir={direction === "prev" ? "left" : "right"} />
-    </button>
+    </Pressable>
   );
 }

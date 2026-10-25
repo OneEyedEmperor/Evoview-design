@@ -98,6 +98,9 @@ export default function ShowcasePage({ entryId, title, intro, tone = "dark", def
   const accent = palette ? shared.accent : fallback;
   const ink = useMemo(() => inkFor(accent), [accent]);
   useNavEyeAccent(palette ? accent : undefined);
+  // An open modal view owns the page's h1 (useShowcaseViewOpen).
+  const [viewOpen, setViewOpen] = useState(false);
+  const Title = viewOpen ? "h2" : "h1";
 
   const style = {
     "--showcase-accent": accent,
@@ -135,11 +138,11 @@ export default function ShowcasePage({ entryId, title, intro, tone = "dark", def
           segments it from the demos. */}
       <header className="lib-showcase__head lib-toned" data-tone={headTone} data-nav-tone={headTone === "dark" ? "dark" : undefined}>
         <div className="lib-showcase__intro lib-rail">
-          <h1 className="lib-display">
+          <Title className="lib-display">
             {/* A page without a palette has no accent to show: its accent word
                 takes the band's ink. */}
             {liquidAccent(title(locale), !palette ? "var(--lib-fg)" : headTone === "dark" ? accent : `color-mix(in oklab, ${accent} 62%, var(--lib-ink))`)}
-          </h1>
+          </Title>
           <p className="lib-lead">{intro[locale]}</p>
           <StatusTag status={entry.status} version={entry.version} />
         </div>
@@ -152,7 +155,9 @@ export default function ShowcasePage({ entryId, title, intro, tone = "dark", def
         )}
       </header>
       <div ref={stageRef} className="lib-showcase__stage" data-nav-tone={tonedByContent ? undefined : dark}>
-        <FrameTone.Provider value={tone}>{body}</FrameTone.Provider>
+        <FrameTone.Provider value={tone}>
+          <ViewOpen.Provider value={setViewOpen}>{body}</ViewOpen.Provider>
+        </FrameTone.Provider>
       </div>
       <div className="lib-showcase__tail" data-nav-tone={dark} aria-hidden="true" />
       {palette && <FloatingPalette {...paletteProps} anchor={paletteRef} tone={tone} accent={accent} />}
@@ -161,6 +166,20 @@ export default function ShowcasePage({ entryId, title, intro, tone = "dark", def
 }
 
 const FrameTone = createContext<"dark" | "light">("dark");
+const ViewOpen = createContext<(open: boolean) => void>(() => {});
+
+/**
+ * A modal view of the page is open (docs/CRAWLABLE-MODALS.md §4): the page
+ * title renders as an h2 with the same look, so the view's h1 is the only
+ * one. Call it from the component that holds the view state.
+ */
+export function useShowcaseViewOpen(open: boolean): void {
+  const set = useContext(ViewOpen);
+  useLayoutEffect(() => {
+    set(open);
+    return () => set(false);
+  }, [open, set]);
+}
 
 export type DemoTone = "dark" | "light" | "paper";
 export type DemoRhythm = "flush" | "standard" | "compact" | "cinematic";

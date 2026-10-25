@@ -1,15 +1,13 @@
 import { useCallback, useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent } from "react";
-import { GhostAction, GlassClose, PagerOrb, PrimaryPlate, SegmentedProgress, useControlsCopy } from "../controls";
+import { GhostAction, GlassClose, PagerOrb, PrimaryPlate, SegmentedProgress } from "../controls";
 import {
   ArrowLeft,
-  Chevron,
   cn,
   EvoviewMark,
   followRouteLink,
   HeldCopy,
   Index,
   pad,
-  RouteLink,
   useHeldSrc,
   useHydrated,
   useMediaQuery,
@@ -225,11 +223,7 @@ export function StepDossier({ steps, index, onIndexChange, onClose, copy, cta, a
   const cellLabels = steps.map((s, i) => `${pad(i + 1)} ${s.title}`);
   const progress = (
     <div className="psd__progress psd-in" style={{ "--d": wide ? "150ms" : "220ms" } as CSSProperties}>
-      {hrefFor ? (
-        <StepCells count={n} current={shown} label={copy.dossier.progress} labels={cellLabels} hrefOf={(i) => (openable(i) ? hrefFor(i) : undefined)} onSelect={go} />
-      ) : (
-        <SegmentedProgress count={n} current={shown} label={copy.dossier.progress} labels={cellLabels} onSelect={go} canSelect={(i) => i !== shown && openable(i)} fill={1} className="psd__cells" />
-      )}
+      <SegmentedProgress count={n} current={shown} label={copy.dossier.progress} labels={cellLabels} onSelect={go} canSelect={(i) => i !== shown && openable(i)} hrefFor={hrefFor} fill={1} className="psd__cells" />
       {wide ? <Index current={shown + 1} total={n} srLabel={copy.stepOf(shown + 1, n)} /> : <span className="ev-sr">{copy.stepOf(shown + 1, n)}</span>}
     </div>
   );
@@ -278,9 +272,7 @@ export function StepDossier({ steps, index, onIndexChange, onClose, copy, cta, a
         {copy.dossier.previous}
       </GhostAction>
     ) : (
-      <RouteLink href={prevHref} onFollow={() => go(prev)} className="ev-controls evc-glass evc-pager evc-pager--prev" aria-label={copy.dossier.previous}>
-        <Chevron dir="left" />
-      </RouteLink>
+      <PagerOrb direction="prev" label={copy.dossier.previous} href={prevHref} onClick={(e) => followRouteLink(e, () => go(prev))} />
     );
   } else {
     prevControl = wide ? (
@@ -389,39 +381,4 @@ export function StepDossier({ steps, index, onIndexChange, onClose, copy, cta, a
 function StageVideo({ media }: { media: StepMedia }) {
   const src = useHeldSrc(media.src);
   return <video className="psd__img" src={src} poster={media.poster} muted loop playsInline autoPlay aria-hidden="true" />;
-}
-
-/* The dossier's step cells as view links: the markup and classes of controls'
-   SegmentedProgress (sm, full fill), with an `<a href>` per reachable step.
-   The current step and unreachable ones stay disabled buttons, as there. */
-function StepCells({ count, current, label, labels, hrefOf, onSelect }: { count: number; current: number; label: string; labels: string[]; hrefOf: (index: number) => string | undefined; onSelect: (index: number) => void }) {
-  const controls = useControlsCopy();
-  return (
-    <ol className="ev-controls evc-progress evc-progress--sm evc-progress--interactive psd__cells" aria-label={label} style={{ ["--evc-progress-n" as string]: count }}>
-      {Array.from({ length: count }, (_, i) => {
-        const isCurrent = i === current;
-        const state = isCurrent ? "current" : i < current ? "done" : "upcoming";
-        const name = `${labels[i]} · ${controls.stepStatus[state]}`;
-        const href = isCurrent ? undefined : hrefOf(i);
-        const cell = (
-          <span className="evc-progress__cell" aria-hidden="true">
-            <span className="evc-progress__fill" style={isCurrent ? { transform: "scaleX(1)" } : undefined} />
-          </span>
-        );
-        return (
-          <li key={i} data-state={state} aria-current={isCurrent ? "step" : undefined}>
-            {href !== undefined ? (
-              <RouteLink href={href} onFollow={() => onSelect(i)} className="evc-progress__hit" aria-label={name}>
-                {cell}
-              </RouteLink>
-            ) : (
-              <button type="button" className="evc-progress__hit" aria-label={name} aria-current={isCurrent ? "step" : undefined} disabled>
-                {cell}
-              </button>
-            )}
-          </li>
-        );
-      })}
-    </ol>
-  );
 }

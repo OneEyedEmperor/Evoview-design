@@ -1,5 +1,17 @@
 # foundation changelog
 
+## 1.6.1
+
+No config changes, no API changes. Fix:
+
+- `useRouteHistory`: a popstate onto a view entry made by an earlier
+  document of the page (the page was left for another site, or reloaded,
+  and traversed back into without the bfcache) found a foreign owner, so the
+  hook reported `null` and the modal stayed closed on a view URL (deep link →
+  Back past the page → Forward → Forward). With nothing open, such an entry
+  is now adopted when `hrefFor(entry.view)` is the current URL (and its key
+  matches), so another modal's entries are never taken.
+
 ## 1.6.0
 
 Server rendering and crawlable modals (`docs/CRAWLABLE-MODALS.md`).

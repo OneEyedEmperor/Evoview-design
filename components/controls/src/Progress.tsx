@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
-import { cn, sequenceFillStyle, TextFill, type SequenceClock } from "../foundation";
+import { cn, followRouteLink, sequenceFillStyle, TextFill, type SequenceClock } from "../foundation";
 import { useControlsCopy } from "./copy";
 
 export type ProgressCellState = "current" | "done" | "upcoming";
@@ -24,6 +24,8 @@ export type SegmentedProgressProps = {
   onSelect?: (index: number) => void;
   /** Which segments can be jumped to; default all except the current one. */
   canSelect?: (index: number) => boolean;
+  /** URL of a segment's target (a modal view): selectable segments with one render `<a href>`, a plain click runs `onSelect` (docs/CRAWLABLE-MODALS.md §4). */
+  hrefFor?: (index: number) => string | undefined;
   /**
    * Captions above the cells (decorative; hidden < 520px). `true` / "all":
    * every `labels` entry; "complete": a caption locks on when its segment
@@ -45,6 +47,7 @@ export function SegmentedProgress({
   clock,
   onSelect,
   canSelect,
+  hrefFor,
   captions = false,
   className,
 }: SegmentedProgressProps) {
@@ -92,9 +95,14 @@ export function SegmentedProgress({
           </>
         );
         const selectable = !!onSelect && (canSelect ? canSelect(i) : !isCurrent);
+        const href = selectable ? hrefFor?.(i) : undefined;
         return (
           <li key={i} data-state={state} aria-current={isCurrent ? "step" : undefined}>
-            {onSelect ? (
+            {onSelect && href !== undefined ? (
+              <a className="evc-progress__hit" href={href} aria-label={`${nameOf(i)} · ${status}`} aria-current={isCurrent ? "step" : undefined} onClick={(e) => followRouteLink(e, () => onSelect(i))}>
+                {cell}
+              </a>
+            ) : onSelect ? (
               <button type="button" className="evc-progress__hit" aria-label={`${nameOf(i)} · ${status}`} aria-current={isCurrent ? "step" : undefined} disabled={!selectable} onClick={() => onSelect(i)}>
                 {cell}
               </button>
