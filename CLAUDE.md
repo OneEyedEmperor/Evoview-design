@@ -32,12 +32,14 @@ src/pages/       showcase pages, one per component, importing from ../../compone
 
 Binding design rules: `docs/RULES.md` (evidence: `docs/extraction/*`).
 Showcase contract (routes, `ShowcasePage`, registry): `docs/SHOWCASE-CONTRACT.md`.
+Packages with a modal: `docs/CRAWLABLE-MODALS.md` (binding: view URLs,
+server-renderable copy, history), checked by `pnpm verify:ssr`.
 New packages build on `foundation` (tokens, `--ev-scale`, pause-model hooks)
 and `controls`; follow `docs/BUILD-BRIEF.md`.
 
 | Component | Status | Skill |
 | --- | --- | --- |
-| `foundation` — tokens, scale, tones, type voices, pause-model hooks, attribution mark, step gauge, orb + text liquid fill | 1.5.0 | `evoview-foundation` |
+| `foundation` — tokens, scale, tones, type voices, pause-model hooks, attribution mark, step gauge, orb + text liquid fill, SSR + crawlable-modal routing | 1.6.0 | `evoview-foundation` |
 | `controls` — plate, ghost, glass close/pager, chips, rows, fields, switch, segmented control/progress (`/components/controls`) | 1.2.0 | `evoview-controls` |
 | `chapter` — section shell, headings, tone cuts, footer with attribution (`/layouts/chapter`) | 1.1.0 | `evoview-chapter` |
 | `card-track` — media card + scroll-scrubbed track (`/layouts/card-track`) | 1.2.1 | `evoview-card-track` |

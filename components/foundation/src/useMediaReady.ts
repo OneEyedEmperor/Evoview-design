@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useHydrated } from "./hydration";
 import { mediaGate } from "./tokens";
 
 export type MediaSource = string | { src: string; type?: "image" | "video" } | null | undefined | false;
@@ -108,14 +109,19 @@ export function preloadMedia(sources: MediaSource[], video: "loadeddata" | "canp
  * Media gate: reveal a view only once its media is decoded. The loader shows
  * after `graceMs`, then stays ≥ `minVisibleMs`; `timeoutMs` or an error →
  * `failed` with `retry()`. Closed (`open` false) resets.
+ * Server HTML and hydration: not ready, never slow (gate media and motion on
+ * it, never copy: the copy of an open view is always mounted).
  */
 export function useMediaReady(open: boolean, sources: MediaSource[], options: MediaReadyOptions = {}): MediaReady {
   const { graceMs = mediaGate.graceMs, minVisibleMs = mediaGate.minVisibleMs, timeoutMs = mediaGate.timeoutMs, video = "loadeddata" } = options;
+  const hydrated = useHydrated();
   const list = normalise(sources);
   const signature = list.map((s) => `${s.type}:${s.src}`).join("|");
   // Stable across renders for the same sources (callers pass fresh arrays).
   const items = useMemo(() => list, [signature]);
-  const allCached = items.every((s) => decoded.has(s.src));
+  // The session cache is client state: reading it while hydrating would
+  // disagree with the server HTML.
+  const allCached = hydrated && items.every((s) => decoded.has(s.src));
 
   const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState({ signature: "", ready: false, slow: false, failed: false, loaded: 0 });
@@ -186,7 +192,7 @@ export function useMediaReady(open: boolean, sources: MediaSource[], options: Me
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
 
   // Until the effect catches up with a new source list, report its cached status.
-  if (!open) return { ready: false, slow: false, failed: false, retry, loaded: 0, total: items.length };
+  if (!open || !hydrated) return { ready: false, slow: false, failed: false, retry, loaded: 0, total: items.length };
   if (state.signature !== signature) {
     const ready = open && allCached;
     return { ready, slow: false, failed: false, retry, loaded: ready ? items.length : 0, total: items.length };

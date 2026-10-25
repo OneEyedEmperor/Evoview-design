@@ -1,5 +1,29 @@
 # foundation changelog
 
+## 1.6.0
+
+Server rendering and crawlable modals (`docs/CRAWLABLE-MODALS.md`).
+
+- `useHydrated()`: false while server rendering and hydrating, true after
+  (and on a client-only mount). Gate `inert`, `aria-hidden`, loaders on it.
+- `useMediaQuery(query, serverValue = false)`: optional server / hydration
+  value (pass `true` for desktop queries: server HTML is the desktop layout).
+- `useMediaReady`: not ready and never slow while server rendering and
+  hydrating (the decoded-session cache is read only after hydration).
+  Client-only mounts behave as before.
+- `inkFor`: hex, `rgb()` and `hsl()` parsed in JS, same ink on server and
+  client; other syntaxes still use a canvas on the client (`#101011` on the
+  server).
+- Routing: types `ModalRoutes`, `ViewHead`, `RouteViewProps`;
+  `useRouteHistory` (history model of crawlable modals); `routeHrefs` /
+  `viewFromPath` (default URL scheme); `followRouteLink`; `RouteLink`
+  (`<a href>` with the in-page handler, button without a URL);
+  `ROUTE_LAYER_NOSCRIPT_CSS`.
+- Held copy: `HeldCopy`, `useHeld`, `useHeldSrc`; `[data-ev-held]` pauses
+  CSS animations (foundation.css).
+- Every hook and primitive renders on the server (`pnpm verify:ssr`).
+- No config changes; existing exports unchanged.
+
 ## 1.5.0
 
 - `OrbFill` (+ types `OrbFillProps`, `OrbFillController`): the one way an

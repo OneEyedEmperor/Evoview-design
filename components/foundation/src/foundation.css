@@ -301,3 +301,10 @@
 html[data-ev-suspended] .ev-ambient:not([data-ev-modal] .ev-ambient),
 html[data-ev-suspended] .ev-ambient:not([data-ev-modal] .ev-ambient)::before,
 html[data-ev-suspended] .ev-ambient:not([data-ev-modal] .ev-ambient)::after { animation-play-state: paused; }
+
+/* Held copy (HeldCopy): the view's copy is in the DOM before its media;
+   nothing animates until the live copy replaces it. */
+[data-ev-held],
+[data-ev-held] *,
+[data-ev-held] *::before,
+[data-ev-held] *::after { animation-play-state: paused !important; }

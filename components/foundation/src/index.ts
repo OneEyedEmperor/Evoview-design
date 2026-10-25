@@ -11,8 +11,21 @@ export {
 } from "./suspension";
 export { useInViewPause, type InViewPause, type InViewPauseOptions } from "./useInViewPause";
 export { useMediaQuery } from "./useMediaQuery";
+export { useHydrated } from "./hydration";
 export { useSequenceClock, sequenceFillStyle, type SequenceClock } from "./useSequenceClock";
 export { useMediaReady, preloadMedia, type MediaReady, type MediaReadyOptions, type MediaSource } from "./useMediaReady";
+export {
+  useRouteHistory,
+  routeHrefs,
+  viewFromPath,
+  followRouteLink,
+  ROUTE_LAYER_NOSCRIPT_CSS,
+  type ModalRoutes,
+  type ViewHead,
+  type RouteViewProps,
+} from "./routing";
+export { RouteLink, type RouteLinkProps } from "./RouteLink";
+export { HeldCopy, useHeld, useHeldSrc } from "./HeldCopy";
 export { Readout, Index, StepGauge, SectionMarker, EvoviewMark, EvoviewLogo } from "./primitives";
 export { OrbFill, type OrbFillProps, type OrbFillController } from "./OrbFill";
 export { TextFill, type TextFillProps } from "./TextFill";

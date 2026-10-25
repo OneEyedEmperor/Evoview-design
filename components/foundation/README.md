@@ -79,7 +79,8 @@ useInViewPause(ref, { rootMargin?, threshold?, ignoreSuspension?, enabled?, once
   → { active, inView, documentVisible, suspended }
   // once: `active` latches true after the first activation, observing stops (reveal once, lazy load)
   // follows ref.current: an element mounted later or swapped by a keyed remount is (re)observed
-useMediaQuery(query): boolean            // live matchMedia; false on the server
+useMediaQuery(query, serverValue = false): boolean  // live matchMedia; serverValue on the server and while hydrating
+useHydrated(): boolean                   // false on the server and while hydrating
 
 // Timed sequences: only enabled time counts, remainder carried, new key = 0
 useSequenceClock(key, enabled, durationMs, onElapsed)
@@ -106,6 +107,45 @@ whose sources were preloaded is `ready` on its first render — no grace gap,
 no loader. Call it on idle or on intent (hover / focus of a launcher) for
 views the visitor is likely to open; it cannot be cancelled, so do not feed
 it large videos speculatively.
+
+## Server rendering and crawlable modals
+
+Every hook and primitive renders on the server (`pnpm verify:ssr`):
+environment reads go through `useSyncExternalStore` server snapshots
+(visibility visible, not suspended, not in view, `useMediaQuery` →
+`serverValue`), `useMediaReady` is not ready and never slow on the server
+and while hydrating, `inkFor` gives the same ink on both sides for hex /
+`rgb()` / `hsl()`. The suspension store is module-level, so a modal
+hydrated in its own React root (island) still suspends the page. Contract
+for modal packages: `docs/CRAWLABLE-MODALS.md`.
+
+```ts
+type ModalRoutes<C, V> = { views(c): V[]; parent(v): V | null; key(v): string; parse(c, key): V | null; head(c, v): ViewHead };
+type ViewHead = { title; description /* ≤ 160 */; breadcrumb: string[]; image?: { src; alt } };
+type RouteViewProps<V> = { view: V | null; onNavigate(v: V | null): void; hrefFor?(v: V | null): string; history?: boolean };
+
+useRouteHistory({ view, routes, hrefFor?, onNavigate, history? })  // keeps window.history in step with the view
+routeHrefs(base, routes.key) → (view | null) => string              // "<base>/<key>/", base for null
+viewFromPath(pathname, base, routes, config) → V | null | undefined // inverse (undefined: outside base)
+followRouteLink(event, action)            // onClick of a view link: plain click → action, modified click → native
+<RouteLink href? onFollow disabled? …>    // <a href> + handler; <button> when href is undefined
+<HeldCopy live>, useHeld(), useHeldSrc(src)  // copy mounted before media; no video src until live
+ROUTE_LAYER_NOSCRIPT_CSS                  // <noscript><style> for prerendered view pages
+```
+
+`useRouteHistory`: one entry per level; open pushes the view's ancestry,
+deeper = push, same level = replace, up = Back (lands on the ancestor of
+the view on screen), close = Back past every level. A page loaded on the
+view's URL first rewrites its entry to `hrefFor(null)`. Reload / Forward
+onto its own entries adopts them; Forward after a close reopens through
+`onNavigate` (keep the modal mounted). History state: `evRoute` (spread
+over the existing state, so router keys survive). Without `hrefFor` the
+entries keep the current URL.
+
+`HeldCopy`: wrap the open view's copy, `live={gate.ready}`. Until live it
+carries `data-ev-held` (CSS animations paused) and `useHeldSrc` returns
+`undefined`; going live remounts it, so its entrance starts when the view
+used to mount (state inside resets). Images keep their `src`.
 
 Primitives: `<Readout size?>`, `<Index current total srLabel? size?>`,
 `<StepGauge current total srLabel?>` (stacked-list position as a vertical
@@ -182,7 +222,7 @@ TypeScript strict. No other dependency.
 
 ## Verification
 
-`pnpm build`; a consuming package at 1440 / 1024 / 390: rendered root font
+`pnpm build`; `pnpm verify:ssr` (foundation section passes); a consuming package at 1440 / 1024 / 390: rendered root font
 13.76 / 13.76 / 16px, no text below the floors, accent follows `--primary`
 live, tones flip with the class, clocks stop off-screen / hidden tab / under
 `suspendBackground()` and resume with the remainder.

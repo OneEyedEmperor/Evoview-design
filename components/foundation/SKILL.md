@@ -1,6 +1,6 @@
 ---
 name: evoview-foundation
-description: Evoview library foundation — tokens (--ev-scale, type voices, radius roles, rails, rhythm, motion, tones, accent mapping), pause-model hooks (useInViewPause, useSequenceClock, useMediaReady, suspendBackground) and the approved Evoview attribution mark. Use when building or adapting any Evoview library package, installing one into a client, or when asked about Evoview tokens, scale, tones or the pause model. Triggers on "evoview foundation", "ev-scale", "evoview tokens", "pause model", "useSequenceClock", "useMediaReady".
+description: Evoview library foundation — tokens (--ev-scale, type voices, radius roles, rails, rhythm, motion, tones, accent mapping), pause-model hooks (useInViewPause, useSequenceClock, useMediaReady, suspendBackground), crawlable-modal routing (useRouteHistory, RouteLink, HeldCopy, useHydrated) and the approved Evoview attribution mark. Use when building or adapting any Evoview library package, installing one into a client, server-rendering / prerendering one, or when asked about Evoview tokens, scale, tones or the pause model. Triggers on "evoview foundation", "ev-scale", "evoview tokens", "pause model", "useSequenceClock", "useMediaReady", "crawlable modal", "useRouteHistory".
 ---
 
 # Evoview foundation
@@ -26,6 +26,12 @@ library's `STRATEGY.md` + `docs/RULES.md` first.
   (warm likely views with `preloadMedia` on idle / intent), put
   the one `<EvoviewMark>` in the header strip. `install.sh` must call
   `../foundation/install.sh` first.
+- **Package with a modal**: follow `docs/CRAWLABLE-MODALS.md` — export
+  `<name>Routes: ModalRoutes`, take `RouteViewProps` (`view`, `onNavigate`,
+  `hrefFor`, `history`), keep history with `useRouteHistory`, navigate with
+  `RouteLink`, mount copy at once inside `<HeldCopy live={gate.ready}>`,
+  gate `inert` / `aria-hidden` / loaders on `useHydrated()`; then add it to
+  `PACKAGES` in `scripts/verify-ssr.mjs` and keep `pnpm verify:ssr` green.
 
 ## Rules
 

@@ -4,7 +4,7 @@ import LibraryLayout from "./library/LibraryLayout";
 import { AccentChoiceProvider } from "./library/accentChoice";
 import { LocaleProvider } from "./library/locale";
 import { usePageCurtain } from "./library/PageCurtain";
-import { CHAPTER_ROUTES, RouteBoundary, RoutePending, ScrollManager, lazyPage, usePreloadPages, type LazyPage } from "./library/routing";
+import { CHAPTER_ROUTES, RouteBoundary, RoutePending, ScrollManager, lazyPage, pagePath, usePreloadPages, type LazyPage } from "./library/routing";
 import Home from "./pages/library/Home";
 
 /* Library routes render inside LibraryLayout (library navbar + footer). The
@@ -41,7 +41,7 @@ const LAYOUT_PAGES: Record<string, LazyPage | null> = {
 const OUTSIDE_LAYOUT = /^\/(navbar\/(reference|one-page)|reservation|evoview)(\/|$)/;
 
 const curtainKey = ({ pathname }: Location) => {
-  const path = pathname.replace(/\/+$/, "") || "/";
+  const path = pagePath(pathname);
   if (OUTSIDE_LAYOUT.test(path)) return null;
   return path in CHAPTER_ROUTES ? "/" : path;
 };
@@ -67,10 +67,11 @@ function AppRoutes() {
               <Route path="components" element={<Home />} />
               <Route path="layouts/chapter" element={<Chapter />} />
               <Route path="layouts/card-track" element={<CardTrack />} />
-              <Route path="layouts/process-sequence" element={<ProcessSequence />} />
+              {/* Deep-link pages: `/*` = a modal view's URL (DEEP_LINK_PAGES). */}
+              <Route path="layouts/process-sequence/*" element={<ProcessSequence />} />
               <Route path="layouts/story-blocks" element={<StoryBlocks />} />
               <Route path="components/reservation" element={<Reservation />} />
-              <Route path="components/dossier" element={<Dossier />} />
+              <Route path="components/dossier/*" element={<Dossier />} />
               <Route path="components/selector-stage" element={<SelectorStage />} />
               <Route path="components/controls" element={<Controls />} />
               <Route path="navbar" element={<NavbarPage />} />

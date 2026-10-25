@@ -5,7 +5,7 @@ import EvoviewLogo from "../../components/navbar/src/brand/EvoviewLogo";
 import { withRoute } from "../../components/navbar/src/navbar.config";
 import { buildLibraryNavbarConfig, HOME_SECTIONS } from "./library.navbar.config";
 import { useLibraryLocale } from "./locale";
-import { CHAPTER_ROUTES, RouteBoundary, RoutePending } from "./routing";
+import { CHAPTER_ROUTES, RouteBoundary, RoutePending, pagePath } from "./routing";
 import "./library.css";
 
 export const EVOVIEW_URL = "https://evoview.be/";
@@ -17,7 +17,8 @@ export default function LibraryLayout() {
   useNavbarLinks(useCallback((to: string) => navigate(to), [navigate]));
 
   const config = useMemo(() => {
-    const routed = withRoute(buildLibraryNavbarConfig(locale, setLocale), pathname);
+    // A modal view's URL (`/components/dossier/table/`) is its page for the navbar.
+    const routed = withRoute(buildLibraryNavbarConfig(locale, setLocale), pagePath(pathname));
     // Home is one page, also when reached by a category route (`/components`
     // renders the index scrolled to its chapter): the pill follows the
     // section in view instead of pinning the route's category.

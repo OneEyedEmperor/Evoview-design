@@ -2,6 +2,31 @@ import { Component, lazy, useEffect, useLayoutEffect, useRef, useState, type Com
 import { useLocation, useNavigationType, type Location } from "react-router-dom";
 import { useLibraryLocale } from "./locale";
 
+/* Pages whose modal views have their own URLs (docs/CRAWLABLE-MODALS.md):
+   `<page>/<view key>/` renders the page itself, so the curtain, the navbar
+   and the scroll manager treat every sub-path as the page. */
+export const DEEP_LINK_PAGES = ["/components/dossier", "/layouts/process-sequence"] as const;
+
+/** The page a pathname belongs to: its deep-link page, else the path without trailing slashes. */
+export function pagePath(pathname: string): string {
+  const path = pathname.replace(/\/+$/, "") || "/";
+  return DEEP_LINK_PAGES.find((page) => path.startsWith(`${page}/`)) ?? path;
+}
+
+/**
+ * For a deep-link page: `base` is the page route (`/components/dossier`),
+ * `path` the view key after it (`table/tasting`, "" on the page itself).
+ * Reads the rendered location (it lags the URL during the page curtain).
+ * Seed the modal's initial view from `path` once; the modal keeps history
+ * in step from there (foundation `useRouteHistory`).
+ */
+export function useShowcaseSubpath(): { base: string; path: string } {
+  const { pathname } = useLocation();
+  const base = pagePath(pathname);
+  const rest = pathname.replace(/\/+$/, "").slice(base.length);
+  return { base, path: rest.replace(/^\/+/, "") };
+}
+
 type Loader = () => Promise<{ default: ComponentType }>;
 export type LazyPage = ComponentType & { preload: () => Promise<unknown> };
 
@@ -142,11 +167,12 @@ export function ScrollManager({ location }: { location?: Location }) {
   const { pathname, hash, key } = location ?? current;
   const action = useNavigationType();
   // Per location key, so a StrictMode re-run reaches the same decision.
-  const seen = useRef<{ key: string; pathname: string; samePage: boolean; first: boolean } | null>(null);
+  const seen = useRef<{ key: string; page: string; samePage: boolean; first: boolean } | null>(null);
 
   useLayoutEffect(() => {
     if (seen.current?.key !== key) {
-      seen.current = { key, pathname, samePage: seen.current?.pathname === pathname, first: seen.current === null };
+      const page = pagePath(pathname);
+      seen.current = { key, page, samePage: seen.current?.page === page, first: seen.current === null };
     }
     const { samePage, first } = seen.current;
     // Back/forward: the browser restores. The first load is also a POP, but

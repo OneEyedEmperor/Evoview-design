@@ -9,10 +9,10 @@ not edit `src/App.tsx`, `src/library/*` or `CLAUDE.md` (the orchestrator does).
 | --- | --- | --- |
 | `/layouts/chapter` | `src/pages/library/Chapter.tsx` | `chapter` |
 | `/layouts/card-track` | `src/pages/library/CardTrack.tsx` | `card-track` |
-| `/layouts/process-sequence` | `src/pages/library/ProcessSequence.tsx` | `process-sequence` |
+| `/layouts/process-sequence` (+ `/*` view URLs) | `src/pages/library/ProcessSequence.tsx` | `process-sequence` |
 | `/layouts/story-blocks` | `src/pages/library/StoryBlocks.tsx` | `story-blocks` |
 | `/components/reservation` | `src/pages/library/Reservation.tsx` | `reservation` |
-| `/components/dossier` | `src/pages/library/Dossier.tsx` | `dossier` |
+| `/components/dossier` (+ `/*` view URLs) | `src/pages/library/Dossier.tsx` | `dossier` |
 | `/components/selector-stage` | `src/pages/library/SelectorStage.tsx` | `selector-stage` |
 | `/components/controls` | `src/pages/library/Controls.tsx` | `controls` |
 | `/navbar` (+ `/navbar/reference/*`, `/navbar/one-page`) | `src/pages/library/Navbar.tsx` | `navbar` |
@@ -27,6 +27,26 @@ Shell-owned (not package pages): `/` index (`Home.tsx`); `/layouts`,
 `/reservation` → `/components/reservation`, `/evoview` → `/navbar/one-page`.
 Pages are lazy-loaded inside `LibraryLayout` (library navbar + footer with
 the evoview.be attribution); a page must not mount its own `<Navbar>`.
+
+**Deep-linked modal views** (`docs/CRAWLABLE-MODALS.md`). Pages listed in
+`DEEP_LINK_PAGES` (`src/library/routing.tsx`) also render on `<page>/*`:
+the sub-path is a modal view key. The curtain, the navbar's current page
+and the scroll manager treat every sub-path as its page (`pagePath`), so
+moving between views never plays the curtain or scrolls. In the page:
+
+```tsx
+import { useShowcaseSubpath } from "../../library/routing";
+const { base, path } = useShowcaseSubpath();     // "/components/dossier", "table/tasting" | ""
+const hrefFor = useMemo(() => routeHrefs(base, dossierRoutes.key), [base]);
+const [view, setView] = useState(() => (path ? dossierRoutes.parse(config, path) : null));
+<Dossier config={config} view={view} onNavigate={setView} hrefFor={hrefFor} />
+```
+
+Seed the view from `path` once; the modal's `useRouteHistory` keeps the URL
+in step (its `pushState` bypasses the router, Back / Forward reach both).
+Launchers are links to `hrefFor(view)` with `followRouteLink`. A new
+deep-link page: add it to `DEEP_LINK_PAGES` and give its route `/*` in
+`App.tsx`.
 
 Registry (`src/library/registry.ts`): `{ id, category, route, title, meta,
 status: "ready" | "building", version? }`. `version` is read from
