@@ -190,37 +190,63 @@
 
 .lib-home { --primary: #818cf8; --primary-foreground: #101011; }
 
-/* The lockup (logo over a full-measure LIBRARY) is the subject, the method
-   cards a four-up strip beside it (6/6); under both, the directory: every
-   package as a direct choice, three equal shelves. */
-.lib-hero { --lib-hero-gap: 0.5em; padding-block: 6.5em 3.5em; overflow: hidden; }
-.lib-hero__grid { display: grid; gap: 2.5em; }
-.lib-hero__main { display: grid; gap: 2em; min-width: 0; }
-.lib-hero__lockup { display: grid; gap: 0.15em; margin: 0; container-type: inline-size; }
-.lib-hero__mark { display: block; line-height: 0; }
+/* The one-line lockup (logo and LIBRARY at matched size) is the subject,
+   centred over the method-card reel that runs behind it edge to edge;
+   under both, the directory: every package as a direct choice, three
+   equal shelves. */
+/* --lib-hero-u: the lockup's unit, a share of the stage width (cqi resolves
+   where it is used, inside the stage). Scales logo, stamp, word and bars. */
+.lib-hero { --lib-hero-gap: 0.75em; --lib-hero-u: 0.75cqi; padding-block: 5em 3.5em; overflow: hidden; }
+.lib-hero__stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  min-height: calc(var(--lib-hero-card) + 4em);
+  --lib-hero-card: clamp(9em, 30vw, 19em);
+}
+/* Sizes are in --lib-hero-u; the frame shrink-wraps the lockup so the
+   reel behind it spans exactly logo to word. */
+.lib-hero__stage { container-type: inline-size; }
+.lib-hero__frame { position: relative; width: fit-content; }
+.lib-hero__lockup { position: relative; z-index: 1; display: grid; margin: 0; color: inherit; text-decoration: none; }
+a.lib-hero__lockup:focus-visible { outline: 2px solid var(--lib-signal); outline-offset: 0.5em; border-radius: 0.5em; }
+.lib-hero__row { display: flex; align-items: center; gap: calc(3 * var(--lib-hero-u)); }
+.lib-hero__mark { display: block; flex: none; line-height: 0; }
 /* Brand artwork in its own colours: black parts turn white on night, the
    purple MARKETING line stays, lifted only enough to read on #0e0e0e. */
-.lib-hero__mark svg { display: block; width: 46cqi; height: auto; overflow: visible; }
+.lib-hero__mark svg { display: block; width: calc(38 * var(--lib-hero-u)); height: auto; overflow: visible; }
+/* The stamp: the ringed fourth eye, tilted off the lockup's axis like a
+   mark pressed onto it. The ring overflows the 440x320 box, so the box is
+   sized to the ring's height and the eye spills sideways within it. */
+.lib-hero__stamp {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: calc(9 * var(--lib-hero-u));
+  aspect-ratio: 1;
+  rotate: -14deg;
+}
+.lib-hero__stamp .lib-eye[data-artwork="4"] { width: auto; height: 82%; opacity: 1; }
 .lib-hero__mark svg [fill="#000000"] { fill: #fff; }
 .lib-hero__mark svg [fill="#6b517a"] { fill: color-mix(in oklab, #6b517a 72%, #fff); }
-/* Sized to fill the lockup's measure, so the word always runs edge to edge. */
+/* Matched to the logo: about its width, cap height near the mark's. */
 .lib-hero__word {
   display: block;
-  margin-left: -0.04em;
   font-family: var(--lib-font-display);
-  font-size: 22.5cqi;
+  font-size: calc(10.3 * var(--lib-hero-u));
   font-weight: 900;
   line-height: 0.8;
   letter-spacing: -0.035em;
   text-transform: uppercase;
   white-space: nowrap;
 }
-/* Section bars: one per page section, only the current one lit (signal),
-   the rest a step off the ground. The title becomes a two-row grid sized
-   by its text, so the bar row spans exactly the title's width; thickness
-   and air are in the title's em. */
+/* Section bars: one per page section, only the current one lit, the rest a
+   step off the ground. Lit in the signal; as the separator between a title
+   and its lead (data-role="separator") lit in the foreground instead. The
+   title becomes a two-row grid sized by its text, so the bar row spans
+   exactly the title's width; thickness and air are in the title's em. */
 .lib-chapter__head .lib-title:has(> .lib-bars) { display: grid; justify-self: center; }
-.lib-hero__word:has(> .lib-bars) { display: grid; justify-self: start; }
 .lib-bars {
   --lib-bar-h: 0.12em;
   --lib-bar-gap: 0.06em;
@@ -232,7 +258,6 @@
 }
 .lib-bars__bar {
   position: relative;
-  overflow: hidden;
   height: var(--lib-bar-h);
   border-radius: 999px;
   background: var(--lib-line-strong);
@@ -242,91 +267,109 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: var(--lib-fg);
+  background: var(--lib-signal);
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 900ms var(--lib-ease-cine) 150ms;
 }
+.lib-bars[data-role="separator"] .lib-bars__bar[data-on]::after { background: var(--lib-fg); }
 .lib-bars[data-seen] .lib-bars__bar[data-on]::after { transform: none; }
+/* The category's live dot (its navbar pill's), centred on the lit bar; it
+   starts blinking once the bar has drawn in. */
+.lib-bars__dot {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  width: calc(2.6 * var(--lib-bar-h));
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--lib-bar-dot);
+  box-shadow: 0 0 calc(2 * var(--lib-bar-h)) color-mix(in srgb, var(--lib-bar-dot) 80%, transparent);
+  opacity: 0;
+  translate: -50% -50%;
+}
+.lib-bars[data-seen] .lib-bars__dot { animation: lib-rec-blink 1s ease-in-out 1050ms infinite; }
+@keyframes lib-rec-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.15; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lib-bars[data-seen] .lib-bars__dot { animation: none; opacity: 1; }
+}
 /* The display word's line box is tight (LH .8): less air, finer bars. */
-.lib-hero__word .lib-bars { --lib-bar-h: 0.055em; --lib-bar-gap: 0.035em; margin: 0.2em 0 0 0.04em; }
+.lib-hero__lockup > .lib-bars {
+  --lib-bar-h: max(3px, calc(0.6 * var(--lib-hero-u)));
+  --lib-bar-gap: calc(0.4 * var(--lib-hero-u));
+  width: 100%;
+  margin-top: calc(3.4 * var(--lib-hero-u));
+}
 
-.lib-hero__intro { display: grid; gap: 1.25em; justify-items: start; }
-.lib-hero__intro .lib-lead { max-width: 30em; }
+/* The accent picker under the lockup: swatches only, in a small glass
+   capsule. */
+.lib-hero__lockup > .lib-bars[data-slot] { visibility: hidden; }
+/* Fixed to the compact capsule's height (34 px swatch + 3 px padding + 1 px
+   border, twice), so an empty slot matches the index's palette. */
+.lib-hero__palette { position: relative; z-index: 1; margin-top: 2.5em; min-height: 42px; }
+.lib-hero__palette .lib-palette { margin: 0; padding: 3px; border-radius: 999px; }
+.lib-hero__palette .lib-palette__row { max-width: none; flex-wrap: nowrap; }
+.lib-hero__palette .lib-palette__swatch { width: 34px; height: 34px; }
+.lib-hero__palette .lib-palette__swatch > span { width: 20px; height: 20px; }
+.lib-hero__palette .lib-palette__swatch svg { width: 11px; height: 11px; }
 
-/* Directory: three equal shelves (true peers). Each shelf's head jumps to
-   its chapter; its packages are a text list, so each sits on its own tonal
-   tile (RULES §3), one height for every row so the shelves read across. */
-.lib-dir { display: grid; gap: 2em; }
-.lib-dir__shelf { display: grid; align-content: start; gap: 0.75em; min-width: 0; }
-.lib-dir__head {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: baseline;
-  gap: 0.9em;
-  min-height: 44px;
-  padding-inline: 0.25em;
-  color: var(--lib-fg);
-  text-decoration: none;
-}
-.lib-dir__head:focus-visible { outline: 2px solid var(--lib-signal); outline-offset: 2px; border-radius: 0.5em; }
-.lib-dir__label {
-  font-family: var(--lib-font-display);
-  font-size: 1.5em;
-  font-weight: 900;
-  line-height: 0.95;
-  letter-spacing: -0.02em;
-  text-transform: uppercase;
-}
-.lib-dir__count { color: var(--lib-faint); }
-@media (hover: hover) {
-  .lib-dir__head .lib-dir__label { transition: color 180ms var(--lib-ease); }
-  .lib-dir__head:hover .lib-dir__label { color: var(--lib-signal); }
-}
-.lib-dir__list { display: grid; gap: 0.375em; margin: 0; padding: 0; list-style: none; }
-.lib-dir__item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1em;
-  min-height: 3.6em;
-  padding: 0 1.1em 0 1.2em;
-  box-sizing: border-box;
-  border-radius: 1em;
-  background: #141416;
-  color: var(--lib-fg);
-  text-decoration: none;
+/* Recolourable eye: white strokes over an iris filled with the accent. */
+.lib-home, .lib-hero { --lib-iris: var(--primary); }
+.lib-eyemark { position: relative; display: block; aspect-ratio: 440 / 320; }
+.lib-eyemark img { display: block; width: 100%; height: auto; user-select: none; }
+.lib-eyemark__iris {
+  position: absolute;
+  inset: 0;
+  background: var(--lib-iris, #627aff);
+  -webkit-mask: var(--lib-iris-mask) center / 100% 100% no-repeat;
+  mask: var(--lib-iris-mask) center / 100% 100% no-repeat;
   transition: background-color 280ms var(--lib-ease);
 }
-.lib-dir__item[data-kind="demo"] { background: #111113; }
-.lib-dir__item[data-kind="demo"] .lib-dir__name { color: var(--lib-muted); }
-.lib-dir__name {
-  min-width: 0;
-  font-family: var(--lib-font-display);
-  font-size: 1.05em;
-  font-weight: 900;
-  letter-spacing: -0.01em;
-  text-transform: uppercase;
-  transition: color 180ms var(--lib-ease);
+.lib-eye__iris { fill: var(--lib-iris, #627aff); transition: fill 280ms var(--lib-ease); }
+/* The library navbar's menu eye follows the page's picked accent (Evoview
+   indigo on pages without a palette), never the live pill's dot. The navbar
+   demos inside pages keep their own eyes. */
+.lib-shell > .ev-navbar .nav-reticle {
+  --nav-section-accent: var(--lib-nav-eye, #818cf8);
+  --nav-eye-pupil: var(--lib-nav-eye, #818cf8);
 }
-.lib-dir__item .lib-status { color: var(--lib-faint); }
-@media (hover: hover) {
-  .lib-dir__item:hover { background: #1c1c1f; }
-  .lib-dir__item:hover .lib-dir__name { color: var(--lib-fg); }
-}
-.lib-dir__item:focus-visible { outline: 2px solid var(--lib-signal); outline-offset: 2px; }
 
 /* Panels = the Evoview method card in its finished state (site:
    IntroSection PhaseCard, showCompleted): 1px purple frame, image graded
-   grey at .85 over #0b0b10, .72 dim + centre falloff, phase eye, one shine. */
-.lib-hero__collage {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--lib-hero-gap);
+   grey at .85 over #0b0b10, .72 dim + centre falloff, one shine; the
+   phase eye is left off so the lockup's stamp is the only eye. */
+/* The reel sits behind the lockup and no wider than it, held back in
+   opacity and blur, softened at both ends so the title stays the subject.
+   Each item carries its own trailing gap, so one set is exactly half the
+   track. */
+.lib-hero__reel {
+  position: absolute;
+  inset-inline: 0;
+  top: 50%;
+  translate: 0 -50%;
+  overflow: hidden;
+  opacity: 0.32;
+  filter: blur(3px);
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+}
+.lib-hero__track {
+  display: flex;
+  width: max-content;
   margin: 0;
   padding: 0;
   list-style: none;
+  animation: lib-hero-reel 48s linear infinite;
+  animation-play-state: paused;
 }
+.lib-hero__reel[data-live] .lib-hero__track { animation-play-state: running; }
+.lib-hero__track > li { flex: none; width: var(--lib-hero-card); padding-right: var(--lib-hero-gap); }
+@keyframes lib-hero-reel { to { transform: translateX(-50%); } }
 .lib-hero__panel {
   padding: 1px;
   border-radius: 1em;
@@ -366,21 +409,13 @@
   transition: opacity 700ms ease-out calc(260ms + var(--lib-stagger, 0) * 80ms);
 }
 .lib-hero__panel[data-ready] .lib-hero__dim { opacity: 1; }
-.lib-hero__eye {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-.lib-eye { height: 30cqw; width: auto; overflow: visible; opacity: 0.8; }
-.lib-eye[data-artwork="3"] { height: calc(30cqw * 1.15); }
-.lib-eye[data-artwork="4"] { height: calc(30cqw * 1.3225); }
+.lib-eye { overflow: visible; }
 .lib-eye__stroke { stroke-dasharray: 1; stroke-dashoffset: 1; animation: lib-eye-draw 1s cubic-bezier(0.4, 0, 0.2, 1) both; }
 .lib-eye__finish { opacity: 0; animation: lib-eye-finish 180ms ease-out var(--eye-finish) forwards; }
 @keyframes lib-eye-draw { to { stroke-dashoffset: 0; } }
 @keyframes lib-eye-finish { to { opacity: 1; } }
+.lib-hero__stamp[data-drawn] .lib-eye__stroke { animation: none; stroke-dashoffset: 0; }
+.lib-hero__stamp[data-drawn] .lib-eye__finish { animation: none; opacity: 1; }
 .lib-hero__shine { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
 .lib-hero__shine::before {
   content: "";
@@ -396,27 +431,13 @@
 @keyframes lib-hero-shine { from { transform: translateX(-100%); } to { transform: translateX(235%); } }
 
 @media (max-width: 767px) {
-  /* Phones: the card strip slots in right under the lockup. */
-  .lib-hero__grid { gap: 2em; }
-  .lib-hero__main { display: contents; }
-  .lib-hero__intro, .lib-dir { order: 1; }
-  .lib-dir { margin-top: 0.5em; }
+  .lib-hero { --lib-hero-gap: 0.5em; }
   .lib-hero__panel { border-radius: 0.75em; }
   .lib-hero__media { border-radius: calc(0.75em - 1px); }
 }
 
 @media (min-width: 768px) {
-  .lib-hero { --lib-hero-gap: 1em; padding-block: 8em 5em; }
-  .lib-hero__grid { grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--lib-gutter); row-gap: 4em; align-items: end; }
-  .lib-hero__main { grid-column: 1 / span 6; gap: 2.5em; }
-  .lib-hero__collage { grid-column: 7 / -1; }
-  .lib-dir { grid-column: 1 / -1; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 1em; }
-}
-@media (min-width: 768px) and (max-width: 1023px) {
-  /* Six columns would crush the lockup: it takes the row, the strip follows. */
-  .lib-hero__main, .lib-hero__collage { grid-column: 1 / -1; }
-  .lib-dir__item { padding-inline: 1em 0.9em; }
-  .lib-dir__name { font-size: 0.95em; }
+  .lib-hero { --lib-hero-gap: 1em; padding-block: 7em 5em; }
 }
 
 .lib-chapter { padding-block: 5em; scroll-margin-top: 0; }
@@ -446,9 +467,48 @@
 
 .lib-card { display: grid; gap: 0.5em; color: inherit; text-decoration: none; }
 .lib-card .lib-well { margin-bottom: 0.75em; }
+/* Dark, blurred overlay over the cover at rest; it lifts with the grade
+   on hover/focus so the chosen card comes up sharp and to full light. */
+.lib-card .lib-well::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background: rgb(0 0 0 / 0.4);
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+  pointer-events: none;
+  transition: opacity 600ms var(--lib-ease);
+}
+/* Phone thumbnails are a third the size and never get a hover. */
+@media (max-width: 767px) {
+  .lib-grid .lib-card .lib-well::before { -webkit-backdrop-filter: blur(2.5px); backdrop-filter: blur(2.5px); }
+}
+/* The Evoview method eye centred on the veiled cover; it leaves with the
+   veil. */
+.lib-well__tag {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  transition: opacity 600ms var(--lib-ease), scale 600ms var(--lib-ease-cine);
+}
+.lib-well__tag .lib-eyemark { width: 17%; }
+@media (max-width: 767px) {
+  .lib-grid .lib-well__tag .lib-eyemark { width: 36%; }
+}
+.lib-card:focus-visible .lib-well::before { opacity: 0; }
+.lib-card:focus-visible .lib-well__tag { opacity: 0; scale: 0.96; }
+@media (hover: hover) {
+  .lib-card:hover .lib-well::before { opacity: 0; }
+  .lib-card:hover .lib-well__tag { opacity: 0; scale: 0.96; }
+}
 .lib-card .lib-well::after {
   content: "";
   position: absolute;
+  z-index: 3;
   inset: auto 0 0;
   height: 2px;
   background: var(--primary);
@@ -529,12 +589,33 @@
   transition: background-color 280ms var(--lib-ease), color 280ms var(--lib-ease);
 }
 @media (min-width: 768px) {
-  .lib-card__orb { left: 1.6em; }
+  /* Centred card: orb on the seam's midpoint, title and meta on the same
+     axis; the version stays in the ribbon's top-right corner. */
+  .lib-card__orb { left: 50%; translate: -50% 0; }
+  .lib-card__caption { justify-items: center; text-align: center; }
+  .lib-card__caption > .lib-card__meta { justify-self: stretch; }
 }
-@media (hover: hover) {
-  .lib-card:hover .lib-card__orb { background: var(--primary); color: var(--primary-foreground); }
+/* From 768 the seam fills on hover/focus (SeamFlow): it draws the orb's
+   rest ring itself, so the bar can wrap it under the disc; the orb fills
+   with liquid (OrbFill). Phones keep the box-shadow ring and the well's bar. */
+.lib-card { position: relative; }
+.lib-card .lib-well { isolation: isolate; }
+.lib-card__orb { z-index: 2; }
+.lib-flow { position: absolute; z-index: 1; left: 0; display: none; overflow: hidden; pointer-events: none; }
+.lib-flow__ring { fill: var(--lib-orb-ring); }
+.lib-flow__liquid { fill: var(--primary); }
+@media (min-width: 768px) {
+  .lib-flow { display: block; }
+  .lib-card:has(> .lib-flow) .lib-card__orb { box-shadow: none; }
+  .lib-card:has(> .lib-flow) .lib-well::after { display: none; }
 }
-.lib-card:focus-visible .lib-card__orb { background: var(--primary); color: var(--primary-foreground); }
+.lib-card__orb:has(> .ev-orb-fill) {
+  --ev-orb-rest: var(--lib-fg);
+  --ev-orb-rest-ink: var(--lib-seam-tone);
+  --ev-orb-lit: var(--primary);
+  --ev-orb-lit-ink: var(--primary-foreground);
+  background: transparent;
+}
 .lib-card__title {
   margin: 0;
   font-family: var(--lib-font-display);
@@ -580,16 +661,18 @@
   height: 44px;
   align-self: end;
   place-items: center;
+  position: relative;
   border-radius: 999px;
-  background: var(--lib-fg);
-  color: var(--lib-paper);
-  transition: background-color 280ms var(--lib-ease), color 280ms var(--lib-ease);
+  /* Hover colours rise in as liquid (OrbFill, RULES §1). */
+  --ev-orb-rest: var(--lib-fg);
+  --ev-orb-rest-ink: var(--lib-paper);
+  --ev-orb-lit: var(--primary);
+  --ev-orb-lit-ink: var(--primary-foreground);
 }
 .lib-demo__go svg { width: 18px; height: 18px; transition: transform 280ms var(--lib-ease); }
 .lib-demo:focus-visible { outline: 2px solid var(--lib-signal); outline-offset: 3px; }
 @media (hover: hover) {
   .lib-demo:hover { background: var(--lib-tile-hover); }
-  .lib-demo:hover .lib-demo__go { background: var(--primary); color: var(--primary-foreground); }
   .lib-demo:hover .lib-demo__go svg { transform: translateX(2px); }
 }
 @media (min-width: 768px) {
@@ -624,19 +707,45 @@
 .lib-showcase[data-tone="dark"] { --foreground: oklch(0.98 0 0); --muted-foreground: oklch(0.6 0 0); }
 .lib-showcase[data-tone="light"] { --foreground: #151515; --muted-foreground: #6b6b6b; }
 
-.lib-showcase__head { padding-block: 7.5em var(--lib-lead); }
-.lib-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75em; margin-bottom: 2em; color: var(--lib-faint); }
-.lib-crumbs a { color: var(--lib-muted); text-decoration: none; }
-.lib-crumbs a:hover { color: var(--lib-fg); }
-.lib-crumbs a:focus-visible { outline: 2px solid var(--lib-signal); outline-offset: 2px; border-radius: 2px; }
-.lib-crumbs__index { color: var(--lib-signal); }
-.lib-showcase__split { display: grid; gap: 1.5em; }
-.lib-showcase__aside { display: grid; gap: 1.25em; }
-.lib-showcase__meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1em; }
+/* Title block: one centred stack — title, its sentence, the version — on a
+   full-bleed band in the page's opposite tone. */
+.lib-showcase__head { position: relative; z-index: 3; padding-block: 7.5em var(--lib-chapter); }
+.lib-showcase__intro { display: grid; justify-items: center; text-align: center; }
+.lib-showcase__intro .lib-lead { max-width: 34em; margin-top: 1.1em; font-size: max(14px, 0.9375em); text-wrap: balance; }
+.lib-showcase__intro .lib-status { margin-top: 1em; }
+/* The palette sits on the seam, centred on the band's bottom edge: half on
+   the band, half on the demos' ground, an opaque capsule so it reads on
+   both. The band keeps half its height of air under the version. */
+.lib-showcase__head:has(.lib-showcase__palette) { padding-bottom: 0; }
+.lib-showcase__palette { display: flex; justify-content: center; margin-top: calc(var(--lib-lead) / 2); translate: 0 50%; }
+.lib-showcase__palette .lib-palette { margin: 0; padding: 3px; border-radius: 999px; box-shadow: 0 10px 28px -12px rgb(0 0 0 / 0.45); backdrop-filter: none; -webkit-backdrop-filter: none; }
+.lib-showcase__palette .lib-palette__row { max-width: none; flex-wrap: nowrap; }
+.lib-showcase__palette .lib-palette__swatch { width: 34px; height: 34px; }
+.lib-showcase__palette .lib-palette__swatch > span { width: 20px; height: 20px; }
+.lib-showcase__palette .lib-palette__swatch svg { width: 11px; height: 11px; }
+.lib-toned.lib-showcase__head[data-tone="dark"] .lib-palette { background: #18181a; }
+.lib-toned.lib-showcase__head[data-tone="light"] .lib-palette { background: #fff; }
+/* Room for the capsule's lower half before the first demo. */
+.lib-showcase__head:has(.lib-showcase__palette) + .lib-showcase__stage { --lib-seam: 21px; padding-top: var(--lib-seam); }
 .lib-showcase__tail { height: var(--lib-chapter); }
+/* Under the library hero the navbar clearance is the hero's: the header
+   opens one heading band below it, the hero's empty palette slot being air
+   enough on top. */
+.lib-showcase > .lib-hero { padding-bottom: 0; }
+/* Pages without a palette: the empty slot's top margin is pulled back; the
+   slot itself stays, it is the reel's run-out (pulling it would clip the
+   cards). */
+.lib-showcase > .lib-hero:has(.lib-hero__palette:empty) .lib-hero__stage { margin-bottom: -2.5em; }
+.lib-hero + .lib-showcase__head { padding-top: calc(var(--lib-chapter) - var(--lib-lead) / 2); }
+/* The page's title block is full bleed in the page's opposite tone
+   (ShowcasePage), its own segment between the hero and the demos. */
+/* A first demo on the frame tone starts one heading band under the band. */
+.lib-showcase__stage > .lib-variant[data-frame]:first-child { --lib-variant-top: var(--lib-lead); }
+.lib-showcase .lib-showcase__stage:not(:has(> .lib-variant)) { padding-top: calc(var(--lib-lead) + var(--lib-seam, 0px)); }
 @media (min-width: 768px) {
   .lib-showcase__head { padding-top: 9em; }
-  .lib-showcase__split { grid-template-columns: 1.28fr 0.72fr; column-gap: 4em; align-items: end; }
+  .lib-hero + .lib-showcase__head { padding-top: calc(var(--lib-chapter) - var(--lib-lead) / 2); }
+  .lib-showcase__intro .lib-lead { font-size: 1.05em; }
 }
 
 /* ShowcaseVariant. A caption opening a new environment gets a chapter band
@@ -696,9 +805,22 @@
   padding-bottom: max(0px, var(--lib-chapter) - var(--lib-variant-trail, var(--lib-chapter)));
 }
 .lib-variant[data-frame]:last-child > .lib-variant__body { padding-bottom: 0; }
+/* No caption: the band above the first ink is the header's own. */
+.lib-variant:not(:has(> .lib-variant__caption)) > .lib-variant__body {
+  margin-top: calc(-1 * clamp(0px, var(--lib-variant-pad), var(--lib-lead) + var(--lib-chapter)));
+}
 @media (min-width: 768px) {
   .lib-variant__caption { grid-template-columns: 0.72fr 1.28fr; column-gap: 3.5em; align-items: baseline; }
 }
+/* Titled caption: heading over its lead, one column, read before the scene. */
+.lib-variant__caption--title { gap: 1em; }
+@media (min-width: 768px) { .lib-variant__caption--title { grid-template-columns: minmax(0, 1fr); } }
+.lib-variant__title { color: var(--lib-fg); text-wrap: balance; }
+.lib-variant__title em { font-style: normal; color: var(--lib-signal); }
+.lib-variant__caption--title .lib-variant__when { max-width: 40em; }
+@media (min-width: 768px) { .lib-variant__caption--title .lib-variant__when { font-size: 1.05em; } }
+/* A titled first scene is a section of its own: more air under the page header. */
+.lib-variant[data-frame]:first-child:has(> .lib-variant__caption--title) { --lib-variant-top: calc(0.4 * var(--lib-lead)); }
 
 .lib-building { display: grid; gap: 1.5em; }
 .lib-building__copy { display: grid; gap: 1em; align-content: center; justify-items: start; }
@@ -723,6 +845,8 @@
 }
 .lib-toned[data-tone="dark"] .lib-palette { background: rgb(0 0 0 / 0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
 .lib-toned[data-tone="light"] .lib-palette { background: rgb(255 255 255 / 0.6); --lib-ring-gap: var(--lib-paper); --lib-ring: var(--lib-ink); }
+/* The hero is dark inside light pages too. */
+.lib-toned.lib-hero .lib-palette { background: rgb(0 0 0 / 0.6); --lib-ring-gap: var(--lib-night); --lib-ring: #fff; }
 .lib-palette__caption {
   margin: 0;
   padding: 0 12px;

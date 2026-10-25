@@ -33,6 +33,9 @@ first; the foundation README covers tokens and the pause model.
 - Keep the anatomy (marks, indices, orb, underline, equal segments); do not
   swap in the client's UI-kit buttons or boxes around fields.
 - Selection must stay multi-signal; never ship a colour-only state.
+- Orbs (plate orb, check orb, chip mark, done step) change colour only
+  through foundation `OrbFill`'s liquid rise; restyle them via the
+  `--ev-orb-*` tokens, never with a `background` swap.
 - No Evoview mark inside controls or next to a client CTA; the one linked
   mark belongs to the host component's header strip.
 - Never fork for a client: fixes go into the library (`VERSION`,

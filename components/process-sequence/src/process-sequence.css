@@ -444,12 +444,10 @@
 /* An odd step count closes the grid with one full-width control. */
 .ps-index > li:last-child:nth-child(odd) { grid-column: 1 / -1; }
 .ps-index__btn[data-state="active"] { border-color: var(--ps-frame-active); background: var(--ps-frame-active); color: var(--ps-ribbon-fg); }
-.ps-index__btn[data-state="active"] .ps-index__num { color: var(--ps-ribbon-fill); }
 .ps-index__btn[data-state="complete"] {
   border-color: color-mix(in oklab, var(--process-signal) 55%, transparent);
   background: color-mix(in oklab, var(--process-accent) 16%, transparent);
 }
-.ps-index__btn[data-state="complete"] .ps-index__num { color: var(--process-signal); }
 
 .ps-monitor { display: grid; }
 .ps-monitor__slot { grid-area: 1 / 1; min-width: 0; }

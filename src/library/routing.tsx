@@ -1,27 +1,41 @@
 import { Component, lazy, useEffect, useLayoutEffect, useRef, useState, type ComponentType, type ErrorInfo, type LazyExoticComponent, type ReactNode } from "react";
-import { useLocation, useNavigationType } from "react-router-dom";
+import { useLocation, useNavigationType, type Location } from "react-router-dom";
 import { useLibraryLocale } from "./locale";
 
 type Loader = () => Promise<{ default: ComponentType }>;
-export type LazyPage = LazyExoticComponent<ComponentType> & { preload: () => Promise<unknown> };
+export type LazyPage = ComponentType & { preload: () => Promise<unknown> };
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /* React.lazy caches a rejected import forever, so one failed chunk request
    (dev server mid-edit, flaky network) would leave the route broken until a
-   reload. The loader is shared with `preload` and retried once. */
+   reload. The loader is shared with `preload` and retried once.
+   React.lazy also suspends once on first render even when the chunk is
+   already in, which flashes the fallback over the page (and the shared
+   hero); a preloaded page renders its module directly instead. */
 export function lazyPage(load: Loader): LazyPage {
   let pending: Promise<{ default: ComponentType }> | null = null;
+  let loaded: ComponentType | null = null;
   const attempt = () => {
     pending ??= load()
       .catch(() => wait(700).then(load))
+      .then((module) => {
+        loaded = module.default;
+        return module;
+      })
       .catch((error) => {
         pending = null;
         throw error;
       });
     return pending;
   };
-  return Object.assign(lazy(attempt), { preload: attempt });
+  const Lazy: LazyExoticComponent<ComponentType> = lazy(attempt);
+  function Page() {
+    // Fixed per mount: switching type mid-life would remount the page.
+    const [Resolved] = useState<ComponentType>(() => loaded ?? Lazy);
+    return <Resolved />;
+  }
+  return Object.assign(Page, { preload: attempt });
 }
 
 /* Warm every route chunk once the first page is idle, so client navigation
@@ -121,9 +135,11 @@ const findTarget = (pathname: string, hash: string) => {
    target, waiting for a lazy page to mount it and re-aligning once layout
    settles. Back/forward keep the browser's own restoration. A click on the
    current category pill (the navbar only scrolls to top on same-URL clicks)
-   still lands on its chapter. */
-export function ScrollManager() {
-  const { pathname, hash, key } = useLocation();
+   still lands on its chapter. `location` is the rendered one when it lags
+   the URL (see library/experimental-transition). */
+export function ScrollManager({ location }: { location?: Location }) {
+  const current = useLocation();
+  const { pathname, hash, key } = location ?? current;
   const action = useNavigationType();
   // Per location key, so a StrictMode re-run reaches the same decision.
   const seen = useRef<{ key: string; pathname: string; samePage: boolean; first: boolean } | null>(null);

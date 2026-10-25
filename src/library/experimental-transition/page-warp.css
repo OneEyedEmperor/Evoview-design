@@ -1,0 +1,74 @@
+/* Page warp overlay (trial). Stacking while warping: void 40 < stage 41
+   (set inline) < ring 42 < dot 43 < navbar 50. */
+.page-warp {
+  --warp-rec: #ef3b2d;
+  --warp-void: #050505;
+}
+.page-warp__defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+.page-warp__void,
+.page-warp__ring,
+.page-warp__dot {
+  position: fixed;
+  pointer-events: none;
+}
+.page-warp [hidden] { display: none; }
+
+.page-warp__void {
+  inset: 0;
+  z-index: 40;
+  background:
+    radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--warp-rec) 16%, transparent), transparent 34vmin),
+    var(--warp-void);
+}
+
+/* The pull made visible: one thin ring collapsing onto the dot. */
+.page-warp__ring {
+  --warp-ring: 40vmin;
+  left: 50%;
+  top: 50%;
+  z-index: 42;
+  width: calc(var(--warp-ring) * 2);
+  height: calc(var(--warp-ring) * 2);
+  margin: calc(var(--warp-ring) * -1) 0 0 calc(var(--warp-ring) * -1);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--warp-rec) 80%, #fff),
+    0 0 14px 1px color-mix(in srgb, var(--warp-rec) 45%, transparent);
+}
+
+/* The REC dot: the vacuum's mouth. Blinks only while it holds the next page. */
+.page-warp__dot {
+  left: 50%;
+  top: 50%;
+  z-index: 43;
+  width: 14px;
+  height: 14px;
+  transform: translate(-50%, -50%) scale(0);
+}
+.page-warp__dot > span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--warp-rec);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--warp-rec) 40%, transparent),
+    0 0 12px 2px color-mix(in srgb, var(--warp-rec) 75%, transparent),
+    0 0 42px 10px color-mix(in srgb, var(--warp-rec) 30%, transparent);
+}
+.page-warp__dot[data-held] > span {
+  /* Only a real wait (slow chunk) shows the blink; a normal swap never does. */
+  animation: page-warp-rec 1s ease-in-out 0.2s infinite;
+}
+@keyframes page-warp-rec {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+
+/* Fixed chrome inside the stage would re-anchor to the transformed stage. */
+.page-warping .lib-float { visibility: hidden; }

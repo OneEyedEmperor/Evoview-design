@@ -1,5 +1,5 @@
 import { useId, useRef, useState } from "react";
-import { cn, pad } from "../foundation";
+import { cn, pad, TextFill } from "../foundation";
 import { Heading, Note, StageFrame, defaultCopy, layersOf, radioKeys, toneClass, useOnce, useStageGate } from "./stage";
 import type { AtlasContent, SelectorStageCopy, Tone } from "./types";
 
@@ -96,7 +96,9 @@ export function ProofAtlas({
                 >
                   <img src={it.media.src} alt="" decoding="async" draggable={false} data-ready={gate.ready || undefined} />
                   <span className="ev-t-readout ss-thumb__label">
-                    {pad(i + 1)} · {it.label}
+                    <TextFill ink={selected ? "var(--ss-on-media)" : undefined}>
+                      {pad(i + 1)} · {it.label}
+                    </TextFill>
                   </span>
                 </button>
               );

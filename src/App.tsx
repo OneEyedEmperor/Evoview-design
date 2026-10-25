@@ -1,8 +1,10 @@
 import { Suspense } from "react";
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, type Location } from "react-router-dom";
 import LibraryLayout from "./library/LibraryLayout";
+import { AccentChoiceProvider } from "./library/accentChoice";
 import { LocaleProvider } from "./library/locale";
-import { RouteBoundary, RoutePending, ScrollManager, lazyPage, usePreloadPages } from "./library/routing";
+import { usePageCurtain } from "./library/PageCurtain";
+import { CHAPTER_ROUTES, RouteBoundary, RoutePending, ScrollManager, lazyPage, usePreloadPages, type LazyPage } from "./library/routing";
 import Home from "./pages/library/Home";
 
 /* Library routes render inside LibraryLayout (library navbar + footer). The
@@ -23,45 +25,76 @@ const NavbarOnePage = lazyPage(() => import("./pages/library/NavbarOnePage"));
 
 const PAGES = [Chapter, CardTrack, ProcessSequence, StoryBlocks, Reservation, Dossier, SelectorStage, Controls, NavbarPage, NavbarReference, NavbarOnePage];
 
+/* LibraryLayout pages (under the shared hero), keyed by path. */
+const LAYOUT_PAGES: Record<string, LazyPage | null> = {
+  "/": null,
+  "/layouts/chapter": Chapter,
+  "/layouts/card-track": CardTrack,
+  "/layouts/process-sequence": ProcessSequence,
+  "/layouts/story-blocks": StoryBlocks,
+  "/components/reservation": Reservation,
+  "/components/dossier": Dossier,
+  "/components/selector-stage": SelectorStage,
+  "/components/controls": Controls,
+  "/navbar": NavbarPage,
+};
+const OUTSIDE_LAYOUT = /^\/(navbar\/(reference|one-page)|reservation|evoview)(\/|$)/;
+
+const curtainKey = ({ pathname }: Location) => {
+  const path = pathname.replace(/\/+$/, "") || "/";
+  if (OUTSIDE_LAYOUT.test(path)) return null;
+  return path in CHAPTER_ROUTES ? "/" : path;
+};
+const curtainPrepare = (location: Location) => LAYOUT_PAGES[curtainKey(location) ?? ""]?.preload();
+
 function AppRoutes() {
-  const { pathname } = useLocation();
   usePreloadPages(PAGES);
+  const { location, layer } = usePageCurtain({
+    pageKey: curtainKey,
+    prepare: curtainPrepare,
+  });
+  const { pathname } = location;
   return (
-    <RouteBoundary resetKey={pathname}>
-      <Suspense fallback={<RoutePending />}>
-        <Routes>
-          <Route element={<LibraryLayout />}>
-            <Route index element={<Home />} />
-            <Route path="layouts" element={<Home />} />
-            <Route path="components" element={<Home />} />
-            <Route path="layouts/chapter" element={<Chapter />} />
-            <Route path="layouts/card-track" element={<CardTrack />} />
-            <Route path="layouts/process-sequence" element={<ProcessSequence />} />
-            <Route path="layouts/story-blocks" element={<StoryBlocks />} />
-            <Route path="components/reservation" element={<Reservation />} />
-            <Route path="components/dossier" element={<Dossier />} />
-            <Route path="components/selector-stage" element={<SelectorStage />} />
-            <Route path="components/controls" element={<Controls />} />
-            <Route path="navbar" element={<NavbarPage />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Route>
-          <Route path="navbar/reference/*" element={<NavbarReference />} />
-          <Route path="navbar/one-page" element={<NavbarOnePage />} />
-          <Route path="reservation" element={<Navigate to="/components/reservation" replace />} />
-          <Route path="evoview" element={<Navigate to="/navbar/one-page" replace />} />
-        </Routes>
-      </Suspense>
-    </RouteBoundary>
+    <>
+      <ScrollManager location={location} />
+      {layer}
+      <RouteBoundary resetKey={pathname}>
+        <Suspense fallback={<RoutePending />}>
+          <Routes location={location}>
+            <Route element={<LibraryLayout />}>
+              <Route index element={<Home />} />
+              <Route path="layouts" element={<Home />} />
+              <Route path="components" element={<Home />} />
+              <Route path="layouts/chapter" element={<Chapter />} />
+              <Route path="layouts/card-track" element={<CardTrack />} />
+              <Route path="layouts/process-sequence" element={<ProcessSequence />} />
+              <Route path="layouts/story-blocks" element={<StoryBlocks />} />
+              <Route path="components/reservation" element={<Reservation />} />
+              <Route path="components/dossier" element={<Dossier />} />
+              <Route path="components/selector-stage" element={<SelectorStage />} />
+              <Route path="components/controls" element={<Controls />} />
+              <Route path="navbar" element={<NavbarPage />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Route>
+            <Route path="navbar/reference/*" element={<NavbarReference />} />
+            <Route path="navbar/one-page" element={<NavbarOnePage />} />
+            <Route path="reservation" element={<Navigate to="/components/reservation" replace />} />
+            <Route path="evoview" element={<Navigate to="/navbar/one-page" replace />} />
+          </Routes>
+        </Suspense>
+      </RouteBoundary>
+    </>
   );
 }
 
 export default function App() {
   return (
     <LocaleProvider>
-      <BrowserRouter>
-        <ScrollManager />
-        <AppRoutes />
-      </BrowserRouter>
+      <AccentChoiceProvider>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </AccentChoiceProvider>
     </LocaleProvider>
   );
 }

@@ -6,9 +6,10 @@ and a footer bar that carries the Evoview attribution. This package is that
 shell, neutral and accent-driven. Depends on `foundation`.
 
 Showcase: `https://evoview-library.said.bet/layouts/chapter` — a specimen
-chapter between two dark neighbours with live tone / rhythm / heading / mark
-settings, then a short page of a fictional architect (dark cinematic → dark
-compact → paper → footer).
+chapter on a dark page with live tone / heading / instrument
+(phase chooser, self-running ticker, step tiles in place of the image)
+settings, then a short page of a fictional architect (dark → paper →
+footer).
 Evidence: `docs/extraction/foundations.md` §2–5, A2 / A3 / A9 / A10.
 
 ## What is Evoview (protected)

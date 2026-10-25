@@ -1,6 +1,9 @@
-import { useCallback, useMemo, type CSSProperties, type MouseEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode, type RefObject, type TransitionEvent } from "react";
+import { OrbFill } from "../foundation/OrbFill";
+import { SurfaceFill } from "../foundation/SurfaceFill";
+import { DeckIcon } from "./NavIcons";
 import type { NavDeckEntry, NavTray, NavTrayItem, NavbarConfig, NavbarLabels } from "./types";
-import { getTrayItems, trayLayout, useTrayVersion } from "./useNavTrays";
+import { ensureTray, getTrayItems, trayLayout, useTrayVersion } from "./useNavTrays";
 
 /* Pieces shared by the desktop finder and its mobile counterpart: the
    reticle mark, the tray rows and the action handlers. */
@@ -34,7 +37,10 @@ export function ArrowIcon() {
 
 type ItemProps = {
   href?: string;
+  current?: boolean;
   onClick: (event: MouseEvent<HTMLElement>) => void;
+  onPreview?: () => void;
+  onPreviewEnd?: () => void;
   className: string;
   style: CSSProperties;
   children: ReactNode;
@@ -42,19 +48,46 @@ type ItemProps = {
 
 /** A tray entry with an `href` is a real link (routable, middle-clickable);
     one without is a button. */
-function ItemControl({ href, onClick, className, style, children }: ItemProps) {
+function ItemControl({ href, current, onClick, onPreview, onPreviewEnd, className, style, children }: ItemProps) {
+  const state = {
+    "data-current": current || undefined,
+    "aria-current": current ? ("page" as const) : undefined,
+    onPointerEnter: onPreview,
+    onFocus: onPreview,
+    onPointerLeave: onPreviewEnd,
+    onBlur: onPreviewEnd,
+  };
   return href ? (
-    <a href={href} data-tray-item onClick={onClick} className={className} style={style}>{children}</a>
+    <a href={href} data-tray-item {...state} onClick={onClick} className={className} style={style}>{children}</a>
   ) : (
-    <button type="button" data-tray-item onClick={onClick} className={className} style={style}>{children}</button>
+    <button type="button" data-tray-item {...state} onClick={onClick} className={className} style={style}>{children}</button>
   );
 }
 
-function SubPill({ index, row, accent, onClick }: { index: number; row: NavTrayItem; accent: string; onClick: (event: MouseEvent<HTMLElement>) => void }) {
+type EntryProps = {
+  index: number;
+  row: NavTrayItem;
+  accent: string;
+  /** Pill text when this entry is the current page. */
+  currentLabel?: string;
+  onClick: (event: MouseEvent<HTMLElement>) => void;
+  onPreview?: () => void;
+  onPreviewEnd?: () => void;
+};
+
+function CurrentBadge({ label }: { label: string }) {
+  return <span className="nav-current-badge nav-label-technical">{label}</span>;
+}
+
+/** `titleOnly` (mobile): no `meta` line, a larger title. */
+function SubPill({ index, row, accent, currentLabel, onClick, onPreview, onPreviewEnd, titleOnly = false }: EntryProps & { titleOnly?: boolean }) {
   return (
     <ItemControl
       href={row.href}
+      current={currentLabel !== undefined}
       onClick={onClick}
+      onPreview={onPreview}
+      onPreviewEnd={onPreviewEnd}
       className="nav-sub-pill nav-simple-menu-item nav-control-focus relative flex min-h-[3em] w-full items-center rounded-[var(--nav-radius-md)] py-[0.5em] pl-[1.75em] pr-[1.5em] text-left"
       style={{ "--nav-orb-accent": accent, "--nav-entry-index": index } as CSSProperties}
     >
@@ -62,23 +95,29 @@ function SubPill({ index, row, accent, onClick }: { index: number; row: NavTrayI
         aria-hidden="true"
         className="nav-simple-menu-orb absolute left-0 top-1/2 flex h-[1.75em] w-[1.75em] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full"
       >
-        <span className="nav-simple-menu-number nav-font-body text-[0.625em] font-bold tabular-nums">{String(index + 1).padStart(2, "0")}</span>
+        <OrbFill hoverWithin=".nav-simple-menu-item" withPress>
+          <span className="nav-simple-menu-number nav-font-body text-[0.625em] font-bold tabular-nums">{String(index + 1).padStart(2, "0")}</span>
+        </OrbFill>
       </span>
       <span className="min-w-0 flex-1">
-        <span className="nav-row-title block truncate nav-font-body text-[0.78em] font-semibold leading-[1.3]">{row.title}</span>
-        {row.meta && <span className="nav-row-meta nav-label-technical mt-1 block truncate">{row.meta}</span>}
+        <span className={`nav-row-title block truncate nav-font-body font-semibold leading-[1.3] ${titleOnly ? "text-[0.95em]" : "text-[0.78em]"}`}>{row.title}</span>
+        {!titleOnly && row.meta && <span className="nav-row-meta nav-label-technical mt-1 block truncate">{row.meta}</span>}
       </span>
-      <span aria-hidden="true" className="nav-sub-pill-arrow absolute right-[0.75em] top-1/2 -translate-y-1/2"><ArrowIcon /></span>
+      {currentLabel !== undefined ? (
+        <span className="ml-[0.75em] shrink-0"><CurrentBadge label={currentLabel} /></span>
+      ) : (
+        <span aria-hidden="true" className="nav-sub-pill-arrow absolute right-[0.75em] top-1/2 -translate-y-1/2"><ArrowIcon /></span>
+      )}
     </ItemControl>
   );
 }
 
 const markLoaded = (image: HTMLImageElement) => { image.dataset.loaded = ""; };
 
-/* Desktop card: the cover edge to edge, monochrome at rest, the title
+/* Desktop card: the cover edge to edge, blurred and monochrome at rest, the title
    centred over it; the entry's accent grades the artwork and draws the
    bottom edge on hover/focus. */
-function TrayCard({ index, row, accent, showMeta, onClick }: { index: number; row: NavTrayItem; accent: string; showMeta: boolean; onClick: (event: MouseEvent<HTMLElement>) => void }) {
+function TrayCard({ index, row, accent, currentLabel, onClick, onPreview, onPreviewEnd }: EntryProps) {
   let media: ReactNode = null;
   if (typeof row.cover === "string") {
     media = (
@@ -101,18 +140,18 @@ function TrayCard({ index, row, accent, showMeta, onClick }: { index: number; ro
   return (
     <ItemControl
       href={row.href}
+      current={currentLabel !== undefined}
       onClick={onClick}
+      onPreview={onPreview}
+      onPreviewEnd={onPreviewEnd}
       className="nav-tray-card nav-control-focus"
       style={{ "--nav-orb-accent": accent, "--nav-entry-index": index } as CSSProperties}
     >
       {media}
       <span aria-hidden="true" className="nav-tray-card-grade" />
       <span aria-hidden="true" className="nav-tray-card-scrim" />
-      <span aria-hidden="true" className="nav-tray-card-number">{index + 1}</span>
-      <span className="nav-tray-card-text">
-        <span className="nav-tray-card-title">{row.title}</span>
-        {showMeta && row.meta && <span className="nav-tray-card-meta nav-label-technical">{row.meta}</span>}
-      </span>
+      <span className="nav-tray-card-title">{row.title}</span>
+      {currentLabel !== undefined && <span className="nav-tray-card-badge"><CurrentBadge label={currentLabel} /></span>}
       <span aria-hidden="true" className="nav-tray-card-edge" />
     </ItemControl>
   );
@@ -129,7 +168,133 @@ function TraySkeleton({ columns, cards, label }: { columns: 1 | 2; cards: boolea
   );
 }
 
-export type NavActions = ReturnType<typeof useNavActions>;
+const normalizePath = (href: string) => href.replace(/\/+$/, "") || "/";
+
+export type CurrentPage = { entry: NavDeckEntry; title: string };
+
+/** Whether the live pill carries the REC marks (blinking dot, page pill):
+    always on multi-page sites, on one-page sites only with `sectionPill`. */
+export const marksLive = (config: NavbarConfig, current: "page" | "location") => current === "page" || Boolean(config.sectionPill);
+
+/** Multi-page sites: the live deck entry and the page's name, from the tray
+    entry whose `href` is the current route, else the deck label; none on the
+    home route, which the wordmark already marks. One-page sites with
+    `sectionPill`: the entry of the section in view and its deck label. */
+export function useCurrentPage(config: NavbarConfig, activeKey: string | undefined, current: "page" | "location"): CurrentPage | null {
+  useTrayVersion();
+  // The location fallback is read after mount so server and client agree.
+  const [clientPath, setClientPath] = useState<string>();
+  useEffect(() => { setClientPath(normalizePath(window.location.pathname)); }, [config]);
+  const path = config.currentPath ?? clientPath;
+  const entry = marksLive(config, current) && activeKey !== undefined ? config.deck.find((candidate) => candidate.key === activeKey) : undefined;
+  const tray = entry ? config.trays[entry.key] : undefined;
+
+  useEffect(() => { void ensureTray(tray).catch(() => undefined); }, [tray]);
+
+  if (!entry) return null;
+  if (current === "location") return { entry, title: entry.label };
+  if (path === undefined || path === normalizePath(config.homeHref)) return null;
+  const item = getTrayItems(tray)?.find((row) => row.href !== undefined && normalizePath(row.href) === path);
+  return { entry, title: item?.title ?? entry.label };
+}
+
+/** The live pill names the page itself (a page inside the section shows its
+    own title); its link still goes to the section, so the accessible name
+    carries both. */
+export function deckLabel(entry: NavDeckEntry, page: CurrentPage | null): { text: string; aria?: string } {
+  if (!page || page.entry.key !== entry.key || page.title === entry.label) return { text: entry.label };
+  return { text: page.title, aria: `${page.title} (${entry.label})` };
+}
+
+/** A deck pill's label; a change of text glides the pill's width and brings
+    the new words in. */
+export function DeckLabel({ text }: { text: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  useWidthGlide(ref, text);
+  return (
+    <span ref={ref} className="nav-deck-label" onTransitionEnd={releaseWidth}>
+      <span key={text} className="nav-deck-label-text">{text}</span>
+    </span>
+  );
+}
+
+/** Deck pill mark: an entry with a `dot` colour shows its dot instead of the
+    icon. Where `marksLive`, the live pill's dot blinks (a live entry without
+    `dot` gets the default blinking dot); the others hold still. */
+export function DeckMark({ entry, live }: { entry: NavDeckEntry; live: boolean }) {
+  if (!live && !entry.dot) return <DeckIcon icon={entry.icon} />;
+  return (
+    <span aria-hidden="true" className="nav-deck-icon nav-deck-rec">
+      <span
+        className={`nav-page-pill-dot${live ? "" : " nav-page-pill-dot--still"}`}
+        style={entry.dot ? ({ "--nav-rec-dot": entry.dot } as CSSProperties) : undefined}
+      />
+    </span>
+  );
+}
+
+/** Width FLIP for an element whose content changes with `key`: from its last
+    measured width to the new natural one (the element transitions `width`;
+    pair with `releaseWidth` on transitionend). */
+export function useWidthGlide(ref: RefObject<HTMLElement | null>, key: string) {
+  const widthRef = useRef<number | null>(null);
+  useLayoutEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    const previous = widthRef.current;
+    element.style.width = "";
+    const next = element.offsetWidth;
+    widthRef.current = next;
+    if (previous === null || previous === next) return;
+    element.style.width = `${previous}px`;
+    void element.offsetWidth;
+    element.style.width = `${next}px`;
+  }, [ref, key]);
+}
+
+/** Back to natural width once a glide settles, so later reflows (fonts) apply. */
+export const releaseWidth = (event: TransitionEvent<HTMLElement>) => {
+  if (event.propertyName === "width" && event.target === event.currentTarget) event.currentTarget.style.width = "";
+};
+
+/** The current-page pill in its slot. The slot unfolds from zero width when
+    a page appears and folds away (keeping its last contents) when none
+    applies; a change of page glides the pill's width and brings the new dot
+    and name in. `hidden` folds it regardless (mobile, menu open). */
+export function CurrentPageSlot({ page, labels, hidden = false }: { page: CurrentPage | null; labels: NavbarLabels; hidden?: boolean }) {
+  const [shown, setShown] = useState(page);
+  useEffect(() => { if (page) setShown(page); }, [page]);
+  const present = page !== null && !hidden;
+  const pillRef = useRef<HTMLSpanElement>(null);
+  const key = shown ? `${shown.entry.key}:${shown.title}` : "";
+  useWidthGlide(pillRef, key);
+
+  return (
+    <span className="nav-page-slot" data-present={present || undefined} aria-hidden={!present}>
+      <span className="nav-page-slot-clip">
+        {shown && (
+          <span
+            ref={pillRef}
+            className="nav-page-pill"
+            onTransitionEnd={releaseWidth}
+          >
+            <span key={key} className="nav-page-pill-body">
+              <span
+                aria-hidden="true"
+                className="nav-page-pill-dot"
+                style={shown.entry.dot ? ({ "--nav-rec-dot": shown.entry.dot } as CSSProperties) : undefined}
+              />
+              <span className="sr-only">{labels.currentItem ?? "Active page"}: </span>
+              <span className="nav-page-pill-label">{shown.title}</span>
+            </span>
+          </span>
+        )}
+      </span>
+    </span>
+  );
+}
+
+export type NavActions =ReturnType<typeof useNavActions>;
 
 /** Action handlers. Every destination closes the menu first, then dispatches. */
 export function useNavActions(config: NavbarConfig, close: () => void, location: "navbar" | "mobile_menu") {
@@ -166,6 +331,9 @@ export function TrayContent({
   columns = 2,
   sectionLink = false,
   desktop = false,
+  currentPath,
+  onPreview,
+  onPreviewEnd,
 }: {
   entry: NavDeckEntry | null;
   tray: NavTray | undefined;
@@ -175,14 +343,25 @@ export function TrayContent({
   sectionLink?: boolean;
   /** Honour the tray's desktop `layout` (cards); mobile always uses rows. */
   desktop?: boolean;
+  currentPath?: string;
+  /** An entry is hovered or focused (desktop: its pill previews the title). */
+  onPreview?: (row: NavTrayItem) => void;
+  /** The pointer or focus leaves an entry. Leaving one entry for the next
+      fires in the same dispatch as the next entry's preview, so React
+      batches the two and the pill never flashes its own name between. */
+  onPreviewEnd?: () => void;
 }) {
   useTrayVersion();
   if (!entry || !tray) return null;
 
+  const path = currentPath ?? (typeof window === "undefined" ? undefined : normalizePath(window.location.pathname));
+  const currentLabel = (row: NavTrayItem) =>
+    path !== undefined && row.href !== undefined && normalizePath(row.href) === path
+      ? labels.currentItem ?? "Active page"
+      : undefined;
+
   let body: ReactNode;
-  let count = "";
   if (tray.kind === "cta") {
-    count = tray.label;
     body = (
       <div className="nav-tray-contact">
         <p className="nav-row-title-quiet max-w-[23em] nav-font-body text-[0.78em] leading-[1.5]">{tray.copy}</p>
@@ -190,12 +369,19 @@ export function TrayContent({
           type="button"
           data-tray-item
           onClick={() => actions.cta(entry, tray.label, tray.onSelect)}
-          className="nav-tray-cta nav-control-focus mt-[0.75em] flex min-h-[3em] w-full items-center justify-between gap-[1.5em] rounded-[var(--nav-radius-md)] px-[1em] text-left nav-font-body text-[0.78em] font-semibold"
+          className="nav-tray-cta nav-control-focus relative mt-[0.75em] flex min-h-[3em] w-full items-center justify-between gap-[1.5em] rounded-[var(--nav-radius-md)] px-[1em] text-left nav-font-body text-[0.78em] font-semibold"
         >
           <span>{tray.label}</span>
           <span className="nav-tray-cta-arrow flex h-[2.25em] w-[2.25em] shrink-0 items-center justify-center rounded-full">
             <ArrowIcon />
           </span>
+          {/* Hover pours the hover plate colour over the CTA (RULES §1). */}
+          <SurfaceFill hoverWithin=".nav-tray-cta">
+            <span>{tray.label}</span>
+            <span className="nav-tray-cta-arrow flex h-[2.25em] w-[2.25em] shrink-0 items-center justify-center rounded-full">
+              <ArrowIcon />
+            </span>
+          </SurfaceFill>
         </button>
         {tray.note && <span className="nav-row-meta nav-label-technical mt-3 block">{tray.note}</span>}
       </div>
@@ -203,10 +389,11 @@ export function TrayContent({
   } else {
     const items = getTrayItems(tray);
     const cards = desktop && trayLayout(tray, items) === "cards";
+    // A section with a dot colour grades its whole tray in it.
+    const accentOf = (row: NavTrayItem) => entry.dot ?? row.accent ?? entry.accent;
     if (!items) {
       body = <TraySkeleton columns={cards ? 1 : columns} cards={cards} label={labels.loading} />;
     } else {
-      count = `${String(items.length).padStart(2, "0")} ${tray.unit}`;
       body = cards ? (
         <div className="grid grid-cols-1 gap-[0.5em]">
           {items.map((row, index) => (
@@ -214,9 +401,11 @@ export function TrayContent({
               key={row.id}
               index={index}
               row={row}
-              accent={row.accent ?? entry.accent}
-              showMeta={Boolean(tray.cardMeta)}
+              accent={accentOf(row)}
+              currentLabel={currentLabel(row)}
               onClick={(event) => actions.item(entry, row, event)}
+              onPreview={onPreview ? () => onPreview(row) : undefined}
+              onPreviewEnd={onPreviewEnd}
             />
           ))}
         </div>
@@ -227,8 +416,12 @@ export function TrayContent({
               key={row.id}
               index={index}
               row={row}
-              accent={row.accent ?? entry.accent}
+              accent={accentOf(row)}
+              currentLabel={currentLabel(row)}
+              titleOnly={!desktop}
               onClick={(event) => actions.item(entry, row, event)}
+              onPreview={onPreview ? () => onPreview(row) : undefined}
+              onPreviewEnd={onPreviewEnd}
             />
           ))}
         </div>
@@ -236,11 +429,14 @@ export function TrayContent({
     }
   }
 
+  // The tray names its section: the open pill may be showing a page title
+  // instead. Touch also gets the link to the section page, which it cannot
+  // reach by a second hover.
   return (
     <>
-      <div className="mb-[0.75em] flex items-baseline justify-between gap-[1em] pr-[0.25em]">
-        <span className="nav-row-title nav-label-technical">{entry.label}</span>
-        {sectionLink && entry.href && tray.kind !== "cta" ? (
+      <div className="nav-tray-head">
+        <span className="nav-tray-title">{entry.label}</span>
+        {sectionLink && entry.href && tray.kind !== "cta" && (
           <a
             href={entry.href}
             data-tray-item
@@ -249,8 +445,6 @@ export function TrayContent({
           >
             {labels.sectionLink} <ArrowIcon />
           </a>
-        ) : (
-          <span className="nav-row-meta nav-label-technical">{count}</span>
         )}
       </div>
       {body}

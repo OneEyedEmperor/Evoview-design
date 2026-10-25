@@ -57,8 +57,10 @@ without explicit approval and a supplied destination (`STRATEGY.md`).
 /root/.vibehub/projects/evoview-design-library/components/navbar/install.sh /root/.vibehub/projects/<client>
 ```
 
-Copies `src/` to `<client>/src/components/navbar/`. Re-running upgrades the
-components and preserves `navbar.config.tsx` + `brand/`.
+Installs / upgrades `foundation` first (the menu number orbs fill through
+its `OrbFill`), then copies `src/` to `<client>/src/components/navbar/`.
+Re-running upgrades the components and preserves `navbar.config.tsx` +
+`brand/`.
 
 Mount once in the page shell, before `<main>`.
 
@@ -92,11 +94,9 @@ One-page site: export a constant `navbarConfig` with `sections` filled and
   page. Multi-page sites: `sections: []` + `activeKey` (via `withRoute`).
 - `config.sections` must be a module-level constant (the scroll store is keyed
   by reference). The config object itself may be rebuilt per locale/route.
-- Fonts: reads `--font-heading`, `--font-body`, `--font-technical`,
-  `--font-numeral` from `:root`; falls back to Overused Grotesk / Inter /
-  body / the technical (readout) face. Load whatever the fallback resolves
-  to, or set the variables. Gaegu numerals are evoview.be's own art
-  direction (the example config only); do not carry them to clients.
+- Fonts: reads `--font-heading`, `--font-body`, `--font-technical` from
+  `:root`; falls back to Overused Grotesk / Inter / body. Load whatever the
+  fallback resolves to, or set the variables.
 - Anchors and routes (deck pills and tray entries with `href`) are plain
   `<a href>`. A client router must intercept them: `useNavbarLinks(navigate)`.
   Server rendering works (`renderToString`).
@@ -116,15 +116,17 @@ One-page site: export a constant `navbarConfig` with `sections` filled and
 | --- | --- |
 | `logo` | Wordmark node, sized by `--nav-logo-*`. Black artwork is inverted on dark; coloured artwork → `vars["--nav-logo-dark-filter"] = "none"`. |
 | `homeHref` | Wordmark link. |
-| `labels` | `menu`, `close` (mobile morph), `sectionLink`, aria strings, `loading`. |
+| `labels` | `menu`, `close` (mobile morph), `sectionLink`, aria strings, `loading`, optional `currentItem` (active-page badge, default "Active page"). |
 | `accent` | Brand accent → focus ring, CTA glow/hover, mobile tiles, language thumb, pupil fallback. |
 | `vars` | Any `--nav-*` token (logo box, fonts, radii, tray width, `--nav-eye-pupil`, …). |
 | `reticle` | `eye` (default: solid accent almond + pupil, quiet pulse) or `hud` (outlined lids that blink on hover). |
 | `sections` | `{ id, color }[]` in document order, or `[]`. `color` = pupil colour. |
-| `activeKey` | Live pill on multi-page sites. `withRoute()` derives it from the pathname. |
+| `activeKey` | Live pill on multi-page sites. `withRoute()` derives it from the pathname. Also turns on the resting current-page pill (blinking REC dot `--nav-rec-dot` + page name, finder colours, right of the finder; none on the home route), and the live deck pill swaps its icon for the same dot and moves to the front of the deck (a CTA keeps its slot). |
+| `sectionPill` | One-page sites (or a one-page route of a multi-page site): show the current-page pill for the section in view (live entry's dot + deck `label`), blink that entry's dot and lead the deck with it. Off by default. |
+| `currentPath` | Route used to mark the tray entry whose `href` matches it (`currentItem` badge with a blinking dot; `--nav-current-item`, `--nav-current-dot`). Set by `withRoute()`; falls back to `window.location.pathname`. |
 | `initialTone` | Tone before the first probe. `"dark"` for a dark first screen. |
-| `deck` | Pills: `key`, `label`, `icon` (built-in key or node), `href` (`<a>`; omit → `<button>`), `section`, `accent`, `cta`, `content` (replaces icon+label, e.g. `<NavLangSwitch>`), `keepOpen` (click leaves the menu open). |
-| `trays` | Per deck key, optional. `items` (array or loader) + `unit` + optional `layout` (`cards` \| `rows`; default `cards` when any entry has a cover) and `cardMeta`; or a `cta` block. No tray → the pill navigates on first interaction. |
+| `deck` | Pills: `key`, `label`, `icon` (built-in key or node), `href` (`<a>`; omit → `<button>`), `section`, `accent`, `dot` (replaces the icon with a dot of that colour, blinking only while live; multi-page: also the REC dots + finder eye colour while this pill is live), `cta`, `content` (replaces icon+label, e.g. `<NavLangSwitch>`), `keepOpen` (click leaves the menu open). |
+| `trays` | Per deck key, optional. `items` (array or loader) + `unit` + optional `layout` (`cards` \| `rows`; default `cards` when any entry has a cover; cards show the title only, over a cover blurred at rest and sharp on hover); or a `cta` block. No tray → the pill navigates on first interaction. |
 | tray entry | `id`, `title`, `meta` (short description), `accent`, `cover` (image URL or rendered node; desktop cards only), `href` (route/anchor → `<a>`), `onSelect(event)` (runs first; `preventDefault()` cancels the `href`). |
 | `onSection` | Intercept a pill click; `event.preventDefault()` to replace the navigation (locale flip, modal). |
 | `track` | `nav_click` (pills, `href` entries), `nav_modal_open` (`onSelect`-only entries), `cta_click` with payloads. |
@@ -132,7 +134,7 @@ One-page site: export a constant `navbarConfig` with `sections` filled and
 Tray entries route with `href`; `onSelect` is where a site opens its own
 modal or scrolls. The navbar never owns a modal. Desktop shows cover cards
 stacked in one column (or 2×2 rows); mobile always shows single-column rows
-with `meta`, plus the `sectionLink` to the pill's own `href`.
+(title only), plus the `sectionLink` to the pill's own `href`.
 
 ## Adapting
 

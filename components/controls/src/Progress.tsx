@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
-import { cn, sequenceFillStyle, type SequenceClock } from "../foundation";
+import { cn, sequenceFillStyle, TextFill, type SequenceClock } from "../foundation";
 import { useControlsCopy } from "./copy";
 
 export type ProgressCellState = "current" | "done" | "upcoming";
@@ -79,7 +79,11 @@ export function SegmentedProgress({
                 data-lock={captions === "complete" && caption != null ? "" : undefined}
                 aria-hidden="true"
               >
-                {caption}
+                {caption != null && (
+                  <TextFill truncate ink={state === "current" ? "var(--ev-fg)" : state === "done" ? "var(--controls-signal)" : undefined}>
+                    {caption}
+                  </TextFill>
+                )}
               </span>
             )}
             <span className="evc-progress__cell" aria-hidden="true">

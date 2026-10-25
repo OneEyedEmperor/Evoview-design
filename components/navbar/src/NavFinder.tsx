@@ -9,10 +9,9 @@ import {
   type MouseEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import { DeckIcon } from "./NavIcons";
 import type { NavDeckEntry, NavbarConfig } from "./types";
 import { ensureTray, getTrayItems, preloadTrays, trayLayout, useTrayVersion, warmTrayCovers } from "./useNavTrays";
-import { ReticleMark, TrayContent, useNavActions } from "./finderShared";
+import { CurrentPageSlot, DeckLabel, DeckMark, deckLabel, marksLive, ReticleMark, TrayContent, useCurrentPage, useNavActions } from "./finderShared";
 
 /* Desktop navigation — the finder.
 
@@ -159,6 +158,11 @@ export default function NavFinder({ config, activeKey, current, accent }: { conf
     warmTrayCovers(config);
   }, [config]);
   const actions = useNavActions(config, closeFromAction, "navbar");
+  const page = useCurrentPage(config, activeKey, current);
+  // The open tray's pill previews the hovered/focused entry's title, only
+  // while an entry is hovered or focused.
+  const [preview, setPreview] = useState<{ key: string; title: string } | null>(null);
+  useEffect(() => { setPreview(null); }, [tray]);
 
   // Hovering a pill without a tray closes whichever tray is open.
   const revealTray = useCallback((entry: NavDeckEntry, immediate = false) => {
@@ -405,6 +409,7 @@ export default function NavFinder({ config, activeKey, current, accent }: { conf
                 <ReticleMark />
                 <span className="nav-finder-word">{labels.menu}</span>
               </button>
+              <CurrentPageSlot page={page} labels={labels} />
             </div>
           </div>
 
@@ -420,19 +425,20 @@ export default function NavFinder({ config, activeKey, current, accent }: { conf
                     "aria-current": activeKey === entry.key ? current : undefined,
                     "aria-expanded": hasTray ? tray === entry.key : undefined,
                     "aria-controls": hasTray ? trayId : undefined,
-                    "aria-label": entry.content ? entry.label : undefined,
+                    "aria-label": entry.content ? entry.label : deckLabel(entry, page).aria,
                     className: `nav-deck-pill nav-control-focus${entry.cta ? " nav-deck-pill--cta" : ""}`,
                     style: { "--nav-orb-accent": entry.accent, "--nav-entry-index": index } as CSSProperties,
                     onPointerEnter: (event: ReactPointerEvent) => { if (event.pointerType !== "touch") revealTray(entry); },
                     onFocus: () => {
+                      setPreview(null);
                       if (silentPillFocusRef.current) return;
                       revealTray(entry, true);
                     },
                   };
                   const content = entry.content ?? (
                     <>
-                      <DeckIcon icon={entry.icon} />
-                      <span className="nav-deck-label">{entry.label}</span>
+                      <DeckMark entry={entry} live={marksLive(config, current) && activeKey === entry.key} />
+                      <DeckLabel text={preview?.key === entry.key ? preview.title : deckLabel(entry, page).text} />
                     </>
                   );
                   return entry.href ? (
@@ -456,6 +462,7 @@ export default function NavFinder({ config, activeKey, current, accent }: { conf
         className="nav-tray-anchor absolute left-0 top-full z-10 w-max pt-[0.5em]"
         data-open={tray !== null}
         inert={tray === null}
+        onPointerLeave={() => setPreview(null)}
       >
         <div
           id={trayId}
@@ -465,7 +472,10 @@ export default function NavFinder({ config, activeKey, current, accent }: { conf
           className="nav-tray nav-glass-panel rounded-[var(--nav-radius-lg)] p-[0.75em]"
         >
           <div key={tray ?? "none"} className="nav-tray-swap nav-simple-menu-rail">
-            <TrayContent entry={trayEntry} tray={trayEntry ? trays[trayEntry.key] : undefined} actions={actions} labels={labels} desktop />
+            <TrayContent entry={trayEntry} tray={trayEntry ? trays[trayEntry.key] : undefined} actions={actions} labels={labels} currentPath={config.currentPath} desktop
+              onPreview={(row) => { if (trayEntry) setPreview({ key: trayEntry.key, title: row.title }); }}
+              onPreviewEnd={() => setPreview(null)}
+            />
           </div>
         </div>
       </div>

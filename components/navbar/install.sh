@@ -18,6 +18,9 @@ VERSION="$(cat "$HERE/VERSION")"
 [ -f "$TARGET/package.json" ] || { echo "no package.json in $TARGET"; exit 1; }
 grep -q '"react"' "$TARGET/package.json" || { echo "$TARGET is not a React project"; exit 1; }
 
+# The menu number orbs fill through foundation's OrbFill.
+"$HERE/../foundation/install.sh" "$TARGET"
+
 mkdir -p "$DEST"
 fresh=1
 [ -f "$DEST/navbar.config.tsx" ] && fresh=0

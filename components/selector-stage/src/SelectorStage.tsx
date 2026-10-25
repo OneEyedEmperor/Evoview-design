@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState, type FocusEvent, type PointerEvent } from "react";
 import { OptionChip } from "../controls";
-import { cn, pad, sequenceFillStyle, StepGauge, useInViewPause, useSequenceClock } from "../foundation";
+import { cn, pad, sequenceFillStyle, StepGauge, TextFill, useInViewPause, useSequenceClock } from "../foundation";
 import { Heading, Note, StageFrame, defaultCopy, layersOf, radioKeys, toneClass, useOnce, useStageGate } from "./stage";
 import type { SelectorStageContent, SelectorStageCopy, Tone } from "./types";
 
@@ -130,7 +130,11 @@ export function SelectorStage({
                       onClick={() => select(i, true)}
                     >
                       <StepGauge current={i + 1} total={options.length} className="ss-row__gauge" />
-                      <span className="ev-t-label ss-row__label">{o.label}</span>
+                      <span className="ev-t-label ss-row__label">
+                        <TextFill ink={selected ? "var(--ev-fg)" : undefined} hoverWithin={selected ? undefined : ".ss-row"} hoverInk="var(--ev-fg-90)" withFocus={false}>
+                          {o.label}
+                        </TextFill>
+                      </span>
                       <span className="ss-row__bar" aria-hidden="true" />
                     </button>
                   );
@@ -154,8 +158,12 @@ export function SelectorStage({
               </div>
               {autoplay && (
                 <button type="button" className="ss-auto" onClick={toggleAuto}>
-                  <span className="ss-auto__icon" data-paused={!auto || undefined} aria-hidden="true" />
-                  <span className="ev-t-readout">{auto ? copy.autoplayPause : copy.autoplayResume}</span>
+                  <TextFill hoverWithin=".ss-auto" hoverInk="var(--ev-fg)" withFocus={false}>
+                    <span className="ss-auto__icon" data-paused={!auto || undefined} aria-hidden="true" />
+                  </TextFill>
+                  <TextFill className="ev-t-readout" hoverWithin=".ss-auto" hoverInk="var(--ev-fg)" withFocus={false}>
+                    {auto ? copy.autoplayPause : copy.autoplayResume}
+                  </TextFill>
                 </button>
               )}
             </div>

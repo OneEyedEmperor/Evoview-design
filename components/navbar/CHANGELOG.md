@@ -1,5 +1,96 @@
 # navbar changelog
 
+## 2.7.0
+
+- Now depends on `foundation` (≥ 1.5.0): `install.sh` installs it first,
+  and the package gets a `foundation -> ../foundation/src` symlink in the
+  library.
+- Behaviour: the tray rows' number orbs fill on hover / focus-visible /
+  touch press with the liquid rise (foundation `OrbFill`, RULES §1) instead
+  of a background cut; the 1.08 scale stays.
+- CSS: `.nav-simple-menu-orb` declares `--ev-orb-rest(-ink)` /
+  `--ev-orb-lit(-ink)` (light and dark tone) instead of hover
+  `background` / `color` rules; `.nav-simple-menu-number` no longer sets a
+  colour.
+- Behaviour: the CTA tray's plate pours its hover colour in (foundation
+  `SurfaceFill`; the accent on dark bars) instead of a background swap.
+  CSS: `.nav-tray-cta` sets `--ev-surface-lit`.
+- No config changes.
+
+## 2.6.0
+
+- Current page pill (multi-page sites, i.e. `activeKey` set): at rest the
+  bar shows, right of the finder pill and in its colours, a blinking red
+  REC dot (`--nav-rec-dot`, Evoview `redBlink` timing) and the page name
+  (the matching tray entry's `title`, else the deck `label`). Not shown on
+  the home route. Desktop: it
+  folds away with the finder as the deck opens. Mobile: right of
+  Menu/Close, truncated, folded while the menu is open; the wordmark no
+  longer shrinks to make room.
+- Multi-page sites: in the open deck (desktop and mobile), the live pill's
+  icon is replaced by the same blinking REC dot.
+- The live deck pill shows the current page's name (e.g. "Réservation"
+  instead of "Composants"); its link still targets the section and its
+  accessible name carries both.
+- Desktop: hovering or focusing a tray entry previews its title on the
+  tray's own pill (width glides, words rise in) only while that entry is
+  hovered/focused; off an entry (gaps, tray title) the pill shows its own
+  name again. Entry-to-entry moves swap straight, without a flash between.
+- Multi-page sites: the live pill leads the deck (desktop and mobile); the
+  other pills keep their configured order. A live CTA keeps its last slot;
+  one-page sites keep the configured order.
+- Mobile: in an odd deck the last tile always spans the last row (was CTA
+  only).
+- Mobile tray rows show the title only (no `meta` line), at 0.95em
+  (was 0.78em). Desktop `rows` trays keep `meta`.
+- Desktop tray cards drop the index numeral; `--nav-font-numeral` is
+  removed (a leftover `vars` entry is harmless).
+- Tray head is the section's `label` as a title (heading face, 1.125em),
+  since the open pill may show a page name instead; no count. Mobile keeps
+  the `sectionLink` at its end. `NavTray.unit` is now optional and unused.
+- The current page's tray card holds the hover state at rest (sharp
+  cover, accent grade, edge); other cards hover as before.
+- Tray "active page" badge redesigned in the REC language: light plate
+  (`--nav-current-item` `#fbf8f6`), red ink (`--nav-current-item-ink`
+  `#c42a1f`), red dot (`--nav-current-dot` now defaults to `--nav-rec-dot`)
+  on the REC blink.
+- Per-section REC colour: optional `dot` on a deck entry. While that pill is
+  live (multi-page), it colours every REC dot (page pill, live deck pill,
+  tray badge; the badge ink is the dot darkened) and the finder's eye.
+  Without it: dots `--nav-rec-dot`, eye the site accent. A deck entry with
+  `dot` shows that dot instead of its icon (desktop and mobile, any page);
+  only the live pill's dot blinks. Its tray is graded in the same colour
+  (card overlay and hover edge, row orbs), over any row `accent`.
+- The current-page pill animates: its slot unfolds from zero width (and
+  folds away keeping its last contents), a change of page glides the
+  pill's width and brings the new dot and name in (rise + fade).
+- `sectionPill` (opt-in, one-page): the current-page pill follows the
+  section in view (deck entry's dot + `label`), and that entry's deck dot
+  blinks and leads the deck; nothing shows over sections without a deck entry.
+- Config changes: optional `NavDeckEntry.dot`, `NavbarConfig.sectionPill`; otherwise none (uses
+  `activeKey`, `currentPath`, `labels.currentItem` as screen-reader prefix).
+
+## 2.5.0
+
+- Active page in trays: the entry whose `href` matches the current route
+  gets an indigo "active page" badge with a blinking green dot (top right on
+  desktop cards, in place of the arrow on rows), plus
+  `aria-current="page"`. The blink stops under reduced motion.
+- Config changes (all optional): `currentPath` on `NavbarConfig` (set by
+  `withRoute`, else read from `window.location.pathname`);
+  `labels.currentItem` (badge text, default "Active page"); tokens
+  `--nav-current-item`, `--nav-current-item-ink`, `--nav-current-dot`. Existing clients: add
+  `currentItem` to `labels` per locale; optionally add `currentPath: path`
+  to the return of their `withRoute`.
+
+## 2.4.0
+
+- Desktop cover cards read as titles: the cover is blurred at rest (3.5px)
+  and sharpens on hover/focus, the title grows 1.125em → 1.375em, and the `meta`
+  caption is no longer rendered on cards (rows and mobile keep it).
+- Config changes: `cardMeta` removed from `NavTray`. Delete it from the
+  client config; TypeScript flags it otherwise.
+
 ## 2.3.1
 
 - Mobile now marks the live pill (`activeKey`, or the section in view):

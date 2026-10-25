@@ -14,4 +14,8 @@ export { useMediaQuery } from "./useMediaQuery";
 export { useSequenceClock, sequenceFillStyle, type SequenceClock } from "./useSequenceClock";
 export { useMediaReady, preloadMedia, type MediaReady, type MediaReadyOptions, type MediaSource } from "./useMediaReady";
 export { Readout, Index, StepGauge, SectionMarker, EvoviewMark, EvoviewLogo } from "./primitives";
+export { OrbFill, type OrbFillProps, type OrbFillController } from "./OrbFill";
+export { TextFill, type TextFillProps } from "./TextFill";
+export { SurfaceFill, type SurfaceFillProps } from "./SurfaceFill";
+export type { LiquidController } from "./liquid";
 export { ArrowRight, ArrowLeft, ArrowUpRight, Check, Close, Chevron } from "./icons";

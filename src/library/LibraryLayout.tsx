@@ -3,9 +3,9 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Navbar, useNavbarLinks } from "../../components/navbar/src";
 import EvoviewLogo from "../../components/navbar/src/brand/EvoviewLogo";
 import { withRoute } from "../../components/navbar/src/navbar.config";
-import { buildLibraryNavbarConfig } from "./library.navbar.config";
+import { buildLibraryNavbarConfig, HOME_SECTIONS } from "./library.navbar.config";
 import { useLibraryLocale } from "./locale";
-import { RouteBoundary, RoutePending } from "./routing";
+import { CHAPTER_ROUTES, RouteBoundary, RoutePending } from "./routing";
 import "./library.css";
 
 export const EVOVIEW_URL = "https://evoview.be/";
@@ -16,12 +16,19 @@ export default function LibraryLayout() {
   const { pathname } = useLocation();
   useNavbarLinks(useCallback((to: string) => navigate(to), [navigate]));
 
-  const config = useMemo(() => withRoute(buildLibraryNavbarConfig(locale, setLocale), pathname), [locale, setLocale, pathname]);
+  const config = useMemo(() => {
+    const routed = withRoute(buildLibraryNavbarConfig(locale, setLocale), pathname);
+    // Home is one page, also when reached by a category route (`/components`
+    // renders the index scrolled to its chapter): the pill follows the
+    // section in view instead of pinning the route's category.
+    const onIndex = pathname.replace(/\/+$/, "") === "" || pathname.replace(/\/+$/, "") in CHAPTER_ROUTES;
+    return onIndex ? { ...routed, activeKey: undefined, sections: HOME_SECTIONS, sectionPill: true } : routed;
+  }, [locale, setLocale, pathname]);
 
   return (
     <div className="ev-library lib-shell">
       <Navbar config={config} />
-      <main>
+      <main id="library-top">
         <RouteBoundary resetKey={pathname}>
           <Suspense fallback={<RoutePending />}>
             <Outlet />

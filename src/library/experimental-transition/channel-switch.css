@@ -1,0 +1,37 @@
+/* Channel switch overlay (trial). Static sits over the page and under the
+   navbar (50), which stays crisp through the switch. */
+.channel-switch__defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+.channel-switch__layer {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  pointer-events: none;
+}
+.channel-switch__layer[hidden] { display: none; }
+
+.channel-switch__snow {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+/* CRT texture: fine scanlines and a vignette, only while switching. */
+.channel-switch__scan {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background:
+    radial-gradient(ellipse at 50% 50%, transparent 55%, rgb(0 0 0 / 0.45) 100%),
+    repeating-linear-gradient(to bottom, rgb(0 0 0 / 0.22) 0 1px, transparent 1px 3px);
+  mix-blend-mode: multiply;
+}
+
+/* Fixed chrome inside the stage would re-anchor to the filtered stage. */
+.channel-switching .lib-float { visibility: hidden; }

@@ -49,6 +49,9 @@ alone does not authorize adding attribution or changing client link destinations
 
 ## Rules
 
+- The menu number orbs change colour only through foundation `OrbFill`'s
+  liquid rise (RULES §1); restyle them via `--ev-orb-*`, never a
+  `background` swap. `install.sh` installs `foundation` first.
 - Never copy files from `/root/.vibehub/projects/evoview/src/components/nav`
   or from another client; the package is the portable version.
 - Never fork the component to fix a client issue. If the package is wrong or

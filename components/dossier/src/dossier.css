@@ -284,9 +284,8 @@
     transition: color 300ms ease, background-color 300ms ease;
   }
   .evd-strip__label { overflow: hidden; font-family: var(--ev-font-body); font-size: clamp(11px, 0.85vw, 13px); letter-spacing: 0.015em; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
-  .evd-strip__tab[data-state="active"] { color: #fff; background-color: rgb(255 255 255 / 0.045); }
+  .evd-strip__tab[data-state="active"] { background-color: rgb(255 255 255 / 0.045); }
   .evd-strip__tab[data-state="active"] .evd-strip__num { background: color-mix(in oklab, var(--dossier-accent) 85%, transparent); color: var(--dossier-ink); }
-  .evd-strip__tab[data-state="past"] { color: rgb(255 255 255 / 0.72); }
   .evd-strip__progress {
     position: absolute;
     inset: auto 4px 0 0;
@@ -298,7 +297,7 @@
   .evd-strip__tab[data-state="past"] .evd-strip__progress { transform: scaleX(1); }
   .evd-strip__tab[data-state="active"] .evd-strip__progress { transform: scaleX(var(--evd-progress, 0)); }
   @media (hover: hover) {
-    .evd-strip__overview:hover, .evd-strip__tab:hover { color: #fff; background-color: rgb(255 255 255 / 0.06); }
+    .evd-strip__overview:hover, .evd-strip__tab:hover { background-color: rgb(255 255 255 / 0.06); }
   }
   .evd-strip button:focus-visible { outline: 2px solid var(--dossier-signal); outline-offset: -4px; }
 
@@ -319,7 +318,10 @@
     color: #151515;
     box-shadow: 0 8px 28px rgb(0 0 0 / 0.3), 0 14px 40px -24px var(--dossier-deep);
     text-align: left;
-    transition: background-color 180ms ease, transform 140ms ease;
+    position: relative;
+    /* Hover pours the lighter plate in (foundation SurfaceFill, RULES §1). */
+    --ev-surface-lit: #f3f3f2;
+    transition: transform 140ms ease;
   }
   .evd-toast small {
     display: block;
@@ -333,7 +335,6 @@
   }
   .evd-toast strong { display: block; font-family: var(--ev-font-body); font-size: 13px; font-weight: 600; }
   .evd-toast svg { width: 16px; height: 16px; color: color-mix(in oklab, var(--dossier-accent) 60%, #151515); }
-  @media (hover: hover) { .evd-toast button:hover { background: #f3f3f2; } }
   .evd-toast button:active { transform: translateY(1px); }
   .evd-toast button:focus-visible { outline: 2px solid var(--dossier-signal); outline-offset: 3px; }
 }
@@ -514,9 +515,8 @@
 .evd-tile:focus-visible .evd-tile__title,
 .evd-board[data-cycle] .evd-tile[data-cycle-focus] .evd-tile__title { transform: translateY(-2px); }
 .evd-tile:focus-visible .evd-tile__num,
-.evd-board[data-cycle] .evd-tile[data-cycle-focus] .evd-tile__num { opacity: 0.9; color: var(--dossier-signal); }
+.evd-board[data-cycle] .evd-tile[data-cycle-focus] .evd-tile__num { opacity: 0.9; }
 .evd-tile:focus-visible .evd-tile__kicker,
-.evd-board[data-cycle] .evd-tile[data-cycle-focus] .evd-tile__kicker { color: var(--dossier-signal); }
 .evd-board[data-cycle] .evd-tile[data-cycle-focus] .evd-tile__shine { animation: evd-shine 1200ms cubic-bezier(0.16, 1, 0.3, 1) 150ms both; }
 .evd-board[data-cycle] .evd-tile,
 .evd-board[data-cycle] .evd-tile__media,
@@ -536,8 +536,7 @@
   .evd-tile:hover .evd-tile__scrim { opacity: 0.88; }
   .evd-tile:hover .evd-tile__edge { transform: scaleX(1); }
   .evd-tile:hover .evd-tile__title { transform: translateY(-2px); }
-  .evd-tile:hover .evd-tile__num { opacity: 0.9; color: var(--dossier-signal); }
-  .evd-tile:hover .evd-tile__kicker { color: var(--dossier-signal); }
+  .evd-tile:hover .evd-tile__num { opacity: 0.9; }
   .evd-tile:hover .evd-tile__shine { animation: evd-shine 900ms cubic-bezier(0.16, 1, 0.3, 1) both; }
 }
 @keyframes evd-shine {
@@ -702,7 +701,7 @@
 .evd-dock__item[data-tap="b"]::after { animation: evd-bloom-b 520ms cubic-bezier(0.16, 1, 0.3, 1) both; }
 @keyframes evd-bloom-a { 0% { opacity: 1; transform: translate3d(-50%, -50%, 0) scale(0.3); } 100% { opacity: 0; transform: translate3d(-50%, -50%, 0) scale(1.35); } }
 @keyframes evd-bloom-b { 0% { opacity: 1; transform: translate3d(-50%, -50%, 0) scale(0.3); } 100% { opacity: 0; transform: translate3d(-50%, -50%, 0) scale(1.35); } }
-.evd-dock__item:active { color: #fff; background: rgb(255 255 255 / 0.055); transform: translate3d(0, 1px, 0) scale(0.965); transition-duration: 70ms; }
+.evd-dock__item:active { background: rgb(255 255 255 / 0.055); transform: translate3d(0, 1px, 0) scale(0.965); transition-duration: 70ms; }
 .evd-dock__item:focus-visible { outline: 2px solid var(--dossier-signal); outline-offset: -3px; }
 .evd-dock__icon { display: flex; width: 20px; height: 20px; flex: 0 0 auto; align-items: center; justify-content: center; transition: transform 460ms cubic-bezier(0.22, 1.7, 0.36, 1); }
 .evd-dock__icon svg { width: 18px; height: 18px; }

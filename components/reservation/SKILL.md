@@ -32,6 +32,8 @@ library's `STRATEGY.md` first.
 
 ## Rules
 
+- Orbs (choice check, pill number marks, compact guest orbs) change colour
+  only through foundation `OrbFill`'s liquid rise (RULES §1).
 - The chassis is the Evoview signature: do not re-theme its surfaces, swap
   fonts or marks. The client shows up through its accent, venue, copy and
   choices.

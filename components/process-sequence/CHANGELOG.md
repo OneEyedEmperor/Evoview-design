@@ -1,5 +1,14 @@
 # process-sequence changelog
 
+## 1.2.0
+
+Requires `foundation` ≥ 1.5.0 (`TextFill`) and `controls` ≥ 1.2.0. No config
+changes, no API changes.
+
+- Behaviour: the phone index numbers take their state ink (active, complete)
+  as a liquid fill (RULES §1). Titles riding the active ribbon / button
+  surface keep following it.
+
 ## 1.1.2
 
 - Step dossier, ≥ 768: the windowed shell keeps `--ev-modal-reserve-bottom`

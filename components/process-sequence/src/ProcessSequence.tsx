@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type RefObject } from "react";
 import { SegmentedProgress } from "../controls";
-import { Check, cn, pad, SectionMarker, useInViewPause, useMediaReady, useSequenceClock } from "../foundation";
+import { Check, cn, pad, SectionMarker, TextFill, useInViewPause, useMediaReady, useSequenceClock } from "../foundation";
 import { StepCard, isVideo } from "./StepCard";
 import { StepDossier } from "./StepDossier";
 import type { ProcessSequenceConfig, ProcessStep, StepState } from "./types";
@@ -177,7 +177,10 @@ export function ProcessSequence({ config, tone = "dark", autoplay = true, onOpen
                 return (
                   <li key={s.id}>
                     <button type="button" className="ps-index__btn" data-state={st} aria-current={st === "active" ? "step" : undefined} onClick={() => jump(i)}>
-                      <span className="ps-index__num">{pad(i + 1)}</span>
+                      <span className="ps-index__num">
+                        {/* The index's state ink rises in (RULES §1). */}
+                        <TextFill ink={st === "active" ? "var(--ps-ribbon-fill)" : st === "complete" ? "var(--process-signal)" : undefined}>{pad(i + 1)}</TextFill>
+                      </span>
                       <span className="ps-index__title">{s.title}</span>
                       {st === "complete" && <Check className="ps-index__check" />}
                       <span className="ev-sr">{copy.status[st]}</span>

@@ -30,7 +30,6 @@ export const navbarConfig: NavbarConfig = {
   reticle: "hud",
   vars: {
     "--nav-font-technical": '"Satoshi", sans-serif',
-    "--nav-font-numeral": '"Gaegu", cursive',
     "--nav-cta-hover-dark": "#c8a6d9",
   },
 

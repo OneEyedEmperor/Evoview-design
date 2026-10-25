@@ -24,6 +24,12 @@ export type NavDeckEntry = {
   section?: string;
   /** Accent used by the pill's own marks and its tray rows. */
   accent: string;
+  /** Section colour: replaces the pill's icon with a dot (blinking while
+      live) and grades its tray (card overlay and edge, row orbs) over any
+      row `accent`. Multi-page sites: also the REC dots (page pill, tray
+      badge) and the finder's eye while this pill is live. Default
+      `--nav-rec-dot` for the dots and the site accent for the eye. */
+  dot?: string;
   /** The one filled pill (inverse gloss). At most one entry. */
   cta?: boolean;
   /** Replaces the icon + label body (e.g. `<NavLangSwitch>`); `label` then
@@ -37,8 +43,7 @@ export type NavTrayItem = {
   id: string;
   title: string;
   /** Short description: the caption under the title on rows (mobile, and
-      desktop `rows` trays); on desktop cards only when the tray sets
-      `cardMeta`. */
+      desktop `rows` trays). Desktop cards show the title only. */
   meta?: string;
   /** Overrides the deck entry's accent for this row (card hover grade and
       edge, row orb). */
@@ -59,8 +64,9 @@ export type NavTrayItem = {
 export type NavTray =
   | {
       kind: "items";
-      /** Counter noun shown in the tray header: "04 dossiers". */
-      unit: string;
+      /** Unused since 2.6.0 (trays have no header); kept so existing
+          configs still type-check. */
+      unit?: string;
       /** Static rows, or a loader so copy stays off the critical path. */
       items: NavTrayItem[] | (() => Promise<NavTrayItem[]>);
       /** Desktop presentation: `cards` = one full-width cover banner per
@@ -69,8 +75,6 @@ export type NavTray =
           loader tray so the loading skeleton has the right shape. Mobile
           always shows single-column rows. */
       layout?: "cards" | "rows";
-      /** Desktop cards also show each entry's `meta` under the title. */
-      cardMeta?: boolean;
     }
   | {
       kind: "cta";
@@ -93,6 +97,8 @@ export type NavbarLabels = {
   closeAria: string;
   homeAria: string;
   loading: string;
+  /** Pill on the tray entry for the current page. Default "Active page". */
+  currentItem?: string;
 };
 
 export type NavTrackPayload = Record<string, string | number | boolean | null | undefined>;
@@ -121,6 +127,13 @@ export type NavbarConfig = {
   sections: NavSection[];
   /** Live pill on a multi-page site (by deck key). Overrides `sections`. */
   activeKey?: string;
+  /** One-page sites: show the current-page pill (dot + deck label) for the
+      section in view, and blink that entry's dot. Off by default. */
+  sectionPill?: boolean;
+  /** Current route (no trailing slash). The tray entry whose `href` equals it
+      is marked as the active page. `withRoute` sets it; unset, the tray
+      reads `window.location.pathname`. */
+  currentPath?: string;
   /** Tone rendered before the first scroll probe (server render, hydration).
       Set "dark" on a site whose first screen is dark. Default "light". */
   initialTone?: "light" | "dark";

@@ -1,5 +1,33 @@
 # foundation changelog
 
+## 1.5.0
+
+- `OrbFill` (+ types `OrbFillProps`, `OrbFillController`): the one way an
+  orb changes colour (RULES §1). The new colour rises from the bottom as a
+  liquid level with a moving wave surface that calms when full, the content
+  turning to the new ink as it goes under; drains back on reversal. Driven
+  by `on`, by a `hoverWithin` host (hover, focus-visible, opt-in touch
+  press; disabled / busy hosts stay empty) or externally via
+  `controller.current.to(level)`. Colours: `--ev-orb-rest`,
+  `--ev-orb-rest-ink`, `--ev-orb-lit`, `--ev-orb-lit-ink`. No CSS file.
+- `TextFill` (+ `TextFillProps`): the same liquid fill for a text colour
+  switch (RULES §1); the new colour rises through the glyphs, returning to
+  the previous one drains it, a third rises over whichever shows. Colour
+  from `hoverWithin` + `hoverInk` (with `withHover` / `withFocus` /
+  `withPress`), `on` (`--ev-text-lit`, default `--primary`) or `ink` (any
+  state colour; default `--ev-text-rest`, i.e. the inherited colour).
+  `truncate` for single-line ellipsis labels. Root is `inline-grid` (labels,
+  titles, link text; not mid-paragraph).
+- `SurfaceFill` (+ `SurfaceFillProps`): the liquid fill for a button whose
+  surface changes colour: a copy of its content in the filled state, laid
+  over the button (display / padding / gap / radius inherited) on
+  `--ev-surface-lit` with `--ev-surface-lit-ink`, poured in on hover
+  (`withHover` / `withFocus` / `withPress`; disabled, busy, locked stay
+  empty). The button needs `position: relative`.
+- `liquid.ts`: the shared engine (`createLiquid`, `bindLiquidHover`,
+  `liquidClips`, type `LiquidController`, exported from the index).
+- No config changes; existing exports unchanged.
+
 ## 1.4.0
 
 - `StepGauge({ current, total, srLabel?, className? })` + `.ev-gauge`: a

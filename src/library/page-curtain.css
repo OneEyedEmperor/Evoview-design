@@ -1,0 +1,17 @@
+/* Under the navbar (z-50), over every page layer. */
+.page-curtain {
+  position: fixed;
+  z-index: 45;
+  inset: var(--curtain-top, 0px) 0 0;
+  overflow: hidden;
+  pointer-events: auto;
+}
+.page-curtain[hidden] { display: none; }
+.page-curtain__panel {
+  position: absolute;
+  inset: 0;
+  background: var(--lib-night, #0e0e0e);
+  transform: translateY(100%);
+  will-change: transform;
+}
+html.page-curtaining .lib-float { opacity: 0; pointer-events: none; transition: opacity 200ms ease-out; }

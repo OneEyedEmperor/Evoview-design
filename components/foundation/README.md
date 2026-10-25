@@ -112,6 +112,37 @@ Primitives: `<Readout size?>`, `<Index current total srLabel? size?>`,
 battery filled from the bottom; the norm for list rows, RULES §1; colour =
 `currentColor`), `<SectionMarker live?>`, `<EvoviewMark label href?>`,
 `<EvoviewLogo>`.
+`<OrbFill on? hoverWithin? withFocus? withPress? controller? lit?>` — the
+only way an orb changes colour (RULES §1): the new colour rises as liquid
+with a wave surface, the content turning to the new ink, and drains on
+reversal. Put it inside the orb (host `position: relative`, its radius, no
+background of its own); it paints both states from `--ev-orb-rest`,
+`--ev-orb-rest-ink`, `--ev-orb-lit` (default `--primary`), `--ev-orb-lit-ink`.
+State from `on`, or from the closest `hoverWithin` host's hover / focus-visible
+/ touch press (disabled or `aria-busy` hosts stay empty), or drive the level
+yourself through `controller.current.to(0…1)`. `children` show at rest, `lit`
+(default `children`) on the liquid. A settling transition, no loop. Imports
+no CSS, so `../foundation/OrbFill` can be used without `foundation.css`.
+`<TextFill ink? on? hoverWithin? hoverInk? withHover? withFocus? withPress? truncate?>`
+— the only way text changes colour (RULES §1): the new colour rises through
+the glyphs, going back drains it, a third colour rises over whichever
+shows. Shown colour: `hoverInk` (default `--ev-text-lit`) while the
+`hoverWithin` host is hovered / focus-visible / pressed, else
+`--ev-text-lit` (default `--primary`) when `on`, else `ink` (any CSS colour,
+for state colours; default `--ev-text-rest` = inherited `color`, so host
+`color` rules keep working). The text is laid twice in one `inline-grid`
+cell (the lit copy is aria-hidden): wrap a label, title or link text, not
+words mid-paragraph; `truncate` keeps a single-line ellipsis. Inline SVG in
+`currentColor` fills too (give an icon its own `TextFill`). Engine shared
+with `OrbFill`: `liquid.ts`.
+`<SurfaceFill hoverWithin withHover? withFocus? withPress?>` — a button
+whose surface changes colour on hover pours it in: pass the button's
+content again as children (styled for the filled state; override inner
+colours with `.ev-surface-fill …` selectors), as the button's last child.
+The copy lies over the button (inset 0, display / padding / gap / alignment
+/ radius inherited) on `--ev-surface-lit`, ink `--ev-surface-lit-ink`; the
+original stays in flow for layout and the accessible name. Host:
+`position: relative`, no CSS hover background swap.
 Icons: `ArrowRight`, `ArrowLeft`, `ArrowUpRight`, `Check`, `Close`,
 `Chevron dir`.
 

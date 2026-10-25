@@ -1,5 +1,16 @@
 # selector-stage changelog
 
+## 1.4.0
+
+Requires `foundation` ≥ 1.5.0 (`TextFill`) and `controls` ≥ 1.2.0. No config
+changes, no API changes.
+
+- Behaviour: row labels (hover, selection), the autoplay toggle (icon and
+  label) and atlas thumb labels take their new ink as a liquid fill
+  (RULES §1). The `.ss-loader` ghost colour override still applies.
+- CSS: `.ss-row__label`, `.ss-auto`, `.ss-thumb__label` state rules no
+  longer set `color`.
+
 ## 1.3.0
 
 - Requires `foundation` 1.4.0 (`StepGauge`).

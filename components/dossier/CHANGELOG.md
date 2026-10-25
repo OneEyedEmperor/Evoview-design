@@ -1,5 +1,20 @@
 # dossier changelog
 
+## 1.3.0
+
+Requires `foundation` ≥ 1.5.0 (`TextFill`) and `controls` ≥ 1.2.0. No config
+changes, no API changes.
+
+- Behaviour: text colour switches take the liquid fill (RULES §1): strip tab
+  labels (rest → past → active, hover), the overview link (label and arrow),
+  tile index and kicker (hover from 1024 with hover, cycle focus on touch),
+  dock icon and label (touch press). The active tab's number keeps following
+  its accent badge.
+- Behaviour: the completion toast's hover plate pours in (foundation
+  `SurfaceFill`).
+- CSS: those rules no longer set `color`; backgrounds and opacity still
+  transition.
+
 ## 1.2.0
 
 Text lists on tonal surfaces (RULES §3; uses foundation 1.3.0

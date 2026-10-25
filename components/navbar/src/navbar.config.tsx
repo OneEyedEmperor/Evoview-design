@@ -47,6 +47,7 @@ const COPY: Record<Locale, Copy> = {
       closeAria: "Fermer le menu",
       homeAria: "Evoview — accueil",
       loading: "Chargement de la navigation",
+      currentItem: "Page active",
     },
     deck: { home: "Accueil", services: "Services", portfolio: "Portfolio", method: "Méthode", contact: "Contact", lang: "Langue : français. Passer en anglais" },
     servicesUnit: "dossiers",
@@ -67,6 +68,7 @@ const COPY: Record<Locale, Copy> = {
       closeAria: "Close menu",
       homeAria: "Evoview — home",
       loading: "Loading navigation",
+      currentItem: "Active page",
     },
     deck: { home: "Home", services: "Services", portfolio: "Portfolio", method: "Method", contact: "Contact", lang: "Language: English. Switch to French" },
     servicesUnit: "dossiers",
@@ -135,13 +137,14 @@ export function buildNavbarConfig(locale: Locale, onLocaleChange: (locale: Local
 }
 
 /* Multi-page sites: the live pill is the one whose href is the current route
-   or its closest parent (`/services/x` lights Services). Call from the
-   layout: `withRoute(config, location.pathname)`. */
+   or its closest parent (`/services/x` lights Services), and the tray entry
+   whose href is the route is marked active. Call from the layout:
+   `withRoute(config, location.pathname)`. */
 export function withRoute(config: NavbarConfig, pathname: string): NavbarConfig {
   const path = pathname.replace(/\/+$/, "") || "/";
   const matches = (href: string) => href === path || (href !== "/" && path.startsWith(`${href}/`));
   const live = config.deck
     .filter((entry) => entry.href && matches(entry.href))
     .sort((a, b) => (b.href?.length ?? 0) - (a.href?.length ?? 0))[0];
-  return { ...config, activeKey: live?.key };
+  return { ...config, activeKey: live?.key, currentPath: path };
 }

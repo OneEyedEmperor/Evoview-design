@@ -20,51 +20,174 @@
   .chd-specimen__grid { grid-template-columns: minmax(0, 0.37fr) minmax(0, 0.63fr); column-gap: 3.5em; align-items: start; }
   .chd-desk { position: sticky; top: 92px; gap: 1.25em; }
   .chd-desk__controls { grid-template-columns: minmax(0, 1fr); gap: 1em; }
-  .chd-desk__say { min-height: calc(2 * 1.6em); }
+  .chd-desk__say { min-height: calc(3 * 1.6em); }
 }
 @media (min-width: 1024px) and (max-width: 1279.98px) { .chd-desk .evc-seg__option { padding-inline: 6px; } }
+
+/* Heading setting: three schematic tiles on tonal ground, no borders. */
+.chd-layouts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.chd-layout {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 14px 8px 12px;
+  border: 0;
+  border-radius: var(--ev-radius-control);
+  background: color-mix(in oklab, var(--ev-fg) 4%, transparent);
+  color: var(--ev-fg-55);
+  cursor: pointer;
+  transition: background-color var(--ev-dur-fast) ease, color var(--ev-dur-fast) ease, box-shadow var(--ev-dur-fast) ease;
+}
+@media (hover: hover) { .chd-layout:hover { background: color-mix(in oklab, var(--ev-fg) 8%, transparent); color: var(--ev-fg); } }
+.chd-layout[aria-checked="true"] {
+  background: var(--ev-surface);
+  color: var(--ev-fg);
+  box-shadow: 0 12px 28px -18px var(--chapter-accent-deep, var(--ev-accent-deep));
+}
+.chd-layout:focus-visible { outline: 2px solid var(--ev-accent-signal); outline-offset: 2px; }
+.chd-layout__plan { width: 100%; max-width: 88px; height: auto; }
+.chd-layout__plan rect { transition: fill var(--ev-dur-fast) ease; }
+.chd-s-title { fill: var(--ev-fg-35); }
+.chd-s-text { fill: var(--ev-fg-12); }
+.chd-s-signal { fill: var(--ev-fg-12); }
+.chd-s-media { fill: color-mix(in oklab, var(--ev-fg) 7%, transparent); }
+.chd-layout[aria-checked="true"] .chd-s-title { fill: var(--ev-fg); }
+.chd-layout[aria-checked="true"] .chd-s-signal { fill: var(--ev-accent-signal); }
+.chd-layout[aria-checked="true"] .chd-s-media { fill: color-mix(in oklab, var(--ev-accent-signal) 14%, transparent); }
 
 /* The frame is media clipping: a crop of a page, cut above and below. */
 .chd-frame { position: relative; overflow: hidden; margin-inline: calc(-1 * var(--lib-gutter)); }
 @media (min-width: 768px) { .chd-frame { margin-inline: 0; border-radius: calc(1.5 * var(--ev-rem)); } }
 
-.chd-neighbour { box-sizing: border-box; overflow: hidden; }
-/* The previous chapter, reduced to its last image (a whole room as a
-   panorama strip) and a short tail: enough to read as "a dark chapter ends
-   here", short enough that the specimen heading stays in the first
-   viewport. Its own bottom padding is cropped, not demonstrated; the
-   specimen's padding is the one the rhythm bands show. */
-.chd-neighbour--before { --chd-prev-h: calc(6 * var(--ev-rem)); padding-bottom: calc(2.5 * var(--ev-rem)); }
-.chd-neighbour--before .chd-room { aspect-ratio: auto; height: var(--chd-prev-h); border-top-left-radius: 0; border-top-right-radius: 0; }
-@media (min-width: 1024px) { .chd-neighbour--before { --chd-prev-h: calc(3 * var(--ev-rem)); padding-bottom: calc(1.25 * var(--ev-rem)); } }
-@media (min-width: 1280px) { .chd-neighbour--before { --chd-prev-h: calc(5.5 * var(--ev-rem)); padding-bottom: calc(2 * var(--ev-rem)); } }
-.chd-neighbour--after { height: calc(var(--ev-chapter-standard) + 6.5 * var(--ev-rem)); padding-top: var(--ev-chapter-standard); }
-/* The follower obeys the rule the specimen teaches: same tone → compact. */
-.chd-live.ev-tone-dark + .chd-neighbour--after { padding-top: var(--ev-chapter-compact); }
-.chd-neighbour .ev-chapter__heading { margin: 0; }
+/* Split: the phase list is narrow enough to hold the column beside the
+   title inside the specimen frame; the title wraps, the list stays. */
+@media (min-width: 768px) {
+  .chd-live .ev-chapter__heading--split { flex-wrap: nowrap; align-items: flex-start; column-gap: calc(2.5 * var(--ev-rem)); }
+  .chd-live .ev-chapter__heading--split .ev-chapter__main { flex: 1 1 auto; }
+}
+/* Steps: the four moves as tonal tiles under the heading, two by two in
+   the specimen frame, four across once the chapter is wide enough. */
+.chd-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15em), 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.chd-step {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px 12px;
+  padding: 16px 18px 18px;
+  border-radius: var(--ev-radius-surface);
+  background: var(--ev-surface-list);
+}
+.chd-step .chd-phase__orb { background: var(--chapter-accent); color: var(--chapter-accent-ink); }
+.chd-step__name { color: var(--ev-fg); }
+.chd-step__text { grid-column: 1 / -1; color: var(--ev-fg-65); text-wrap: pretty; }
 
-.chd-live {
-  --chd-pt: var(--ev-chapter-standard);
-  --chd-pb: var(--ev-chapter-standard);
+/* Feature: the content takes the stage. */
+.chd-stage { display: grid; gap: calc(1.25 * var(--ev-rem)); }
+@media (min-width: 768px) {
+  /* Phases: the list leaves the heading and indexes a tall drawing. */
+  .chd-stage { grid-template-columns: auto minmax(0, 1fr); align-items: start; }
+  .chd-stage .chd-sheet--specimen.chd-sheet--feature { aspect-ratio: 4 / 3; }
+  /* Ticker: the drawing bleeds to the frame edge, square-cut. */
+  .chd-live[data-instrument="ticker"][data-heading="feature"] .chd-sheet {
+    margin-inline: calc(-1 * var(--ev-gutter));
+    border-radius: 0;
+    aspect-ratio: 16 / 9;
+  }
+  /* Steps: one row of four poster tiles, out near the frame edge. */
+  .chd-live[data-heading="feature"] .chd-steps {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-inline: calc(-1 * var(--ev-gutter) + 12px);
+  }
+  .chd-live[data-heading="feature"] .chd-step {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+    gap: 14px;
+    min-height: calc(15 * var(--ev-rem));
+    padding: 20px 16px;
+  }
+  .chd-live[data-heading="feature"] .chd-step .chd-phase__orb { width: 40px; height: 40px; font-size: 16px; }
+  /* Compact role (RULES floor 11px): four narrow columns read as captions. */
+  .chd-live[data-heading="feature"] .chd-step__text { grid-column: auto; font-size: max(calc(0.875 * var(--ev-rem)), 12px); line-height: 1.5; }
+}
+
+/* Client logo, one size per layout; it inks in the tone foreground. */
+.chd-logo { display: block; color: var(--ev-fg); line-height: 0; }
+.chd-logo > svg,
+.chd-live .ev-chapter__mark > svg { width: auto; height: 100%; }
+.chd-logo,
+.chd-logo-in { animation: chd-logo-in var(--ev-dur-reveal) var(--ev-ease-cinematic) both; }
+@keyframes chd-logo-in { from { opacity: 0; transform: scale(0.9); } }
+/* Centered: the package's inline slot; the eye is wide, so a touch lower. */
+.chd-live .ev-chapter__mark.chd-logo-in { height: 0.95em; }
+/* Split: heads the instrument column, aligned to the title's cap line. */
+.chd-side { display: grid; justify-items: start; gap: calc(1.5 * var(--ev-rem)); }
+.chd-logo--side { height: calc(2.6 * var(--ev-rem)); }
+@media (min-width: 768px) {
+  .chd-side { justify-items: end; }
+  .chd-live[data-instrument="phases"] .chd-side { justify-items: stretch; }
+  .chd-live[data-instrument="phases"] .chd-logo--side { justify-self: end; }
+  .chd-logo--side { height: calc(3.2 * var(--ev-rem)); margin-top: 0.2em; }
+}
+/* Feature: opens the region, centred above the title. */
+.chd-logo--emblem {
+  width: fit-content;
+  height: calc(3.6 * var(--ev-rem));
+  margin: 0 auto calc(1.75 * var(--ev-rem));
+}
+@media (min-width: 768px) { .chd-logo--emblem { height: calc(5 * var(--ev-rem)); } }
+
+/* Split + ticker: the state line stands as a short column beside the title. */
+.chd-live .ev-chapter__heading--split .ev-chapter__ticker { flex-direction: column; row-gap: 0.9em; padding-top: 0.4em; }
+.chd-live .ev-chapter__heading--split .ev-chapter__ticker li + li::before { content: none; }
+.chd-phases { display: grid; gap: 4px; min-width: calc(11 * var(--ev-rem)); }
+/* Centered: the same rows side by side; two by two on phones. */
+.chd-phases--row { grid-template-columns: repeat(2, minmax(0, 1fr)); min-width: 0; width: 100%; }
+@media (min-width: 768px) { .chd-phases--row { grid-template-columns: repeat(4, auto); width: auto; } }
+.chd-phase {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 14px 6px 8px;
+  border: 0;
+  border-radius: var(--ev-radius-control);
+  background: color-mix(in oklab, var(--ev-fg) 4%, transparent);
+  color: var(--ev-fg-55);
+  cursor: pointer;
+  text-align: left;
+  transition: background-color var(--ev-dur-fast) ease, color var(--ev-dur-fast) ease;
+}
+@media (hover: hover) { .chd-phase:hover { color: var(--ev-fg); } }
+.chd-phase[aria-checked="true"] { background: var(--ev-surface); color: var(--ev-fg); }
+.chd-phase:focus-visible { outline: 2px solid var(--chapter-signal); outline-offset: 2px; }
+.chd-phase__orb {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--ev-fg) 7%, transparent);
+  font-family: var(--ev-font-display);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+/* The active phase's orb takes the accent as liquid (foundation OrbFill, RULES §1). */
+.chd-phase .chd-phase__orb {
   position: relative;
-  transition: padding var(--ev-dur-reveal) var(--ev-ease-cinematic);
+  background: none;
+  --ev-orb-rest: color-mix(in oklab, var(--ev-fg) 7%, transparent);
+  --ev-orb-lit: var(--chapter-accent);
+  --ev-orb-lit-ink: var(--chapter-accent-ink);
 }
-.chd-live[data-rhythm="compact"] { --chd-pt: var(--ev-chapter-compact); --chd-pb: var(--ev-chapter-compact); }
-.chd-live[data-rhythm="cinematic"] { --chd-pt: var(--ev-chapter-cinematic-top); --chd-pb: var(--ev-chapter-cinematic-bottom); }
-
-/* Rhythm change: the two padding bands light up once (acknowledge). */
-.chd-band {
-  position: absolute;
-  inset-inline: 0;
-  pointer-events: none;
-  background: color-mix(in oklab, var(--chapter-accent) 12%, transparent);
-  opacity: 0;
-  transition: height var(--ev-dur-reveal) var(--ev-ease-cinematic);
-  animation: chd-band 1.6s var(--ev-ease) both;
-}
-.chd-band--top { top: 0; height: var(--chd-pt); }
-.chd-band--bottom { bottom: 0; height: var(--chd-pb); }
-@keyframes chd-band { 15%, 65% { opacity: 1; } 100% { opacity: 0; } }
 
 /* ── Scene 2 · the page ───────────────────────────────────────────────── */
 .chd-figure { margin: 0; }
@@ -104,59 +227,10 @@
 .chd-drawing[data-lit] .chd-d-window { fill: color-mix(in oklab, var(--chapter-signal) 30%, transparent); stroke: var(--chapter-signal); }
 /* The specimen's one proof object: shorter than a page sheet, so the
    chapter's padding and heading stay the subject. */
-@media (min-width: 768px) { .chd-sheet--specimen { aspect-ratio: 2.6 / 1; } }
+@media (min-width: 768px) {
+  .chd-sheet--specimen { aspect-ratio: 2.6 / 1; transition: aspect-ratio var(--ev-dur-reveal) var(--ev-ease-cinematic); }
+  .chd-sheet--specimen.chd-sheet--feature { aspect-ratio: 2 / 1; }
+}
 .chd-drawing .chd-d-accent,
 .chd-drawing .chd-d-accent * { stroke: var(--chapter-signal); stroke-width: 1.5; }
 .chd-drawing .chd-d-accent .chd-d-fill { fill: var(--chapter-signal); }
-
-/* A graded room: the light is the subject; it drifts with the sun. */
-.chd-room {
-  position: relative;
-  aspect-ratio: 4 / 5;
-  overflow: hidden;
-  border-radius: var(--ev-radius-surface);
-  background: #0b0b0c;
-  box-shadow: 0 20px 40px -10px color-mix(in oklab, var(--ev-accent-deep) 45%, transparent);
-}
-@media (min-width: 768px) { .chd-room { aspect-ratio: 2.2 / 1; } }
-.chd-room > span { position: absolute; display: block; }
-.chd-room__wall { inset: 0 0 26% 0; background: linear-gradient(90deg, #121214 0%, #1b1b1e 58%, #141416 100%); }
-.chd-room__window {
-  top: 12%;
-  left: 60%;
-  width: 13%;
-  height: 56%;
-  background: linear-gradient(180deg, #f4f1ea, #cfc9bd);
-  box-shadow: 0 0 60px 6px rgba(244, 241, 234, 0.12);
-}
-.chd-room__beam {
-  inset: 12% 27% 0 18%;
-  background: linear-gradient(200deg, rgba(244, 241, 234, 0.2), rgba(244, 241, 234, 0) 72%);
-  clip-path: polygon(78% 0, 99% 0, 52% 100%, 0 100%);
-  transform-origin: 88% 0;
-}
-.chd-room__floor { inset: 74% 0 0 0; background: linear-gradient(180deg, #0f0f11, #08080a); }
-.chd-room__patch {
-  bottom: 6%;
-  left: 22%;
-  width: 34%;
-  height: 12%;
-  background: radial-gradient(closest-side, rgba(244, 241, 234, 0.26), rgba(244, 241, 234, 0));
-  transform: skewX(-24deg);
-}
-/* Four moments of the sun; slow, so the drift stays quieter than state. */
-.chd-room__beam,
-.chd-room__patch,
-.chd-room__window { transition: transform 2.4s var(--ev-ease-cinematic), opacity 2.4s ease, filter 2.4s ease; }
-.chd-room[data-moment="0"] .chd-room__beam { transform: skewX(16deg) scaleY(0.78); opacity: 0.7; }
-.chd-room[data-moment="0"] .chd-room__patch { transform: translateX(70%) skewX(-10deg) scaleX(0.6); opacity: 0.8; }
-.chd-room[data-moment="1"] .chd-room__beam { transform: skewX(6deg) scaleY(0.9); opacity: 0.9; }
-.chd-room[data-moment="1"] .chd-room__patch { transform: translateX(34%) skewX(-18deg) scaleX(0.8); }
-.chd-room[data-moment="3"] .chd-room__beam { transform: skewX(-14deg); opacity: 0.4; }
-.chd-room[data-moment="3"] .chd-room__patch { transform: translateX(-30%) skewX(-34deg) scaleX(1.3); opacity: 0.35; }
-.chd-room[data-moment="3"] .chd-room__window { filter: brightness(0.72); }
-@media (max-width: 767.98px) {
-  .chd-room__window { left: 58%; width: 22%; height: 44%; }
-  .chd-room__beam { inset: 12% 20% 0 6%; }
-  .chd-room__patch { left: 10%; width: 54%; }
-}

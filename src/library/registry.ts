@@ -26,7 +26,7 @@ const DRAFTS: Draft[] = [
     id: "chapter",
     category: "layouts",
     route: "/layouts/chapter",
-    title: { fr: "Chapitre", en: "Chapter" },
+    title: { fr: "Rythme des sections", en: "Section pacing" },
     meta: { fr: "Coque de section, titres et coupes de ton", en: "Section shell, headings and tone cuts" },
     status: "ready",
   },

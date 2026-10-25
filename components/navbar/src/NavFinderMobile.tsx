@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent } from "react";
-import { DeckIcon } from "./NavIcons";
 import type { NavDeckEntry, NavbarConfig } from "./types";
 import { ensureTray, preloadTrays } from "./useNavTrays";
-import { ReticleMark, TrayContent, useNavActions } from "./finderShared";
+import { CurrentPageSlot, DeckLabel, DeckMark, deckLabel, marksLive, ReticleMark, TrayContent, useCurrentPage, useNavActions } from "./finderShared";
 
 /* Mobile finder. Same capsule and vocabulary as the desktop finder, unfolding
    downward instead of sideways: a tap on the finder pill grows the capsule
@@ -40,6 +39,7 @@ export default function NavFinderMobile({ config, activeKey, current, accent }: 
     setTray(null);
   }, []);
   const actions = useNavActions(config, close, "mobile_menu");
+  const page = useCurrentPage(config, activeKey, current);
 
   useEffect(() => {
     if (open) preloadTrays(config);
@@ -195,7 +195,7 @@ export default function NavFinderMobile({ config, activeKey, current, accent }: 
           <a
             href={config.homeHref}
             onClick={close}
-            className="nav-control-focus flex h-[2.75em] min-w-0 flex-1 items-center rounded-full px-[0.25em]"
+            className="nav-control-focus flex h-[2.75em] flex-1 items-center rounded-full px-[0.25em]"
             aria-label={labels.homeAria}
           >
             <span className="nav-logo nav-logo--mobile">{config.logo}</span>
@@ -218,6 +218,7 @@ export default function NavFinderMobile({ config, activeKey, current, accent }: 
               </span>
             </span>
           </button>
+          <CurrentPageSlot page={page} labels={labels} hidden={open} />
         </div>
 
         <div id={bodyId} className="nav-finder-m-body" inert={!open} aria-hidden={!open}>
@@ -234,7 +235,7 @@ export default function NavFinderMobile({ config, activeKey, current, accent }: 
                     "aria-current": isCurrent ? current : undefined,
                     "aria-expanded": hasTray ? tray === entry.key : undefined,
                     "aria-controls": hasTray ? trayId : undefined,
-                    "aria-label": entry.content ? entry.label : undefined,
+                    "aria-label": entry.content ? entry.label : deckLabel(entry, page).aria,
                     className: `nav-deck-pill nav-control-focus${entry.cta ? " nav-deck-pill--cta" : ""}`,
                     style: { "--nav-orb-accent": entry.accent, "--nav-entry-index": index } as CSSProperties,
                   };
@@ -242,8 +243,8 @@ export default function NavFinderMobile({ config, activeKey, current, accent }: 
                     <>
                       {entry.content ?? (
                         <>
-                          <DeckIcon icon={entry.icon} />
-                          <span className="nav-deck-label">{entry.label}</span>
+                          <DeckMark entry={entry} live={marksLive(config, current) && isCurrent} />
+                          <DeckLabel text={deckLabel(entry, page).text} />
                         </>
                       )}
                       {isCurrent && <span aria-hidden="true" className="nav-deck-current" />}
@@ -278,6 +279,7 @@ export default function NavFinderMobile({ config, activeKey, current, accent }: 
                       labels={labels}
                       columns={1}
                       sectionLink
+                      currentPath={config.currentPath}
                     />
                   </div>
                 </div>

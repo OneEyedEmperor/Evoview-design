@@ -11,7 +11,7 @@ import {
   type ReactNode,
   type RefObject,
 } from "react";
-import { ArrowLeft, ArrowRight, EvoviewMark, cn, inkFor, pad, preloadMedia, useMediaReady, useSuspendBackground } from "../foundation";
+import { ArrowLeft, ArrowRight, EvoviewMark, cn, inkFor, pad, preloadMedia, SurfaceFill, TextFill, useMediaReady, useSuspendBackground } from "../foundation";
 import { GlassClose, PagerOrb } from "../controls";
 import { SelectionBoard } from "./Board";
 import { ChapterRevealContext, type ChapterReveal } from "./Chapters";
@@ -464,8 +464,8 @@ function DossierLayer({ config, onClose, initialItemId, initialEntryId, classNam
           {entry && entryIndex !== null && (
             <nav ref={stripRef} className="evd-strip" aria-label={copy.entriesNav} style={{ ["--evd-tabs" as string]: entries.length }}>
               <button type="button" className="evd-strip__overview" onClick={toOverview} aria-label={copy.overviewOf(item.label)}>
-                <ArrowLeft />
-                <span>{copy.overview}</span>
+                <TextFill hoverWithin=".evd-strip__overview" hoverInk="#fff" withFocus={false}><ArrowLeft /></TextFill>
+                <TextFill hoverWithin=".evd-strip__overview" hoverInk="#fff" withFocus={false}>{copy.overview}</TextFill>
               </button>
               <div className="evd-strip__tabs">
                 {entries.map((e, i) => (
@@ -479,7 +479,17 @@ function DossierLayer({ config, onClose, initialItemId, initialEntryId, classNam
                     onClick={() => i !== entryIndex && openEntry(i)}
                   >
                     <span className="evd-strip__num">{pad(i + 1)}</span>
-                    <span className="evd-strip__label">{e.label ?? e.title}</span>
+                    <span className="evd-strip__label">
+                      <TextFill
+                        truncate
+                        ink={i === entryIndex ? "#fff" : i < entryIndex ? "rgb(255 255 255 / 0.72)" : undefined}
+                        hoverWithin={i === entryIndex ? undefined : ".evd-strip__tab"}
+                        hoverInk="#fff"
+                        withFocus={false}
+                      >
+                        {e.label ?? e.title}
+                      </TextFill>
+                    </span>
                     <span className="evd-strip__progress" aria-hidden="true" />
                   </button>
                 ))}
@@ -497,6 +507,13 @@ function DossierLayer({ config, onClose, initialItemId, initialEntryId, classNam
                       <strong>{nextEntryLabel}</strong>
                     </span>
                     <ArrowRight />
+                    <SurfaceFill hoverWithin=".evd-toast button">
+                      <span>
+                        <small>{entryIndex < entries.length - 1 ? copy.toastNext : itemCount > 1 ? copy.toastEnd : copy.toastBack}</small>
+                        <strong>{nextEntryLabel}</strong>
+                      </span>
+                      <ArrowRight />
+                    </SurfaceFill>
                   </button>
                 </div>
               )}
@@ -679,8 +696,12 @@ function DockButton({ side, label, aria, icon, onClick }: { side: "start" | "end
         onClick();
       }}
     >
-      <span className="evd-dock__icon">{icon}</span>
-      <span className="evd-dock__label">{label}</span>
+      <span className="evd-dock__icon">
+        <TextFill hoverWithin=".evd-dock__item" hoverInk="#fff" withHover={false} withFocus={false} withPress>{icon}</TextFill>
+      </span>
+      <span className="evd-dock__label">
+        <TextFill truncate hoverWithin=".evd-dock__item" hoverInk="#fff" withHover={false} withFocus={false} withPress>{label}</TextFill>
+      </span>
     </button>
   );
 }

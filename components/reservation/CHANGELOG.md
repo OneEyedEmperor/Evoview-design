@@ -1,5 +1,24 @@
 # reservation changelog
 
+## 2.10.0
+
+Requires `foundation` ≥ 1.5.0 (installed via `controls`). No config changes.
+
+- Behaviour: the experience check orb, the pill number marks (guests,
+  duration) and the compact guest orbs (≤ 520 container) take the accent
+  as a liquid fill (foundation `OrbFill`, RULES §1) instead of a
+  background cut. The compact guest pill no longer paints its own accent
+  background; its mark spans it and fills.
+- Behaviour: text colour switches take the liquid fill (foundation
+  `TextFill`): pill labels and units (hover, selection), the back / submit
+  another links (label and arrow), the ticket's row labels as each value is
+  filled, calendar days on hover (the selected day still follows its accent
+  disc). The calendar uses a custom `DayButton` (focus handling as
+  react-day-picker's own).
+- Behaviour: the primary plate's hover accent pours in (foundation
+  `SurfaceFill`) instead of a background swap.
+- `ReservationFlow` picks up the same through `controls` 1.2.0.
+
 ## 2.9.0 — ReservationFlow, the short form
 
 - New `ReservationFlow` export: a few chip questions then an e-mail, on a

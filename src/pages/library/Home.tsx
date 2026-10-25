@@ -1,34 +1,41 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
-import EvoviewLogo from "../../../components/foundation/src/brand/EvoviewLogo";
+import AccentPalette, { inkFor } from "../../library/AccentPalette";
+import { useAccentChoice } from "../../library/accentChoice";
 import { Cover } from "../../library/covers";
-import HeroEye from "../../library/hero/HeroEye";
+import EyeMark from "../../library/hero/EyeMark";
+import LibraryHero from "../../library/LibraryHero";
 import { useLibraryLocale, type Localized } from "../../library/locale";
-import { CATEGORY_LABEL, entriesOf, getEntry, pad2, type Category, type RegistryEntry } from "../../library/registry";
+import { CATEGORY_DOT } from "../../library/library.navbar.config";
+import { CATEGORY_LABEL, entriesOf, getEntry, type Category, type RegistryEntry } from "../../library/registry";
+import { OrbFill, type OrbFillController } from "../../../components/foundation/src/OrbFill";
+import SeamFlow from "../../library/SeamFlow";
+import { SWATCHES } from "../../library/ShowcasePage";
 import StatusTag from "../../library/StatusTag";
+import { useNavEyeAccent } from "../../library/useNavEyeAccent";
 
-/* The library index, built for picking: the hero ends in a directory of
-   every package (three equal shelves), then each category is a chapter
-   whose packages sit in an equal 2-up grid (peers, so equal columns), the
-   navbar chapter pairs its package with its two demos 6/6. Tone cuts and
-   spacing separate everything; text choices sit on tonal tiles. */
+/* The library index, built for picking: the hero is the one-line lockup
+   over the method-card reel with a small accent palette under it; the
+   picked colour drives the eyes' irises, the orbs and the hover fills,
+   except in the layouts and components chapters, whose cards (irises,
+   orbs, hover fills) take their category's live dot.
+   Then each category is a chapter whose packages sit in an equal 2-up
+   grid (peers, so equal columns), the navbar chapter pairs its package
+   with its two demos 6/6. Tone cuts and spacing separate everything; text
+   choices sit on tonal tiles. */
 
 const COPY = {
   fr: {
-    intro: "Les sections et composants des sites Evoview, extraits du site, découplés et prêts à adapter pour chaque client.",
-    indexLabel: "Sommaire de la bibliothèque",
-    collageLabel: "La méthode Evoview",
     demo: "Démo",
+    accent: "Couleur d'accent",
+    custom: "Couleur personnalisée",
   },
   en: {
-    intro: "The sections and components behind Evoview sites, extracted from the site, decoupled and ready to adapt for each client.",
-    indexLabel: "Library contents",
-    collageLabel: "The Evoview method",
     demo: "Demo",
+    accent: "Accent colour",
+    custom: "Custom colour",
   },
 };
-
-const HERO_SHELVES: Category[] = ["layouts", "components", "navbar"];
 
 const NAVBAR_DEMOS: { route: string; title: Localized; meta: Localized }[] = [
   {
@@ -48,20 +55,13 @@ const NAVBAR_LEAD: Localized = {
   en: "The navigation capsule of Evoview sites: the package, then two full-screen demos to watch it work.",
 };
 
-const HERO_PANELS: { id: string; alt: Localized }[] = [
-  { id: "identite-visuelle", alt: { fr: "Identité visuelle", en: "Visual identity" } },
-  { id: "direction-artistique", alt: { fr: "Direction artistique", en: "Art direction" } },
-  { id: "design-creation", alt: { fr: "Design & création", en: "Design & creation" } },
-  { id: "strategie-marketing", alt: { fr: "Stratégie marketing", en: "Marketing strategy" } },
-];
-
 const CHAPTERS: { category: Exclude<Category, "navbar">; tone: "light" | "dark"; lead: Localized }[] = [
   {
     category: "layouts",
     tone: "light",
     lead: {
-      fr: "Les compositions qui portent une page : coque de chapitre, piste de cartes, séquence minutée, blocs de récit.",
-      en: "The compositions a page is built from: chapter shell, card track, timed sequence, story blocks.",
+      fr: "Les compositions qui portent une page : rythme des sections, piste de cartes, séquence minutée, blocs de récit.",
+      en: "The compositions a page is built from: section pacing, card track, timed sequence, story blocks.",
     },
   },
   {
@@ -79,7 +79,7 @@ const SECTIONS = 2 + CHAPTERS.length;
 
 /* The page's sections as a row of bars beside a title, only this
    section's bar lit; the lit bar draws in once on screen. */
-function SectionBars({ index }: { index: number }) {
+function SectionBars({ index, separator, dot }: { index: number; separator?: boolean; dot?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
   const [seen, setSeen] = useState(false);
   useEffect(() => {
@@ -98,9 +98,11 @@ function SectionBars({ index }: { index: number }) {
     return () => io.disconnect();
   }, []);
   return (
-    <span ref={ref} className="lib-bars" data-seen={seen || undefined} aria-hidden="true">
+    <span ref={ref} className="lib-bars" data-role={separator ? "separator" : undefined} data-seen={seen || undefined} aria-hidden="true">
       {Array.from({ length: SECTIONS }, (_, i) => (
-        <span key={i} className="lib-bars__bar" data-on={i + 1 === index || undefined} />
+        <span key={i} className="lib-bars__bar" data-on={i + 1 === index || undefined}>
+          {dot && i + 1 === index && <span className="lib-bars__dot" style={{ "--lib-bar-dot": dot } as CSSProperties} />}
+        </span>
       ))}
     </span>
   );
@@ -111,65 +113,25 @@ export default function Home() {
   const copy = COPY[locale];
   const navbar = getEntry("navbar");
 
+  const swatches = useMemo(() => SWATCHES.map((s) => ({ id: s.id, color: s.color, label: t(s.label) })), [t]);
+  const { accentId, custom, accent, picked, onChange, onCustom } = useAccentChoice(swatches, SWATCHES[0].id);
+  const style = { "--primary": accent, "--primary-foreground": inkFor(accent) } as CSSProperties;
+  useNavEyeAccent(accent);
+
   return (
-    <div className="lib-home">
-      <section className="lib-hero lib-toned" data-tone="dark" data-nav-tone="dark">
-        <div className="lib-rail lib-hero__grid">
-          <div className="lib-hero__main">
-            <h1 className="lib-hero__lockup">
-              <span className="lib-hero__mark">
-                <EvoviewLogo alt="Evoview" />
-              </span>
-              <span className="lib-hero__word">
-                Library
-                <SectionBars index={1} />
-              </span>
-            </h1>
-            <div className="lib-hero__intro">
-              <p className="lib-lead">{copy.intro}</p>
-            </div>
-          </div>
-          <ul className="lib-hero__collage" aria-label={copy.collageLabel}>
-            {HERO_PANELS.map((panel, i) => (
-              <li key={panel.id}>
-                <HeroPanel id={panel.id} alt={t(panel.alt)} index={i} />
-              </li>
-            ))}
-          </ul>
-          <nav className="lib-dir" aria-label={copy.indexLabel}>
-            {HERO_SHELVES.map((category) => {
-              const entries = entriesOf(category);
-              const demos = category === "navbar" ? NAVBAR_DEMOS : [];
-              return (
-                <div key={category} className="lib-dir__shelf">
-                  <Link to={{ hash: category }} className="lib-dir__head">
-                    <span className="lib-dir__label">{t(CATEGORY_LABEL[category])}</span>
-                    <span className="lib-voice-state lib-dir__count">{pad2(entries.length)}</span>
-                  </Link>
-                  <ol className="lib-dir__list">
-                    {entries.map((entry) => (
-                      <li key={entry.id}>
-                        <Link to={entry.route} className="lib-dir__item">
-                          <span className="lib-dir__name">{t(entry.title)}</span>
-                          <StatusTag status={entry.status} version={entry.version} />
-                        </Link>
-                      </li>
-                    ))}
-                    {demos.map((demo) => (
-                      <li key={demo.route}>
-                        <Link to={demo.route} className="lib-dir__item" data-kind="demo">
-                          <span className="lib-dir__name">{t(demo.title)}</span>
-                          <span className="lib-voice-state lib-status">{copy.demo}</span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              );
-            })}
-          </nav>
-        </div>
-      </section>
+    <div className="lib-home" style={style}>
+      <LibraryHero accent={picked ? accent : undefined} home bars={<SectionBars index={1} separator />}>
+        <AccentPalette
+          swatches={swatches}
+          value={accentId}
+          custom={custom}
+          caption={{ strong: copy.accent, rest: "" }}
+          customLabel={copy.custom}
+          onChange={onChange}
+          onCustom={onCustom}
+          compact
+        />
+      </LibraryHero>
 
       {CHAPTERS.map((chapter, c) => {
         const entries = entriesOf(chapter.category);
@@ -181,12 +143,19 @@ export default function Home() {
             className="lib-chapter lib-toned"
             data-tone={chapter.tone}
             data-nav-tone={chapter.tone === "dark" ? "dark" : undefined}
+            style={
+              {
+                "--lib-iris": CATEGORY_DOT[chapter.category],
+                "--primary": CATEGORY_DOT[chapter.category],
+                "--primary-foreground": inkFor(CATEGORY_DOT[chapter.category]),
+              } as CSSProperties
+            }
           >
             <div className="lib-rail">
               <header className="lib-chapter__head">
                 <h2 id={`${chapter.category}-title`} className="lib-title">
                   {t(CATEGORY_LABEL[chapter.category])}
-                  <SectionBars index={c + 2} />
+                  <SectionBars index={c + 2} separator dot={CATEGORY_DOT[chapter.category]} />
                 </h2>
                 <p className="lib-lead">{t(chapter.lead)}</p>
               </header>
@@ -207,7 +176,7 @@ export default function Home() {
           <header className="lib-chapter__head">
             <h2 id="navbar-title" className="lib-title">
               {t(CATEGORY_LABEL.navbar)}
-              <SectionBars index={SECTIONS} />
+              <SectionBars index={SECTIONS} separator />
             </h2>
             <p className="lib-lead">{t(NAVBAR_LEAD)}</p>
           </header>
@@ -228,9 +197,11 @@ export default function Home() {
                         <span className="lib-body">{t(demo.meta)}</span>
                       </span>
                       <span className="lib-demo__go" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M5 12h14M13 6l6 6-6 6" />
-                        </svg>
+                        <OrbFill hoverWithin=".lib-demo">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M5 12h14M13 6l6 6-6 6" />
+                          </svg>
+                        </OrbFill>
                       </span>
                     </Link>
                   </li>
@@ -244,65 +215,21 @@ export default function Home() {
   );
 }
 
-const EYE_AFTER_MS = 520;
-
-/* The method card's finished state: purple frame, graded image under a dim
-   and a centre falloff, the phase eye drawn in, one shine sweep. Revealed
-   once decoded (`complete` covers cached images on remount); the eye mounts
-   after the dim has settled so its stroke reveal plays in sequence. */
-function HeroPanel({ id, alt, index }: { id: string; alt: string; index: number }) {
-  const ref = useRef<HTMLImageElement>(null);
-  const [ready, setReady] = useState(false);
-  const [drawn, setDrawn] = useState(false);
-  useEffect(() => {
-    if (ref.current?.complete) setReady(true);
-  }, []);
-  useEffect(() => {
-    if (!ready) return;
-    const timer = window.setTimeout(() => setDrawn(true), EYE_AFTER_MS + index * 160);
-    return () => window.clearTimeout(timer);
-  }, [ready, index]);
-  return (
-    <div className="lib-hero__panel" data-ready={ready || undefined} style={{ "--lib-stagger": index } as CSSProperties}>
-      <div className="lib-hero__media">
-        <img
-          ref={ref}
-          src={`/library/hero/${id}-768.webp`}
-          srcSet={`/library/hero/${id}-480.webp 480w, /library/hero/${id}-768.webp 768w`}
-          sizes="(min-width: 768px) 12em, 24vw"
-          alt={alt}
-          width={768}
-          height={768}
-          decoding="async"
-          draggable={false}
-          onLoad={() => setReady(true)}
-          onError={() => setReady(true)}
-        />
-        <span className="lib-hero__dim" aria-hidden="true" />
-        {drawn && (
-          <>
-            <span className="lib-hero__eye">
-              <HeroEye phase={(index + 1) as 1 | 2 | 3 | 4} />
-            </span>
-            <span className="lib-hero__shine" aria-hidden="true" />
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
 function EntryCard({ entry, index }: { entry: RegistryEntry; index?: number }) {
   const { t } = useLibraryLocale();
+  const orb = useRef<OrbFillController | null>(null);
   return (
     <Link to={entry.route} className="lib-card">
       <div className="lib-well">
         <Cover id={entry.id} />
+        <span className="lib-well__tag">
+          <EyeMark artwork={3} />
+        </span>
       </div>
       <div className="lib-card__caption">
         {index !== undefined && (
           <span className="lib-card__orb" aria-hidden="true">
-            {index}
+            <OrbFill controller={orb}>{index}</OrbFill>
           </span>
         )}
         <div className="lib-card__meta">
@@ -311,6 +238,7 @@ function EntryCard({ entry, index }: { entry: RegistryEntry; index?: number }) {
         <h3 className="lib-card__title">{t(entry.title)}</h3>
         <p className="lib-body">{t(entry.meta)}</p>
       </div>
+      <SeamFlow orb={orb} />
     </Link>
   );
 }

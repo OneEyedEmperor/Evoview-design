@@ -20,9 +20,6 @@
   /* Small caps captions (tray meta, counters). Falls back to the body font;
      a site with a dedicated technical face sets --font-technical. */
   --nav-font-technical: var(--font-technical, var(--nav-font-body));
-  /* The large index numeral on desktop tray cards: the readout face unless
-     the site sets one (evoview.be's own art direction uses "Gaegu"). */
-  --nav-font-numeral: var(--font-numeral, var(--nav-font-technical));
   /* Rail width the capsule centres in. */
   --nav-max-width: var(--container-nav, 62.5rem);
   /* The desktop finder is sized in em against a capped base: it follows the
@@ -54,6 +51,13 @@
      the section colour; set a fixed colour for a brand mark. */
   --nav-eye-pupil: var(--nav-section-accent, var(--nav-accent));
   --nav-eye-iris: #fff;
+  /* REC dot: current-page pill, live deck pill, tray badge. */
+  --nav-rec-dot: #ef3b2d;
+  /* Badge on the tray entry for the current page: light plate, ink in the
+     dot's colour darkened so the small caps keep their contrast. */
+  --nav-current-item: #fbf8f6;
+  --nav-current-item-ink: color-mix(in srgb, var(--nav-rec-dot) 80%, #000);
+  --nav-current-dot: var(--nav-rec-dot);
 }
 @media (max-width: 767px) {
   .ev-navbar { --nav-max-width: calc(100% - 1.5rem); }
@@ -282,37 +286,28 @@
   transform: translate3d(3px, 0, 0);
 }
 
+/* Hover/focus/press colours rise in as liquid (foundation OrbFill, RULES §1). */
 .nav-simple-menu-orb {
-  color: rgba(21, 21, 21, 0.76);
-  background: #fff;
+  --ev-orb-rest: #fff;
+  --ev-orb-rest-ink: var(--nav-orb-accent);
+  --ev-orb-lit: #151515;
+  --ev-orb-lit-ink: #fff;
   border: 1.5px solid color-mix(in srgb, var(--nav-orb-accent) 62%, transparent);
   box-shadow:
     inset 0 0 0 1px rgba(21, 21, 21, 0.045),
     inset 0 1px 0 rgba(255, 255, 255, 0.9),
     0 7px 16px -11px rgba(0, 0, 0, 0.5);
-  transition:
-    color var(--nav-duration-control) var(--nav-ease-standard),
-    background var(--nav-duration-control) var(--nav-ease-standard),
-    transform var(--nav-duration-control) var(--nav-ease-cinematic);
+  transition: transform var(--nav-duration-control) var(--nav-ease-cinematic);
 }
 
 .nav-simple-menu-number {
-  color: var(--nav-orb-accent);
   line-height: 1;
   letter-spacing: -0.04em;
-  transition: color var(--nav-duration-control) var(--nav-ease-standard);
 }
 
 .nav-simple-menu-item:hover .nav-simple-menu-orb,
 .nav-simple-menu-item:focus-visible .nav-simple-menu-orb {
-  color: #fff;
-  background: #151515;
   transform: scale(1.08);
-}
-
-.nav-simple-menu-item:hover .nav-simple-menu-number,
-.nav-simple-menu-item:focus-visible .nav-simple-menu-number {
-  color: #fff;
 }
 
 .ev-navbar[data-tone="dark"] .nav-glass-panel {
@@ -351,21 +346,13 @@
   border-color: color-mix(in srgb, var(--nav-orb-accent) 52%, rgba(255, 255, 255, 0.14));
 }
 .ev-navbar[data-tone="dark"] .nav-simple-menu-orb {
-  color: rgba(255, 255, 255, 0.88);
-  background: #121214;
+  --ev-orb-rest: #121214;
+  --ev-orb-lit: #fff;
+  --ev-orb-lit-ink: var(--nav-orb-accent);
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
     0 7px 16px -11px rgba(0, 0, 0, 0.9);
-}
-.ev-navbar[data-tone="dark"] .nav-simple-menu-item:hover .nav-simple-menu-orb,
-.ev-navbar[data-tone="dark"] .nav-simple-menu-item:focus-visible .nav-simple-menu-orb {
-  color: #151515;
-  background: #fff;
-}
-.ev-navbar[data-tone="dark"] .nav-simple-menu-item:hover .nav-simple-menu-number,
-.ev-navbar[data-tone="dark"] .nav-simple-menu-item:focus-visible .nav-simple-menu-number {
-  color: var(--nav-orb-accent);
 }
 
 /* ============================================================
@@ -724,6 +711,107 @@
   flex-shrink: 0;
 }
 .nav-deck-label {
+  display: inline-block;
+  overflow: hidden;
+  padding-block: 0.2em;
+  margin-block: -0.2em;
+  white-space: nowrap;
+  font-family: var(--nav-font-heading);
+  font-size: 0.75em;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  transition: width 360ms var(--nav-ease-cinematic);
+}
+/* A changed label (live page name, hovered tray entry) rises in. */
+.nav-deck-label-text {
+  display: inline-block;
+  animation: navPagePillIn 360ms var(--nav-ease-cinematic) both;
+}
+/* Current page pill (multi-page sites): beside the finder pill at rest, in
+   the finder's own colours, a blinking REC dot and the page name. A readout,
+   not a control. It lives in the trigger cell, so it folds away with the
+   finder as the deck opens. */
+.nav-finder-cell--trigger .nav-finder-cell-inner {
+  display: flex;
+  align-items: center;
+}
+/* The slot unfolds 0fr ⇄ 1fr like the finder cells; the clip keeps the pill
+   at its own width while the track opens over it. */
+.nav-page-slot {
+  display: grid;
+  grid-template-columns: 0fr;
+  min-width: 0;
+  opacity: 0;
+  transition:
+    grid-template-columns 420ms var(--nav-ease-cinematic),
+    opacity 220ms ease;
+}
+.nav-page-slot[data-present] {
+  grid-template-columns: 1fr;
+  opacity: 1;
+  transition:
+    grid-template-columns 460ms var(--nav-ease-cinematic),
+    opacity 320ms ease 80ms;
+}
+.nav-page-slot-clip {
+  display: flex;
+  min-width: 0;
+  overflow: hidden;
+}
+.nav-page-pill {
+  display: flex;
+  align-items: center;
+  flex: none;
+  width: max-content;
+  min-width: 0;
+  height: 2.375em;
+  margin-left: 0.25em;
+  padding: 0 1em 0 0.75em;
+  overflow: hidden;
+  border-radius: var(--nav-radius-round);
+  background: var(--nav-pill-rest);
+  color: var(--nav-pill-ink);
+  white-space: nowrap;
+  user-select: none;
+  transition: width 420ms var(--nav-ease-cinematic);
+}
+/* A new page's dot and name rise in as the width settles. */
+.nav-page-pill-body {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  min-width: 0;
+  animation: navPagePillIn 420ms var(--nav-ease-cinematic) both;
+}
+@keyframes navPagePillIn {
+  from { opacity: 0; transform: translateY(0.45em); filter: blur(3px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+.nav-page-pill-dot {
+  width: 0.5em;
+  height: 0.5em;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--nav-rec-dot);
+  box-shadow: 0 0 0.6em color-mix(in srgb, var(--nav-rec-dot) 80%, transparent);
+  animation: nav-rec-blink 1s ease-in-out infinite;
+}
+.nav-deck-rec {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.nav-page-pill-dot--still { animation: none; }
+.reduced-motion .nav-page-pill-dot { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .nav-page-pill-dot { animation: none; }
+}
+.nav-page-pill-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-family: var(--nav-font-heading);
   font-size: 0.75em;
   font-weight: 700;
@@ -731,6 +819,23 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
+/* Desktop never truncates; mid-glide the name is clipped, not ellipsised. */
+.nav-finder:not(.nav-finder--mobile) .nav-page-pill-label { text-overflow: clip; }
+.nav-finder .nav-page-pill {
+  cursor: default;
+  transition:
+    width 420ms var(--nav-ease-cinematic),
+    color 160ms ease,
+    opacity calc(var(--nav-finder-duration-close) * 0.7) ease-out calc(var(--nav-finder-duration-close) * 0.3);
+}
+.nav-finder[data-open="true"] .nav-page-pill {
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    width 420ms var(--nav-ease-cinematic),
+    opacity calc(var(--nav-finder-duration) * 0.5) var(--nav-ease-standard);
+}
+
 /* The CTA is the one filled pill: the inverse gloss of its bar, always lit. */
 .nav-deck-pill--cta {
   --nav-gloss-body: var(--nav-gloss-body-inverse);
@@ -849,8 +954,9 @@
   object-fit: cover;
   user-select: none;
   opacity: 0;
-  filter: grayscale(1) contrast(1.08) brightness(0.62);
-  transform: scale(1.001);
+  /* The scale keeps the blur's soft edge outside the card. */
+  filter: blur(3.5px) grayscale(1) contrast(1.08) brightness(0.62);
+  transform: scale(1.12);
   transition: opacity 240ms var(--nav-ease-standard), filter 260ms var(--nav-ease-standard), transform 420ms var(--nav-ease-cinematic);
 }
 .nav-tray-card-media[data-loaded] { opacity: 1; }
@@ -873,37 +979,17 @@
     linear-gradient(to top, rgba(0, 0, 0, 0.45), transparent 60%);
   transition: opacity 260ms var(--nav-ease-standard);
 }
-.nav-tray-card-number {
-  position: absolute;
-  left: 0.6em;
-  top: 0.3em;
-  font-family: var(--nav-font-numeral);
-  font-size: 1.75em;
-  font-weight: 700;
-  line-height: 1;
-  opacity: 0.5;
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.6));
-}
-.nav-tray-card-text {
-  display: grid;
-  justify-items: center;
-  gap: 0.5em;
-  min-width: 0;
-  padding-inline: 3em;
-  text-align: center;
-}
 .nav-tray-card-title {
+  min-width: 0;
+  padding-inline: 2.5em;
+  text-align: center;
   font-family: var(--nav-font-heading);
-  font-size: 1.125em;
+  font-size: 1.375em;
   font-weight: 900;
   line-height: 1;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   text-shadow: 0 2px 14px rgba(0, 0, 0, 0.7);
-}
-.nav-tray-card-meta {
-  color: rgba(255, 255, 255, 0.66);
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.7);
 }
 .nav-tray-card-edge {
   position: absolute;
@@ -914,17 +1000,54 @@
   transform-origin: left;
   transition: transform 320ms var(--nav-ease-cinematic);
 }
-.nav-tray-card:is(:hover, :focus-visible) {
+/* The current page's card holds the lit state at rest. */
+.nav-tray-card:is(:hover, :focus-visible, [data-current]) {
   box-shadow: inset 0 0 0 1.4px color-mix(in srgb, var(--nav-orb-accent) 85%, transparent);
 }
-.nav-tray-card:is(:hover, :focus-visible) .nav-tray-card-media {
-  filter: grayscale(0.6) contrast(1.08) brightness(0.82);
-  transform: scale(1.04);
+.nav-tray-card:is(:hover, :focus-visible, [data-current]) .nav-tray-card-media {
+  filter: blur(0) grayscale(0.6) contrast(1.08) brightness(0.82);
+  transform: scale(1.16);
 }
-.nav-tray-card:is(:hover, :focus-visible) .nav-tray-card-grade { opacity: 1; }
-.nav-tray-card:is(:hover, :focus-visible) .nav-tray-card-scrim { opacity: 0.8; }
-.nav-tray-card:is(:hover, :focus-visible) .nav-tray-card-edge { transform: scaleX(1); }
+.nav-tray-card:is(:hover, :focus-visible, [data-current]) .nav-tray-card-grade { opacity: 1; }
+.nav-tray-card:is(:hover, :focus-visible, [data-current]) .nav-tray-card-scrim { opacity: 0.8; }
+.nav-tray-card:is(:hover, :focus-visible, [data-current]) .nav-tray-card-edge { transform: scaleX(1); }
 .nav-tray-card:active { scale: 0.99; }
+
+/* Current page badge: a pill with a blinking live dot. */
+.nav-tray-card-badge {
+  position: absolute;
+  top: 0.5em;
+  right: 0.5em;
+  display: flex;
+}
+.nav-current-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45em 0.8em;
+  border-radius: var(--nav-radius-round);
+  background: var(--nav-current-item);
+  color: var(--nav-current-item-ink);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  font-size: 0.5625rem;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+  gap: 0.6em;
+}
+.nav-current-badge::before {
+  content: "";
+  width: 0.75em;
+  height: 0.75em;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--nav-current-dot);
+  box-shadow: 0 0 0.6em color-mix(in srgb, var(--nav-current-dot) 70%, transparent);
+  animation: nav-rec-blink 1s ease-in-out infinite;
+}
+.reduced-motion .nav-current-badge::before { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .nav-current-badge::before { animation: none; }
+}
 @keyframes navTrayPulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.45; }
@@ -935,9 +1058,9 @@
   background: #151515;
   color: #fff;
   box-shadow: 0 14px 30px -20px var(--nav-cta-glow);
-  transition: background 220ms var(--nav-ease-standard), transform 180ms var(--nav-ease-standard);
+  --ev-surface-lit: #2a2a2e;
+  transition: transform 180ms var(--nav-ease-standard);
 }
-.nav-tray-cta:hover { background: #2a2a2e; }
 .nav-tray-cta:active { transform: scale(0.99); }
 .nav-tray-cta-arrow {
   background: #fff;
@@ -949,7 +1072,7 @@
   background: #fff;
   color: #101011;
 }
-.ev-navbar[data-tone="dark"] .nav-tray-cta:hover { background: var(--nav-cta-hover-dark); }
+.ev-navbar[data-tone="dark"] .nav-tray-cta { --ev-surface-lit: var(--nav-cta-hover-dark); }
 .ev-navbar[data-tone="dark"] .nav-tray-cta-arrow {
   background: #101011;
   color: #fff;
@@ -985,6 +1108,9 @@
 }
 .nav-finder--mobile[data-open="true"] .nav-finder-trigger { color: var(--nav-pill-ink-strong); }
 .nav-finder--mobile .nav-finder-trigger:active { scale: 0.97; }
+/* Mobile page pill: right of the finder, truncated (folded while open via
+   the slot's `hidden`). */
+.nav-finder--mobile .nav-page-pill { height: 2.5em; max-width: 10.5em; padding: 0 0.875em 0 0.75em; }
 /* The open finder is the lit close control: gloss on, reticle tightened,
    eye blinking — the desktop hover state held for as long as the menu is. */
 .nav-finder--mobile .nav-finder-trigger[aria-expanded="true"]::after {
@@ -1123,8 +1249,8 @@
   padding: 0 0.75em;
 }
 .nav-deck--mobile .nav-deck-pill--cta { margin-left: 0; }
-/* An odd deck ending in the CTA: the CTA takes the whole last row. */
-.nav-deck--mobile .nav-deck-pill--cta:last-child:nth-child(odd) { grid-column: 1 / -1; }
+/* An odd deck: the last tile (CTA or not) takes the whole last row. */
+.nav-deck--mobile .nav-deck-pill:last-child:nth-child(odd) { grid-column: 1 / -1; }
 /* Columns slide in from their own edge (left → right, right → left), rows
    staggered top-down; a full-width CTA row drops in instead. translate +
    opacity only, so it stays on the compositor. */
@@ -1214,24 +1340,34 @@
   border-color: color-mix(in srgb, var(--nav-orb-accent) 35%, transparent);
   transform: translate3d(3px, 0, 0);
 }
-.nav-finder--mobile .nav-simple-menu-item:active .nav-simple-menu-orb {
-  color: #fff;
-  background: #151515;
-  transform: scale(1.08);
-}
-.nav-finder--mobile .nav-simple-menu-item:active .nav-simple-menu-number { color: #fff; }
+.nav-finder--mobile .nav-simple-menu-item:active .nav-simple-menu-orb { transform: scale(1.08); }
 .ev-navbar[data-tone="dark"] .nav-finder--mobile .nav-simple-menu-item:active {
   color: #fff;
   background: color-mix(in srgb, var(--nav-orb-accent) 20%, #19191c);
   border-color: color-mix(in srgb, var(--nav-orb-accent) 52%, rgba(255, 255, 255, 0.14));
 }
-.ev-navbar[data-tone="dark"] .nav-finder--mobile .nav-simple-menu-item:active .nav-simple-menu-orb {
-  color: #151515;
-  background: #fff;
-}
-.ev-navbar[data-tone="dark"] .nav-finder--mobile .nav-simple-menu-item:active .nav-simple-menu-number { color: var(--nav-orb-accent); }
 .nav-finder--mobile .nav-tray-cta:active { transform: scale(0.99); }
 
+/* Tray head: the section's name as a title (the open pill may be showing a
+   page instead); on touch, the section link sits at its end. */
+.nav-tray-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1em;
+  padding: 0.25em 0.25em 0 0.25em;
+  margin-bottom: 0.75em;
+}
+.nav-tray-title {
+  font-family: var(--nav-font-heading);
+  font-size: 1.125em;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #151515;
+}
+.ev-navbar[data-tone="dark"] .nav-tray-title { color: #fff; }
 .nav-tray-link {
   color: rgba(21, 21, 21, 0.55);
   transition: color 160ms ease;

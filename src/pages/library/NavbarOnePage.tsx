@@ -7,7 +7,7 @@ import { useLibraryLocale, type Localized } from "../../library/locale";
    match the config, so the bar can be watched re-toning, lighting the
    section's pill and recolouring its pupil while scrolling. */
 
-const config = { ...navbarConfig, vars: { ...navbarConfig.vars, "--nav-font-numeral": '"Satoshi", sans-serif' } };
+const config = navbarConfig;
 
 const SECTIONS: { id: string; title: string; dark: boolean; line: Localized }[] = [
   {

@@ -39,7 +39,7 @@ status: "ready" | "building", version? }`. `version` is read from
 import ShowcasePage from "../../library/ShowcasePage";
 
 <ShowcasePage
-  entryId="selector-stage"                  // registry id → kicker, breadcrumb, version
+  entryId="selector-stage"                  // registry id → version, status
   title={(l) => <>Selector <em>Stage</em></>} // em = accent word
   intro={{ fr: "…", en: "…" }}              // one sentence
   tone="dark"                               // page environment: "dark" | "light"
@@ -57,10 +57,28 @@ that reads `useLibraryLocale()` over the render function when the component
 is expensive: a node child is not re-rendered on colour change.
 Default accent: `defaultAccent` ?? near-white (dark tone) / near-ink (light).
 
-The frame renders the header (kicker, title, intro, FR/EN toggle, accent
-palette) and wraps children in an element that sets `--primary`,
+Every library page opens on the index hero (`LibraryHero`, `src/library/LibraryHero.tsx`):
+the Evoview lockup over the method reel, rendered by `ShowcasePage` above its
+header (lockup links to `/`; LIBRARY takes the picked accent, Evoview indigo
+while on the page default). The index renders it with its h1, bars and palette.
+
+Page changes inside `LibraryLayout` play the page curtain (`src/library/PageCurtain.tsx`,
+wired in `App.tsx`): a night panel rises from the bottom (cover), then drops back down (reveal), over everything below
+`.lib-hero` (top follows the hero's bottom, 0 once scrolled past), routes render
+the lagged location until it covers. The hero must read as shared: after its
+first reveal, remounts start revealed (no card rise, shine or eye draw) and the
+reel resumes on a shared clock. `lazyPage` renders preloaded modules directly so
+the swap never flashes the Suspense fallback. Reduced motion, iframes and the
+full-screen navbar demos swap instantly.
+
+The frame renders the hero (palette slot left empty off the index) and the
+header: a centred stack (title, intro, version, no breadcrumb) on a full-bleed
+band in the page's opposite tone, with the compact swatch capsule centred on
+the band's bottom edge (half on the band, half on the demos). It wraps children in an element that sets `--primary`,
 `--primary-foreground` (contrast ink), `--foreground`, `--muted-foreground`,
-`--font-heading`. Clicking a swatch recolours the live component instantly
+`--font-heading`. The pick is shared across pages for the visit
+(`src/library/accentChoice.tsx`, matched by colour, custom swatch when a page
+lacks it). Clicking a swatch recolours the live component instantly
 (CSS variables only — never remount on colour change). Locale comes from
 `useLibraryLocale()` (`src/library/locale.tsx`), shared with the navbar.
 
@@ -78,6 +96,7 @@ import ShowcasePage, { ShowcaseVariant } from "../../library/ShowcasePage";
   tone="paper"                                  // environment of the component below; omit on frame tone
   rhythm="standard"                             // top padding the component brings: flush | standard | compact | cinematic
   index={{ current: 2, total: 4 }}              // only when it indexes something real
+  caption="readout"                             // "title": heading + lead stacked; "none": no caption, name/when omitted (chapter specimen)
 >
   <CompareToggle … tone="paper" />
 </ShowcaseVariant>
@@ -109,8 +128,8 @@ Route chunks are retried once and preloaded on idle; a page that still fails
 shows a retry state inside the layout, never a blank app.
 
 - **Floating palette**: same state, glass capsule bottom-right (phone: an orb
-  that unfolds), shown once the header palette reaches the navbar band (the
-  header palette fades there instead of showing through the bar's glass)
+  that unfolds), shown once the hero palette reaches the navbar band (the
+  hero palette fades there instead of showing through the bar's glass)
   and, from 768 px, while a modal suspends the page. On a phone it hides
   while a modal is open (the modal owns the screen, its dock and CTA) and
   while the navbar's mobile menu is open. It carries

@@ -57,9 +57,41 @@ ordered set of cards; choose it before inventing another card. Reference:
 - Orb Ø `2.5em`, centred on the seam, overlapping well and ribbon, aligned to
   the ribbon's text start. Bare number in the state voice; foreground plate
   (white on night, ink on paper), number in the environment colour, a `.3em`
-  ring in the seam's colour so it reads as set into the gap. Hover/focus
-  fills it with the accent (`--primary` / `--primary-foreground`). Decorative
+  ring in the seam's colour so it reads as set into the gap. Decorative
   (`aria-hidden`); order stays in the DOM order.
+- Hover/focus (from 768): the seam fills with the accent (`SeamFlow`,
+  `src/library/SeamFlow.tsx`) — a plain bar from the left that fills the end
+  notches to the corners' exact curves, splits top and bottom around the
+  orb's ring, then runs on to the right; one eased ~1s timeline, drains back
+  the same way.
+- **An orb never switches colour by a cut or a fade.** Any orb colour change
+  (rest ↔ accent, state, selection, anywhere an orb is used) is the liquid
+  fill: the new colour rises from the bottom as a level with a moving wave
+  surface that calms when full, the number turning to the new ink as it goes
+  under, and drains back down on reversal. Use foundation's `OrbFill`
+  (`on`, `hoverWithin` or a driving `controller`; colours via
+  `--ev-orb-rest(-ink)` / `--ev-orb-lit(-ink)`), never a CSS
+  `background`/`color` swap on the orb. Borders, rings and halos around the
+  orb may still transition.
+- **Text never switches colour by a cut or a fade either.** A label, title,
+  index, caption or link text that changes colour (hover, focus, selection,
+  state) takes the same liquid fill: the new colour rises through the
+  glyphs, returning to the previous colour drains it, a third colour rises
+  over whichever shows. Use foundation's `TextFill` (`on`, `ink` for a state
+  colour, `hoverWithin` + `hoverInk`); inline icons in `currentColor` beside
+  the label go in their own `TextFill` with the same trigger. Not covered:
+  running text (never state-coloured), text whose content is replaced
+  rather than recoloured, text riding a surface that itself changes under
+  it (plate hover, segmented thumb, selected calendar day: it follows that
+  surface), and fixed states that never switch at runtime (disabled,
+  outside-month days).
+- **Buttons too.** A button whose surface changes colour on hover / press
+  (primary plate, CTA, toast) pours its new surface in as the same liquid,
+  label ink and inner orb switching under the one wave: foundation's
+  `SurfaceFill` (a copy of the content in the filled state, last child of
+  the button, colours `--ev-surface-lit` / `--ev-surface-lit-ink`), never a
+  CSS `background` swap. Faint tonal hover tints of rows and tiles are not
+  colour switches and keep their transition.
 - Ribbon: optional status/version top-right, card title, one-line meta.
 - Peers in an equal grid (2-up from 768), rows stretched to one height.
 - Phone (< 768): one tonal row tile per card, thumbnail `.8` : caption `1.2`,

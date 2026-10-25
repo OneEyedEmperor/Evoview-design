@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState, type CSSProperties, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
-import { DayPicker } from "react-day-picker";
+import { DayPicker, type DayButtonProps } from "react-day-picker";
 import { addDays, format, isBefore, isSameDay, startOfDay } from "date-fns";
 import EvoviewLogo from "./brand/EvoviewLogo";
 import ringEyeSvg from "./brand/eye-4-ring.svg?raw";
+import { OrbFill } from "../foundation/OrbFill";
+import { SurfaceFill } from "../foundation/SurfaceFill";
+import { TextFill } from "../foundation/TextFill";
 import { ArrowLeft, ArrowRight, Check, Chevron, EyeGlyph } from "./marks";
 import type { ReservationConfig, ReservationRequest, ReservationWindow } from "./types";
 import "./reservation.css";
@@ -48,12 +51,56 @@ const endTimesFor = (windows: ReservationWindow[], startTime: string, step: numb
   return window ? range(start + step, toMinutes(window.close), step).map(formatTime) : [];
 };
 
-function Pills<T extends string | number>({ items, selected, onSelect, render, label, className }: { items: T[]; selected: T | null; onSelect: (v: T) => void; render?: (v: T) => ReactNode; label: string; className?: string }) {
+/* Text colour switches rise in as liquid (RULES §1). */
+function PillInk({ on, children }: { on: boolean; children: ReactNode }) {
+  return (
+    <TextFill ink={on ? "#fff" : undefined} hoverWithin=".evo-resa-pill" hoverInk="#fff" withFocus={false}>
+      {children}
+    </TextFill>
+  );
+}
+
+function GhostInk({ children }: { children: ReactNode }) {
+  return (
+    <TextFill hoverWithin=".evo-resa-ghost" hoverInk="#fff" withFocus={false}>
+      {children}
+    </TextFill>
+  );
+}
+
+/* Calendar day: the hover ink rises in; a selected day's ink follows its accent disc. */
+function DayButton({ day: _day, modifiers, children, ...props }: DayButtonProps) {
+  const ref = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (modifiers.focused) ref.current?.focus();
+  }, [modifiers.focused]);
+  const still = modifiers.selected || modifiers.disabled || modifiers.outside;
+  return (
+    <button ref={ref} {...props}>
+      <TextFill hoverWithin={still ? undefined : ".evo-cal__daybtn"} hoverInk="#fff" withFocus={false}>
+        {children}
+      </TextFill>
+    </button>
+  );
+}
+
+/* A pill's number mark is an orb: selection fills it as liquid (RULES §1).
+   The hidden copy keeps the mark's width, the fill sits over it. */
+function PillMark({ on, children }: { on: boolean; children: ReactNode }) {
+  return (
+    <span className="evo-resa-pill__mark" aria-hidden="true">
+      <span className="evo-resa-pill__sizer">{children}</span>
+      <OrbFill on={on}>{children}</OrbFill>
+    </span>
+  );
+}
+
+function Pills<T extends string | number>({ items, selected, onSelect, render, label, className }: { items: T[]; selected: T | null; onSelect: (v: T) => void; render?: (v: T, selected: boolean) => ReactNode; label: string; className?: string }) {
   return (
     <div className={`evo-resa-pills${className ? ` ${className}` : ""}`} role="group" aria-label={label}>
       {items.map((item) => (
         <button key={item} type="button" className="evo-resa-pill" aria-pressed={selected === item} onClick={() => onSelect(item)}>
-          {render ? render(item) : item}
+          {render ? render(item, selected === item) : <PillInk on={selected === item}>{item}</PillInk>}
         </button>
       ))}
     </div>
@@ -337,7 +384,9 @@ export function Reservation({ config }: { config: ReservationConfig }) {
       <dl className="evo-resa-ticket__rows">
         {([0, 2, 3, 4] as const).map((i) => (
           <div key={i} data-filled={!!values[i] || undefined}>
-            <dt className="evo-resa-readout">{c.steps[STEP_KEYS[i]].short}</dt>
+            <dt className="evo-resa-readout">
+              <TextFill ink={values[i] ? "var(--resa-accent)" : undefined}>{c.steps[STEP_KEYS[i]].short}</TextFill>
+            </dt>
             <dd>{values[i] ?? "—"}</dd>
           </div>
         ))}
@@ -357,7 +406,7 @@ export function Reservation({ config }: { config: ReservationConfig }) {
               {exp.icon ? <span className="evo-resa-choice__icon" aria-hidden="true">{exp.icon}</span> : <EyeGlyph className="evo-resa-choice__eye" variant={i === experiences.length - 1 && i > 0 ? 4 : i} />}
               <span className="evo-resa-choice__label">{exp.label}</span>
               <span className="evo-resa-readout evo-resa-choice__hint">{exp.desc}</span>
-              <span className="evo-resa-choice__check" aria-hidden="true"><Check /></span>
+              <span className="evo-resa-choice__check" aria-hidden="true"><OrbFill on={experience === exp.value} lit={<Check />} /></span>
             </button>
           );
         })}
@@ -396,7 +445,7 @@ export function Reservation({ config }: { config: ReservationConfig }) {
             disabled: "is-disabled",
             hidden: "is-hidden",
           }}
-          components={{ Chevron: ({ orientation }) => <Chevron className="evo-cal__chevron" dir={orientation === "left" ? "left" : "right"} /> }}
+          components={{ Chevron: ({ orientation }) => <Chevron className="evo-cal__chevron" dir={orientation === "left" ? "left" : "right"} />, DayButton }}
         />
         {c.closedNote && <p className="evo-resa-readout evo-resa-note"><i className="evo-resa-rec" aria-hidden="true" />{c.closedNote}</p>}
       </div>
@@ -411,10 +460,10 @@ export function Reservation({ config }: { config: ReservationConfig }) {
           items={counts}
           selected={guests}
           onSelect={selectGuests}
-          render={(n) => (
+          render={(n, on) => (
             <>
-              <span className="evo-resa-pill__mark" aria-hidden="true">{n > guestRange.max ? `+${guestRange.max}` : pad(n)}</span>
-              <span className="evo-resa-pill__unit"><span className="evo-resa-sr">{n > guestRange.max ? `+${guestRange.max}` : n} </span>{unit(n)}</span>
+              <PillMark on={on}>{n > guestRange.max ? `+${guestRange.max}` : pad(n)}</PillMark>
+              <span className="evo-resa-pill__unit"><span className="evo-resa-sr">{n > guestRange.max ? `+${guestRange.max}` : n} </span><PillInk on={on}>{unit(n)}</PillInk></span>
             </>
           )}
         />
@@ -443,10 +492,10 @@ export function Reservation({ config }: { config: ReservationConfig }) {
               items={hourOptions}
               selected={hours}
               onSelect={selectHours}
-              render={(h) => (
+              render={(h, on) => (
                 <>
-                  <span className="evo-resa-pill__mark" aria-hidden="true">{pad(h)}</span>
-                  <span className="evo-resa-pill__unit"><span className="evo-resa-sr">{h} </span>{h > 1 ? c.hoursUnit?.many ?? "h" : c.hoursUnit?.one ?? "h"}</span>
+                  <PillMark on={on}>{pad(h)}</PillMark>
+                  <span className="evo-resa-pill__unit"><span className="evo-resa-sr">{h} </span><PillInk on={on}>{h > 1 ? c.hoursUnit?.many ?? "h" : c.hoursUnit?.one ?? "h"}</PillInk></span>
                 </>
               )}
             />
@@ -525,8 +574,8 @@ export function Reservation({ config }: { config: ReservationConfig }) {
                 <p className="evo-resa-done__text">{nbsp(c.confirmationMessage)}</p>
                 <div className="evo-resa-inline-ticket">{ticket}</div>
                 <button type="button" className="evo-resa-ghost evo-resa-readout" onClick={resetForm}>
-                  <ArrowLeft className="evo-resa-ghost__icon" />
-                  {c.submitAnother}
+                  <GhostInk><ArrowLeft className="evo-resa-ghost__icon" /></GhostInk>
+                  <GhostInk>{c.submitAnother}</GhostInk>
                 </button>
               </div>
             ) : (
@@ -543,13 +592,17 @@ export function Reservation({ config }: { config: ReservationConfig }) {
                 </div>
                 <div className={`evo-resa-bar${last ? "" : " evo-resa-bar--auto"}`}>
                   <button type="button" className="evo-resa-ghost evo-resa-readout" onClick={() => goTo(step - 1)} disabled={step === 0}>
-                    <ArrowLeft className="evo-resa-ghost__icon" />
-                    {c.back}
+                    <GhostInk><ArrowLeft className="evo-resa-ghost__icon" /></GhostInk>
+                    <GhostInk>{c.back}</GhostInk>
                   </button>
                   {(blocked || formError) && <p className="evo-resa-bar__error" role="alert">{formError || c.chooseToContinue}</p>}
                   <button type="submit" className="evo-resa-primary" disabled={submitting} aria-busy={submitting || undefined}>
                     {last ? (submitting ? c.submitting : c.submit) : c.next}
                     <span className="evo-resa-primary__orb"><ArrowRight /></span>
+                    <SurfaceFill hoverWithin=".evo-resa-primary">
+                      <span>{last ? (submitting ? c.submitting : c.submit) : c.next}</span>
+                      <span className="evo-resa-primary__orb"><ArrowRight /></span>
+                    </SurfaceFill>
                   </button>
                 </div>
               </>

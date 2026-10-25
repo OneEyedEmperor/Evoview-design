@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { pad, sequenceFillStyle, useInViewPause, useSequenceClock } from "../foundation";
+import { pad, sequenceFillStyle, TextFill, useInViewPause, useSequenceClock } from "../foundation";
 import { isVideo, TOUCH_CYCLE_QUERY, useMediaQuery } from "./hooks";
 import type { DossierEntry, DossierMedia } from "./types";
 
@@ -18,11 +18,16 @@ export type SelectionBoardProps = {
   dwellMs?: number;
 };
 
+/* Index and kicker take the signal as liquid (RULES §1). */
+const SIGNAL = "var(--dossier-signal)";
+
 /** The overview: an asymmetric 4-tile mosaic (7/5 over 4/8). Graded media releases colour on focus. */
 export function SelectionBoard({ entries, label, revealed, onSelect, openLabel, registerTile, dwellMs = 2000 }: SelectionBoardProps) {
   const tiles = entries.slice(0, 4);
   const boardRef = useRef<HTMLDivElement>(null);
   const touch = useMediaQuery(TOUCH_CYCLE_QUERY);
+  /* The tile's signal ink on hover exists only where the CSS hover grade does. */
+  const tileHover = useMediaQuery("(hover: hover) and (min-width: 1024px)");
   const [held, setHeld] = useState(false);
   const cycle = touch && revealed;
   // Modal content: runs while the page behind is suspended, stops off-screen / hidden tab / while touched.
@@ -60,7 +65,11 @@ export function SelectionBoard({ entries, label, revealed, onSelect, openLabel, 
           <span className="evd-tile__grade" aria-hidden="true" />
           <span className="evd-tile__scrim" aria-hidden="true" />
           <span className="evd-tile__shine" aria-hidden="true" />
-          <span className="evd-tile__num" aria-hidden="true">{pad(i + 1)}</span>
+          <span className="evd-tile__num" aria-hidden="true">
+            <TextFill ink={cycle && active === i ? SIGNAL : undefined} hoverWithin={tileHover ? ".evd-tile" : undefined} hoverInk={SIGNAL} withFocus={false}>
+              {pad(i + 1)}
+            </TextFill>
+          </span>
           <span className="evd-tile__edge" aria-hidden="true" />
           {cycle && (
             <span className="evd-tile__track" aria-hidden="true">
@@ -68,7 +77,13 @@ export function SelectionBoard({ entries, label, revealed, onSelect, openLabel, 
             </span>
           )}
           <span className="evd-tile__caption" aria-hidden="true">
-            {entry.kicker && <span className="ev-t-readout evd-tile__kicker">{entry.kicker}</span>}
+            {entry.kicker && (
+              <span className="ev-t-readout evd-tile__kicker">
+                <TextFill ink={cycle && active === i ? SIGNAL : undefined} hoverWithin={tileHover ? ".evd-tile" : undefined} hoverInk={SIGNAL} withFocus={false}>
+                  {entry.kicker}
+                </TextFill>
+              </span>
+            )}
             <span className="evd-tile__title">{entry.title}</span>
           </span>
         </button>

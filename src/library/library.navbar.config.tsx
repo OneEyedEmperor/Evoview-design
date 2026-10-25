@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Blocks, Languages, LayoutTemplate, PanelTop, type LucideIcon } from "lucide-react";
+import { Blocks, Languages, LayoutTemplate, type LucideIcon } from "lucide-react";
 import { NavLangSwitch } from "../../components/navbar/src";
 import EvoviewLogo from "../../components/navbar/src/brand/EvoviewLogo";
 import type { NavbarConfig, NavbarLabels, NavSection, NavTray } from "../../components/navbar/src/types";
@@ -12,9 +12,22 @@ import { CATEGORY_LABEL, CATEGORY_ROUTE, entriesOf, type Category } from "./regi
    URLs so the navbar's own decode gate handles them. */
 
 const ACCENT = "#3f51b5";
+const REC_RED = "#ef3b2d";
+/* The live dot of each category pill, reused on the index's section bars. */
+export const CATEGORY_DOT = { layouts: ACCENT, components: REC_RED } as const;
 const PILL_ACCENT: Record<Category, string> = { layouts: "#8a6aa0", components: "#818cf8", navbar: "#c8a6d9" };
 
 const SECTIONS: NavSection[] = [];
+
+/* The home page reads as one page: the bar follows its category sections.
+   `library-top` (the <main>) covers the hero, which has no pill. Module-level:
+   the scroll store is keyed by this array. */
+export const HOME_SECTIONS: NavSection[] = [
+  { id: "library-top", color: ACCENT },
+  { id: "layouts", color: ACCENT },
+  { id: "components", color: REC_RED },
+  { id: "navbar", color: ACCENT },
+];
 
 const mark = (Icon: LucideIcon): ReactNode => <Icon strokeWidth={1.6} aria-hidden="true" />;
 
@@ -28,6 +41,7 @@ const LABELS: Record<Locale, NavbarLabels> = {
     closeAria: "Fermer le menu",
     homeAria: "Evoview — bibliothèque, accueil",
     loading: "Chargement de la navigation",
+    currentItem: "Page active",
   },
   en: {
     menu: "Menu",
@@ -38,6 +52,7 @@ const LABELS: Record<Locale, NavbarLabels> = {
     closeAria: "Close menu",
     homeAria: "Evoview — library, home",
     loading: "Loading navigation",
+    currentItem: "Active page",
   },
 };
 
@@ -56,7 +71,6 @@ function trayFor(category: "layouts" | "components", locale: Locale): NavTray {
     kind: "items",
     unit: UNIT[category][locale],
     layout: "cards",
-    cardMeta: true,
     items: entriesOf(category).map((entry) => ({
       id: entry.id,
       title: entry.title[locale],
@@ -78,14 +92,12 @@ export function buildLibraryNavbarConfig(locale: Locale, onLocaleChange: (locale
     vars: {
       "--nav-accent-ink": "#fff",
       "--nav-font-technical": '"Satoshi", sans-serif',
-      "--nav-font-numeral": '"Satoshi", sans-serif',
     },
     sections: SECTIONS,
     initialTone: "dark",
     deck: [
-      { key: "layouts", label: CATEGORY_LABEL.layouts[locale], icon: mark(LayoutTemplate), href: CATEGORY_ROUTE.layouts, accent: PILL_ACCENT.layouts },
-      { key: "components", label: CATEGORY_LABEL.components[locale], icon: mark(Blocks), href: CATEGORY_ROUTE.components, accent: PILL_ACCENT.components },
-      { key: "navbar", label: CATEGORY_LABEL.navbar[locale], icon: mark(PanelTop), href: CATEGORY_ROUTE.navbar, accent: PILL_ACCENT.navbar },
+      { key: "layouts", label: CATEGORY_LABEL.layouts[locale], icon: mark(LayoutTemplate), href: CATEGORY_ROUTE.layouts, section: "layouts", accent: PILL_ACCENT.layouts, dot: ACCENT },
+      { key: "components", label: CATEGORY_LABEL.components[locale], icon: mark(Blocks), href: CATEGORY_ROUTE.components, section: "components", accent: PILL_ACCENT.components, dot: REC_RED },
       { key: "lang", label: LANG[locale], icon: mark(Languages), content: <NavLangSwitch locale={locale} locales={LOCALES} icon={mark(Languages)} />, keepOpen: true, accent: ACCENT },
     ],
     trays: {

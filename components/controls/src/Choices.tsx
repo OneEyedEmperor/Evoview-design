@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes, HTMLAttributes, KeyboardEvent, ReactNode, Ref } from "react";
-import { Check, cn, pad } from "../foundation";
+import { Check, cn, OrbFill, pad, TextFill } from "../foundation";
 import { useControlsCopy } from "./copy";
 
 const indexText = (index: number | string | undefined) => (typeof index === "number" ? pad(index) : index);
@@ -10,7 +10,7 @@ const indexText = (index: number | string | undefined) => (typeof index === "num
 export function CheckOrb({ checked, className }: { checked: boolean; className?: string }) {
   return (
     <span className={cn("ev-controls evc-orb", className)} data-checked={checked || undefined} aria-hidden="true">
-      <Check />
+      <OrbFill on={checked} lit={<Check />} />
     </span>
   );
 }
@@ -27,7 +27,9 @@ export function StepMark({ index, state = "idle", size = "md", label, className 
       aria-label={label}
       aria-hidden={label ? undefined : true}
     >
-      {state === "done" ? <Check /> : indexText(index)}
+      <OrbFill on={state === "done"} lit={<Check />}>
+        <TextFill ink={state === "current" ? "var(--controls-signal)" : undefined}>{indexText(index)}</TextFill>
+      </OrbFill>
     </span>
   );
 }
@@ -56,10 +58,16 @@ export function OptionChip({ selected = false, index, size = "md", className, ch
       {...rest}
     >
       <span className="evc-chip__mark" aria-hidden="true">
-        {index !== undefined && <span className="evc-chip__num">{indexText(index)}</span>}
-        <Check className="evc-chip__check" />
+        {index !== undefined && <span className="evc-chip__num evc-chip__sizer">{indexText(index)}</span>}
+        <OrbFill on={selected} lit={<Check className="evc-chip__check" />}>
+          {index !== undefined && <span className="evc-chip__num">{indexText(index)}</span>}
+        </OrbFill>
       </span>
-      <span className="evc-chip__label">{children}</span>
+      <span className="evc-chip__label">
+        <TextFill ink={selected ? "var(--ev-fg)" : undefined} hoverWithin=".evc-chip" hoverInk="var(--ev-fg)" withFocus={false}>
+          {children}
+        </TextFill>
+      </span>
     </button>
   );
 }
@@ -86,7 +94,11 @@ export function OptionRow({ selected = false, index, icon, label, hint, classNam
       aria-checked={radio ? selected : undefined}
       {...rest}
     >
-      {index !== undefined && <span className="ev-t-readout evc-row__index" aria-hidden="true">{indexText(index)}</span>}
+      {index !== undefined && (
+        <span className="ev-t-readout evc-row__index" aria-hidden="true">
+          <TextFill ink={selected ? "var(--controls-signal)" : undefined}>{indexText(index)}</TextFill>
+        </span>
+      )}
       {icon != null && <span className="evc-row__icon" aria-hidden="true">{icon}</span>}
       <span className="evc-row__label">{label}</span>
       {hint != null && <span className="ev-t-readout evc-row__hint">{hint}</span>}

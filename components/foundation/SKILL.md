@@ -31,6 +31,13 @@ library's `STRATEGY.md` + `docs/RULES.md` first.
 
 - Never change the host root font-size; never add a `prefers-reduced-motion`
   branch (stable final states + the pause model instead).
+- An orb never changes colour by a CSS cut or fade: wrap its content in
+  `<OrbFill>` (liquid rise, RULES §1) and set the `--ev-orb-*` colours.
+  Same for text: a label, title, index or link text that changes colour
+  goes in `<TextFill>` (`ink` / `on` / `hoverWithin` + `hoverInk`), never a
+  `color` rule on `:hover` or a state selector. A button whose surface
+  changes colour on hover gets `<SurfaceFill>` (its content again, filled
+  state) instead of a hover `background` swap.
 - Accent is signal only (selection, progress, focus, indices, blooms,
   primary hover). Light accents (yellow, near-white) must still read: use
   `--ev-accent-signal` for strokes and accent text, never colour alone.

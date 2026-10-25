@@ -1,16 +1,20 @@
-import { createContext, useContext, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
+import { Children, createContext, Fragment, isValidElement, useContext, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactElement, type ReactNode, type RefObject } from "react";
 import { Link } from "react-router-dom";
-import AccentPalette, { CUSTOM_SWATCH, inkFor } from "./AccentPalette";
+import { TextFill } from "../../components/foundation/src/TextFill";
+import AccentPalette, { inkFor } from "./AccentPalette";
 import { Cover } from "./covers";
+import { useAccentChoice } from "./accentChoice";
 import FloatingPalette from "./FloatingPalette";
+import LibraryHero from "./LibraryHero";
 import { useLibraryLocale, type Locale, type Localized } from "./locale";
-import { CATEGORY_LABEL, CATEGORY_ROUTE, getEntry, pad2, positionOf } from "./registry";
+import { CATEGORY_ROUTE, getEntry, pad2 } from "./registry";
 import StatusTag from "./StatusTag";
+import { useNavEyeAccent } from "./useNavEyeAccent";
 
 export type ShowcaseContext = { locale: Locale; accent: string; ink: string };
 
 type Props = {
-  /** Registry id → kicker, breadcrumb, version, status. */
+  /** Registry id → version, status. */
   entryId: string;
   /** Display title; wrap the accent word in <em>. */
   title: (locale: Locale) => ReactNode;
@@ -27,7 +31,7 @@ type Props = {
 const NEAR_WHITE = "#e9e6df";
 const NEAR_INK = "#1c1c1f";
 
-const SWATCHES: { id: string; color: string; label: Localized }[] = [
+export const SWATCHES: { id: string; color: string; label: Localized }[] = [
   { id: "indigo", color: "#818cf8", label: { fr: "Indigo Evoview", en: "Evoview indigo" } },
   { id: "chili", color: "#d83a2c", label: { fr: "Rouge piment", en: "Chili red" } },
   { id: "orange", color: "#fb923c", label: { fr: "Orange", en: "Orange" } },
@@ -40,8 +44,6 @@ const SWATCHES: { id: string; color: string; label: Localized }[] = [
 
 const COPY = {
   fr: {
-    library: "Bibliothèque",
-    breadcrumb: "Fil d'Ariane",
     paletteStrong: "Accent client",
     paletteRest: "le composant s'adapte à chaque marque",
     custom: "Couleur personnalisée",
@@ -50,8 +52,6 @@ const COPY = {
     back: "Retour à l'index",
   },
   en: {
-    library: "Library",
-    breadcrumb: "Breadcrumb",
     paletteStrong: "Client accent",
     paletteRest: "the component adapts to every brand",
     custom: "Custom colour",
@@ -61,17 +61,31 @@ const COPY = {
   },
 } satisfies Record<Locale, Record<string, string>>;
 
+/* The title's accent word takes each picked colour as a liquid rise
+   (RULES §1): its <em> is wrapped in a TextFill fed the concrete signal
+   colour (the CSS var would just cut). Light frames pull the accent toward
+   ink as .lib-toned does. */
+function liquidAccent(node: ReactNode, ink: string): ReactNode {
+  return Children.map(node, (child) => {
+    if (!isValidElement(child)) return child;
+    const el = child as ReactElement<{ children?: ReactNode }>;
+    if (el.type === "em") return <em>{<TextFill ink={ink}>{el.props.children}</TextFill>}</em>;
+    if (el.type === Fragment) return <>{liquidAccent(el.props.children, ink)}</>;
+    return child;
+  });
+}
+
 const same = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
 
 export default function ShowcasePage({ entryId, title, intro, tone = "dark", defaultAccent, palette = true, children }: Props) {
   const { locale } = useLibraryLocale();
   const copy = COPY[locale];
   const entry = getEntry(entryId);
-  const { index, total } = positionOf(entry);
   const fallback = defaultAccent ?? (tone === "dark" ? NEAR_WHITE : NEAR_INK);
 
-  const [accentId, setAccentId] = useState("default");
-  const [custom, setCustom] = useState("#7c3aed");
+  // Evoview indigo is selected on arrival; it is the "default" swatch itself
+  // when the page's own default is indigo (filtered out of the rest).
+  // A pick made on any page carries over (accentChoice).
   const swatches = useMemo(
     () => [
       { id: "default", color: fallback, label: copy.default },
@@ -79,8 +93,11 @@ export default function ShowcasePage({ entryId, title, intro, tone = "dark", def
     ],
     [fallback, locale, copy.default],
   );
-  const accent = accentId === CUSTOM_SWATCH ? custom : (swatches.find((s) => s.id === accentId) ?? swatches[0]).color;
+  const shared = useAccentChoice(swatches, same(fallback, SWATCHES[0].color) ? "default" : SWATCHES[0].id);
+  const { accentId, custom, onChange, onCustom } = shared;
+  const accent = palette ? shared.accent : fallback;
   const ink = useMemo(() => inkFor(accent), [accent]);
+  useNavEyeAccent(palette ? accent : undefined);
 
   const style = {
     "--showcase-accent": accent,
@@ -94,14 +111,15 @@ export default function ShowcasePage({ entryId, title, intro, tone = "dark", def
   const tonedByContent = useHasNavTone(stageRef);
   const ready = usePageReady(stageRef);
   const dark = tone === "dark" ? "dark" : undefined;
+  const headTone = tone === "dark" ? "light" : "dark";
   const paletteProps = {
     swatches,
     value: accentId,
     custom,
     caption: { strong: copy.paletteStrong, rest: copy.paletteRest },
     customLabel: copy.custom,
-    onChange: setAccentId,
-    onCustom: setCustom,
+    onChange,
+    onCustom,
   };
 
   /* Nav tone is declared per region, never on the wrapper: the navbar probe
@@ -110,32 +128,26 @@ export default function ShowcasePage({ entryId, title, intro, tone = "dark", def
      no tone of its own. */
   return (
     <div className="lib-showcase lib-toned ev-library" data-tone={tone} data-lib-ready={ready ? "" : undefined} style={style}>
-      <header className="lib-showcase__head lib-rail" data-nav-tone={dark}>
-        <nav aria-label={copy.breadcrumb} className="lib-crumbs lib-voice-state">
-          <Link to="/">{copy.library}</Link>
-          <span aria-hidden="true">/</span>
-          <Link to={CATEGORY_ROUTE[entry.category]}>{CATEGORY_LABEL[entry.category][locale]}</Link>
-          {entry.category !== "navbar" && (
-            <>
-              <span aria-hidden="true">/</span>
-              <span className="lib-crumbs__index">
-                {pad2(index)} / {pad2(total)}
-              </span>
-            </>
-          )}
-        </nav>
-        <div className="lib-showcase__split">
-          <h1 className="lib-display">{title(locale)}</h1>
-          <div className="lib-showcase__aside">
-            <p className="lib-lead">{intro[locale]}</p>
-            <div className="lib-showcase__meta">
-              <StatusTag status={entry.status} version={entry.version} />
-            </div>
-          </div>
+      {/* LIBRARY follows the accent on the index only; here it stays white.
+          The palette lives in the title block, so the hero's slot is empty. */}
+      <LibraryHero />
+      {/* The title block takes the opposite tone of the page: a full cut
+          segments it from the demos. */}
+      <header className="lib-showcase__head lib-toned" data-tone={headTone} data-nav-tone={headTone === "dark" ? "dark" : undefined}>
+        <div className="lib-showcase__intro lib-rail">
+          <h1 className="lib-display">
+            {/* A page without a palette has no accent to show: its accent word
+                takes the band's ink. */}
+            {liquidAccent(title(locale), !palette ? "var(--lib-fg)" : headTone === "dark" ? accent : `color-mix(in oklab, ${accent} 62%, var(--lib-ink))`)}
+          </h1>
+          <p className="lib-lead">{intro[locale]}</p>
+          <StatusTag status={entry.status} version={entry.version} />
         </div>
+        {/* Swatches only, on the seam between the band and the demos: the
+            choice belongs to both, and costs the band no height. */}
         {palette && (
           <div ref={paletteRef} className="lib-showcase__palette">
-            <AccentPalette {...paletteProps} />
+            <AccentPalette {...paletteProps} compact />
           </div>
         )}
       </header>
@@ -155,9 +167,9 @@ export type DemoRhythm = "flush" | "standard" | "compact" | "cinematic";
 
 type VariantProps = {
   /** Component (and variant) name, set as a readout: `SelectorStage · paper`. */
-  name: ReactNode;
+  name?: ReactNode;
   /** One sentence: when a client would choose this configuration. */
-  when: ReactNode;
+  when?: ReactNode;
   /** Only when it indexes something real (a numbered sequence the reader
       steps through); never as decoration. */
   index?: { current: number; total: number };
@@ -167,6 +179,10 @@ type VariantProps = {
   /** Top padding the component brings (foundation chapter rhythm), so the
       frame can hold caption → content at the heading band. */
   rhythm?: DemoRhythm;
+  /** "title": the name set as a section heading with `when` as a lead under
+      it, for a scene the reader must understand before using it. "none":
+      no caption, the scene opens one heading band under the page header. */
+  caption?: "readout" | "title" | "none";
   id?: string;
   children: ReactNode;
 };
@@ -177,7 +193,7 @@ type VariantProps = {
    the heading band, variants are separated by a chapter band (or by the
    component's own chapter padding when it has one). No rules, no boxes.
    Contract: docs/SHOWCASE-CONTRACT.md. */
-export function ShowcaseVariant({ name, when, index, tone, rhythm = "flush", id, children }: VariantProps) {
+export function ShowcaseVariant({ name, when, index, tone, rhythm = "flush", caption = "readout", id, children }: VariantProps) {
   const frame = useContext(FrameTone);
   const nameId = useId();
   const env = tone ?? frame;
@@ -186,23 +202,32 @@ export function ShowcaseVariant({ name, when, index, tone, rhythm = "flush", id,
   return (
     <section
       id={id}
-      aria-labelledby={nameId}
+      aria-labelledby={caption === "none" ? undefined : nameId}
       className={tone ? `lib-variant ev-tone-${tone}` : "lib-variant"}
       data-tone={env}
       data-frame={env === frame ? "" : undefined}
       data-rhythm={rhythm}
     >
-      <header className="lib-variant__caption lib-rail">
-        <p id={nameId} className="lib-voice-state lib-variant__name">
-          {index && (
-            <span className="lib-variant__index">
-              {pad2(index.current)} / {pad2(index.total)}
-            </span>
-          )}
-          {name}
-        </p>
-        <p className="lib-body lib-variant__when">{when}</p>
-      </header>
+      {caption === "none" ? null : caption === "title" ? (
+        <header className="lib-variant__caption lib-variant__caption--title lib-rail">
+          <h2 id={nameId} className="lib-title lib-variant__title">
+            {name}
+          </h2>
+          <p className="lib-lead lib-variant__when">{when}</p>
+        </header>
+      ) : (
+        <header className="lib-variant__caption lib-rail">
+          <p id={nameId} className="lib-voice-state lib-variant__name">
+            {index && (
+              <span className="lib-variant__index">
+                {pad2(index.current)} / {pad2(index.total)}
+              </span>
+            )}
+            {name}
+          </p>
+          <p className="lib-body lib-variant__when">{when}</p>
+        </header>
+      )}
       <div ref={bodyRef} className="lib-variant__body">
         {children}
       </div>

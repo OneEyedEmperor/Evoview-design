@@ -1,5 +1,5 @@
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, MouseEvent, MouseEventHandler, ReactNode, Ref } from "react";
-import { ArrowRight, Chevron, Close, cn } from "../foundation";
+import { ArrowRight, Chevron, Close, cn, SurfaceFill, TextFill } from "../foundation";
 import { useControlsCopy } from "./copy";
 
 type ButtonLike = ButtonHTMLAttributes<HTMLButtonElement> & { href?: undefined; ref?: Ref<HTMLButtonElement> };
@@ -39,18 +39,25 @@ export type PrimaryPlateProps = (ButtonLike | AnchorLike) & {
   busy?: boolean;
 };
 
-/** The one primary action: white plate (ink plate on light tones), round orb; hover fills with the accent. */
+/** The one primary action: white plate (ink plate on light tones), round orb; hover pours the accent over plate, label and orb (RULES §1). */
 export function PrimaryPlate({ children, icon, size = "md", block = false, busy = false, className, ...rest }: PrimaryPlateProps) {
   const copy = useControlsCopy();
+  const orb = (
+    <span className="evc-plate__orb" aria-hidden="true">
+      {busy ? <span className="evc-spinner" /> : (icon ?? <ArrowRight />)}
+    </span>
+  );
   return (
     <Pressable className={cn("ev-controls evc-plate", size === "lg" && "evc-plate--lg", block && "evc-plate--block", className)} busy={busy} {...rest}>
       <span className="evc-plate__label">
         {children}
         {busy && <span className="ev-sr"> ({copy.busy})</span>}
       </span>
-      <span className="evc-plate__orb" aria-hidden="true">
-        {busy ? <span className="evc-spinner" /> : (icon ?? <ArrowRight />)}
-      </span>
+      {orb}
+      <SurfaceFill hoverWithin=".evc-plate">
+        <span className="evc-plate__label">{children}</span>
+        {orb}
+      </SurfaceFill>
     </Pressable>
   );
 }
@@ -65,9 +72,17 @@ export type GhostActionProps = (ButtonLike | AnchorLike) & {
 export function GhostAction({ children, icon, iconPosition = "start", className, ...rest }: GhostActionProps) {
   return (
     <Pressable className={cn("ev-controls evc-ghost", iconPosition === "end" && "evc-ghost--end", className)} {...rest}>
-      {icon && iconPosition === "start" && <span className="evc-ghost__icon" aria-hidden="true">{icon}</span>}
-      <span>{children}</span>
-      {icon && iconPosition === "end" && <span className="evc-ghost__icon" aria-hidden="true">{icon}</span>}
+      {icon && iconPosition === "start" && (
+        <span className="evc-ghost__icon" aria-hidden="true">
+          <TextFill hoverWithin=".evc-ghost" withFocus={false}>{icon}</TextFill>
+        </span>
+      )}
+      <TextFill hoverWithin=".evc-ghost" withFocus={false}>{children}</TextFill>
+      {icon && iconPosition === "end" && (
+        <span className="evc-ghost__icon" aria-hidden="true">
+          <TextFill hoverWithin=".evc-ghost" withFocus={false}>{icon}</TextFill>
+        </span>
+      )}
     </Pressable>
   );
 }

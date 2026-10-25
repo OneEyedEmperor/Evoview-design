@@ -1,5 +1,5 @@
 import { useId, type InputHTMLAttributes, type KeyboardEvent, type ReactNode, type Ref, type TextareaHTMLAttributes } from "react";
-import { Check, cn } from "../foundation";
+import { Check, cn, TextFill } from "../foundation";
 import { rovingKeyDown } from "./Choices";
 import { useControlsCopy } from "./copy";
 
@@ -138,7 +138,10 @@ export function SegmentedControl({ options, value, onChange, label, block = fals
           className="ev-t-label evc-seg__option"
           onClick={() => onChange(o.value)}
         >
-          {o.label}
+          {/* Hover ink rises in (RULES §1); the checked ink follows the thumb. */}
+          <TextFill hoverWithin={i === active ? undefined : ".evc-seg__option"} hoverInk="var(--ev-fg)" withFocus={false}>
+            {o.label}
+          </TextFill>
         </button>
       ))}
     </div>

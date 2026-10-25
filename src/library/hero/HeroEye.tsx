@@ -3,7 +3,8 @@ import traces from "./methodEyeTraces.json";
 
 /* The Evoview method eye (site: src/components/MethodEye.tsx), reveal-only:
    pixel-traced strokes mask the original PNG in, then the full raster fades
-   to fill the texture; phase 4 closes with the enclosing ring. */
+   to fill the texture; phase 4 closes with the enclosing ring. The iris is
+   a separate mask filled with `--lib-iris`. */
 
 const FINISH_FADE_S = 0.18;
 const RING_DRAW_S = 0.6;
@@ -42,8 +43,14 @@ export default function HeroEye({ phase }: { phase: 1 | 2 | 3 | 4 }) {
           ))}
           <rect width="440" height="320" fill="white" className="lib-eye__finish" />
         </mask>
+        <mask id={`${maskId}-iris`} maskUnits="userSpaceOnUse" x="0" y="0" width="440" height="320">
+          <image href={`/library/hero/eye-${artwork}-iris.png`} width="440" height="320" />
+        </mask>
       </defs>
-      <image href={`/library/hero/eye-${artwork}.png`} width="440" height="320" mask={`url(#${maskId})`} />
+      <g mask={`url(#${maskId})`}>
+        <image href={`/library/hero/eye-${artwork}-rest.png`} width="440" height="320" />
+        <rect width="440" height="320" className="lib-eye__iris" mask={`url(#${maskId}-iris)`} />
+      </g>
       {ring && (
         <circle
           cx="220"

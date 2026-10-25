@@ -15,7 +15,8 @@ Read `README.md` ("What is Evoview", attribution, API) and the library's
 
 1. Open the showcase at 1440 and 390; switch the palette to the client's
    accent and to yellow / off-white. Use the specimen to try each planned
-   section's tone / rhythm / heading between dark neighbours.
+   section's tone / heading / heading instrument (phases, ticker, steps)
+   on a dark page; rhythm is shown on the page scene below.
 2. Plan the page as chapters before writing markup: for each section pick
    tone (alternate near-white / near-black; same-tone neighbour → `compact`),
    rhythm (`cinematic` for a dark entry), rail, heading layout. One
