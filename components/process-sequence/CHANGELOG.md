@@ -1,5 +1,45 @@
 # process-sequence changelog
 
+## 1.3.0
+
+Crawlable views (`docs/CRAWLABLE-MODALS.md`). Requires `foundation` ≥ 1.6.0.
+No config changes; existing usage (no `view`, no `hrefFor`) keeps working.
+
+- API: `processSequenceRoutes: ModalRoutes<ProcessSequenceConfig,
+  ProcessSequenceView>` (`views`, `parent`, `key`, `parse`, `head`) and
+  `type ProcessSequenceView = { step: string }` exported. Only steps with
+  `detail` are views; `step.id` is the URL key (keep it a slug).
+- `ProcessSequenceProps` gains `Partial<RouteViewProps<ProcessSequenceView>>`:
+  `view` (controlled; `undefined` = the board keeps its own state),
+  `onNavigate`, `hrefFor`, `history` (default true).
+- `StepDossier` props added: `hrefFor(index)`, `canOpen(index)`, `onUp`,
+  `closing` (host-controlled exit); `STEP_DOSSIER_EXIT_MS` exported. Without
+  them it behaves as before (`onClose` after its own exit).
+- `StepCard`: `href` added; `onOpen` now receives the card element.
+- Behaviour: opening, stepping and closing the dossier keep browser history
+  in step (`useRouteHistory`): open pushes, steps replace, close / Escape /
+  backdrop go Back, so Back closes and Forward reopens. Without `hrefFor` the
+  entries keep the current URL.
+- Links: with `hrefFor`, the cards, the dossier's previous / next and its
+  step cells are `<a href>` (plain click in-page, modified click opens the
+  URL). Controls without a target (first step's previous, current cell) stay
+  disabled buttons.
+- Server rendering: the open step's copy renders from the first render and
+  stays mounted (held, `HeldCopy`, until its media is decoded — the entrance
+  starts at the same moment as before); the dossier root carries
+  `data-ev-route-layer`; its title is the view's `h1`; `inert` on held parts,
+  the loader and video sources only after hydration. Server layout = desktop.
+- Dossier paging (keys, previous / next, cells) skips steps without `detail`;
+  the CTA replaces "next" on the last step that has one. Unchanged when every
+  step has a detail (the reference config).
+- Keys work when focus has dropped to the page (after Back / Forward); Tab
+  is pulled back into the dialog; Alt+← is left to the browser. After a step
+  swap that drops focus, the close button takes it again.
+- CTA with a same-page `#anchor`: closes the dossier (history unwound), then
+  jumps; other hrefs navigate natively.
+- Showcase: `/layouts/process-sequence/<step>/` opens that step's dossier on
+  load.
+
 ## 1.2.0
 
 Requires `foundation` ≥ 1.5.0 (`TextFill`) and `controls` ≥ 1.2.0. No config

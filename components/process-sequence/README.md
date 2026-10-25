@@ -7,7 +7,8 @@ that explains it and leads to the client's main action. Depends on
 `foundation` and `controls`.
 
 Showcase: `https://evoview-library.said.bet/layouts/process-sequence` (one
-dark chapter: four steps, client icons, dossier; live accent palette).
+dark chapter: four steps, client icons, dossier; live accent palette;
+`…/process-sequence/<step>/` opens that step's dossier).
 
 ## What is Evoview (protected)
 
@@ -78,7 +79,8 @@ complete frames and marks keep the accent; everything else is identical.
 | `src/ProcessSequence.tsx` | Board: clock, heading + instrument, Z stacks, phone index + monitor | no |
 | `src/StepCard.tsx` | Three-state card + completion mark | no |
 | `src/StepDossier.tsx` | Split modal (also usable on its own) | no |
-| `src/types.ts`, `src/index.ts` | Types, exports | no |
+| `src/routes.ts` | `processSequenceRoutes` (views, keys, head data) | no |
+| `src/types.ts`, `src/media.ts`, `src/index.ts` | Types, media helper, exports | no |
 | `src/process-sequence.css` | `.ev-process` token block, `ps-*` board, `psd*` dossier | no |
 
 `examples/*.webp` (demo media) belong to the library page; not installed.
@@ -111,6 +113,11 @@ type ProcessSequenceProps = {
   chapter?: boolean;                  // default true: cinematic padding + tone background + top spill;
                                       // false: the host chapter owns padding and background (floor bloom kept)
   id?: string; className?: string;
+  // Crawlable views (below). All optional: without `view` the board keeps the dossier state itself.
+  view?: ProcessSequenceView | null;  // { step: id } | null (closed); controlled when defined
+  onNavigate?: (view) => void;        // every open / step / close the dossier asks for, every Back / Forward
+  hrefFor?: (view | null) => string;  // view URLs: cards and dossier controls become links
+  history?: boolean;                  // default true; false = the host router owns history
 };
 
 type ProcessSequenceConfig = {
@@ -129,8 +136,46 @@ type ProcessSequenceConfig = {
 ```
 
 `StepDossier` can be mounted alone: `steps`, `index`, `onIndexChange`,
-`onClose`, `copy`, `cta?`, `attribution?`, `tone?`. The host restores focus
-(the board does).
+`onClose`, `copy`, `cta?`, `attribution?`, `tone?`, plus `hrefFor?(index)`
+(links), `canOpen?(index)`, `onUp?` (Escape / backdrop), `closing?`
+(host-controlled exit: requests call `onClose` at once, keep it mounted
+`STEP_DOSSIER_EXIT_MS`). The host restores focus (the board does).
+
+## Crawlable views
+
+Contract: `docs/CRAWLABLE-MODALS.md` in the library (client wiring: §7).
+Every step with `detail` is a view `{ step: id }` (level 1) with its own URL
+whose server HTML carries the step's full copy.
+
+- **Routes**: `processSequenceRoutes.views(config)` lists the views (prerender,
+  sitemap), `key` = `step.id` (keep ids URL-safe slugs), `parse(config, key)`,
+  `head(config, view)` → `{ title: "<heading> — <step title>", description
+  (intro, ≤ 160), breadcrumb: [step title], image? (poster / image, not
+  inline data URIs) }`. Data only: the client renders `<title>`, meta,
+  canonical, hreflang and JSON-LD.
+- **Wiring**: one route renders the page on `base` and every
+  `hrefFor(view)` (no remount). Keep `view` in page state, seeded once:
+  ```tsx
+  const hrefFor = routeHrefs(base, processSequenceRoutes.key);            // "<base>/<id>/"
+  const [view, setView] = useState(() => viewFromPath(location.pathname, base, processSequenceRoutes, config) ?? null);
+  <ProcessSequence config={config} view={view} onNavigate={setView} hrefFor={hrefFor} />
+  ```
+  The board stays mounted while closed (Forward reopens). The cards are the
+  launchers (`<a href>`); history is the package's (`useRouteHistory`: open
+  pushes, steps replace, close / Escape / backdrop go Back). With a host
+  router owning history, pass `history={false}` and map `onNavigate`.
+- **Server render**: desktop layout; the open step's copy is in the HTML from
+  the first render (media held, video sources withheld), one `h1` (the
+  dossier heading), the dossier root carries `data-ev-route-layer` (put
+  `ROUTE_LAYER_NOSCRIPT_CSS` in a `<noscript><style>`), no `inert` / loader
+  until hydration. The page's own `h1` steps down to `h2` on view URLs.
+- **Prerender**: for each locale and `[null, ...views]` render the page with
+  that `view`, write `dist<hrefFor(view)>index.html` with its head.
+- **Verify**: library `pnpm verify:ssr process-sequence`; client: the built
+  site crawled without JavaScript (per view URL: title, one h1, copy,
+  canonical / hreflang, no `inert`), then in a browser: every view by click
+  and by URL, Back / Forward / Escape, Ctrl-click opens the URL in a new tab,
+  the board clock stays paused under a deep-linked dossier.
 
 ## Behaviour
 
@@ -143,9 +188,10 @@ type ProcessSequenceConfig = {
 - **Dossier**: opens behind a media gate (loader after 350 ms, ≥ 500 ms,
   text status, retry at 20 s); stage curtain 400 ms + media 1.15 → 1, heading
   wipe, cells, intro, items (+40 ms each), footer stagger; step change = 180 ms
-  out, hold until the next media is decoded, replay. ←/→, Esc, Tab contained,
-  focus on close, returns to the launching card, page scroll locked, background
-  suspended (`useSuspendBackground`). It sets no `inert` on the page, so host
+  out, hold until the next media is decoded, replay. ←/→, Esc (one level up =
+  close), Tab contained, focus on close once the sheet is up, returns to the
+  launching card, page scroll locked, background suspended
+  (`useSuspendBackground`); Back closes, Forward reopens. It sets no `inert` on the page, so host
   chrome marked `data-ev-keep-interactive` (see `dossier` README) stays
   clickable when stacked above its z-index 1000; it is outside the Tab trap
   (pointer only while open). ≥ 768 the windowed shell keeps
@@ -175,3 +221,5 @@ type ProcessSequenceConfig = {
    Esc closes and focus returns to the card. Phone: index jumps, full sheet.
 6. The Evoview mark appears once, in the dossier stage, opens evoview.be in a
    new tab.
+7. With URLs: the "Crawlable views" checks above (`pnpm verify:ssr` in the
+   library).

@@ -1,11 +1,13 @@
-import { useMemo } from "react";
-import { ProcessSequence as Board, buildProcessSequenceConfig } from "../../../components/process-sequence/src";
+import { useMemo, useState } from "react";
+import { ProcessSequence as Board, buildProcessSequenceConfig, processSequenceRoutes, type ProcessSequenceView } from "../../../components/process-sequence/src";
+import { routeHrefs } from "../../../components/foundation/src";
 import releve from "../../../components/process-sequence/examples/releve.webp";
 import esquisse from "../../../components/process-sequence/examples/esquisse.webp";
 import permis from "../../../components/process-sequence/examples/permis.webp";
 import chantier from "../../../components/process-sequence/examples/chantier.webp";
 import ShowcasePage from "../../library/ShowcasePage";
 import { useLibraryLocale } from "../../library/locale";
+import { useShowcaseSubpath } from "../../library/routing";
 
 const MEDIA = {
   survey: { src: releve, alt: "" },
@@ -17,7 +19,8 @@ const MEDIA = {
 /* One client chapter (an architecture studio's method). The frame owns the
    chapter (spacing and environment), so the board mounts with
    chapter={false}. Colour comes only from the frame's --primary: a swatch
-   never re-renders the board. */
+   never re-renders the board. Each step dossier has its URL
+   (/layouts/process-sequence/<step>/), seeded once from the location. */
 export default function ProcessSequence() {
   return (
     <ShowcasePage
@@ -37,6 +40,9 @@ export default function ProcessSequence() {
 
 function Demo() {
   const { locale } = useLibraryLocale();
+  const { base, path } = useShowcaseSubpath();
   const config = useMemo(() => buildProcessSequenceConfig(locale, { media: MEDIA }), [locale]);
-  return <Board config={config} tone="dark" chapter={false} />;
+  const hrefFor = useMemo(() => routeHrefs(base, processSequenceRoutes.key), [base]);
+  const [view, setView] = useState<ProcessSequenceView | null>(() => (path ? processSequenceRoutes.parse(config, path) : null));
+  return <Board config={config} tone="dark" chapter={false} view={view} onNavigate={setView} hrefFor={hrefFor} />;
 }

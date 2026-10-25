@@ -31,10 +31,20 @@ choreography + the approved mark in the dossier stage). Keep both.
    chapter (it pads itself; `chapter={false}` inside a padded section). Check
    the host `--primary` / `--primary-foreground`; fix tokens rather than
    restyling the board.
-5. Verify with the README checklist (1440 / 1024 / 390, one full cycle,
-   pause on scroll-away and dossier, keyboard, palette), then log an activity
-   record (`surface: code`, `type: feature`, subject = the client project)
-   with the package version.
+5. Crawlable views (README "Crawlable views", library
+   `docs/CRAWLABLE-MODALS.md` §7): give each step dossier a URL. One route
+   renders the page on its base and `<base>/<step id>/`; the page holds
+   `view` (seeded once with `viewFromPath`) and passes `view`, `onNavigate`,
+   `hrefFor = routeHrefs(base, processSequenceRoutes.key)`. Prerender
+   `[null, ...processSequenceRoutes.views(config)]` per locale with
+   `head(config, view)` for title / description / canonical / hreflang /
+   JSON-LD and `ROUTE_LAYER_NOSCRIPT_CSS`; the page's own h1 becomes h2 on
+   view URLs. Step ids must be URL slugs.
+6. Verify with the README checklist (1440 / 1024 / 390, one full cycle,
+   pause on scroll-away and dossier, keyboard, palette, and the crawlable
+   checks: no-JS crawl of every view URL, Back / Forward / Escape, Ctrl-click,
+   deep link), then log an activity record (`surface: code`, `type: feature`,
+   subject = the client project) with the package version.
 
 ## Rules
 
@@ -51,6 +61,9 @@ choreography + the approved mark in the dossier stage). Keep both.
   second board on the same page.
 - One linked Evoview mark, in the dossier stage strip; never next to the CTA,
   never invent another destination or add tracking.
+- Never mount the dossier's copy behind its media gate or re-add `inert`,
+  loaders or video sources to server HTML; the dossier heading stays the
+  view's only h1.
 - Never fork for a client: fixes go into the library (`VERSION`,
   `CHANGELOG.md`), clients re-run `install.sh`.
 - Respond in English even when the client interface is French.

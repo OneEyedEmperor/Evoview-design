@@ -181,6 +181,8 @@
   --ps-halo: 0 18px 44px -26px var(--process-deep);
 }
 .ps-card--interactive { cursor: pointer; }
+/* A card linking its dossier view renders as <a>: same box as the div. */
+a.ps-card { display: block; color: inherit; text-decoration: none; }
 .ps-card:focus-visible { outline: 2px solid var(--process-signal); outline-offset: 6px; }
 
 .ps-card__inner {
@@ -645,11 +647,14 @@
 .psd__retry:focus-visible { outline: 2px solid var(--ev-accent-signal); outline-offset: 3px; }
 
 /* Step change: 180 ms out, hold until the next media is ready, then replay. */
-.psd__shell[data-leaving] :is(.psd__scroll, .psd__stage-wrap, .psd__top > .psd__where) {
+.psd__shell[data-leaving] :is(.psd__scroll, .psd__stage-wrap, .psd__top .psd__where) {
   opacity: 0;
   transform: translateY(8px);
   transition: opacity 180ms ease, transform 180ms ease;
 }
+
+/* View links in place of controls buttons (cells, pager, plate, ghost): the button-only resets they miss. */
+.psd a:is(.ev-controls, .evc-progress__hit) { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 
 .psd-in { animation: psd-rise 350ms var(--ev-ease-cinematic) var(--d, 0ms) both; }
 .psd-in--wipe { animation-name: psd-wipe; }

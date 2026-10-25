@@ -1,11 +1,18 @@
-import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type RefObject } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
 import { SegmentedProgress } from "../controls";
-import { Check, cn, pad, SectionMarker, TextFill, useInViewPause, useMediaReady, useSequenceClock } from "../foundation";
-import { StepCard, isVideo } from "./StepCard";
-import { StepDossier } from "./StepDossier";
-import type { ProcessSequenceConfig, ProcessStep, StepState } from "./types";
+import { Check, cn, pad, SectionMarker, TextFill, useInViewPause, useMediaQuery, useMediaReady, useRouteHistory, useSequenceClock, type RouteViewProps } from "../foundation";
+import { isVideo } from "./media";
+import { processSequenceRoutes } from "./routes";
+import { StepCard } from "./StepCard";
+import { STEP_DOSSIER_EXIT_MS, StepDossier } from "./StepDossier";
+import type { ProcessSequenceConfig, ProcessSequenceView, ProcessStep, StepState } from "./types";
 
-export type ProcessSequenceProps = {
+/**
+ * Crawlable views (docs/CRAWLABLE-MODALS.md): pass `view` / `onNavigate` /
+ * `hrefFor` to control the step dossier from the URL. With `view` undefined
+ * the board keeps the dossier state itself (with `hrefFor`, still with URLs).
+ */
+export type ProcessSequenceProps = Partial<RouteViewProps<ProcessSequenceView>> & {
   config: ProcessSequenceConfig;
   /** Chapter environment. The active ribbon always inverts it (paper on dark, ink on light). */
   tone?: "dark" | "light";
@@ -26,20 +33,27 @@ const DEFAULT_DWELL = 4000;
 const DEFAULT_LAST = 6000;
 
 const mq = "(min-width: 768px)";
-const subscribeWide = (cb: () => void) => {
-  const m = window.matchMedia(mq);
-  m.addEventListener("change", cb);
-  return () => m.removeEventListener("change", cb);
-};
-const getWide = () => window.matchMedia(mq).matches;
 
-export function ProcessSequence({ config, tone = "dark", autoplay = true, onOpen, dossier = true, chapter = true, id, className }: ProcessSequenceProps) {
+export function ProcessSequence({
+  config,
+  tone = "dark",
+  autoplay = true,
+  onOpen,
+  dossier = true,
+  chapter = true,
+  id,
+  className,
+  view,
+  onNavigate,
+  hrefFor,
+  history = true,
+}: ProcessSequenceProps) {
   const { steps, copy } = config;
   const n = steps.length;
   const headingId = useId();
   const rootRef = useRef<HTMLElement>(null);
   const gridRef = useRef<HTMLOListElement>(null);
-  const wide = useSyncExternalStore(subscribeWide, getWide, () => true);
+  const wide = useMediaQuery(mq, true);
 
   const durationOf = useCallback(
     (i: number) => {
@@ -81,18 +95,44 @@ export function ProcessSequence({ config, tone = "dark", autoplay = true, onOpen
   const stateOf = (i: number): StepState => (draining ? (i === n - 1 ? "active" : "complete") : i < phase ? "complete" : i === phase ? "active" : "idle");
   const completedBefore = (i: number) => i < Math.min(phase, n);
 
-  // Dossier
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  // Dossier: the host's `view` when controlled, else our own.
+  const builtIn = dossier && !onOpen;
+  const [ownView, setOwnView] = useState<ProcessSequenceView | null>(null);
+  const controlled = view !== undefined;
+  const current = builtIn ? (controlled ? view : ownView) : null;
+  const navigate = useCallback(
+    (next: ProcessSequenceView | null) => {
+      if (!controlled) setOwnView(next);
+      onNavigate?.(next);
+    },
+    [controlled, onNavigate],
+  );
+  useRouteHistory({ view: current, routes: processSequenceRoutes, hrefFor, onNavigate: navigate, history });
+
+  const openAt = current ? steps.findIndex((s) => s.id === current.step && !!s.detail) : -1;
+  const openIndex = openAt >= 0 ? openAt : null;
+  // Kept through the exit, on the step it closed on.
+  const [mountedIndex, setMountedIndex] = useState(openIndex);
+  if (openIndex !== null && openIndex !== mountedIndex) setMountedIndex(openIndex);
+
   const launcher = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (openIndex !== null || mountedIndex === null) return;
+    const t = window.setTimeout(() => {
+      setMountedIndex(null);
+      const el = launcher.current;
+      launcher.current = null;
+      if (el) window.requestAnimationFrame(() => el.isConnected && el.focus({ preventScroll: true }));
+    }, STEP_DOSSIER_EXIT_MS);
+    return () => window.clearTimeout(t);
+  }, [openIndex, mountedIndex]);
+
   const openable = (s: ProcessStep) => !!onOpen || (dossier && !!s.detail);
-  const open = (i: number) => {
+  const viewHref = (s: ProcessStep) => (builtIn && s.detail && hrefFor ? hrefFor({ step: s.id }) : undefined);
+  const open = (i: number, card: HTMLElement) => {
     if (onOpen) return onOpen(steps[i], i);
-    launcher.current = document.activeElement as HTMLElement | null;
-    setOpenIndex(i);
-  };
-  const close = () => {
-    setOpenIndex(null);
-    window.requestAnimationFrame(() => launcher.current?.focus({ preventScroll: true }));
+    launcher.current = card;
+    navigate({ step: steps[i].id });
   };
 
   useZStack(gridRef, n, wide);
@@ -108,7 +148,8 @@ export function ProcessSequence({ config, tone = "dark", autoplay = true, onOpen
       statusLabel={copy.status[stateOf(i)]}
       stepOf={copy.stepOf(i + 1, n)}
       loading={i === activeIndex && media.slow ? (media.failed ? copy.dossier.failed : copy.dossier.loading) : null}
-      onOpen={openable(s) ? () => open(i) : undefined}
+      onOpen={openable(s) ? (el) => open(i, el) : undefined}
+      href={ghost ? undefined : viewHref(s)}
       openHint={copy.openHint}
       ghost={ghost}
     />
@@ -200,12 +241,16 @@ export function ProcessSequence({ config, tone = "dark", autoplay = true, onOpen
         )}
       </div>
 
-      {openIndex !== null && (
+      {mountedIndex !== null && (
         <StepDossier
           steps={steps}
-          index={openIndex}
-          onIndexChange={setOpenIndex}
-          onClose={close}
+          index={openIndex ?? mountedIndex}
+          onIndexChange={(i) => navigate({ step: steps[i].id })}
+          onClose={() => navigate(null)}
+          onUp={() => navigate(current ? processSequenceRoutes.parent(current) : null)}
+          closing={openIndex === null}
+          canOpen={(i) => !!steps[i].detail}
+          hrefFor={hrefFor ? (i) => hrefFor({ step: steps[i].id }) : undefined}
           copy={copy}
           cta={config.cta}
           attribution={config.attribution}

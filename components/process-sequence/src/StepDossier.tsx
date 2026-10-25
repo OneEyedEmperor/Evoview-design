@@ -1,12 +1,28 @@
-import { useCallback, useEffect, useId, useRef, useState, useSyncExternalStore, type CSSProperties, type KeyboardEvent } from "react";
-import { GhostAction, GlassClose, PagerOrb, PrimaryPlate, SegmentedProgress } from "../controls";
-import { ArrowLeft, cn, EvoviewMark, Index, pad, useMediaReady, useSuspendBackground } from "../foundation";
-import { isVideo } from "./StepCard";
-import type { ProcessSequenceConfig, ProcessSequenceCopy, ProcessStep } from "./types";
+import { useCallback, useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent } from "react";
+import { GhostAction, GlassClose, PagerOrb, PrimaryPlate, SegmentedProgress, useControlsCopy } from "../controls";
+import {
+  ArrowLeft,
+  Chevron,
+  cn,
+  EvoviewMark,
+  followRouteLink,
+  HeldCopy,
+  Index,
+  pad,
+  RouteLink,
+  useHeldSrc,
+  useHydrated,
+  useMediaQuery,
+  useMediaReady,
+  useSuspendBackground,
+} from "../foundation";
+import { isVideo } from "./media";
+import { headingLines } from "./routes";
+import type { ProcessSequenceConfig, ProcessSequenceCopy, ProcessStep, StepMedia } from "./types";
 
 export type StepDossierProps = {
   steps: ProcessStep[];
-  /** Requested step (0-based). The view follows once its media is ready. */
+  /** Requested step (0-based). Its copy mounts after the out-motion; its media gate holds the entrance. */
   index: number;
   onIndexChange: (index: number) => void;
   onClose: () => void;
@@ -16,116 +32,182 @@ export type StepDossierProps = {
   attribution?: ProcessSequenceConfig["attribution"];
   /** Sheet tone; the stage stays dark. */
   tone?: "dark" | "light";
+  /** URL of a step's view: previous / next / step cells render as `<a href>` (plain click → `onIndexChange`, modified click → the URL). */
+  hrefFor?: (index: number) => string | undefined;
+  /** Steps the dossier can show; previous / next skip the others. Default: every step. */
+  canOpen?: (index: number) => boolean;
+  /** Escape and backdrop: one level up. Default: close. */
+  onUp?: () => void;
+  /** Host-controlled exit: close requests call `onClose` at once; the host keeps the dossier mounted with `closing` for `STEP_DOSSIER_EXIT_MS`. Omitted: the dossier plays its exit, then calls `onClose`. */
+  closing?: boolean;
 };
 
+export const STEP_DOSSIER_EXIT_MS = 320;
 const OUT_MS = 180;
-const EXIT_MS = 320;
 const mq = "(min-width: 768px)";
-const subscribeWide = (cb: () => void) => {
-  const m = window.matchMedia(mq);
-  m.addEventListener("change", cb);
-  return () => m.removeEventListener("change", cb);
-};
-const getWide = () => window.matchMedia(mq).matches;
+const FOCUSABLE = 'a[href], button:not(:disabled), [tabindex]:not([tabindex="-1"])';
+
+type KeyLike = Pick<KeyboardEvent, "key" | "shiftKey" | "altKey" | "ctrlKey" | "metaKey" | "preventDefault" | "stopPropagation">;
 
 /**
  * Split modal for one step: stage 5/12 (media, numeral, approved Evoview mark)
  * and sheet 7/12 (heading, progress, intro, numbered items, objective,
- * prev / next). Phone: full sheet with sticky header and footer. Media-gated,
- * ←/→ / Esc, focus contained and restored by the host, page suspended while open.
+ * prev / next). Phone: full sheet with sticky header and footer. The step's
+ * copy is mounted from the first render (server HTML included) and held until
+ * its media is decoded, then its entrance plays. ←/→ / Esc, focus contained,
+ * page suspended while open.
  */
-export function StepDossier({ steps, index, onIndexChange, onClose, copy, cta, attribution, tone = "dark" }: StepDossierProps) {
+export function StepDossier({ steps, index, onIndexChange, onClose, copy, cta, attribution, tone = "dark", hrefFor, canOpen, onUp, closing: closingProp }: StepDossierProps) {
   const n = steps.length;
   const titleId = useId();
+  const rootRef = useRef<HTMLDivElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
-  const wide = useSyncExternalStore(subscribeWide, getWide, () => true);
+  const wide = useMediaQuery(mq, true);
+  const hydrated = useHydrated();
   useSuspendBackground(true);
 
   const target = steps[index];
   const media = useMediaReady(true, [isVideo(target.media) ? { src: target.media.src, type: "video" } : target.media.src]);
 
-  // shown = the step on screen; it changes after the out-motion and once the next media is ready.
-  const [shown, setShown] = useState<number | null>(null);
+  // shown = the step on screen; it follows a new index after the out-motion.
+  const [shown, setShown] = useState(index);
   const [leaving, setLeaving] = useState(false);
-  const [closing, setClosing] = useState(false);
+  const [exiting, setExiting] = useState(false);
+  const closing = closingProp ?? exiting;
 
   useEffect(() => {
-    if (shown === index) return;
-    if (shown === null) {
-      if (media.ready) setShown(index);
+    if (shown === index) {
+      setLeaving(false);
       return;
     }
     setLeaving(true);
-    const t = window.setTimeout(() => setLeaving(false), OUT_MS);
+    const t = window.setTimeout(() => {
+      setShown(index);
+      setLeaving(false);
+    }, OUT_MS);
     return () => window.clearTimeout(t);
-  }, [index, shown, media.ready]);
+  }, [index, shown]);
 
-  useEffect(() => {
-    if (shown !== null && shown !== index && !leaving && media.ready) setShown(index);
-  }, [shown, index, leaving, media.ready]);
+  // The outgoing copy stays live through its out-motion; the incoming copy waits for its media.
+  const live = shown !== index || media.ready;
 
-  // Scroll lock + initial focus.
+  // Scroll lock.
   useEffect(() => {
     const html = document.documentElement;
     const prev = html.style.overflow;
     html.style.overflow = "hidden";
-    closeRef.current?.focus({ preventScroll: true });
     return () => {
       html.style.overflow = prev;
     };
   }, []);
 
+  // Close button focus once the sheet is up, retried over its first frames; never steals focus
+  // already in the dialog. A step swap that drops focus with the outgoing controls lands here too.
+  useEffect(() => {
+    if (closing) return;
+    let frame = 0;
+    let attempts = 0;
+    const focusClose = () => {
+      const button = closeRef.current;
+      if (!button || shellRef.current?.contains(document.activeElement)) return;
+      button.focus({ preventScroll: true });
+      if (document.activeElement !== button && ++attempts < 20) frame = window.requestAnimationFrame(focusClose);
+    };
+    frame = window.requestAnimationFrame(focusClose);
+    return () => window.cancelAnimationFrame(frame);
+  }, [closing, shown, live]);
+
   const requestClose = useCallback(() => {
     if (closing) return;
-    setClosing(true);
-    window.setTimeout(onClose, EXIT_MS);
-  }, [closing, onClose]);
+    if (closingProp !== undefined) return onClose();
+    setExiting(true);
+    window.setTimeout(onClose, STEP_DOSSIER_EXIT_MS);
+  }, [closing, closingProp, onClose]);
 
-  const go = (i: number) => {
-    if (i >= 0 && i < n && i !== index) onIndexChange(i);
+  const requestUp = () => {
+    if (closing) return;
+    if (onUp) onUp();
+    else requestClose();
   };
 
-  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === "Escape") {
-      e.stopPropagation();
-      requestClose();
-    } else if (e.key === "ArrowRight") {
+  const openable = (i: number) => i >= 0 && i < n && (canOpen ? canOpen(i) : true);
+  const neighbour = (from: number, dir: -1 | 1) => {
+    for (let i = from + dir; i >= 0 && i < n; i += dir) if (openable(i)) return i;
+    return undefined;
+  };
+  const go = (i: number | undefined) => {
+    if (closing || i === undefined || i === index || !openable(i)) return;
+    onIndexChange(i);
+  };
+  const linkOf = (i: number | undefined) => (i === undefined ? undefined : hrefFor?.(i));
+
+  const trapTab = (e: KeyLike) => {
+    const shell = shellRef.current;
+    if (!shell) return;
+    const list = Array.from(shell.querySelectorAll<HTMLElement>(FOCUSABLE)).filter((el) => el.tabIndex >= 0 && el.offsetParent !== null && !el.closest("[inert]"));
+    if (list.length === 0) return;
+    const first = list[0];
+    const last = list[list.length - 1];
+    const active = document.activeElement;
+    if (!shell.contains(active)) {
       e.preventDefault();
-      go(index + 1);
-    } else if (e.key === "ArrowLeft") {
+      (e.shiftKey ? last : first).focus();
+    } else if (e.shiftKey && active === first) {
       e.preventDefault();
-      go(index - 1);
-    } else if (e.key === "Tab") {
-      const nodes = shellRef.current?.querySelectorAll<HTMLElement>('a[href], button:not(:disabled), [tabindex]:not([tabindex="-1"])');
-      if (!nodes || nodes.length === 0) return;
-      const list = Array.from(nodes).filter((el) => el.offsetParent !== null);
-      const first = list[0];
-      const last = list[list.length - 1];
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
+      last.focus();
+    } else if (!e.shiftKey && active === last) {
+      e.preventDefault();
+      first.focus();
     }
   };
 
-  const step = shown === null ? null : steps[shown];
-  const detail = step?.detail;
-  const isLast = shown === n - 1;
-  const showLoader = media.slow && (shown === null || shown !== index);
-  const markOn = attribution?.enabled !== false;
+  const onKey = (e: KeyLike) => {
+    if (e.key === "Escape") {
+      e.stopPropagation();
+      requestUp();
+    } else if (e.key === "Tab") {
+      trapTab(e);
+    } else if (e.altKey || e.ctrlKey || e.metaKey) {
+      // Alt+← is the browser's Back: history moves the view.
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      go(neighbour(index, 1));
+    } else if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      go(neighbour(index, -1));
+    }
+  };
 
-  const stage = step && (
+  // Keys pressed while focus sits outside the dialog (dropped on body after Back / Forward).
+  const keyRef = useRef(onKey);
+  useEffect(() => {
+    keyRef.current = onKey;
+  });
+  useEffect(() => {
+    const onDocumentKey = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || rootRef.current?.contains(e.target as Node)) return;
+      keyRef.current(e);
+    };
+    document.addEventListener("keydown", onDocumentKey);
+    return () => document.removeEventListener("keydown", onDocumentKey);
+  }, []);
+
+  const step = steps[shown];
+  const detail = step.detail;
+  const prev = neighbour(shown, -1);
+  const next = neighbour(shown, 1);
+  const isLast = next === undefined;
+  const prevHref = linkOf(prev);
+  const nextHref = linkOf(next);
+  const showLoader = hydrated && !live && (media.slow || media.failed);
+  const markOn = attribution?.enabled !== false;
+  const heldInert = hydrated && !live;
+
+  const stage = (
     <div className="psd__stage" key={`stage-${shown}`}>
       <div className="psd__picture">
-        {isVideo(step.media) ? (
-          <video className="psd__img" src={step.media.src} poster={step.media.poster} muted loop playsInline autoPlay aria-hidden="true" />
-        ) : (
-          <img className="psd__img" src={step.media.src} alt={step.media.alt ?? ""} decoding="async" draggable={false} />
-        )}
+        {isVideo(step.media) ? <StageVideo media={step.media} /> : <img className="psd__img" src={step.media.src} alt={step.media.alt ?? ""} decoding="async" draggable={false} />}
       </div>
       <span className="psd__grade" aria-hidden="true" />
       {markOn && (
@@ -134,71 +216,127 @@ export function StepDossier({ steps, index, onIndexChange, onClose, copy, cta, a
         </div>
       )}
       <div className="psd__stamp" aria-hidden="true">
-        <span className="psd__numeral">{pad((shown ?? 0) + 1)}</span>
+        <span className="psd__numeral">{pad(shown + 1)}</span>
         <span className="ev-t-readout psd__label">{step.caption ?? step.title}</span>
       </div>
     </div>
   );
 
-  const progress = step && (
+  const cellLabels = steps.map((s, i) => `${pad(i + 1)} ${s.title}`);
+  const progress = (
     <div className="psd__progress psd-in" style={{ "--d": wide ? "150ms" : "220ms" } as CSSProperties}>
-      <SegmentedProgress count={n} current={shown ?? 0} label={copy.dossier.progress} labels={steps.map((s, i) => `${pad(i + 1)} ${s.title}`)} onSelect={go} fill={1} className="psd__cells" />
-      {wide ? <Index current={(shown ?? 0) + 1} total={n} srLabel={copy.stepOf((shown ?? 0) + 1, n)} /> : <span className="ev-sr">{copy.stepOf((shown ?? 0) + 1, n)}</span>}
+      {hrefFor ? (
+        <StepCells count={n} current={shown} label={copy.dossier.progress} labels={cellLabels} hrefOf={(i) => (openable(i) ? hrefFor(i) : undefined)} onSelect={go} />
+      ) : (
+        <SegmentedProgress count={n} current={shown} label={copy.dossier.progress} labels={cellLabels} onSelect={go} canSelect={(i) => i !== shown && openable(i)} fill={1} className="psd__cells" />
+      )}
+      {wide ? <Index current={shown + 1} total={n} srLabel={copy.stepOf(shown + 1, n)} /> : <span className="ev-sr">{copy.stepOf(shown + 1, n)}</span>}
     </div>
   );
 
-  const next = isLast && cta ? (
-    cta.href ? (
-      <PrimaryPlate href={cta.href} block={!wide} onClick={() => { cta.onClick?.(); requestClose(); }}>
-        {cta.label}
+  let nextControl;
+  if (isLast && cta) {
+    const ctaHref = cta.href;
+    const onCta = (e: MouseEvent<HTMLElement>) => {
+      cta.onClick?.();
+      if (ctaHref === undefined) return requestClose();
+      // A same-page anchor closes the dossier first (its history entries go), then jumps.
+      if (ctaHref.startsWith("#"))
+        followRouteLink(e, () => {
+          requestClose();
+          window.setTimeout(() => window.location.assign(ctaHref), STEP_DOSSIER_EXIT_MS + 40);
+        });
+    };
+    nextControl =
+      ctaHref !== undefined ? (
+        <PrimaryPlate href={ctaHref} block={!wide} onClick={onCta}>
+          {cta.label}
+        </PrimaryPlate>
+      ) : (
+        <PrimaryPlate block={!wide} onClick={onCta}>
+          {cta.label}
+        </PrimaryPlate>
+      );
+  } else if (nextHref !== undefined) {
+    nextControl = (
+      <PrimaryPlate href={nextHref} block={!wide} onClick={(e) => followRouteLink(e, () => go(next))}>
+        {copy.dossier.next}
       </PrimaryPlate>
+    );
+  } else {
+    nextControl = (
+      <PrimaryPlate block={!wide} onClick={() => go(next)} disabled={isLast}>
+        {copy.dossier.next}
+      </PrimaryPlate>
+    );
+  }
+
+  let prevControl;
+  if (prevHref !== undefined) {
+    prevControl = wide ? (
+      <GhostAction icon={<ArrowLeft />} href={prevHref} onClick={(e) => followRouteLink(e, () => go(prev))}>
+        {copy.dossier.previous}
+      </GhostAction>
     ) : (
-      <PrimaryPlate block={!wide} onClick={() => { cta.onClick?.(); requestClose(); }}>
-        {cta.label}
-      </PrimaryPlate>
-    )
-  ) : (
-    <PrimaryPlate block={!wide} onClick={() => go((shown ?? 0) + 1)} disabled={isLast}>
-      {copy.dossier.next}
-    </PrimaryPlate>
-  );
+      <RouteLink href={prevHref} onFollow={() => go(prev)} className="ev-controls evc-glass evc-pager evc-pager--prev" aria-label={copy.dossier.previous}>
+        <Chevron dir="left" />
+      </RouteLink>
+    );
+  } else {
+    prevControl = wide ? (
+      <GhostAction icon={<ArrowLeft />} onClick={() => go(prev)} disabled={prev === undefined}>
+        {copy.dossier.previous}
+      </GhostAction>
+    ) : (
+      <PagerOrb direction="prev" label={copy.dossier.previous} onClick={() => go(prev)} disabled={prev === undefined} />
+    );
+  }
 
   return (
-    <div className={cn("ev-root psd", closing && "psd--closing")} data-ev-modal="" onKeyDown={onKeyDown}>
-      <div className="psd__backdrop" onClick={requestClose} aria-hidden="true" />
+    <div ref={rootRef} className={cn("ev-root psd", closing && "psd--closing")} data-ev-modal="" data-ev-route-layer="" onKeyDown={(e: ReactKeyboardEvent<HTMLDivElement>) => onKey(e)}>
+      <div className="psd__backdrop" onClick={requestUp} aria-hidden="true" />
       <div
         ref={shellRef}
         className={cn("psd__shell", tone === "light" ? "ev-tone-paper" : "ev-tone-dark")}
         role="dialog"
         aria-modal="true"
-        aria-labelledby={step ? titleId : undefined}
-        aria-label={step ? undefined : copy.dossier.label}
-        data-ready={step ? "" : undefined}
+        aria-labelledby={titleId}
+        data-ready={shown === index && live ? "" : undefined}
         data-leaving={leaving || undefined}
       >
-        {wide && <div className="psd__stage-wrap">{stage}</div>}
+        {wide && (
+          <div className="psd__stage-wrap" inert={heldInert}>
+            <HeldCopy live={live}>{stage}</HeldCopy>
+          </div>
+        )}
 
         <div className="psd__sheet">
           <div className="psd__top">
-            {!wide && step && (
-              <div className="psd__where psd-in" style={{ "--d": "80ms" } as CSSProperties} key={`where-${shown}`}>
-                <span className="psd__where-num">{pad((shown ?? 0) + 1)}</span>
-                <span className="psd__where-title">{step.title}</span>
-              </div>
+            {!wide && (
+              <HeldCopy live={live}>
+                <div className="psd__where psd-in" style={{ "--d": "80ms" } as CSSProperties} key={`where-${shown}`}>
+                  <span className="psd__where-num">{pad(shown + 1)}</span>
+                  <span className="psd__where-title">{step.title}</span>
+                </div>
+              </HeldCopy>
             )}
             <GlassClose ref={closeRef} label={copy.dossier.close} onClick={requestClose} className="psd__close" />
           </div>
 
-          <div className="psd__scroll">
-            {step && (
+          <div className="psd__scroll" inert={heldInert}>
+            <HeldCopy live={live}>
               <div className="psd__content" key={`content-${shown}`}>
                 {!wide && <div className="psd__well psd-in" style={{ "--d": "140ms" } as CSSProperties}>{stage}</div>}
                 {!wide && progress}
-                <h2 id={titleId} className="ev-t-heading psd__heading psd-in psd-in--wipe" style={{ "--d": wide ? "100ms" : "280ms" } as CSSProperties}>
-                  {(detail?.heading ?? [step.title]).map((line) => (
-                    <span key={line}>{line}</span>
+                <h1 id={titleId} className="ev-t-heading psd__heading psd-in psd-in--wipe" style={{ "--d": wide ? "100ms" : "280ms" } as CSSProperties}>
+                  {headingLines(step).map((line, i) => (
+                    // The space keeps the lines apart in text extraction; at the start of a block line it is not rendered.
+                    <span key={line}>
+                      {i > 0 && " "}
+                      {line}
+                    </span>
                   ))}
-                </h2>
+                </h1>
                 {wide && progress}
                 <p className="ev-t-body psd__intro psd-in" style={{ "--d": wide ? "200ms" : "360ms" } as CSSProperties}>
                   {detail?.intro ?? step.summary}
@@ -220,24 +358,18 @@ export function StepDossier({ steps, index, onIndexChange, onClose, copy, cta, a
                   </div>
                 )}
               </div>
-            )}
+            </HeldCopy>
           </div>
 
-          {step && (
-            <div className="psd__foot psd-in" style={{ "--d": wide ? "300ms" : "700ms" } as CSSProperties} key={`foot-${shown}`}>
-              {wide ? (
-                <GhostAction icon={<ArrowLeft />} onClick={() => go((shown ?? 0) - 1)} disabled={shown === 0}>
-                  {copy.dossier.previous}
-                </GhostAction>
-              ) : (
-                <PagerOrb direction="prev" label={copy.dossier.previous} onClick={() => go((shown ?? 0) - 1)} disabled={shown === 0} />
-              )}
-              {next}
+          <HeldCopy live={live}>
+            <div className="psd__foot psd-in" style={{ "--d": wide ? "300ms" : "700ms" } as CSSProperties} key={`foot-${shown}`} inert={heldInert}>
+              {prevControl}
+              {nextControl}
             </div>
-          )}
+          </HeldCopy>
         </div>
 
-        {(showLoader || media.failed) && (
+        {showLoader && (
           <div className="psd__loader" role="status" aria-live="polite">
             <span className="psd__spinner" aria-hidden="true" data-failed={media.failed || undefined} />
             <span className="ev-t-readout">{media.failed ? copy.dossier.failed : copy.dossier.loading}</span>
@@ -250,5 +382,46 @@ export function StepDossier({ steps, index, onIndexChange, onClose, copy, cta, a
         )}
       </div>
     </div>
+  );
+}
+
+/** Stage video: no source until the held copy goes live (server HTML carries the poster only). */
+function StageVideo({ media }: { media: StepMedia }) {
+  const src = useHeldSrc(media.src);
+  return <video className="psd__img" src={src} poster={media.poster} muted loop playsInline autoPlay aria-hidden="true" />;
+}
+
+/* The dossier's step cells as view links: the markup and classes of controls'
+   SegmentedProgress (sm, full fill), with an `<a href>` per reachable step.
+   The current step and unreachable ones stay disabled buttons, as there. */
+function StepCells({ count, current, label, labels, hrefOf, onSelect }: { count: number; current: number; label: string; labels: string[]; hrefOf: (index: number) => string | undefined; onSelect: (index: number) => void }) {
+  const controls = useControlsCopy();
+  return (
+    <ol className="ev-controls evc-progress evc-progress--sm evc-progress--interactive psd__cells" aria-label={label} style={{ ["--evc-progress-n" as string]: count }}>
+      {Array.from({ length: count }, (_, i) => {
+        const isCurrent = i === current;
+        const state = isCurrent ? "current" : i < current ? "done" : "upcoming";
+        const name = `${labels[i]} · ${controls.stepStatus[state]}`;
+        const href = isCurrent ? undefined : hrefOf(i);
+        const cell = (
+          <span className="evc-progress__cell" aria-hidden="true">
+            <span className="evc-progress__fill" style={isCurrent ? { transform: "scaleX(1)" } : undefined} />
+          </span>
+        );
+        return (
+          <li key={i} data-state={state} aria-current={isCurrent ? "step" : undefined}>
+            {href !== undefined ? (
+              <RouteLink href={href} onFollow={() => onSelect(i)} className="evc-progress__hit" aria-label={name}>
+                {cell}
+              </RouteLink>
+            ) : (
+              <button type="button" className="evc-progress__hit" aria-label={name} aria-current={isCurrent ? "step" : undefined} disabled>
+                {cell}
+              </button>
+            )}
+          </li>
+        );
+      })}
+    </ol>
   );
 }

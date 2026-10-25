@@ -1,9 +1,9 @@
 import { useEffect, useRef, type KeyboardEvent, type ReactNode } from "react";
-import { cn, pad, sequenceFillStyle, type SequenceClock } from "../foundation";
-import type { CompletionMark, ProcessStep, StepMedia, StepState } from "./types";
+import { cn, followRouteLink, pad, sequenceFillStyle, useHydrated, type SequenceClock } from "../foundation";
+import { isVideo } from "./media";
+import type { CompletionMark, ProcessStep, StepState } from "./types";
 
-const VIDEO_RE = /\.(mp4|webm|mov|m4v|ogv)(\?|#|$)/i;
-export const isVideo = (m: StepMedia) => (m.type ? m.type === "video" : VIDEO_RE.test(m.src));
+export { isVideo };
 
 type ClockLike = Pick<SequenceClock, "duration" | "elapsed" | "running" | "done">;
 
@@ -22,15 +22,18 @@ type StepCardProps = {
   stepOf: string;
   /** Loader text while the active media decodes (null = ready). */
   loading?: string | null;
-  /** Makes the card a button. */
-  onOpen?: () => void;
+  /** Makes the card a button (a link with `href`); receives the card element. */
+  onOpen?: (card: HTMLElement) => void;
+  /** URL of the step's dossier view: the card renders as `<a href>`, a plain click runs `onOpen`. */
+  href?: string;
   openHint?: string;
   /** Hidden duplicate used only to reserve height (phone monitor). */
   ghost?: boolean;
 };
 
-export function StepCard({ step, index, state, clock, runKey, mark, statusLabel, stepOf, loading, onOpen, openHint, ghost }: StepCardProps) {
+export function StepCard({ step, index, state, clock, runKey, mark, statusLabel, stepOf, loading, onOpen, href, openHint, ghost }: StepCardProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const hydrated = useHydrated();
   const video = isVideo(step.media);
   const live = state === "active" && clock.running && !ghost;
 
@@ -52,37 +55,27 @@ export function StepCard({ step, index, state, clock, runKey, mark, statusLabel,
   }, [state]);
 
   const fill = state === "active" ? sequenceFillStyle(clock) : undefined;
-  const interactive = !!onOpen && !ghost;
-
-  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      onOpen?.();
-    }
-  };
-
+  const open = ghost ? undefined : onOpen;
+  const interactive = !!open;
   const name = `${pad(index + 1)} ${step.title} · ${statusLabel}`;
 
-  return (
-    <div
-      className={cn("ps-card", interactive && "ps-card--interactive")}
-      data-state={state}
-      role={interactive ? "button" : "group"}
-      tabIndex={interactive ? 0 : undefined}
-      aria-label={interactive ? `${name} — ${openHint}` : name}
-      aria-current={state === "active" ? "step" : undefined}
-      aria-hidden={ghost || undefined}
-      onClick={interactive ? onOpen : undefined}
-      onKeyDown={interactive ? onKeyDown : undefined}
-    >
-      <div className="ps-card__inner">
+  const shared = {
+    className: cn("ps-card", interactive && "ps-card--interactive"),
+    "data-state": state,
+    "aria-label": interactive ? `${name} — ${openHint}` : name,
+    "aria-current": state === "active" ? ("step" as const) : undefined,
+    "aria-hidden": ghost || undefined,
+  };
+
+  const inner = (
+    <div className="ps-card__inner">
         <div className="ps-card__media">
           <div className="ps-card__picture">
             {video ? (
               <video
                 ref={videoRef}
                 className="ps-card__img"
-                src={step.media.src}
+                src={hydrated ? step.media.src : undefined}
                 poster={step.media.poster}
                 muted
                 loop
@@ -121,7 +114,38 @@ export function StepCard({ step, index, state, clock, runKey, mark, statusLabel,
             </div>
           </div>
         </div>
-      </div>
+    </div>
+  );
+
+  if (open && href !== undefined) {
+    // Enter follows the link natively (modified Enter / click: new tab); Space keeps the button parity.
+    const onLinkKeyDown = (e: KeyboardEvent<HTMLAnchorElement>) => {
+      if (e.key !== " ") return;
+      e.preventDefault();
+      open(e.currentTarget);
+    };
+    return (
+      <a {...shared} href={href} onClick={(e) => followRouteLink(e, () => open(e.currentTarget))} onKeyDown={onLinkKeyDown}>
+        {inner}
+      </a>
+    );
+  }
+
+  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      open?.(e.currentTarget);
+    }
+  };
+  return (
+    <div
+      {...shared}
+      role={interactive ? "button" : "group"}
+      tabIndex={interactive ? 0 : undefined}
+      onClick={open ? (e) => open(e.currentTarget) : undefined}
+      onKeyDown={interactive ? onKeyDown : undefined}
+    >
+      {inner}
     </div>
   );
 }

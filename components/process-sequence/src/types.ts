@@ -23,6 +23,7 @@ export type StepDetail = {
 };
 
 export type ProcessStep = {
+  /** URL-safe slug (`a-z`, `0-9`, `-`): the step's view key (`<base>/<id>/`). */
   id: string;
   /** Card title (≈ 20 characters; it types in). */
   title: string;
@@ -84,3 +85,6 @@ export type ProcessSequenceConfig = {
 };
 
 export type StepState = "idle" | "active" | "complete";
+
+/** An open step dossier (docs/CRAWLABLE-MODALS.md §1): a step id, level 1. Only steps with `detail` are views. */
+export type ProcessSequenceView = { step: string };
