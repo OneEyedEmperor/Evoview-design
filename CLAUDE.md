@@ -45,7 +45,7 @@ and `controls`; follow `docs/BUILD-BRIEF.md`.
 | `card-track` — media card + scroll-scrubbed track (`/layouts/card-track`) | 1.2.1 | `evoview-card-track` |
 | `process-sequence` — timed step board + step dossier, crawlable step views (`/layouts/process-sequence`) | 1.3.1 | `evoview-process-sequence` |
 | `story-blocks` — intro split, indexed sequence, proof collage, payoff (`/layouts/story-blocks`) | 2.2.0 | `evoview-story-blocks` |
-| `dossier` — portal modal, selection board, chapter strip, mobile dock (`/components/dossier`) | 1.3.0 | `evoview-dossier` |
+| `dossier` — portal modal, selection board, chapter strip, mobile dock, crawlable views (`/components/dossier`) | 1.4.0 | `evoview-dossier` |
 | `selector-stage` — selector ↔ stage, before/after, atlas (`/components/selector-stage`) | 1.4.0 | `evoview-selector-stage` |
 | `navbar` — finder capsule, desktop + mobile, cover-card trays (`/navbar`) | 2.7.0 | `evoview-navbar` |
 | `reservation` — Evoview booking application + short paper flow, client accent (`/components/reservation`) | 2.10.0 | `evoview-reservation` |
