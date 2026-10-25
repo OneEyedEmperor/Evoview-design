@@ -1,6 +1,6 @@
 ---
 name: evoview-dossier
-description: Evoview portal modal (dossier) for client sites — header strip with the approved Evoview mark, 4-tile selection board, open chapters with a reading-progress chapter strip, glass capsule + dock on phones, media-gated loader, full modal contract (focus, Escape one level, history Back). Use when a client page needs to present a multi-part offer (services, projects, menus, rooms) as an Evoview dossier. Triggers on "evoview dossier", "portal modal", "selection board", "service dossier", "dossier modal".
+description: Evoview portal modal (dossier) for client sites — header strip with the approved Evoview mark, 4-tile selection board, open chapters with a reading-progress chapter strip, glass capsule + dock on phones, media-gated loader, full modal contract (focus, Escape one level, history Back), every view a crawlable, prerenderable URL (dossierRoutes). Use when a client page needs to present a multi-part offer (services, projects, menus, rooms) as an Evoview dossier. Triggers on "evoview dossier", "portal modal", "selection board", "service dossier", "dossier modal".
 ---
 
 # Evoview dossier
@@ -35,13 +35,24 @@ pause model.
    `ChapterRows` (one panel, alternating rows — info sheets, programmes) or
    `surface="tiles"` (peers); number rows only when they are a sequence.
    Demonstrations carry their "example" note (`ChapterSpecimen note`).
-5. Mount `<Dossier>` near the page root (no transformed ancestor), launchers
-   set `open` + `initialItemId` (optionally `initialEntryId`). It preloads the
-   board media on idle (`preload`, default on); keep it mounted while closed.
-   If the host pins chrome bottom-right, set `--dossier-reserve-bottom`.
-6. Keep `attribution.enabled = true`, `href` = `https://evoview.be/`; never
+5. Mount `<Dossier config view onNavigate hrefFor>` near the page root (no
+   transformed ancestor), open or not: the host keeps `view` in state
+   (seeded once from the URL with `viewFromPath`), `hrefFor =
+   routeHrefs(base, dossierRoutes.key)`; launchers are `<a href={hrefFor(v)}>`
+   with `followRouteLink`. It preloads the board media on idle (`preload`,
+   default on). If the host pins chrome bottom-right, set
+   `--dossier-reserve-bottom`.
+6. Crawlable views (README "Crawlable views", contract
+   `docs/CRAWLABLE-MODALS.md` §7): a splat route per page and locale so every
+   view URL renders the same page; the page title becomes h2 while a view is
+   open; prerender `[null, ...dossierRoutes.views(config)]` with
+   `dossierRoutes.head` (title, description, canonical, hreflang, JSON-LD)
+   and the `ROUTE_LAYER_NOSCRIPT_CSS` noscript sheet; sitemap / llms list
+   the views; verify the built HTML without JavaScript.
+7. Keep `attribution.enabled = true`, `href` = `https://evoview.be/`; never
    move the mark next to the client CTA or add other marks.
-7. Verify with the README checklist at 1440 / 1024 / 390, then log an
+8. Verify with the README checklist at 1440 / 1024 / 390 (URLs, Back /
+   Forward level by level, Ctrl-click, cold view URLs), then log an
    activity record (`surface: code`, `type: feature`, subject = the client
    project) with the package version.
 

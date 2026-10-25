@@ -1,15 +1,20 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type MouseEvent } from "react";
 import { ControlsProvider, GhostAction, Switch, buildControlsConfig } from "../../../components/controls/src";
-import { ArrowRight, pad } from "../../../components/foundation/src";
-import { Dossier as DossierModal, buildDossierConfig, type DossierConfig, type DossierItem } from "../../../components/dossier/src";
+import { ArrowRight, followRouteLink, pad, routeHrefs } from "../../../components/foundation/src";
+import { Dossier as DossierModal, buildDossierConfig, dossierRoutes, type DossierConfig, type DossierItem, type DossierView } from "../../../components/dossier/src";
 import "../../../components/dossier/showcase.css";
-import ShowcasePage, { ShowcaseVariant } from "../../library/ShowcasePage";
+import ShowcasePage, { ShowcaseVariant, useShowcaseViewOpen } from "../../library/ShowcasePage";
+import { useShowcaseSubpath } from "../../library/routing";
 import { useLibraryLocale, type Locale, type Localized } from "../../library/locale";
 
 /* /components/dossier — one fictional restaurant (Maison Ardoise) in the two
    configurations a client actually chooses between: several universes behind
    a pager, or a single offer. Colour comes from the frame's --primary (or the
-   per-universe accents); a locale switch only swaps copy, nothing remounts. */
+   per-universe accents); a locale switch only swaps copy, nothing remounts.
+
+   Every view has a URL (docs/CRAWLABLE-MODALS.md): `<page>/<key>/` addresses
+   the main variant (several universes), `<page>/single/<key>/` the
+   one-universe variant. */
 export default function DossierPage() {
   return (
     <ShowcasePage
@@ -70,25 +75,50 @@ const COVERS: Record<string, string> = {
 };
 const SINGLE_COVER = "/library/dossier/salon-reception.webp";
 
-type Open = { set: "multi" | "single"; item: string; entry?: string };
+type Set = "multi" | "single";
+/** The one-universe variant's views live under `<page>/single/`. */
+const SINGLE_SEGMENT = "single";
+
+const singleOnly = (config: DossierConfig): DossierConfig => ({ ...config, items: config.items.filter((item) => item.id === "salons") });
+
+/** The view a page sub-path names, and the variant it belongs to. */
+function viewFromSubpath(path: string, locale: Locale): { set: Set; view: DossierView | null } {
+  const config = buildDossierConfig(locale);
+  if (path === SINGLE_SEGMENT || path.startsWith(`${SINGLE_SEGMENT}/`)) {
+    return { set: "single", view: dossierRoutes.parse(singleOnly(config), path.slice(SINGLE_SEGMENT.length + 1)) };
+  }
+  return { set: "multi", view: path ? dossierRoutes.parse(config, path) : null };
+}
 
 function Showcase() {
   const { locale } = useLibraryLocale();
+  const { base, path } = useShowcaseSubpath();
   const [itemAccents, setItemAccents] = useState(false);
-  const [open, setOpen] = useState<Open | null>(null);
-  // The set of the last open, kept through the exit animation.
-  const [set, setSet] = useState<Open["set"]>("multi");
+  // Seeded once from the URL; the modal keeps the URL in step from there. `set` is kept through the exit animation.
+  const [state, setState] = useState(() => viewFromSubpath(path, locale));
+  const { set, view } = state;
+  // An open view owns the page's h1 (the page title renders as h2 meanwhile).
+  useShowcaseViewOpen(view !== null);
 
   const multi = useMemo<DossierConfig>(() => {
-    const base = buildDossierConfig(locale);
-    return itemAccents ? base : { ...base, items: base.items.map((item) => ({ ...item, accent: undefined })) };
+    const config = buildDossierConfig(locale);
+    return itemAccents ? config : { ...config, items: config.items.map((item) => ({ ...item, accent: undefined })) };
   }, [locale, itemAccents]);
-  const single = useMemo<DossierConfig>(() => ({ ...multi, items: multi.items.filter((item) => item.id === "salons") }), [multi]);
+  const single = useMemo(() => singleOnly(multi), [multi]);
 
-  const launch = (next: Open) => {
-    setSet(next.set);
-    setOpen(next);
-  };
+  const hrefs = useMemo(() => {
+    const singleViews = routeHrefs(`${base}/${SINGLE_SEGMENT}`, dossierRoutes.key);
+    return {
+      multi: routeHrefs(base, dossierRoutes.key),
+      single: (v: DossierView | null) => (v === null ? base : singleViews(v)),
+    };
+  }, [base]);
+
+  const launch = (nextSet: Set, next: DossierView) => setState({ set: nextSet, view: next });
+  const launcher = (nextSet: Set, next: DossierView) => ({
+    href: hrefs[nextSet](next),
+    onClick: (event: MouseEvent<HTMLAnchorElement>) => followRouteLink(event, () => launch(nextSet, next)),
+  });
 
   return (
     <ControlsProvider config={buildControlsConfig(locale)}>
@@ -97,7 +127,7 @@ function Showcase() {
           <div className="dsh-scene__copy">
             <h2 className="ev-t-section-feature">{tr(T.multi.title, locale)}</h2>
             <p className="ev-t-body dsh-scene__body">{tr(T.multi.body, locale)}</p>
-            <GhostAction icon={<ArrowRight />} iconPosition="end" onClick={() => launch({ set: "multi", item: "table", entry: "tasting" })}>
+            <GhostAction icon={<ArrowRight />} iconPosition="end" {...launcher("multi", { item: "table", entry: "tasting" })}>
               {tr(T.multi.deep, locale)}
             </GhostAction>
             <div className="dsh-scene__choice">
@@ -107,7 +137,7 @@ function Showcase() {
           <ul className="dsh-launchers">
             {multi.items.map((item, i) => (
               <li key={item.id} className="dsh-launchers__item" data-index={i + 1}>
-                <Launcher item={item} cover={COVERS[item.id]} index={`${pad(i + 1)} / ${pad(multi.items.length)}`} locale={locale} onOpen={() => launch({ set: "multi", item: item.id })} />
+                <Launcher item={item} cover={COVERS[item.id]} index={`${pad(i + 1)} / ${pad(multi.items.length)}`} locale={locale} {...launcher("multi", { item: item.id })} />
               </li>
             ))}
           </ul>
@@ -120,24 +150,25 @@ function Showcase() {
             <h2 className="ev-t-section-feature">{tr(T.single.title, locale)}</h2>
             <p className="ev-t-body dsh-scene__body">{tr(T.single.body, locale)}</p>
           </div>
-          <Launcher item={single.items[0]} cover={SINGLE_COVER} locale={locale} wide onOpen={() => launch({ set: "single", item: "salons" })} />
+          <Launcher item={single.items[0]} cover={SINGLE_COVER} locale={locale} wide {...launcher("single", { item: "salons" })} />
         </div>
       </ShowcaseVariant>
 
       <DossierModal
         config={set === "single" ? single : multi}
-        open={open !== null}
-        onClose={() => setOpen(null)}
-        initialItemId={open?.item}
-        initialEntryId={open?.entry}
+        view={view}
+        onNavigate={(next) => setState((s) => ({ ...s, view: next }))}
+        hrefFor={hrefs[set]}
       />
     </ControlsProvider>
   );
 }
 
-function Launcher({ item, cover, index, locale, wide = false, onOpen }: { item: DossierItem; cover: string; index?: string; locale: Locale; wide?: boolean; onOpen: () => void }) {
+type LauncherProps = { item: DossierItem; cover: string; index?: string; locale: Locale; wide?: boolean; href: string; onClick: (event: MouseEvent<HTMLAnchorElement>) => void };
+
+function Launcher({ item, cover, index, locale, wide = false, href, onClick }: LauncherProps) {
   return (
-    <button type="button" className="dsh-launcher" data-wide={wide || undefined} aria-label={T.openAria(item.label, locale)} onClick={onOpen}>
+    <a className="dsh-launcher" href={href} data-wide={wide || undefined} aria-label={T.openAria(item.label, locale)} onClick={onClick}>
       <span className="dsh-launcher__media">
         <img src={cover} alt="" decoding="async" />
       </span>
@@ -150,6 +181,6 @@ function Launcher({ item, cover, index, locale, wide = false, onOpen }: { item: 
         <span>{tr(T.explore, locale)}</span>
         <ArrowRight />
       </span>
-    </button>
+    </a>
   );
 }

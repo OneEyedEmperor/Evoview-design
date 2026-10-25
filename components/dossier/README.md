@@ -13,7 +13,9 @@ Showcase: `https://evoview-library.said.bet/components/dossier` (Maison
 Ardoise, a fictional restaurant, in the two configurations a client chooses
 between: three universes behind a pager with a deep link and the
 per-universe accent switch, and a single-universe dossier launched from a
-light page; FR/EN, live palette).
+light page; FR/EN, live palette). Every view has a URL:
+`/components/dossier/<key>/` addresses the three-universe dossier
+(`table/tasting`), `/components/dossier/single/<key>/` the single one.
 
 ```
 desktop ≥ 1024 (shell 92.5em × min(57.5em, 100vh − 2em), radius shell)
@@ -64,7 +66,9 @@ restyle them to the client's UI kit:
   keeps the previous view (inert, dimmed after 140 ms) until the next one is
   ready, so a switch never cuts to an empty body; loader after 350 ms over
   it, count `02 / 04`, one module per medium, 1px accent bar, retry. The only
-  empty moment is a first open on a cold cache, inside the shell's entrance.
+  empty moment is a first open on a cold cache, inside the shell's entrance:
+  the view's copy is already mounted there (held, not shown), so server HTML
+  and crawlers have it; it enters when its media are ready.
 - **Modal contract**: below.
 - **Motion**: open = opacity + scale .965 + clip inset, 620 ms cinematic;
   close 340 ms; board tiles converge (±34px, blur 5 → 0) staggered 100 ms;
@@ -105,6 +109,7 @@ other marks.
 | --- | --- | --- |
 | `src/dossier.config.tsx` | Brand, kicker, items, entries + detail chapters, copy FR/EN, attribution | **yes — the only one** |
 | `src/Dossier.tsx` | Modal, header strip, pager, chapter strip, toast, dock, history, focus, gate | no |
+| `src/routes.ts` | `dossierRoutes` (views, keys, parents, head data), `DossierView` | no |
 | `src/Board.tsx` | `SelectionBoard` (mosaic, grade, touch cycle) | no |
 | `src/Loader.tsx` | `DossierLoader` | no |
 | `src/Chapters.tsx` | `DossierChapter`, `ChapterHead`, `ChapterFigure`, `ChapterSplit`, `ChapterRows`, `ChapterSpecimen`, `ChapterPayoff` | no |
@@ -123,10 +128,15 @@ Installs / upgrades `controls` and `foundation` first, then copies `src/` to
 `<client>/src/components/dossier/`; re-runs keep `dossier.config.tsx`.
 
 ```tsx
-import { Dossier, buildDossierConfig } from "@/components/dossier";
-const [open, setOpen] = useState<string | null>(null);
-<button onClick={() => setOpen("table")}>…</button>
-<Dossier config={buildDossierConfig(locale)} open={open !== null} onClose={() => setOpen(null)} initialItemId={open ?? undefined} />
+import { Dossier, buildDossierConfig, dossierRoutes, type DossierView } from "@/components/dossier";
+import { followRouteLink, routeHrefs, viewFromPath } from "@/components/foundation";
+const base = "/carte/";                                   // this page's route, per locale
+const config = buildDossierConfig(locale);
+const hrefFor = routeHrefs(base, dossierRoutes.key);      // "/carte/table/", "/carte/table/tasting/"
+const [view, setView] = useState<DossierView | null>(() => viewFromPath(location.pathname, base, dossierRoutes, config) ?? null);
+const open = (v: DossierView) => ({ href: hrefFor(v), onClick: (e: MouseEvent) => followRouteLink(e, () => setView(v)) });
+<a {...open({ item: "table" })}>…</a>
+<Dossier config={config} view={view} onNavigate={setView} hrefFor={hrefFor} />
 ```
 
 ## Config
@@ -139,10 +149,12 @@ type DossierConfig = {
   items: {
     id: string; label: string;
     accent?: string; accentInk?: string;           // per-item accent; omit to follow the host
+    description?: string;                          // overview meta description (default: label + entry titles)
     entries: {                                     // exactly 4 (the board)
       id: string; title: string; label?: string; kicker?: string;
-      media: { src; type?: "image" | "video"; poster?; srcSet?; sizes?; position?; fit? };
+      media: { src; type?: "image" | "video"; poster?; srcSet?; sizes?; position?; fit?; alt? };  // alt: head image only
       sources?: MediaSource[];                     // further detail media to decode first
+      description?: string;                        // entry meta description, from its own copy
       content: (ctx: { item, entry, index, total, close, toOverview }) => ReactNode;
     }[];
   }[];
@@ -151,14 +163,21 @@ type DossierConfig = {
 };
 ```
 
-`<Dossier>` props: `config`, `open`, `onClose` (every close path calls it; set
-`open` false), `initialItemId?`, `initialEntryId?` (deep link), `preload?`
-(default `true`: once the page is idle, decode every item's board images
-with foundation `preloadMedia`, first tile of each item first, so a
-preloaded open or switch is ready on the gate's first render; keep
-`<Dossier>` mounted while closed),
-`className?`. Every open mounts a fresh layer, so reopening during the exit
-animation starts from `initialItemId` / `initialEntryId` again.
+Ids (items, entries) are URL slugs: `[a-z0-9-]`.
+
+`<Dossier>` props: `config`, `view` (`DossierView | null`, null = closed),
+`onNavigate(view | null)` (every navigation the dossier asks for and every
+Back / Forward; set `view` to it), `hrefFor?(view | null)` (URL of a view,
+null = the page; without it no URLs and controls stay buttons), `history?`
+(default true; false when a host router owns history), `preload?` (default
+`true`: once the page is idle, decode every item's board images with
+foundation `preloadMedia`, first tile of each item first, so a preloaded
+open or switch is ready on the gate's first render), `className?`. Keep
+`<Dossier>` mounted while closed (preload, Forward after a close). Every
+open mounts a fresh layer, so reopening during the exit animation starts
+from the new view. Deprecated until 2.0: `open` / `onClose` /
+`initialItemId?` / `initialEntryId?` instead of `view` (uncontrolled, no
+URLs).
 CSS knobs on the host (or via `className`): `--dossier-z` (z-index, default
 1000); `--dossier-reserve-bottom` (default `--ev-modal-reserve-bottom`, then
 0; ≥ 768 the windowed shell keeps this much extra space below it, for host
@@ -184,12 +203,54 @@ to cover this and the `process-sequence` step dossier.
   the layer is removed on `animationend` or after 700 ms at most.
 - **Escape = one level** (detail → overview → close), handled at document
   level. Backdrop click = one level. The close button closes everything.
-- **History**: the overview and the detail each own an entry; browser / OS
-  Back follows the same one-level model; closing removes the entries.
+- **History** (foundation `useRouteHistory`): the overview and the detail
+  each own an entry (URL `hrefFor(view)`); deeper = push, sideways (another
+  entry of the item; another item from an overview) = replace, up
+  (`Sommaire`, Escape, the pager from a detail) = Back; browser / OS Back
+  follows the same one-level model; closing goes Back past every level, so
+  Back never reopens it, Forward does.
 - Live region announces location (`Expérience 2 sur 4 : …`, `Univers 3 sur 3 : …`).
 - Host requirement: no `transform` / `filter` / `contain` on an ancestor of
   `<Dossier>` (it would trap the fixed layer), and no ancestor stacking context
   below the site header's z-index. Mount it near the page root if unsure.
+
+## Crawlable views
+
+Binding contract: `docs/CRAWLABLE-MODALS.md` (library repo); client wiring
+is its §7. What the package gives:
+
+- **Views**: `DossierView = { item; entry? }`; `dossierRoutes.views(config)`
+  lists every overview and entry in on-screen order, `key` → `table`,
+  `table/tasting`, `parse(config, key)` is its inverse, `parent` of an entry
+  is its overview.
+- **Server HTML** of `<Dossier view={v} … />` (`react-dom/static`
+  `prerender`): the modal root with `data-ev-route-layer`, one h1 (the
+  header title), the view's full copy (board titles and kickers; the
+  entry's chapters), `<a href>` to the parent, children and siblings, no
+  `inert` / loader. Desktop layout on the server; a phone swaps after
+  hydration.
+- **Head data**: `dossierRoutes.head(config, view)` → `{ title, description,
+  breadcrumb, image }` (data only). Overview title = `copy.overviewTitle`;
+  entry title = `<entry title> — <item label>` (contains the h1); set
+  `description` on items / entries from their own copy.
+
+Client steps (§7):
+1. **Route table**: one route per page and locale with a splat
+   (`/carte/*`), so the page and every `hrefFor(view)` render the same page
+   component (no remount). Seed `view` once from `viewFromPath(location.pathname,
+   base, dossierRoutes, config)`; mount `<Dossier>` open or not; launchers are
+   `<a href={hrefFor(v)}>` with `followRouteLink`. Localised slugs: a custom
+   `hrefFor` and parser.
+2. **Page h1**: on a view URL the dossier's h1 is the page's h1; render the
+   page title as h2 while `view !== null`.
+3. **Prerender** `[null, ...dossierRoutes.views(config)]` per locale into
+   `dist<hrefFor(view)>index.html` with the head (title + site suffix,
+   description, canonical, hreflang on the same key, `og:*`, JSON-LD
+   `WebPage` + `BreadcrumbList`) and `<noscript><style>{ROUTE_LAYER_NOSCRIPT_CSS}</style></noscript>`.
+   List the views in `sitemap.xml` / `llms.txt`.
+4. **Verify** as a crawler without JavaScript (contract §7.3): each view URL
+   has its title, one h1, the copy, canonical / hreflang, no `inert`. In the
+   library: `pnpm verify:ssr dossier`.
 
 ## Desktop / mobile
 
@@ -228,8 +289,12 @@ is suspended while open.
 4. Keyboard: open → focus on close; Tab cycles inside; Enter on a tile opens
    the detail (focus moves into it); Escape → overview (tile refocused) →
    closed (launcher refocused).
-5. Back button: detail → overview → closed; URL unchanged; deep link opens
-   on the detail and Back returns to its overview.
+5. URLs and history: each open / tile / tab / pager / dock step shows the
+   view's URL; Back: detail → overview (tile refocused) → closed (page URL);
+   Forward reopens level by level; a view URL loaded cold opens that view
+   and Back returns to its overview, then the page; Ctrl / Cmd-click on any
+   view link opens it in a new tab and leaves the dossier as it was.
+   `pnpm verify:ssr dossier` passes.
 6. Desktop: scroll a detail to the end → toast under the next tab; pager
    switches items with a dark cut. Phone: capsule + dock leave on scroll-down
    and return on scroll-up; dock next goes through entries then items. One

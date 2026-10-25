@@ -1,5 +1,5 @@
 import { createContext, useContext, useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { cn, pad } from "../foundation";
+import { cn, pad, useHeldSrc, useHydrated } from "../foundation";
 import type { DossierMedia } from "./types";
 import { isVideo } from "./hooks";
 
@@ -32,8 +32,10 @@ export function DossierChapter({ tone = "a", variant = "standard", className, ch
     if (!el || revealed || !register) return;
     return register(el, () => setRevealed(true));
   }, [register, revealed]);
+  // Hidden while pending only once hydrated: server HTML (crawlers, no script) carries every chapter at rest.
+  const pending = useHydrated() && !revealed;
   return (
-    <section ref={ref} className={cn("evd-chapter", `evd-chapter--${variant}`, tone === "paper" && "ev-tone-light", className)} data-tone={tone} data-revealed={revealed || undefined}>
+    <section ref={ref} className={cn("evd-chapter", `evd-chapter--${variant}`, tone === "paper" && "ev-tone-light", className)} data-tone={tone} data-pending={pending || undefined}>
       <div className="evd-rail">{children}</div>
     </section>
   );
@@ -74,13 +76,14 @@ export type ChapterFigureProps = {
 /** Media well with the caption inside (readout kicker + accent dot + title). */
 export function ChapterFigure({ media, ratio = "stage", caption, className }: ChapterFigureProps) {
   const style = { objectPosition: media.position ?? "50% 50%", objectFit: media.fit ?? "cover" } as const;
+  const videoSrc = useHeldSrc(media.src);
   return (
     <figure
       className={cn("evd-figure", typeof ratio === "string" && `evd-figure--${ratio}`, className)}
       style={typeof ratio === "number" ? { aspectRatio: String(ratio) } : undefined}
     >
       {isVideo(media) ? (
-        <video src={media.src} poster={media.poster} muted loop autoPlay playsInline aria-label={media.alt} style={style} />
+        <video src={videoSrc} poster={media.poster} muted loop autoPlay playsInline aria-label={media.alt} style={style} />
       ) : (
         <img src={media.src} srcSet={media.srcSet} sizes={media.sizes} alt={media.alt} decoding="async" style={style} />
       )}

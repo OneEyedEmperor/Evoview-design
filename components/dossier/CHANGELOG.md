@@ -1,5 +1,63 @@
 # dossier changelog
 
+## 1.4.0
+
+Crawlable views (`docs/CRAWLABLE-MODALS.md`): every view has a URL and its
+server HTML carries the view's copy. Requires `foundation` ≥ 1.6.1 and
+`controls` ≥ 1.3.0. The look is unchanged (before/after screenshots at 1440
+and 390 are pixel-identical except timing frames).
+
+API:
+- New `dossierRoutes: ModalRoutes<DossierConfig, DossierView>`, `type
+  DossierView = { item: string; entry?: string }` (keys `item`,
+  `item/entry`; ids are URL slugs).
+- `<Dossier>` is controlled (`DossierRouteProps`): `view` (null = closed),
+  `onNavigate`, `hrefFor?`, `history?`. Tiles, strip, pager, dock, toast,
+  Escape, backdrop, close and Back / Forward all call `onNavigate`; history
+  is foundation `useRouteHistory` (one entry per level). Keep it mounted
+  while closed.
+- Legacy props `open` / `onClose` / `initialItemId` / `initialEntryId`
+  (`DossierLegacyProps`, used when `view` is omitted) keep working, mapped
+  onto an internal view, no URLs. Deprecated; removed in 2.0.
+- `SelectionBoard`: new `hrefFor?(index)` (tiles become `<a href>`);
+  `registerTile` now receives `HTMLElement | null` (was
+  `HTMLButtonElement | null`).
+- New exports: `dossierRoutes`, `DossierView`, `DossierRouteProps`,
+  `DossierLegacyProps`.
+
+Config (optional, additive): `DossierItem.description?`,
+`DossierEntry.description?` (head description, cut to 160 characters),
+`DossierMedia.alt?` (head image alt; the board tile stays decorative). The
+reference config sets entry descriptions (story lead + body) and media alt.
+
+Markup and behaviour:
+- Server-renderable: no environment read in render (server layout =
+  desktop), `data-ev-route-layer` on the root; `inert`, `aria-hidden`, the
+  loader and the body lock only after hydration.
+- Copy mounted, media gated: on a first open the target view's copy mounts
+  at once in `HeldCopy` (animations paused, no video source), not shown once
+  hydrated, and remounts live when its media are decoded, so the body looks
+  and enters exactly as before. Switches still keep the previous view until
+  the next one's media are decoded.
+- One h1 per view: the header title (overview `copy.overviewTitle`, entry
+  label). `.evd-header__meta` is a `div`; the overview's phone readout is an
+  aria-hidden sibling of the h1. The detail carries an sr-only h2 with the
+  entry title (it names the detail region). Tile captions are no longer
+  aria-hidden (the tile's name is still `copy.openEntry`).
+- Real links: with `hrefFor`, tiles, `Sommaire`, strip tabs, pager orbs
+  (controls `PagerOrb href`), dock buttons and the completion toast are
+  `<a href>` with the in-page handler on a plain click; modified clicks open
+  the URL. Close stays a button. Without `hrefFor`: buttons, as before.
+- Chapters below the intro hide while pending only once hydrated
+  (`data-pending`; was the absence of `data-revealed`).
+- Focus: closing returns focus to the launcher (React's commit-phase focus
+  restore used to take it back to the close button, then it fell to
+  `body`); going back to an overview (Escape, `Sommaire`, browser Back)
+  refocuses the tile you came from.
+- CSS: `.evd-toast button` → `.evd-toast .evd-toast__action`;
+  `.evd-tile[aria-disabled="true"]`; `.evd-body [data-waiting]`;
+  `.evd-chapter[data-pending]`; link resets for the view links.
+
 ## 1.3.0
 
 Requires `foundation` ≥ 1.5.0 (`TextFill`) and `controls` ≥ 1.2.0. No config

@@ -2,7 +2,8 @@ import "../foundation";
 import "../controls";
 import "./dossier.css";
 
-export { Dossier, type DossierProps } from "./Dossier";
+export { Dossier, type DossierProps, type DossierRouteProps, type DossierLegacyProps } from "./Dossier";
+export { dossierRoutes, type DossierView } from "./routes";
 export { SelectionBoard, type SelectionBoardProps } from "./Board";
 export { DossierLoader, type DossierLoaderProps } from "./Loader";
 export {

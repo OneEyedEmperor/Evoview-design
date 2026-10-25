@@ -14,6 +14,8 @@ export type DossierMedia = {
   position?: string;
   /** "contain" for UI captures and diagrams. Default "cover". */
   fit?: "cover" | "contain";
+  /** Describes the media where it stands for the view (`dossierRoutes.head` image). The board tile itself stays decorative. Default: the entry title. */
+  alt?: string;
 };
 
 export type DossierEntryContext = {
@@ -39,6 +41,8 @@ export type DossierEntry = {
   media: DossierMedia;
   /** Further detail media, decoded before the detail is revealed. */
   sources?: MediaSource[];
+  /** One or two sentences from the detail's own copy: the view's meta description (`dossierRoutes.head`, cut to 160 characters). Default: title, kicker and item. */
+  description?: string;
   /** The detail: a stack of `DossierChapter`s (or any chapter blocks). */
   content: (ctx: DossierEntryContext) => ReactNode;
 };
@@ -53,6 +57,8 @@ export type DossierItem = {
   accentInk?: string;
   /** Exactly four for the selection board. */
   entries: DossierEntry[];
+  /** The overview's meta description (`dossierRoutes.head`, cut to 160 characters). Default: the label and the entry titles. */
+  description?: string;
 };
 
 export type DossierCopy = {

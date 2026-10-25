@@ -29,6 +29,8 @@
 /* The exit animation is visual only: the page behind is already released and clickable. */
 .ev-dossier[data-phase="closing"] { pointer-events: none; }
 :where(.ev-dossier button) { margin: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; letter-spacing: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+/* View links (tiles, strip, dock, toast: `<a href>` when the views have URLs) look like the buttons they replace. */
+:where(.ev-dossier) :where(a.evd-tile, a.evd-strip__overview, a.evd-strip__tab, a.evd-dock__item, a.evd-toast__action) { color: inherit; text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 .ev-dossier :where(h1, h2, h3, h4, p, ol, dl, dd, figure) { margin: 0; }
 .ev-dossier :where(ol) { padding: 0; list-style: none; }
 
@@ -299,7 +301,7 @@
   @media (hover: hover) {
     .evd-strip__overview:hover, .evd-strip__tab:hover { background-color: rgb(255 255 255 / 0.06); }
   }
-  .evd-strip button:focus-visible { outline: 2px solid var(--dossier-signal); outline-offset: -4px; }
+  .evd-strip :is(a, button):focus-visible { outline: 2px solid var(--dossier-signal); outline-offset: -4px; }
 
   /* Completion toast: under the next tab, white card with an accent hairline. */
   /* Under the tab it opens (the last entry's toast, which leaves for the next universe or the overview, sits under the last tab). The 12px accent stem points at that tab. */
@@ -307,7 +309,7 @@
   .evd-toast[data-anchor="end"] { right: 16px; }
   .evd-toast::before { content: ""; position: absolute; top: -12px; left: 22px; width: 1px; height: 12px; background: var(--dossier-signal); }
   .evd-toast[data-anchor="end"]::before { right: 22px; left: auto; }
-  .evd-toast button {
+  .evd-toast .evd-toast__action {
     display: flex;
     align-items: center;
     gap: 24px;
@@ -335,8 +337,8 @@
   }
   .evd-toast strong { display: block; font-family: var(--ev-font-body); font-size: 13px; font-weight: 600; }
   .evd-toast svg { width: 16px; height: 16px; color: color-mix(in oklab, var(--dossier-accent) 60%, #151515); }
-  .evd-toast button:active { transform: translateY(1px); }
-  .evd-toast button:focus-visible { outline: 2px solid var(--dossier-signal); outline-offset: 3px; }
+  .evd-toast .evd-toast__action:active { transform: translateY(1px); }
+  .evd-toast .evd-toast__action:focus-visible { outline: 2px solid var(--dossier-signal); outline-offset: 3px; }
 }
 @keyframes evd-toast-in { from { opacity: 0; transform: translateY(-6px); } }
 
@@ -376,8 +378,9 @@
 .evd-detail { outline: none; animation: evd-detail-in 340ms var(--ev-ease-cinematic) 40ms backwards; }
 @keyframes evd-detail-in { from { opacity: 0.35; transform: translateY(10px); } }
 /* The previous view stays on screen until the next one's media is decoded; dimmed after a beat so warm swaps never flicker. */
-.evd-body[data-pending] > .evd-overview,
-.evd-body[data-pending] > .evd-detail { opacity: 0.5; transition-delay: 140ms; }
+.evd-body[data-pending] :is(.evd-overview, .evd-detail) { opacity: 0.5; transition-delay: 140ms; }
+/* First open: the target's copy is mounted (held) before its media; once hydrated it is not shown until it goes live. */
+.evd-body [data-waiting] { visibility: hidden; }
 @media (max-width: 1023px) {
   .ev-dossier[data-view="detail"] .evd-body {
     padding-top: max(64px, calc(env(safe-area-inset-top) + 58px));
@@ -526,6 +529,9 @@
 .evd-board[data-cycle] .evd-tile__title { transition-duration: 700ms; }
 .evd-tile:active { transform: scale(0.99); }
 .evd-tile:disabled { cursor: default; }
+.evd-tile[aria-disabled="true"] { cursor: default; pointer-events: none; }
+/* A tile link: no drag ghost, no long-press callout (the press holds the touch cycle). */
+a.evd-tile { -webkit-user-drag: none; -webkit-touch-callout: none; }
 
 @media (hover: hover) and (min-width: 1024px) {
   .evd-tile__media { filter: grayscale(0.62) saturate(0.46) contrast(1.08) brightness(0.68); }
@@ -780,12 +786,12 @@
   .evd-chapter--intro { padding-top: 2em; }
   .evd-rail { max-width: calc(85em + 7em); gap: 3.5em; padding-inline: 3.5em; }
 }
-/* Reveal once (y 16 → 0, stagger 80). Hidden only while explicitly pending, so content never depends on a transition running. */
+/* Reveal once (y 16 → 0, stagger 80). Hidden only while explicitly pending (set after hydration), so content never depends on a transition or a script running. */
 .evd-chapter .evd-rail > * { transition: opacity 600ms var(--ev-ease-cinematic), transform 600ms var(--ev-ease-cinematic); }
-.evd-chapter:not([data-revealed]) .evd-rail > * { opacity: 0; transform: translateY(16px); }
-.evd-chapter[data-revealed] .evd-rail > :nth-child(2) { transition-delay: 80ms; }
-.evd-chapter[data-revealed] .evd-rail > :nth-child(3) { transition-delay: 160ms; }
-.evd-chapter[data-revealed] .evd-rail > :nth-child(4) { transition-delay: 240ms; }
+.evd-chapter[data-pending] .evd-rail > * { opacity: 0; transform: translateY(16px); }
+.evd-chapter:not([data-pending]) .evd-rail > :nth-child(2) { transition-delay: 80ms; }
+.evd-chapter:not([data-pending]) .evd-rail > :nth-child(3) { transition-delay: 160ms; }
+.evd-chapter:not([data-pending]) .evd-rail > :nth-child(4) { transition-delay: 240ms; }
 
 .evd-head { display: grid; gap: 20px; }
 .evd-head__copy { display: grid; max-width: 46em; gap: 12px; }

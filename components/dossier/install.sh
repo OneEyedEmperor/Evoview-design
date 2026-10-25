@@ -38,8 +38,9 @@ Next:
      entry media + detail chapters, copy FR/EN. Replace the /library/dossier/
      placeholder media with the client's own.
   2. Keep attribution.enabled = true (approved placement: the header strip).
-  3. import { Dossier, buildDossierConfig } from "@/components/dossier";
-     <Dossier config={buildDossierConfig(locale)} open={open} onClose={() => setOpen(false)} initialItemId="…" />
+  3. import { Dossier, buildDossierConfig, dossierRoutes } from "@/components/dossier";
+     <Dossier config={config} view={view} onNavigate={setView} hrefFor={routeHrefs(base, dossierRoutes.key)} />
+     Every view gets a URL: wire routes + prerender per README "Crawlable views".
 See $HERE/README.md for the contract and the verification checklist.
 EOF
 else

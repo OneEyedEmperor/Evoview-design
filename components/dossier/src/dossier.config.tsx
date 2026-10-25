@@ -484,7 +484,8 @@ function buildItem(data: ItemData, locale: Locale): DossierItem {
       title: e.title[locale],
       label: e.label[locale],
       kicker: e.kicker[locale],
-      media: { src: MEDIA + e.image },
+      media: { src: MEDIA + e.image, alt: e.alt[locale] },
+      description: `${e.story.lead[locale]} ${e.story.body[locale]}`,
       content: ({ close }) => (
         <>
           <DossierChapter tone="a" variant="intro">
