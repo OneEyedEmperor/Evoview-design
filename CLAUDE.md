@@ -46,7 +46,7 @@ and `controls`; follow `docs/BUILD-BRIEF.md`.
 | `dossier` — portal modal, selection board, chapter strip, mobile dock (`/components/dossier`) | 1.2.0 | `evoview-dossier` |
 | `selector-stage` — selector ↔ stage, before/after, atlas (`/components/selector-stage`) | 1.3.0 | `evoview-selector-stage` |
 | `navbar` — finder capsule, desktop + mobile, cover-card trays (`/navbar`) | 2.3.1 | `evoview-navbar` |
-| `reservation` — Evoview booking application, client accent (`/components/reservation`) | 2.8.1 | `evoview-reservation` |
+| `reservation` — Evoview booking application + short paper flow, client accent (`/components/reservation`) | 2.9.0 | `evoview-reservation` |
 
 ## Rules for changing a component here
 

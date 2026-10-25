@@ -1,7 +1,16 @@
 import { isSunday } from "date-fns";
 import { fr } from "date-fns/locale";
 import { DoorOpen, UtensilsCrossed } from "lucide-react";
-import type { ReservationConfig, ReservationCopy, ReservationRequest, ReservationResult } from "./types";
+import type {
+  ReservationConfig,
+  ReservationCopy,
+  ReservationFlowConfig,
+  ReservationFlowCopy,
+  ReservationFlowOption,
+  ReservationFlowRequest,
+  ReservationRequest,
+  ReservationResult,
+} from "./types";
 
 /* Reference config — the only per-site file. A neutral copy of the Tchin Tchin
    setup (the first client): three experiences with the client's icons, a
@@ -120,5 +129,95 @@ export function buildReservationConfig(locale: Locale): ReservationConfig {
     slotMinutes: 30,
     guests: { min: 1, max: 12, overflow: true },
     submit: submitRequest,
+  };
+}
+
+/* ── ReservationFlow: the short form ──────────────────────────────────
+   Three to five chip questions, then an e-mail. Use it where the booking
+   is simple (a bar, an evening, a tasting); the full Reservation above for
+   experiences, calendars and opening windows. */
+
+const FLOW_COPY: Record<Locale, ReservationFlowCopy> = {
+  fr: {
+    label: "Votre réservation",
+    next: "Continuer",
+    back: "Retour",
+    send: "Envoyer la demande",
+    again: "Recommencer",
+    doneTitle: "C'est noté.",
+    doneBody: "Vous recevrez une confirmation sous 24 heures.",
+    errorGeneric: "Une erreur est survenue. Veuillez réessayer.",
+    emailLabel: "E-mail",
+    errorInvalidEmail: "Il manque la fin de l'adresse (ex. : nom@domaine.be)",
+    signatureAriaLabel: "Evoview — ouvrir evoview.be dans un nouvel onglet",
+  },
+  en: {
+    label: "Your booking",
+    next: "Continue",
+    back: "Back",
+    send: "Send the request",
+    again: "Start again",
+    doneTitle: "All set.",
+    doneBody: "You will receive a confirmation within 24 hours.",
+    errorGeneric: "An error occurred. Please try again.",
+    emailLabel: "Email",
+    errorInvalidEmail: "The address is missing its end (e.g. name@domain.com)",
+    signatureAriaLabel: "Evoview — open evoview.be in a new tab",
+  },
+};
+
+/** The next `count` open days as chips: today, tomorrow, then "sam. 26". */
+function nextDays(locale: Locale, count: number, closed: (d: Date) => boolean): ReservationFlowOption[] {
+  const isFr = locale === "fr";
+  const fmt = new Intl.DateTimeFormat(isFr ? "fr-BE" : "en-GB", { weekday: "short", day: "numeric" });
+  const out: ReservationFlowOption[] = [];
+  const day = new Date();
+  day.setHours(12, 0, 0, 0);
+  for (let i = 0; out.length < count && i < 31; i++, day.setDate(day.getDate() + 1)) {
+    if (closed(day)) continue;
+    const label = i === 0 ? (isFr ? "Aujourd'hui" : "Today") : i === 1 ? (isFr ? "Demain" : "Tomorrow") : fmt.format(day);
+    out.push({ value: day.toISOString().slice(0, 10), label });
+  }
+  return out;
+}
+
+/* Replace with the site's API call; `answers` holds each step id → value. */
+async function submitFlow(request: ReservationFlowRequest): Promise<ReservationResult> {
+  void request;
+  await new Promise((r) => setTimeout(r, 900));
+  return { ok: true };
+}
+
+export function buildReservationFlowConfig(locale: Locale): ReservationFlowConfig {
+  const isFr = locale === "fr";
+  return {
+    locale,
+    copy: FLOW_COPY[locale],
+    steps: [
+      {
+        kind: "choice",
+        id: "venue",
+        short: isFr ? "Lieu" : "Venue",
+        question: isFr ? "Où vous recevoir ?" : "Where shall we seat you?",
+        options: [
+          { value: "restaurant", label: isFr ? "Restaurant" : "Restaurant" },
+          { value: "bar", label: "Bar" },
+          { value: "room", label: isFr ? "Salon privé" : "Private room" },
+        ],
+      },
+      { kind: "choice", id: "date", short: "Date", question: isFr ? "Quel jour ?" : "Which day?", options: nextDays(locale, 5, isSunday) },
+      { kind: "choice", id: "guests", short: isFr ? "Invités" : "Guests", question: isFr ? "Combien serez-vous ?" : "How many of you?", options: ["2", "3 – 4", "5 – 8", "9 – 12"].map((label) => ({ value: label, label })) },
+      {
+        kind: "choice",
+        id: "time",
+        short: isFr ? "Heure" : "Time",
+        question: isFr ? "À quelle heure ?" : "At what time?",
+        // A full slot stays visible, disabled.
+        options: ["19:00", "19:30", "20:00", "20:30", "21:00"].map((label) => ({ value: label, label, disabled: label === "20:00" })),
+      },
+      { kind: "contact", short: "Contact", question: isFr ? "Où vous confirmer ?" : "Where do we confirm?" },
+    ],
+    contact: { sms: isFr ? { label: "Confirmation par SMS", description: "Un message la veille de votre venue." } : { label: "SMS confirmation", description: "One message the day before your visit." } },
+    submit: submitFlow,
   };
 }

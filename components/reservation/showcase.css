@@ -1,0 +1,8 @@
+/* Showcase-only (not installed into clients): the short flow sits on the
+   variant caption's 1.28 column, as on the controls page, inside its own
+   paper chapter band. */
+.rsv-stage--chapter { padding-block: var(--ev-chapter-standard); }
+@media (min-width: 1024px) {
+  .rsv-stage { display: grid; grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr); column-gap: 3.5em; }
+  .rsv-stage > * { grid-column: 2; }
+}

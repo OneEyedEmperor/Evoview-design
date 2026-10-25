@@ -37,6 +37,10 @@ library's `STRATEGY.md` first.
   choices.
 - Do not add the evoview.be side dossier (rail/monitor/journey): it is
   exclusive to Evoview's site.
+- Two versions: `Reservation` (full application, dark chassis) and
+  `ReservationFlow` (short form on paper: chip questions then an e-mail; see
+  README "ReservationFlow"). Pick the flow when the booking needs no
+  calendar, opening windows or contact details beyond an e-mail.
 - The header wordmark is the only Evoview link (`https://evoview.be/`, new
   tab, no tracking). Do not add or move attribution.
 - Never fork the component for a client. Generic fixes go into the library:

@@ -20,6 +20,9 @@ for dep in react-day-picker date-fns lucide-react; do
   grep -q "\"$dep\"" "$TARGET/package.json" || echo "warning: $dep missing from $TARGET/package.json"
 done
 
+# ReservationFlow (the short form) is built on controls, which installs foundation first.
+"$HERE/../controls/install.sh" "$TARGET"
+
 mkdir -p "$DEST"
 fresh=1
 [ -f "$DEST/reservation.config.tsx" ] && fresh=0
@@ -42,6 +45,7 @@ if [ "$fresh" = 1 ]; then
 Next:
   1. Edit $DEST/reservation.config.tsx (copy, experiences, windows, guests, accent, submit).
   2. Mount: import { Reservation } from "@/components/reservation"; <Reservation config={buildReservationConfig(locale)} />
+     Short form: import { ReservationFlow } …; <ReservationFlow config={buildReservationFlowConfig(locale)} />
   3. Keep the signature copy; translate it if needed.
 See $HERE/README.md for the contract and the verification checklist.
 EOF

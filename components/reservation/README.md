@@ -92,6 +92,42 @@ Evoview and say it opens a new tab. No other Evoview link inside the form.
 | `src/marks.tsx` | Evoview eye glyphs, arrows, check, HUD. | no |
 | `src/brand/` | Wordmark, ring-eye emblem, fonts. Refreshed on upgrade. | no |
 | `src/reservation.css` | All styles under `.evo-resa`, container-query responsive. | no |
+| `src/ReservationFlow.tsx`, `src/reservation-flow.css` | The short form (below), built on `controls`. | no |
+
+## ReservationFlow — the short form
+
+A second booking version for simple requests (a bar, an evening, a
+tasting): three to five chip questions, then an e-mail (optional SMS
+opt-in), on a white paper module in the shared controls language —
+segmented progress with captions (answered steps can be revisited), large
+chips (full slots stay visible, disabled), underline e-mail field, white →
+ink plate with `Retour` beside it, a one-line confirmation and
+`Recommencer`. Use the full `Reservation` when the booking needs
+experiences, a calendar, opening windows or contact details.
+
+```tsx
+import { ReservationFlow } from "@/components/reservation";
+import { buildReservationFlowConfig } from "@/components/reservation/reservation.config";
+<ReservationFlow config={buildReservationFlowConfig(locale)} />
+```
+
+- Config (`ReservationFlowConfig`, in the same `reservation.config.tsx`):
+  `locale`, `copy`, `steps` (`{ kind: "choice", id, short, question,
+  options[] }` …, then one `{ kind: "contact" }` last), `contact.sms?`,
+  `submit(request)` → `{ answers: { [stepId]: value }, email, sms? }`,
+  `onResult?`, `tone` (`"paper"` default, `"light"`), `attribution`.
+- Clients installed before 2.9.0 keep their config on upgrade: copy
+  `buildReservationFlowConfig` (and its imports) from the reference file.
+- Host: a light section, a column ≈ 48em (or the 1.28 side of a .72 / 1.28
+  split). Accent from `--primary`; on paper it deepens for legibility, even
+  in yellow. Requires `controls` (installed by `install.sh`, with
+  `foundation`).
+- Recognizably Evoview: the controls voice (Satoshi captions, Overused
+  question, plate + ghost pair), one question per step. Adaptable: steps,
+  options, copy, accent, SMS opt-in.
+- Attribution: the linked Evoview wordmark above the progress (approved
+  placement, `https://evoview.be/`, new tab); `attribution: false` only with
+  Evoview's consent.
 
 ## Install
 
@@ -183,3 +219,7 @@ heading and background.
    host navbar on each step, the duration group comes into view, errors focus
    the first field. Mock `fetch` for the submit on a live client.
 7. Host `tsc`, build and SSR prerender (if any) pass; CSP allows the assets.
+8. ReservationFlow (1440, 390): `Continuer` stays disabled until the step
+   is answered; disabled options can't be picked; the progress jumps back
+   only to answered steps; an invalid e-mail is spelled out; send reaches
+   the confirmation, `Recommencer` resets every answer.

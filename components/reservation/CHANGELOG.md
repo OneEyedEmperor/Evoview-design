@@ -1,5 +1,16 @@
 # reservation changelog
 
+## 2.9.0 — ReservationFlow, the short form
+
+- New `ReservationFlow` export: a few chip questions then an e-mail, on a
+  paper module in the controls language (the controls page "Flow · paper"
+  scene, made real). For simple bookings; `Reservation` is unchanged.
+- Now depends on `controls` (and `foundation`): `install.sh` installs them
+  first.
+- Config changes: `reservation.config.tsx` gains `buildReservationFlowConfig`
+  (`ReservationFlowConfig` in `types.ts`). Existing clients keep their
+  config on upgrade; copy the builder from the reference to use the flow.
+
 ## 2.8.1
 
 - Reference config: one continuous service (12:00–22:30, closed Sundays), so

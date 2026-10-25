@@ -119,3 +119,61 @@ export type ReservationConfig = {
   className?: string;
   style?: CSSProperties;
 };
+
+/* ── ReservationFlow: the short form (paper chassis, controls language) ── */
+
+export type ReservationFlowOption = { value: string; label: string; /** Shown but not choosable (full slot, closed day). */ disabled?: boolean };
+
+export type ReservationFlowStep =
+  | {
+      kind: "choice";
+      /** Key of the answer in `ReservationFlowRequest.answers`. */
+      id: string;
+      /** Progress caption ("Invités"). */
+      short: string;
+      /** Question heading ("Combien serez-vous ?"). */
+      question: string;
+      options: ReservationFlowOption[];
+    }
+  | { kind: "contact"; short: string; question: string };
+
+export type ReservationFlowRequest = {
+  /** Step id → chosen option value. */
+  answers: Record<string, string>;
+  email: string;
+  /** Only when `contact.sms` is configured. */
+  sms?: boolean;
+};
+
+export type ReservationFlowCopy = {
+  /** Accessible name of the progress ("Votre réservation"). */
+  label: string;
+  next: string;
+  back: string;
+  send: string;
+  again: string;
+  doneTitle: string;
+  doneBody: string;
+  errorGeneric: string;
+  emailLabel: string;
+  errorInvalidEmail: string;
+  /** Accessible name of the Evoview wordmark link; must say it opens evoview.be in a new tab. */
+  signatureAriaLabel: string;
+};
+
+export type ReservationFlowConfig = {
+  /** Locale of the shared controls copy (busy states, step names). */
+  locale: "fr" | "en";
+  copy: ReservationFlowCopy;
+  /** Choice steps in order, then exactly one contact step, last. Three to five steps in total. */
+  steps: ReservationFlowStep[];
+  /** Optional SMS opt-in under the e-mail field. */
+  contact?: { sms?: { label: string; description: string } };
+  submit: (request: ReservationFlowRequest) => Promise<ReservationResult>;
+  onResult?: (result: ReservationResult, request: ReservationFlowRequest) => void;
+  /** Tone of the module. Default "paper" (white); "light" on #efefef sites. */
+  tone?: "paper" | "light";
+  /** The approved Evoview attribution (linked wordmark above the progress). Default true. */
+  attribution?: boolean | { href?: string };
+  className?: string;
+};

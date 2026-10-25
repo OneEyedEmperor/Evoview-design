@@ -1,0 +1,11 @@
+/* ReservationFlow: the short form on paper. Layout only; every control is
+   the shared controls language (foundation tones, controls components).
+   The host gives it a column (≈ 1.28 of a .72 / 1.28 split, or ≤ 48em). */
+
+.evrf { display: grid; gap: calc(2.5 * var(--ev-rem)); min-width: 0; }
+.evrf__strip { display: flex; align-items: center; margin-bottom: calc(-1 * var(--ev-rem)); }
+.evrf__step { display: grid; align-content: start; gap: 22px; min-height: 12.5em; animation: evrf-step-in var(--ev-dur-reveal) var(--ev-ease-cinematic) both; }
+@keyframes evrf-step-in { from { opacity: 0; transform: translateY(12px); } }
+.evrf__contact { display: grid; gap: 14px; max-width: 28em; }
+.evrf__body { margin: 0; color: var(--ev-fg-65); }
+.evrf__actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
