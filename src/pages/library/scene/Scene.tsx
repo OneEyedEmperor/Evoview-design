@@ -17,9 +17,9 @@ type SceneProps = {
   /** One sentence: when a client picks it. */
   when: ReactNode;
   /** The ground the component opens on; caption and desk stand on it.
-      Omit when the component lays grounds of its own (a framed crop, a page
-      of chapters): the scene then stands on the frame's dark ground, which
-      must be the component's first ground. */
+      Omit for a framed crop: the scene then stands on the frame's dark
+      ground. A page of chapters gives its first chapter's ground here and
+      its last one in `exit`. */
   tone?: DemoTone;
   /** The ground the component ends on, when it differs (a page of
       chapters): the next scene's top band follows it. */

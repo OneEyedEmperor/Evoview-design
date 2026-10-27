@@ -8,6 +8,12 @@
   page scenes gain title captions; the footer becomes its own scene with its
   desk above it (was below, on another ground); one desk pattern replaces the
   four per-scene desks. No package, config or API change.
+- Showcase only: scene order follows a client page and alternates grounds,
+  so every seam is a hard cut: Chapitre → Récit → Page → FAQ → Contact →
+  Pied de page (Page moved up from after Contact). Inside Page the projects
+  chapter (paper) now comes before the visit band (dark). Defaults unchanged.
+  The frame's stage grade now also covers a dark chapter inside a pale scene
+  (`src/library/trial-grade.css`). No package, config or API change.
 
 ## 1.2.0
 

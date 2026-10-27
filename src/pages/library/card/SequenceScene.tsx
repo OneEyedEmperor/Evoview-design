@@ -57,7 +57,9 @@ export default function SequenceScene() {
   const t = T[locale];
   const config = useMemo(() => buildCardSequenceConfig(locale), [locale]);
   const [layout, setLayout] = useState<CardSequenceLayout>("gallery");
-  const [tone, setTone] = useState<Tone>("dark");
+  /* Paper by default: a hard cut under the deck's dark, a clean end on the
+     library footer, and the receded cards read as dark screens on white. */
+  const [tone, setTone] = useState<Tone>("paper");
   const [said, setSaid] = useState<Said>(null);
 
   const sentence = !said

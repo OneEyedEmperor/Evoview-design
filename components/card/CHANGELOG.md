@@ -8,6 +8,10 @@
   sequence scene takes the chosen tone as a whole (caption and desk follow
   the section). The ribbon track is shown with `showIndex: false` (no
   `01 / 04` counter). No package, config or API change.
+- Showcase only: the sequence scene opens on Papier (was Nuit). That gives a
+  hard cut under the deck and a clean end on the library footer, and the
+  receded cards read as dark screens on white. Scene order unchanged.
+  No package, config or API change.
 
 ## 2.0.0
 

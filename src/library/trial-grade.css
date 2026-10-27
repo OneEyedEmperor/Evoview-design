@@ -39,6 +39,7 @@
 .ev-library .lib-chapter.lib-toned[data-tone="dark"],
 .lib-showcase .lib-showcase__stage .lib-variant.lib-variant[data-tone="dark"],
 .lib-showcase .lib-showcase__stage > .ev-root.ev-root.ev-tone-dark,
+.lib-showcase .lib-showcase__stage .lib-variant:not([data-tone="dark"]) .lib-scene > .ev-root.ev-root.ev-tone-dark,
 .lib-showcase .lib-showcase__stage:has(> .ev-root.ev-tone-dark:first-child) {
   background: transparent;
   isolation: isolate;
@@ -49,6 +50,7 @@
 .ev-library .lib-chapter.lib-toned[data-tone="dark"]::before,
 .lib-showcase .lib-showcase__stage .lib-variant.lib-variant[data-tone="dark"]::before,
 .lib-showcase .lib-showcase__stage > .ev-root.ev-root.ev-tone-dark::before,
+.lib-showcase .lib-showcase__stage .lib-variant:not([data-tone="dark"]) .lib-scene > .ev-root.ev-root.ev-tone-dark::before,
 .lib-showcase .lib-showcase__stage:has(> .ev-root.ev-tone-dark:first-child)::before {
   content: "";
   position: fixed;

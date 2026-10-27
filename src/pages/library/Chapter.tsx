@@ -20,10 +20,11 @@ import StoryScene from "./chapter/StoryScene";
 import { DeskSetting, Scene, SceneDesk, deskOptions } from "./scene/Scene";
 
 /* Scenes, each a caption → desk → component on the component's ground
-   (./scene/Scene): the chapter specimen, then the section chapters in
-   ./chapter/*, the page those chapters belong to, and its footer with the
-   Evoview credit. Colour comes from the frame's --primary only; a swatch
-   never re-renders. */
+   (./scene/Scene), in the order a client page unfolds: the chapter
+   specimen, the story, a page of content chapters, the FAQ, the contact,
+   and the footer with the Evoview credit. Grounds alternate, so every seam
+   between scenes is a hard cut. Colour comes from the frame's --primary
+   only; a swatch never re-renders. */
 export default function Chapter() {
   return (
     <ShowcasePage
@@ -202,12 +203,12 @@ function Demo() {
         <Specimen t={t} />
       </Scene>
       <StoryScene />
-      <FaqScene />
-      <ContactScene />
-      {/* No `tone`: the page opens on its dark chapter and cuts to paper. */}
-      <Scene id="chd-page" name={t.page.name} when={t.page.when} exit="paper" rhythm="standard">
+      {/* The page opens on its paper chapter and ends on its dark one. */}
+      <Scene id="chd-page" name={t.page.name} when={t.page.when} tone="paper" exit="dark" rhythm="standard">
         <Page t={t} />
       </Scene>
+      <FaqScene />
+      <ContactScene />
       <FooterScene config={config} />
     </>
   );
@@ -523,17 +524,6 @@ function Page({ t }: { t: Copy }) {
 
   return (
     <>
-      <ChapterShell id="visite" tone="dark" rhythm="standard" rail="reading">
-        <ChapterHeading
-          level={2}
-          marker={false}
-          layout="split"
-          title={t.visit.title}
-          subtitle={t.visit.subtitle}
-          side={<PrimaryPlate onClick={() => undefined}>{t.visit.cta}</PrimaryPlate>}
-        />
-      </ChapterShell>
-
       <ChapterShell id="projets" tone="paper" rhythm="standard" rail="wide">
         <ChapterHeading
           level={2}
@@ -552,6 +542,17 @@ function Page({ t }: { t: Copy }) {
             <Readout className="chd-caption__aside">{t.projects.place}</Readout>
           </figcaption>
         </figure>
+      </ChapterShell>
+
+      <ChapterShell id="visite" tone="dark" rhythm="standard" rail="reading">
+        <ChapterHeading
+          level={2}
+          marker={false}
+          layout="split"
+          title={t.visit.title}
+          subtitle={t.visit.subtitle}
+          side={<PrimaryPlate onClick={() => undefined}>{t.visit.cta}</PrimaryPlate>}
+        />
       </ChapterShell>
     </>
   );

@@ -4,9 +4,10 @@ import { SegmentedControl } from "../../../../components/controls/src";
 import { useLibraryLocale, type Locale } from "../../../library/locale";
 import { DeskSetting, Scene, SceneDesk } from "../scene/Scene";
 
-/* The footer that closes the page scene above (Chapter.tsx, chd-page), as
-   its own scene: caption and desk on the footer's light ground, the footer
-   last, so the frame lets the library footer follow it directly. */
+/* The footer that closes the client page, as its own scene: caption and
+   desk on the footer's light ground, the footer last, so the frame lets the
+   library footer follow it directly. Its logo links to the page scene
+   (Chapter.tsx, chd-page). */
 
 const preventDefault = (e: MouseEvent<HTMLElement>) => e.preventDefault();
 
