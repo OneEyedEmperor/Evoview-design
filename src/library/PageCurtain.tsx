@@ -91,6 +91,12 @@ export function usePageCurtain({ pageKey, prepare, side }: Options): {
       el.style.setProperty("--curtain-top", `${Math.round(top)}px`);
       frame = requestAnimationFrame(follow);
     };
+    // Blocking listeners only while the curtain runs: outside it, a
+    // non-passive wheel / touchmove listener would hold every scroll on
+    // the main thread.
+    const block = (event: Event) => event.preventDefault();
+    window.addEventListener("wheel", block, { passive: false });
+    window.addEventListener("touchmove", block, { passive: false });
     try {
       el.hidden = false;
       document.documentElement.classList.add("page-curtaining");
@@ -121,6 +127,8 @@ export function usePageCurtain({ pageKey, prepare, side }: Options): {
         await sheet.animate([{ transform: "none" }, { transform: leave }], { duration: OUT_MS, easing: EASE, fill: "forwards" }).finished;
       }
     } finally {
+      window.removeEventListener("wheel", block);
+      window.removeEventListener("touchmove", block);
       cancelAnimationFrame(frame);
       sheet.getAnimations().forEach((a) => a.cancel());
       el.hidden = true;
@@ -142,15 +150,8 @@ export function usePageCurtain({ pageKey, prepare, side }: Options): {
     if (!enabled) return;
     const previous = history.scrollRestoration;
     history.scrollRestoration = "manual";
-    const block = (event: Event) => {
-      if (running.current) event.preventDefault();
-    };
-    window.addEventListener("wheel", block, { passive: false });
-    window.addEventListener("touchmove", block, { passive: false });
     return () => {
       history.scrollRestoration = previous;
-      window.removeEventListener("wheel", block);
-      window.removeEventListener("touchmove", block);
     };
   }, [enabled]);
 

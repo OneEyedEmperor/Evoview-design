@@ -607,6 +607,9 @@ a.lib-hero__lockup:focus-visible { outline: 2px solid var(--lib-signal); outline
 .lib-card .lib-well { isolation: isolate; }
 .lib-card__orb { z-index: 2; }
 .lib-flow { position: absolute; z-index: 1; left: 0; display: none; overflow: hidden; pointer-events: none; }
+/* Unplaced until SeamFlow measures the seam (it writes the inline style):
+   a default-sized box at its static position would count as a layout shift. */
+.lib-flow:not([style]) { visibility: hidden; }
 .lib-flow__ring { fill: var(--lib-orb-ring); }
 .lib-flow__liquid { fill: var(--primary); }
 @media (min-width: 768px) {

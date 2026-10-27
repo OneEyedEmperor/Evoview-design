@@ -161,14 +161,22 @@ padding, strips or rules of their own.
 
 - Header → first content and caption → component: `--lib-lead` (heading
   band, 48 / 64 authored, in `--lib-rem`, never `em`). The frame measures
-  the component's first ink (layout boxes, re-measured on resize, media
-  load and DOM change) and pulls the body into its own top padding, so
-  this holds whatever padding the package brings; `rhythm` is only the
-  pre-measure guess. A component opening on another ground (its own tone
-  cut) is not pulled: the caption sits one lead above the cut. Ink is what
-  can be seen: content past a clipping box's edge is held to that edge,
-  content in a closed `<details>` is skipped; a painted object the walk
-  cannot see (a framed crop) opts in with `data-lib-ink`.
+  the component's first ink (layout boxes, before first paint, re-measured
+  on resize, fonts and media load) and pulls the body into its own top
+  padding, so this holds whatever padding the package brings; `rhythm` is
+  only the pre-measure guess. A component opening on another ground (its
+  own tone cut) is not pulled: the caption sits one lead above the cut. Ink
+  is what can be seen: content past a clipping box's edge is held to that
+  edge, content in a closed `<details>` is skipped; a painted object the
+  walk cannot see (a framed crop) opts in with `data-lib-ink`. Ink never
+  waits for pixels: a media box whose media is not mounted yet (lazy,
+  near-viewport gates) stands in for it when it clips, paints or reserves
+  a ratio, is ≥ 40 px each way and holds no in-flow content (overlays
+  positioned). Packages reserve every media box (ratio or CSS size, never
+  the image's intrinsic size), or the late media moves the measure. A
+  value that still changes while its variant is on screen is applied once
+  the variant leaves the viewport (the content in view is kept still);
+  width changes apply at once. Nothing in the frame listens to scroll.
 - Between variants: a tone cut gets a chapter band (`--lib-chapter`, 80 /
   120) above the next caption; at least one chapter band always follows a
   variant's last ink (measured), so a same-tone continuation starts right

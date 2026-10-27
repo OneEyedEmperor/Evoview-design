@@ -480,18 +480,37 @@ function topWithin(el: HTMLElement, body: HTMLElement): number {
 }
 
 const MEDIA = new Set(["IMG", "VIDEO", "CANVAS", "IFRAME", "PICTURE"]);
+const MEDIA_SELECTOR = "img, video, canvas, iframe, picture";
+const OUT_OF_FLOW = new Set(["absolute", "fixed"]);
 
 /* Top of the first ink and bottom of the last (text, media) inside `body`,
    in layout px: offsetTop chains, so reveal transforms still in flight
-   never skew them. Ink is what can be seen: content past the edge of a
-   clipping box (a lane window, a collapsed answer) is held to that edge,
-   content folded in a closed <details> is skipped. A painted object the
-   walk cannot see as ink (a framed crop) opts in with `data-lib-ink`. */
+   never skew them. Read from layout boxes, never from loaded pixels: a
+   media box still waiting for its media (mounted only near the viewport,
+   or after a first render) stands in for it, so the first measure already
+   finds the value the loaded page settles on. A stand-in is a box sized by
+   its own CSS, not its content: it clips, paints (a well colour, an image)
+   or reserves a ratio, is at least 40 px each way, holds no media element
+   yet and no in-flow content (its overlays are positioned). It is read as
+   its padding box, where the media will sit. Ink is what can be seen:
+   content past the edge of a clipping box (a lane window, a collapsed
+   answer) is held to that edge, content folded in a closed <details> is
+   skipped. A painted object the walk cannot see as ink (a framed crop)
+   opts in with `data-lib-ink`. */
 function inkBounds(body: HTMLElement): { top: number; bottom: number } | null {
   let best: number | null = null;
   let last = 0;
   let seen = 0;
   const clips = new Map<HTMLElement, number>();
+  const standsInForMedia = (el: HTMLElement, style: CSSStyleDeclaration) =>
+    style.overflowX !== "visible" &&
+    style.overflowY !== "visible" &&
+    style.visibility === "visible" &&
+    (style.aspectRatio !== "auto" || style.backgroundImage !== "none" || opaque(style.backgroundColor)) &&
+    !el.querySelector(MEDIA_SELECTOR) &&
+    !Array.from(el.childNodes).some((c) =>
+      c.nodeType === Node.TEXT_NODE ? Boolean(c.textContent?.trim()) : c instanceof Element && !OUT_OF_FLOW.has(getComputedStyle(c).position) && getComputedStyle(c).display !== "none",
+    );
   const clipEdge = (el: HTMLElement | null): number => {
     if (!el || el === body) return Infinity;
     let edge = clips.get(el);
@@ -511,23 +530,28 @@ function inkBounds(body: HTMLElement): { top: number; bottom: number } | null {
     seen += 1;
     const el = node instanceof HTMLElement ? node : node.tagName.toLowerCase() === "svg" ? (node.parentElement as HTMLElement | null) : null;
     if (!el) continue;
-    const isMedia = MEDIA.has(node.tagName) || (node.tagName.toLowerCase() === "svg" && (node as SVGSVGElement).getBoundingClientRect().width > 40);
-    const hasText = !isMedia && Array.from(node.childNodes).some((c) => c.nodeType === Node.TEXT_NODE && c.textContent?.trim());
-    if (!isMedia && !hasText && !(node === el && el.hasAttribute("data-lib-ink"))) continue;
-    const fold = el.closest("details:not([open])");
-    if (fold && !fold.querySelector(":scope > summary")?.contains(el)) continue;
-    const style = getComputedStyle(el);
     // Layout boxes, not paint: media gated until decoded and copy waiting
     // for its reveal already occupy their place.
-    if (style.display === "none" || el.offsetWidth <= 1 || el.offsetHeight <= 1 || style.clipPath.startsWith("inset(50%")) continue;
-    let top = hasText ? parseFloat(style.paddingTop) + parseFloat(style.borderTopWidth) : 0;
+    if (el.offsetWidth <= 1 || el.offsetHeight <= 1) continue;
+    const isMedia = MEDIA.has(node.tagName) || (node.tagName.toLowerCase() === "svg" && (node as SVGSVGElement).getBoundingClientRect().width > 40);
+    const hasText = !isMedia && Array.from(node.childNodes).some((c) => c.nodeType === Node.TEXT_NODE && c.textContent?.trim());
+    const declared = node === el && el.hasAttribute("data-lib-ink");
+    const ink = isMedia || hasText || declared;
+    if (!ink && (node !== el || el.offsetWidth < 40 || el.offsetHeight < 40)) continue;
+    const style = getComputedStyle(el);
+    if (style.display === "none" || style.clipPath.startsWith("inset(50%")) continue;
+    const standIn = !ink && standsInForMedia(el, style);
+    if (!ink && !standIn) continue;
+    const fold = el.closest("details:not([open])");
+    if (fold && !fold.querySelector(":scope > summary")?.contains(el)) continue;
+    let top = standIn ? el.clientTop : hasText ? parseFloat(style.paddingTop) + parseFloat(style.borderTopWidth) : 0;
     let cur: HTMLElement | null = el;
     while (cur && cur !== body) {
       top += cur.offsetTop;
       cur = cur.offsetParent as HTMLElement | null;
     }
     if (cur !== body) continue; // fixed or outside the body's layout
-    const bottom = Math.min(top + el.offsetHeight, clipEdge(el.parentElement));
+    const bottom = Math.min(top + (standIn ? el.clientHeight : el.offsetHeight), clipEdge(el.parentElement));
     if (bottom <= top) continue; // wholly past its clipping edge
     if (best === null || top < best) best = top;
     last = Math.max(last, bottom);
@@ -535,7 +559,8 @@ function inkBounds(body: HTMLElement): { top: number; bottom: number } | null {
   return best === null ? null : { top: best, bottom: last };
 }
 
-const opaque = (color: string) => color !== "transparent" && !/rgba\(.*,\s*0\)$/.test(color);
+// Zero alpha in any computed colour syntax: rgba(…, 0), oklab(… / 0), color(… / 0).
+const opaque = (color: string) => color !== "transparent" && !/^rgba\(.*,\s*0(\.0+)?\)$|\/\s*0(\.0+)?\s*\)$/.test(color);
 const channels = (color: string) => (color.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
 // Near-blacks #0c0c0d / #0e0e0e / #101011 are one environment (RULES §3).
 const sameGround = (a: string, b: string) => {
@@ -578,19 +603,29 @@ function inFlow<T>(body: HTMLElement, read: () => T): T {
    package brings (its chapter rhythm, a capped pinned scene, none), the
    body is pulled so its first ink sits one heading band under the caption,
    and padded so at least one chapter band follows its last ink.
-   Measured on mount, once fonts settle, when media inside loads and when
-   the width changes; never continuously. A new value is held back while
-   the reader is scrolled into or past the variant (it would move content
-   around the viewport) and applied once the variant is below its top
-   again. The pull itself is clamped in CSS. */
+   Measured on mount (before the first paint), once fonts settle, when
+   media inside loads and when the width changes; never continuously. Ink
+   comes from boxes sized before their pixels (inkBounds), so a later
+   measure normally finds the same values. A value that does change while
+   the variant is on screen is held back (it would move content under the
+   reader) and applied once the variant has left the viewport: below it,
+   nothing visible moves; above it, the content in view is kept still.
+   A width change applies at once (the page reflows anyway). Where the
+   variant sits comes from an IntersectionObserver: nothing follows
+   scrolling. The pull itself is clamped in CSS. */
 function useInkOffset(ref: RefObject<HTMLElement | null>) {
   useLayoutEffect(() => {
     const body = ref.current;
     if (!body) return;
+    const section = body.parentElement ?? body;
     let frame = 0;
     let applied = false;
-    let pending: (() => void) | null = null;
+    let pending: Measure | null = null;
     let width = body.offsetWidth;
+    let resized = false;
+    // Until the observer's first report, assume on screen: hold, never jump.
+    let inView = true;
+    let above = false;
 
     const read = () =>
       inFlow(body, () => {
@@ -609,38 +644,38 @@ function useInkOffset(ref: RefObject<HTMLElement | null>) {
         return { pad: `${Math.round(ink.top)}px`, trail: `${Math.max(0, Math.round(content - ink.bottom))}px`, endsInFooter };
       });
 
-    const apply = (next: NonNullable<ReturnType<typeof read>>) => {
+    const apply = (next: Measure) => {
       body.style.setProperty("--lib-variant-pad", next.pad);
       body.style.setProperty("--lib-variant-trail", next.trail);
-      body.parentElement?.toggleAttribute("data-ends-in-footer", next.endsInFooter);
+      section.toggleAttribute("data-ends-in-footer", next.endsInFooter);
       applied = true;
     };
 
-    const onScroll = () => {
-      if (pending && (body.parentElement ?? body).getBoundingClientRect().top >= 0) {
-        const run = pending;
-        pending = null;
-        run();
-      }
+    // Wholly above the viewport, the reader sees what follows the variant:
+    // it is kept where it was (a no-op where scroll anchoring already did).
+    const write = (next: Measure) => {
+      const after = above ? (section.nextElementSibling ?? section.parentElement?.nextElementSibling) : null;
+      const was = after?.getBoundingClientRect().top;
+      apply(next);
+      if (!after || was === undefined) return;
+      const moved = after.getBoundingClientRect().top - was;
+      if (Math.abs(moved) >= 1) window.scrollBy(0, moved);
     };
 
     const measure = () => {
       frame = 0;
+      const now = resized;
+      resized = false;
       const next = read();
       if (!next) return;
       const same =
         body.style.getPropertyValue("--lib-variant-pad") === next.pad &&
         body.style.getPropertyValue("--lib-variant-trail") === next.trail &&
-        (body.parentElement?.hasAttribute("data-ends-in-footer") ?? false) === next.endsInFooter;
-      if (same) {
-        pending = null;
-        return;
-      }
-      if (applied && (body.parentElement ?? body).getBoundingClientRect().top < 0) {
-        pending = () => apply(next);
-        return;
-      }
-      apply(next);
+        section.hasAttribute("data-ends-in-footer") === next.endsInFooter;
+      pending = null;
+      if (same) return;
+      if (!applied || now || !inView) write(next);
+      else pending = next;
     };
 
     measure();
@@ -650,22 +685,34 @@ function useInkOffset(ref: RefObject<HTMLElement | null>) {
     const ro = new ResizeObserver(() => {
       if (body.offsetWidth === width) return;
       width = body.offsetWidth;
+      resized = true;
       schedule();
     });
     ro.observe(body);
-    // Media sized only once loaded can move the first ink without resizing
-    // the body (pinned scenes).
+    const io = new IntersectionObserver(([entry]) => {
+      inView = entry.isIntersecting;
+      above = !inView && entry.boundingClientRect.bottom <= (entry.rootBounds?.top ?? 0);
+      if (pending && !inView) {
+        const next = pending;
+        pending = null;
+        write(next);
+      }
+    });
+    io.observe(section);
+    // Safety net for media that reserves no box: its load can still move
+    // the first ink.
     body.addEventListener("load", schedule, true);
-    window.addEventListener("scroll", onScroll, { passive: true });
     document.fonts?.ready.then(schedule);
     return () => {
       ro.disconnect();
+      io.disconnect();
       body.removeEventListener("load", schedule, true);
-      window.removeEventListener("scroll", onScroll);
       cancelAnimationFrame(frame);
     };
   }, [ref]);
 }
+
+type Measure = { pad: string; trail: string; endsInFooter: boolean };
 
 /* `data-lib-ready` on the frame once fonts are loaded and every eager image
    in the stage has settled (decoded or failed): the signal scripts wait

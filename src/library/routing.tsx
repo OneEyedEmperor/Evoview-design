@@ -180,6 +180,21 @@ const findTarget = (pathname: string, hash: string) => {
   return id ? document.getElementById(id) : null;
 };
 
+/* Reads the scroll position the old page was left at, once per location
+   change, in the commit's before-mutation phase: the old page is still in
+   the document, so scrollY is not yet clamped by a shorter new page, and
+   nothing has to follow scrolling to know it. */
+class LeftAt extends Component<{ at: string; into: { current: number } }> {
+  getSnapshotBeforeUpdate(prev: Readonly<{ at: string }>) {
+    if (prev.at !== this.props.at) this.props.into.current = window.scrollY;
+    return null;
+  }
+  componentDidUpdate() {}
+  render() {
+    return null;
+  }
+}
+
 /* New pages open at the scroll position the previous one was left at (the
    hero above every page stays put, so only the page under it changes); a
    hash or a category route scrolls to its target, waiting for a lazy page to
@@ -187,34 +202,30 @@ const findTarget = (pathname: string, hash: string) => {
    browser's own restoration. A click on the current category pill (the
    navbar only scrolls to top on same-URL clicks) still lands on its chapter.
    `location` is the rendered one when it lags the URL (see
-   library/experimental-transition). */
+   library/experimental-transition). Nothing listens to scroll. */
 export function ScrollManager({ location }: { location?: Location }) {
   const current = useLocation();
   const { pathname, hash, key } = location ?? current;
-  const action = useNavigationType();
-  // Per location key, so a StrictMode re-run reaches the same decision.
-  const seen = useRef<{ key: string; page: string; samePage: boolean; first: boolean } | null>(null);
-  // Last position before the swap: read in the layout effect, the document
-  // may already have shrunk under the new page and clamped scrollY.
+  // The action of the latest URL change: while the rendered location lags
+  // (page curtain), it already belongs to the next location.
+  const navigationType = useNavigationType();
+  const action = useRef(navigationType);
+  action.current = navigationType;
+  // Decided once per location key (with the action that brought it), so a
+  // StrictMode re-run reaches the same decision and a navigation starting
+  // under the curtain never re-runs it for the page being left.
+  const seen = useRef<{ key: string; page: string; samePage: boolean; first: boolean; pop: boolean } | null>(null);
   const lastY = useRef(0);
-  useEffect(() => {
-    const track = () => {
-      lastY.current = window.scrollY;
-    };
-    track();
-    window.addEventListener("scroll", track, { passive: true });
-    return () => window.removeEventListener("scroll", track);
-  }, []);
 
   useLayoutEffect(() => {
     if (seen.current?.key !== key) {
       const page = pagePath(pathname);
-      seen.current = { key, page, samePage: seen.current?.page === page, first: seen.current === null };
+      seen.current = { key, page, samePage: seen.current?.page === page, first: seen.current === null, pop: action.current === "POP" };
     }
-    const { samePage, first } = seen.current;
+    const { samePage, first, pop } = seen.current;
     // Back/forward: the browser restores. The first load is also a POP, but
     // a deep link into a lazy page needs the wait below.
-    if (action === "POP" && !first) return;
+    if (pop && !first) return;
     const wantsTarget = Boolean(hash) || pathname.replace(/\/+$/, "") in CHAPTER_ROUTES;
     if (!wantsTarget) {
       if (samePage || first) return;
@@ -239,7 +250,7 @@ export function ScrollManager({ location }: { location?: Location }) {
       cancelAnimationFrame(frame);
       window.clearTimeout(settle);
     };
-  }, [pathname, hash, key, action]);
+  }, [pathname, hash, key]);
 
   useEffect(() => {
     const onClick = (event: MouseEvent) => {
@@ -252,5 +263,5 @@ export function ScrollManager({ location }: { location?: Location }) {
     return () => document.removeEventListener("click", onClick);
   }, []);
 
-  return null;
+  return <LeftAt at={key} into={lastY} />;
 }
