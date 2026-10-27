@@ -31,11 +31,11 @@ const DRAFTS: Draft[] = [
     status: "ready",
   },
   {
-    id: "card-track",
+    id: "card",
     category: "layouts",
-    route: "/layouts/card-track",
-    title: { fr: "Piste de cartes", en: "Card track" },
-    meta: { fr: "Carte média et piste pilotée au défilement", en: "Media card and scroll-scrubbed track" },
+    route: "/layouts/card",
+    title: { fr: "Carte", en: "Card" },
+    meta: { fr: "Cartes média, piste, donne et séquences", en: "Media cards, track, deal and sequences" },
     status: "ready",
   },
   {

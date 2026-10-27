@@ -7,8 +7,8 @@ not edit `src/App.tsx`, `src/library/*` or `CLAUDE.md` (the orchestrator does).
 
 | Route | Page file (owned by the package agent) | Registry id |
 | --- | --- | --- |
-| `/layouts/chapter` | `src/pages/library/Chapter.tsx` | `chapter` |
-| `/layouts/card-track` | `src/pages/library/CardTrack.tsx` | `card-track` |
+| `/layouts/chapter` | `src/pages/library/Chapter.tsx` (+ `src/pages/library/chapter/*` scenes) | `chapter` |
+| `/layouts/card` (`/layouts/card-track` redirects) | `src/pages/library/Card.tsx` (+ `src/pages/library/card/*` scenes) | `card` |
 | `/layouts/process-sequence` (+ `/*` view URLs) | `src/pages/library/ProcessSequence.tsx` | `process-sequence` |
 | `/layouts/story-blocks` | `src/pages/library/StoryBlocks.tsx` | `story-blocks` |
 | `/components/reservation` | `src/pages/library/Reservation.tsx` | `reservation` |

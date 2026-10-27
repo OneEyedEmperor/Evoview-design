@@ -21,7 +21,7 @@ const GLYPH: Record<string, ReactNode> = {
     </>
   ),
   // One card in focus between two stepped-back ones, over its scrub line.
-  "card-track": (
+  card: (
     <>
       <rect x="4" y="12" width="9" height="17" rx="2.5" stroke={DIM} />
       <rect x="35" y="12" width="9" height="17" rx="2.5" stroke={DIM} />

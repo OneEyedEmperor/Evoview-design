@@ -4,7 +4,7 @@ import "./card-track.css";
 
 export { CardTrack, type CardTrackProps, type CardTrackMode } from "./CardTrack";
 export { MediaCard, type MediaCardProps } from "./MediaCard";
-export { buildCardTrackConfig } from "./card-track.config";
+export { buildCardTrackConfig } from "./card.config";
 export type {
   CardTrackConfig,
   CardTrackCopy,

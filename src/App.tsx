@@ -12,7 +12,7 @@ import Home from "./pages/library/Home";
    docs/SHOWCASE-CONTRACT.md. */
 
 const Chapter = lazyPage(() => import("./pages/library/Chapter"));
-const CardTrack = lazyPage(() => import("./pages/library/CardTrack"));
+const Card = lazyPage(() => import("./pages/library/Card"));
 const ProcessSequence = lazyPage(() => import("./pages/library/ProcessSequence"));
 const StoryBlocks = lazyPage(() => import("./pages/library/StoryBlocks"));
 const Reservation = lazyPage(() => import("./pages/library/Reservation"));
@@ -23,13 +23,13 @@ const NavbarPage = lazyPage(() => import("./pages/library/Navbar"));
 const NavbarReference = lazyPage(() => import("./pages/library/NavbarReference"));
 const NavbarOnePage = lazyPage(() => import("./pages/library/NavbarOnePage"));
 
-const PAGES = [Chapter, CardTrack, ProcessSequence, StoryBlocks, Reservation, Dossier, SelectorStage, Controls, NavbarPage, NavbarReference, NavbarOnePage];
+const PAGES = [Chapter, Card, ProcessSequence, StoryBlocks, Reservation, Dossier, SelectorStage, Controls, NavbarPage, NavbarReference, NavbarOnePage];
 
 /* LibraryLayout pages (under the shared hero), keyed by path. */
 const LAYOUT_PAGES: Record<string, LazyPage | null> = {
   "/": null,
   "/layouts/chapter": Chapter,
-  "/layouts/card-track": CardTrack,
+  "/layouts/card": Card,
   "/layouts/process-sequence": ProcessSequence,
   "/layouts/story-blocks": StoryBlocks,
   "/components/reservation": Reservation,
@@ -73,7 +73,8 @@ function AppRoutes() {
               <Route path="layouts" element={<Home />} />
               <Route path="components" element={<Home />} />
               <Route path="layouts/chapter" element={<Chapter />} />
-              <Route path="layouts/card-track" element={<CardTrack />} />
+              <Route path="layouts/card" element={<Card />} />
+              <Route path="layouts/card-track" element={<Navigate to="/layouts/card" replace />} />
               {/* Deep-link pages: `/*` = a modal view's URL (DEEP_LINK_PAGES). */}
               <Route path="layouts/process-sequence/*" element={<ProcessSequence />} />
               <Route path="layouts/story-blocks" element={<StoryBlocks />} />

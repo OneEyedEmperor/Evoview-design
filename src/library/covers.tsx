@@ -336,7 +336,7 @@ const navbar: Draw = (w, h) => {
 
 const DRAW: Record<string, Draw> = {
   chapter,
-  "card-track": cardTrack,
+  card: cardTrack,
   "process-sequence": processSequence,
   "story-blocks": storyBlocks,
   reservation,
@@ -348,7 +348,7 @@ const DRAW: Record<string, Draw> = {
 
 /* Real crops of each showcase (public/library/covers/<id>-<variant>.webp,
    banner 900×216, card 1280×800). The SVG stays as the fallback. */
-const PHOTO = new Set(["chapter", "card-track", "process-sequence", "story-blocks", "reservation", "dossier", "selector-stage", "controls", "navbar"]);
+const PHOTO = new Set(["chapter", "card", "process-sequence", "story-blocks", "reservation", "dossier", "selector-stage", "controls", "navbar"]);
 const PHOTO_SIZE: Record<CoverVariant, [number, number]> = { banner: [900, 216], card: [1280, 800] };
 
 export const coverSrc = (id: string, variant: CoverVariant) => (PHOTO.has(id) ? `/library/covers/${id}-${variant}.webp?v=${COVERS_REV}` : undefined);

@@ -4,7 +4,7 @@ import { EntryIcon } from "./icons";
 /* The player part's picture: a photograph where one exists
    (public/library/art/<id>-<192|640|1280>.webp, placeholders for now), else
    the entry's glyph. The page list's thumbnails use the same photograph. */
-const PHOTO = new Set(["chapter", "card-track", "process-sequence", "story-blocks"]);
+const PHOTO = new Set(["chapter", "card", "process-sequence", "story-blocks"]);
 const REV = "20261027";
 const SIZES = "(min-width: 768px) 50vw, 100vw";
 

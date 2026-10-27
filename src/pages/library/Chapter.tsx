@@ -14,6 +14,10 @@ import "../../../components/chapter/showcase.css";
 import ShowcasePage, { ShowcaseVariant } from "../../library/ShowcasePage";
 import { useLibraryLocale, type Locale } from "../../library/locale";
 import EveilMark from "./EveilMark";
+import ContactScene from "./chapter/ContactScene";
+import FaqScene from "./chapter/FaqScene";
+import FooterScene from "./chapter/FooterScene";
+import StoryScene from "./chapter/StoryScene";
 
 /* Two scenes. 1 · one chapter the reader sets (tone, heading, instrument)
    between the two chapters it really sits between. 2 · the page those
@@ -192,12 +196,17 @@ function Demo() {
       <ShowcaseVariant caption="none" rhythm="flush">
         <Specimen t={t} />
       </ShowcaseVariant>
+      {/* Section scenes, each owned by its file in ./chapter/. */}
+      <StoryScene />
+      <FaqScene />
+      <ContactScene />
       {/* No `tone`: the page cuts dark → paper → light inside; its
           caption stays on the dark frame the first chapter continues. */}
       <ShowcaseVariant id="chd-page" name={t.page.name} caption="none" rhythm="flush">
         <Page t={t} />
         <ChapterFooter config={config} tone="light" />
       </ShowcaseVariant>
+      <FooterScene />
     </>
   );
 }

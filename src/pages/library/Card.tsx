@@ -1,24 +1,28 @@
 import { useMemo, useState } from "react";
-import { CardTrack, buildCardTrackConfig, type CardTrackDefinition, type CardTrackItem } from "../../../components/card-track/src";
+import { CardTrack, buildCardTrackConfig, type CardTrackDefinition, type CardTrackItem } from "../../../components/card/src";
 import { Readout } from "../../../components/foundation/src";
-import "../../../components/card-track/showcase.css";
+import "../../../components/card/showcase.css";
 import ShowcasePage, { ShowcaseVariant } from "../../library/ShowcasePage";
 import { useLibraryLocale, type Localized } from "../../library/locale";
+import DeckScene from "./card/DeckScene";
+import SequenceScene from "./card/SequenceScene";
 
-/* One studio, the two card variants a client chooses between: the portfolio
-   as portrait cards (dark, continuing the header) and the services as
-   ribbon cards (light). The frame owns every space between header, captions
-   and tracks. Colour comes only from the frame's --primary, so a swatch
-   never re-renders the tracks. */
-export default function CardTrackPage() {
+/* One studio, its cards: the portfolio as portrait cards (dark, continuing
+   the header), the services as ribbon cards (light), then the scenes in
+   ./card/*. The frame owns every space between header, captions and
+   tracks. Colour comes only from the frame's --primary, so a swatch never
+   re-renders the cards. */
+export default function CardPage() {
   return (
     <ShowcasePage
-      entryId="card-track"
-      title={(l) => (l === "fr" ? <>Piste de <em>cartes</em></> : <>Card <em>track</em></>)}
+      entryId="card"
+      title={(l) => (l === "fr" ? <em>Carte</em> : <em>Card</em>)}
       tone="dark"
       defaultAccent="#c8693c"
     >
       <Demo />
+      <DeckScene />
+      <SequenceScene />
     </ShowcasePage>
   );
 }

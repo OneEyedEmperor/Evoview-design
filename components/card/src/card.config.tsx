@@ -8,7 +8,7 @@ import type { CardTrackConfig, CardTrackCopy, CardTrackItem, Locale } from "./ty
 
 export type { Locale };
 
-const MEDIA = "/library/card-track";
+const MEDIA = "/library/card";
 
 const COPY: Record<Locale, CardTrackCopy> = {
   fr: {

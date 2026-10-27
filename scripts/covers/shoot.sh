@@ -18,7 +18,7 @@ ab() { agent-browser "${S[@]}" "$@"; }
 # name | path | scroll target selector | offset px | optional JS run before the capture
 ENTRIES=$(cat <<'EOF'
 chapter|/layouts/chapter|#lumiere|-40|
-card-track|/layouts/card-track|#card-track-portfolio|60|
+card|/layouts/card|#card-track-portfolio|60|
 process-sequence|/layouts/process-sequence|.ev-process|-20|
 story-blocks|/layouts/story-blocks|.ev-story-blocks|90|
 reservation|/components/reservation|.evo-resa__chassis|-30|
