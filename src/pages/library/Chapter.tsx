@@ -7,10 +7,10 @@ import {
   buildChapterConfig,
   type ChapterTone,
 } from "../../../components/chapter/src";
-import { PrimaryPlate, SegmentedControl, Switch, rovingKeyDown } from "../../../components/controls/src";
+import { SegmentedControl, Switch, rovingKeyDown } from "../../../components/controls/src";
 import { OrbFill, Readout, useInViewPause, useSequenceClock } from "../../../components/foundation/src";
 import "../../../components/chapter/showcase.css";
-import ShowcasePage, { ShowcaseVariant } from "../../library/ShowcasePage";
+import ShowcasePage from "../../library/ShowcasePage";
 import { useLibraryLocale, type Locale } from "../../library/locale";
 import EveilMark from "./EveilMark";
 import ContactScene from "./chapter/ContactScene";
@@ -21,8 +21,8 @@ import { DeskSetting, Scene, SceneDesk, deskOptions } from "./scene/Scene";
 
 /* Scenes, each a caption → desk → component on the component's ground
    (./scene/Scene), in the order a client page unfolds: the chapter
-   specimen, the story and its visit band, the FAQ, the contact, and the
-   footer with the Evoview credit. Colour comes from the frame's --primary
+   specimen, the story, the FAQ, the contact, and the footer with the
+   Evoview credit. Colour comes from the frame's --primary
    only; a swatch never re-renders. */
 export default function Chapter() {
   return (
@@ -92,11 +92,6 @@ const T = {
       ],
       drawings: ["Relevé · plan du rez", "Esquisse · coupe A–A", "Chantier · façade sud", "Livraison · façade sud, le soir"],
     },
-    visit: {
-      title: "Visiter l'atelier",
-      subtitle: "Gand, Dok Noord 4. Sur rendez-vous, du mardi au vendredi.",
-      cta: "Prendre rendez-vous",
-    },
   },
   en: {
     specimen: {
@@ -147,11 +142,6 @@ const T = {
       ],
       drawings: ["Survey · ground floor plan", "Sketch · section A–A", "Build · south elevation", "Handover · south elevation, evening"],
     },
-    visit: {
-      title: "Visit the studio",
-      subtitle: "Ghent, Dok Noord 4. By appointment, Tuesday to Friday.",
-      cta: "Book a visit",
-    },
   },
 } satisfies Record<Locale, unknown>;
 
@@ -166,7 +156,7 @@ function Demo() {
     const base = buildChapterConfig(locale);
     return {
       ...base,
-      brand: { ...base.brand, href: "#chd-page" },
+      brand: { ...base.brand, href: "#chd-specimen" },
       footer: { ...base.footer, links: base.footer.links.map((link) => ({ ...link, onSelect: preventDefault })) },
     };
   }, [locale]);
@@ -178,12 +168,6 @@ function Demo() {
         <Specimen t={t} />
       </Scene>
       <StoryScene />
-      {/* The visit band continues the story's dark ground: no caption. */}
-      <ShowcaseVariant id="chd-page" caption="none" tone="dark" rhythm="standard">
-        <div className="lib-scene" data-exit="dark">
-          <Visit t={t} />
-        </div>
-      </ShowcaseVariant>
       <FaqScene />
       <ContactScene />
       <FooterScene config={config} />
@@ -489,26 +473,9 @@ function PhaseList({
   );
 }
 
-/* ── The visit band ───────────────────────────────────────────────────── */
-
 const PHASE_VIEW: View[] = ["plan", "section", "elevation", "elevation"];
 
 const MOMENT_MS = 4200;
-
-function Visit({ t }: { t: Copy }) {
-  return (
-    <ChapterShell id="visite" tone="dark" rhythm="standard" rail="reading">
-      <ChapterHeading
-        level={2}
-        marker={false}
-        layout="split"
-        title={t.visit.title}
-        subtitle={t.visit.subtitle}
-        side={<PrimaryPlate onClick={() => undefined}>{t.visit.cta}</PrimaryPlate>}
-      />
-    </ChapterShell>
-  );
-}
 
 /* Line drawings of the fictional house (ink, one accent signal each). */
 function Drawing({ view, lit = false }: { view: View; lit?: boolean }) {
