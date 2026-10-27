@@ -1,7 +1,27 @@
 import "../foundation";
+import "../controls";
 import "./chapter.css";
+import "./chapter-faq.css";
+import "./chapter-footer-panel.css";
+import "./ChapterStory.css";
+import "./chapter-contact.css";
 
 export { Chapter, ChapterHeading, ChapterMark, ChapterTicker, chapterNavSections } from "./Chapter";
 export type { ChapterProps, ChapterHeadingProps, ChapterTickerProps, ChapterTone, ChapterRhythm, ChapterRail } from "./Chapter";
-export { ChapterFooter, type ChapterFooterProps } from "./ChapterFooter";
+export { ChapterFooter, type ChapterFooterProps, type ChapterFooterLayout } from "./ChapterFooter";
 export { buildChapterConfig, type ChapterConfig, type ChapterFooterLink, type Locale } from "./chapter.config";
+export type { ChapterFooterSocial, ChapterFooterContact } from "./chapter.config";
+export { ChapterFaq, chapterFaqJsonLd, type ChapterFaqProps, type ChapterFaqLayout } from "./ChapterFaq";
+export { buildChapterFaqConfig, type ChapterFaqConfig, type ChapterFaqItem } from "./chapter.config";
+export { ChapterStory, type ChapterStoryProps, type ChapterStoryContent, type ChapterStoryMedia, type ChapterStoryLayout, type ChapterStoryDensity } from "./ChapterStory";
+export { buildChapterStoryConfig, type ChapterStoryConfig } from "./chapter.config";
+export {
+  ChapterContact,
+  type ChapterContactProps,
+  type ChapterContactConfig,
+  type ChapterContactChannel,
+  type ChapterContactHours,
+  type ChapterContactLayout,
+  type ChapterContactHoursView,
+} from "./ChapterContact";
+export { buildChapterContactConfig } from "./chapter.config";

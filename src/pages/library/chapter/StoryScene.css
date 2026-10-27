@@ -1,0 +1,19 @@
+/* Story scene (chapter showcase): the desk sits across the rail above the
+   live chapter, which needs the full width for its lanes. Same anatomy as
+   the specimen desk (readout label over a segmented control, one sentence). */
+
+.chs-desk { display: grid; gap: 1.25em; background: none; }
+.chs-desk__controls { display: grid; gap: 1.25em 2em; }
+.chs-setting { display: grid; gap: var(--ev-gap-internal); }
+.chs-setting__label { color: var(--ev-fg-55); }
+.chs-desk .evc-seg__option { padding-inline: 8px; }
+/* Three lines reserved: the chapter below does not jump when the sentence changes. */
+.chs-desk__say { min-height: calc(3 * 1.6em); max-width: 34em; color: var(--ev-fg-65); text-wrap: pretty; }
+
+@media (min-width: 768px) {
+  .chs-desk__controls { grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.8fr); }
+}
+@media (min-width: 1024px) {
+  .chs-desk { grid-template-columns: minmax(0, 0.63fr) minmax(0, 0.37fr); column-gap: 3.5em; align-items: end; }
+  .chs-desk__say { min-height: calc(3 * 1.6em); }
+}

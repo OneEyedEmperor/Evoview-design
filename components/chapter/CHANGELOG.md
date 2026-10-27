@@ -1,8 +1,53 @@
 # chapter changelog
 
-## Unreleased
+## 1.2.0
 
 - Depends on `controls` (install.sh installs controls + foundation first).
+- **ChapterFaq** (from Tchin "Tout ce que vous devez savoir"): a FAQ chapter,
+  single-open accordion on alternating tonal tiles, toggle orb with
+  `OrbFill`, layouts `media` (sticky portrait beside the list) / `split`
+  (heading column) / `stacked`; answers always rendered (collapsed by height,
+  crawlable); phones show `phoneVisible` questions then a "show more" row;
+  optional FAQPage JSON-LD from the same strings (`chapterFaqJsonLd`).
+  Files `ChapterFaq.tsx`, `chapter-faq.css`.
+- **ChapterFooter `layout="panel"`** (from the Tchin footer): brand + tagline ·
+  page tiles · social orbs, over contact · legal, the Evoview credit centred.
+  `layout="bar"` (default) unchanged. File `chapter-footer-panel.css`.
+- Config (additive, existing keys unchanged): `ChapterFooterLink.current?`;
+  `footer.tagline?`, `footer.nav?`, `footer.navLabel?`, `footer.socials?`
+  (`ChapterFooterSocial { label, href, icon }`), `footer.socialsLabel?`,
+  `footer.contact?` (`ChapterFooterContact { address, mapsHref?, phone?,
+  phoneHref?, email? }`); new `ChapterFaqConfig` + `buildChapterFaqConfig(locale)`
+  (`title`, `subtitle?`, `items[{ question, answer, link? }]`, `more?`,
+  `media?`, `phoneVisible`, `showMore(n)`, `showLess`, `structuredData`).
+  Re-installs keep the old config: the panel needs the new footer keys
+  copied in; the FAQ needs the `buildChapterFaqConfig` block.
+- **ChapterContact** (from the Tchin home contact): booking action, place,
+  channels and hours with today + open state computed live in the business's
+  time zone (30 s tick, paused off-screen), the week folded in `<details>`
+  (in flow, no nested scroll) or laid out; layouts `columns` / `split` /
+  `band`, hours `today` / `week`. Files `ChapterContact.tsx`,
+  `chapter-contact.css`; demo picture `public/library/chapter/contact-studio-{720,1200}.webp`
+  (showcase only, not installed).
+- Config (additive): new `ChapterContactConfig` + `buildChapterContactConfig(locale)`
+  (`title`, `lead?`, `action?`, `place[]`, `channels[]`
+  (`{ label, value, href?, external? }`), `hours { title, timeZone, services,
+  week, note?, labels }`, `picture?`, `newTab`). Re-installs keep the old
+  config: copy the `CONTACT` block in to use it.
+- **ChapterStory** (from the Tchin home story section): the client's story
+  with lanes of its pictures drifting slowly (Web Animations) and travelling
+  with the scroll; one clip playing at a time; lanes revealed once their
+  stills / posters are decoded; layouts `start` (original) / `end` /
+  `center` / `above`, density `ample` / `dense`; columns from 1024, sideways
+  rows below (media first on phones, except `above`). Files
+  `ChapterStory.tsx`, `ChapterStory.css`; demo pictures
+  `public/library/chapter/story-*.webp` (showcase only, not installed).
+- Config (additive): new `ChapterStoryConfig` + `buildChapterStoryConfig(locale)`
+  (`title`, `emblem?`, `story[]`, `quote? { text, name, role? }`, `media[]`
+  of `{ kind: "image", src, srcSet?, sizes?, ratio }` |
+  `{ kind: "video", src, poster, ratio }`); types `ChapterStoryContent` /
+  `ChapterStoryMedia` live in `ChapterStory.tsx`. Re-installs keep the old
+  config: copy the `STORY` block in to use it.
 
 ## 1.1.0
 

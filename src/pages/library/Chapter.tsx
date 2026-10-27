@@ -204,7 +204,7 @@ function Demo() {
           caption stays on the dark frame the first chapter continues. */}
       <ShowcaseVariant id="chd-page" name={t.page.name} caption="none" rhythm="flush">
         <Page t={t} />
-        <ChapterFooter config={config} tone="light" />
+        <ChapterFooter tone="light" {...FooterScene.usePageFooter(config)} />
       </ShowcaseVariant>
       <FooterScene />
     </>

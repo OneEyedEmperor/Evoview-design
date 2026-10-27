@@ -27,7 +27,7 @@ const DRAFTS: Draft[] = [
     category: "layouts",
     route: "/layouts/chapter",
     title: { fr: "Rythme des sections", en: "Section pacing" },
-    meta: { fr: "Coque de section, titres et coupes de ton", en: "Section shell, headings and tone cuts" },
+    meta: { fr: "Coque de section, récit, FAQ, contact, pied de page", en: "Section shell, story, FAQ, contact, footer" },
     status: "ready",
   },
   {

@@ -41,7 +41,7 @@ and `controls`; follow `docs/BUILD-BRIEF.md`.
 | --- | --- | --- |
 | `foundation` — tokens, scale, tones, type voices, pause-model hooks, attribution mark, step gauge, orb + text liquid fill, channel switch (hover-preview screens, RULES §6), SSR + crawlable-modal routing | 1.8.0 | `evoview-foundation` |
 | `controls` — plate, ghost, glass close/pager, chips, rows, fields, switch, segmented control/progress, view links (`/components/controls`) | 1.3.0 | `evoview-controls` |
-| `chapter` — section shell, headings, tone cuts, footer with attribution (`/layouts/chapter`) | 1.1.0 | `evoview-chapter` |
+| `chapter` — section shell, headings, tone cuts; story, FAQ and contact chapters; footer bar / panel with attribution (`/layouts/chapter`) | 1.2.0 | `evoview-chapter` |
 | `card` — media card in three compositions: scroll-scrubbed track, dealt category deck, timed video sequence (`/layouts/card`; was `card-track`) | 2.0.0 | `evoview-card` |
 | `process-sequence` — timed step board + step dossier, crawlable step views (`/layouts/process-sequence`) | 1.4.0 | `evoview-process-sequence` |
 | `story-blocks` — intro split, indexed sequence, proof collage, payoff (`/layouts/story-blocks`) | 2.3.0 | `evoview-story-blocks` |

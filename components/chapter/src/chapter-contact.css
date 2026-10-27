@@ -1,0 +1,392 @@
+/* ChapterContact — the contact chapter (booking action, place, channels,
+   hours with today computed live). Scoped under .ev-chapter-contact (on the
+   Chapter root, which carries .ev-root + the tone class). Text lists sit on
+   tonal tiles, never rules (RULES §3); the accent is signal only: open dot,
+   today marker, focus, hover ink. Layout: data-layout on __body. */
+
+.ev-chapter-contact {
+  --chapter-contact-signal: var(--chapter-signal, var(--ev-accent-signal));
+  --chapter-contact-accent: var(--chapter-accent, var(--ev-accent));
+  --chapter-contact-today: color-mix(in oklab, var(--chapter-contact-accent) 14%, var(--ev-surface-list));
+  --chapter-contact-tile-gap: 6px;
+}
+
+.ev-chapter-contact__body { display: flex; flex-direction: column; }
+.ev-chapter-contact__col { display: flex; flex-direction: column; min-width: 0; }
+
+/* ── Tiles (place + channels) ───────────────────────────────────────── */
+.ev-chapter-contact__tiles {
+  display: grid;
+  gap: var(--chapter-contact-tile-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ev-chapter-contact__tile {
+  position: relative;
+  display: grid;
+  align-content: center;
+  gap: 0.5em;
+  min-height: 5em;
+  padding: 1.05em 1.25em;
+  border-radius: var(--ev-radius-surface);
+  background: var(--ev-surface-list);
+  transition: background-color var(--ev-dur-fast) ease;
+}
+/* Place tiles are surface-list; the channels start on the alt step so the
+   two lists alternate as one. */
+.ev-chapter-contact__reach > .ev-chapter-contact__tile:nth-child(odd) { background: var(--ev-surface-list-alt); }
+.ev-chapter-contact__label { color: var(--ev-fg-55); }
+.ev-chapter-contact__value {
+  color: var(--ev-fg);
+  font-family: var(--ev-font-body);
+  font-size: max(calc(1.0625 * var(--ev-rem)), 15px);
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.ev-chapter-contact__link {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+  width: fit-content;
+  text-decoration: none;
+  border-radius: var(--ev-radius-badge);
+}
+/* The whole tile is the hit area (≥ 44px). */
+.ev-chapter-contact__link::after { content: ""; position: absolute; inset: 0; border-radius: var(--ev-radius-surface); }
+.ev-chapter-contact__link:focus-visible { outline: none; }
+.ev-chapter-contact__link:focus-visible::after { outline: 2px solid var(--chapter-contact-signal); outline-offset: 2px; }
+.ev-chapter-contact__out { display: inline-flex; width: 0.85em; height: 0.85em; align-self: center; }
+.ev-chapter-contact__out svg { width: 100%; height: 100%; }
+@media (hover: hover) {
+  .ev-chapter-contact__tile:has(.ev-chapter-contact__link:hover) { background: color-mix(in oklab, var(--ev-fg) 7%, var(--ev-surface-list)); }
+}
+.ev-chapter-contact__body { --ev-text-lit: var(--chapter-contact-signal); }
+
+/* ── Hours ──────────────────────────────────────────────────────────── */
+.ev-chapter-contact__hours { display: flex; flex-direction: column; gap: 0.75em; min-width: 0; }
+.ev-chapter-contact__hours-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5em 1.5em;
+}
+.ev-chapter-contact__hours-title { margin: 0; color: var(--ev-fg); }
+.ev-chapter-contact__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  margin: 0;
+  color: var(--ev-fg-65);
+  font-family: var(--ev-font-body);
+  font-size: max(calc(0.875 * var(--ev-rem)), var(--ev-floor-body));
+  font-weight: 500;
+  line-height: 1.4;
+}
+.ev-chapter-contact__status[data-open] { color: var(--ev-fg); }
+.ev-chapter-contact__dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--ev-fg-35);
+  transition: background-color var(--ev-dur-control) ease, box-shadow var(--ev-dur-control) ease;
+}
+.ev-chapter-contact__status[data-open] .ev-chapter-contact__dot {
+  background: var(--chapter-contact-signal);
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--chapter-contact-accent) 22%, transparent);
+}
+.ev-chapter-contact__hours-body { display: flex; flex-direction: column; gap: var(--chapter-contact-tile-gap); }
+.ev-chapter-contact__note { color: var(--ev-fg-55); }
+
+/* Today: the hours' primary object, on the selection surface. */
+.ev-chapter-contact__today {
+  display: grid;
+  gap: 1.1em;
+  padding: 1.3em 1.4em 1.4em;
+  border-radius: var(--ev-radius-surface);
+  background: var(--ev-surface);
+}
+.ev-chapter-contact__today-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1em; margin: 0; }
+.ev-chapter-contact__today-head .ev-t-label { color: var(--chapter-contact-signal); }
+.ev-chapter-contact__today-day { color: var(--ev-fg-55); font-family: var(--ev-font-body); font-size: max(calc(0.875 * var(--ev-rem)), var(--ev-floor-body)); }
+.ev-chapter-contact__services { display: grid; grid-template-columns: repeat(auto-fit, minmax(7.5em, 1fr)); gap: 1em; margin: 0; }
+.ev-chapter-contact__services dt {
+  margin-bottom: 0.35em;
+  color: var(--ev-fg-55);
+  font-family: var(--ev-font-body);
+  font-size: max(calc(0.8125 * var(--ev-rem)), 12px);
+}
+.ev-chapter-contact__services dd,
+.ev-chapter-contact__today-closed {
+  margin: 0;
+  color: var(--ev-fg);
+  font-family: var(--ev-font-display);
+  font-size: 1.5em;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* The week folded: in the DOM (crawlable), opens in flow, no nested scroll. */
+.ev-chapter-contact__fold {
+  border-radius: var(--ev-radius-surface);
+  background: var(--ev-surface-list);
+  interpolate-size: allow-keywords;
+}
+.ev-chapter-contact__fold summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1em;
+  min-height: 52px;
+  padding: 0.75em 1.25em;
+  border-radius: var(--ev-radius-surface);
+  color: var(--ev-fg-90);
+  font-family: var(--ev-font-body);
+  font-size: max(calc(0.875 * var(--ev-rem)), var(--ev-floor-body));
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+.ev-chapter-contact__fold summary::-webkit-details-marker { display: none; }
+.ev-chapter-contact__fold summary:focus-visible { outline: 2px solid var(--chapter-contact-signal); outline-offset: 2px; }
+.ev-chapter-contact__chevron { width: 18px; height: 18px; flex: 0 0 auto; transition: transform var(--ev-dur-control) var(--ev-ease); }
+.ev-chapter-contact__fold[open] .ev-chapter-contact__chevron { transform: rotate(180deg); }
+.ev-chapter-contact__fold::details-content {
+  block-size: 0;
+  overflow: clip;
+  transition: block-size var(--ev-dur-reveal) var(--ev-ease), content-visibility var(--ev-dur-reveal) allow-discrete;
+}
+.ev-chapter-contact__fold[open]::details-content { block-size: auto; }
+.ev-chapter-contact__fold-body { padding: 0 0.6em 0.6em; }
+
+/* Week table: one tonal row per day, alternating; today washed + marked. */
+.ev-chapter-contact__table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 4px;
+  font-family: var(--ev-font-body);
+  font-size: max(calc(0.875 * var(--ev-rem)), var(--ev-floor-body));
+  font-variant-numeric: tabular-nums;
+}
+.ev-chapter-contact__table th,
+.ev-chapter-contact__table td { padding: 0.8em 0.9em; white-space: nowrap; text-align: right; }
+.ev-chapter-contact__table th:first-child { text-align: left; }
+.ev-chapter-contact__table thead th {
+  padding-block: 0.5em 0.15em;
+  color: var(--ev-fg-55);
+  font-family: var(--ev-font-display);
+  font-size: max(calc(0.6875 * var(--ev-rem)), var(--ev-floor-label));
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.ev-chapter-contact__table tbody tr { background: var(--ev-surface-list-alt); }
+.ev-chapter-contact__table tbody tr:nth-child(even) { background: var(--ev-surface-list); }
+.ev-chapter-contact__hours[data-view="week"] .ev-chapter-contact__table tbody tr { background: var(--ev-surface-list); }
+.ev-chapter-contact__hours[data-view="week"] .ev-chapter-contact__table tbody tr:nth-child(even) { background: var(--ev-surface-list-alt); }
+.ev-chapter-contact__table tbody th { color: var(--ev-fg); font-weight: 600; border-radius: var(--ev-radius-control) 0 0 var(--ev-radius-control); }
+.ev-chapter-contact__table td { color: var(--ev-fg-65); }
+.ev-chapter-contact__table td:last-child { border-radius: 0 var(--ev-radius-control) var(--ev-radius-control) 0; }
+.ev-chapter-contact__table td[data-closed] { color: var(--ev-fg-35); }
+.ev-chapter-contact__table tbody tr[data-today],
+.ev-chapter-contact__hours[data-view] .ev-chapter-contact__table tbody tr[data-today] { background: var(--chapter-contact-today); }
+.ev-chapter-contact__table tr[data-today] td { color: var(--ev-fg); }
+
+.ev-chapter-contact__mark {
+  display: none;
+  width: 6px;
+  height: 6px;
+  margin-right: 0.6em;
+  border-radius: 999px;
+  background: var(--chapter-contact-signal);
+  vertical-align: 0.15em;
+}
+[data-today] .ev-chapter-contact__mark { display: inline-block; }
+
+/* Week strip (band): seven day tiles across. */
+.ev-chapter-contact__strip {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--chapter-contact-tile-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ev-chapter-contact__strip li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45em;
+  min-width: 0;
+  padding: 0.95em 0.8em 1.05em;
+  border-radius: var(--ev-radius-control);
+  background: var(--ev-surface-list);
+}
+.ev-chapter-contact__strip li:nth-child(even) { background: var(--ev-surface-list-alt); }
+.ev-chapter-contact__strip li[data-today] { background: var(--chapter-contact-today); }
+.ev-chapter-contact__strip-day { margin-bottom: 0.3em; color: var(--ev-fg-55); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+[data-today] > .ev-chapter-contact__strip-day { color: var(--ev-fg); }
+.ev-chapter-contact__strip-slot {
+  color: var(--ev-fg);
+  font-family: var(--ev-font-body);
+  font-size: max(calc(0.8125 * var(--ev-rem)), 12px);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.ev-chapter-contact__strip-slot[data-closed] { color: var(--ev-fg-35); font-weight: 500; }
+.ev-chapter-contact__fold-body .ev-chapter-contact__strip { padding-top: 0.1em; }
+
+/* Inside the fold the rows sit on the fold's own surface: two steps off it. */
+.ev-chapter-contact__fold-body {
+  --chapter-contact-row-a: color-mix(in oklab, var(--ev-fg) 3%, var(--ev-surface-list));
+  --chapter-contact-row-b: color-mix(in oklab, var(--ev-fg) 6%, var(--ev-surface-list));
+}
+.ev-chapter-contact__fold-body .ev-chapter-contact__table tbody tr,
+.ev-chapter-contact__fold-body .ev-chapter-contact__strip li { background: var(--chapter-contact-row-a); }
+.ev-chapter-contact__fold-body .ev-chapter-contact__table tbody tr:nth-child(even),
+.ev-chapter-contact__fold-body .ev-chapter-contact__strip li:nth-child(even) { background: var(--chapter-contact-row-b); }
+.ev-chapter-contact__fold-body .ev-chapter-contact__table tbody tr[data-today],
+.ev-chapter-contact__fold-body .ev-chapter-contact__strip li[data-today] { background: var(--chapter-contact-today); }
+
+/* Picture: media well, revealed when decoded by the browser (lazy). */
+.ev-chapter-contact__picture {
+  position: relative;
+  margin: 0;
+  overflow: hidden;
+  border-radius: var(--ev-radius-surface);
+  background: var(--ev-well);
+}
+.ev-chapter-contact__picture img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+/* ── Phones: one column, where → when → how ────────────────────────── */
+@media (max-width: 767.98px) {
+  .ev-chapter-contact__cols,
+  .ev-chapter-contact__band { display: flex; flex-direction: column; gap: var(--chapter-contact-tile-gap); }
+  .ev-chapter-contact__col { display: contents; }
+  .ev-chapter-contact__place { order: 1; }
+  .ev-chapter-contact__hours { order: 2; margin-block: 1.25em; }
+  .ev-chapter-contact__reach { order: 3; }
+  /* Columns: the picture is a secondary object on a phone. */
+  [data-layout="columns"] .ev-chapter-contact__picture { display: none; }
+  /* Split: media first, then the copy (RULES §0). */
+  [data-layout="split"] .ev-chapter-contact__picture { order: -2; aspect-ratio: 4 / 3; margin-bottom: 2em; }
+  [data-layout="split"] .ev-chapter__heading { order: -1; }
+  /* Band: stays compact — details first as one-line rows (label | value),
+     then the hours with today as one row. */
+  [data-layout="band"] .ev-chapter-contact__reach { order: 2; }
+  [data-layout="band"] .ev-chapter-contact__hours { order: 3; margin-bottom: 0; }
+  [data-layout="band"] .ev-chapter-contact__tile {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: baseline;
+    gap: 1em;
+    min-height: 3.4em;
+    padding: 0.85em 1.1em;
+  }
+  [data-layout="band"] .ev-chapter-contact__value { justify-self: end; text-align: right; font-size: max(calc(0.9375 * var(--ev-rem)), 14px); }
+  [data-layout="band"] .ev-chapter-contact__today { grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 1.25em; padding: 1em 1.1em; }
+  [data-layout="band"] .ev-chapter-contact__today-head { flex-direction: column; gap: 0.3em; }
+  [data-layout="band"] .ev-chapter-contact__services { grid-template-columns: minmax(0, 1fr); gap: 0.5em; justify-items: end; }
+  [data-layout="band"] .ev-chapter-contact__services > div { display: flex; align-items: baseline; gap: 0.75em; }
+  [data-layout="band"] .ev-chapter-contact__services dt { margin: 0; }
+  [data-layout="band"] .ev-chapter-contact__services dd { font-size: 1.15em; }
+  /* Band: the week strip becomes a two-column grid of days. */
+  .ev-chapter-contact__strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ev-chapter-contact__strip li:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .ev-chapter-contact__table th,
+  .ev-chapter-contact__table td { padding-inline: 0.7em; }
+}
+
+/* ── From 768 ───────────────────────────────────────────────────────── */
+@media (min-width: 768px) {
+  /* Columns (the original): channels .44 | hours .56, picture fills the
+     hours column's remaining height and yields it when the week opens. */
+  [data-layout="columns"] .ev-chapter-contact__cols {
+    display: grid;
+    grid-template-columns: minmax(0, 0.44fr) minmax(0, 0.56fr);
+    gap: var(--ev-gap-group);
+    align-items: stretch;
+  }
+  /* Tiles share the column's height evenly (each list grows by its count). */
+  [data-layout="columns"] .ev-chapter-contact__col--reach { gap: var(--chapter-contact-tile-gap); }
+  [data-layout="columns"] .ev-chapter-contact__col--reach > .ev-chapter-contact__tiles { flex: var(--n, 1) 1 auto; grid-auto-rows: 1fr; transition: flex-grow var(--ev-dur-reveal) var(--ev-ease); }
+  /* The open week is taller than the channels: they keep their own height. */
+  [data-layout="columns"] .ev-chapter-contact__cols:has(.ev-chapter-contact__fold[open]) .ev-chapter-contact__col--reach > .ev-chapter-contact__tiles { flex-grow: 0; }
+  [data-layout="columns"] .ev-chapter-contact__picture {
+    flex: 1 1 auto;
+    min-height: 13em;
+    margin-top: 1.25em;
+    transition:
+      opacity var(--ev-dur-control) ease,
+      flex-grow var(--ev-dur-reveal) var(--ev-ease),
+      min-height var(--ev-dur-reveal) var(--ev-ease),
+      margin-top var(--ev-dur-reveal) var(--ev-ease);
+  }
+  [data-layout="columns"] .ev-chapter-contact__picture img { position: absolute; inset: 0; }
+  [data-layout="columns"] .ev-chapter-contact__col--hours:has(.ev-chapter-contact__fold[open]) .ev-chapter-contact__picture {
+    flex-grow: 0;
+    min-height: 0;
+    margin-top: 0;
+    opacity: 0;
+  }
+
+  /* Split / band below 1024: stacked, media first, channels two across. */
+  [data-layout="split"] .ev-chapter-contact__reach,
+  [data-layout="band"] .ev-chapter-contact__reach { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  [data-layout="split"] .ev-chapter-contact__picture { aspect-ratio: 16 / 10; }
+}
+@media (min-width: 768px) and (max-width: 1023.98px) {
+  [data-layout="split"] .ev-chapter-contact__cols { display: flex; flex-direction: column; gap: var(--chapter-contact-tile-gap); }
+  [data-layout="split"] .ev-chapter-contact__col { display: contents; }
+  [data-layout="split"] .ev-chapter-contact__picture { order: -2; margin-bottom: 2em; }
+  [data-layout="split"] .ev-chapter__heading { order: -1; }
+  [data-layout="split"] .ev-chapter-contact__place { order: 1; }
+  [data-layout="split"] .ev-chapter-contact__hours { order: 2; margin-block: 1.25em; }
+  [data-layout="split"] .ev-chapter-contact__reach { order: 3; }
+  [data-layout="band"] .ev-chapter-contact__band { display: flex; flex-direction: column; gap: var(--chapter-contact-tile-gap); }
+  [data-layout="band"] .ev-chapter-contact__hours { margin-top: 1.25em; }
+}
+
+@media (min-width: 1024px) {
+  /* Split: heading + hours (.37) beside the picture and channels (.63). */
+  [data-layout="split"] .ev-chapter-contact__cols {
+    display: grid;
+    grid-template-columns: minmax(0, 0.37fr) minmax(0, 0.63fr);
+    column-gap: 3.5em;
+    align-items: start;
+  }
+  [data-layout="split"] .ev-chapter-contact__col { gap: var(--chapter-contact-tile-gap); }
+  [data-layout="split"] .ev-chapter-contact__picture { margin-bottom: calc(1.25em - var(--chapter-contact-tile-gap)); }
+
+  /* Band: place | four channels on one row, the hours as a strip under it. */
+  [data-layout="band"] .ev-chapter-contact__band {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 4fr);
+    gap: var(--chapter-contact-tile-gap);
+  }
+  [data-layout="band"] .ev-chapter-contact__reach { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
+  [data-layout="band"] .ev-chapter-contact__place,
+  [data-layout="band"] .ev-chapter-contact__reach { grid-column: 1 / -1; }
+  [data-layout="band"] .ev-chapter-contact__hours {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 4fr);
+    gap: var(--chapter-contact-tile-gap) calc(var(--chapter-contact-tile-gap) + 1.25em);
+    margin-top: 1.25em;
+  }
+  [data-layout="band"] .ev-chapter-contact__hours-head { flex-direction: column; align-items: flex-start; justify-content: flex-start; padding: 1.05em 0 0 1.25em; }
+  [data-layout="band"] .ev-chapter-contact__note { grid-column: 2; }
+  [data-layout="band"] .ev-chapter-contact__today { grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 3em; }
+  [data-layout="band"] .ev-chapter-contact__today-head { flex-direction: column; gap: 0.35em; }
+  [data-layout="band"] .ev-chapter-contact__services { grid-template-columns: repeat(auto-fit, minmax(9em, max-content)); column-gap: 3em; }
+}
+/* Five tiles on one row only once each holds an e-mail on one line. */
+@media (min-width: 1280px) {
+  [data-layout="band"] .ev-chapter-contact__place { grid-column: 1; }
+  [data-layout="band"] .ev-chapter-contact__reach { grid-column: 2; }
+}

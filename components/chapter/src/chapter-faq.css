@@ -1,0 +1,161 @@
+/* ChapterFaq — questions on alternating tonal tiles (RULES §3: no rules
+   between rows), single-open accordion, sticky media or heading column.
+   Scoped under .ev-chapter-faq (a .ev-chapter root: --chapter-* tokens). */
+
+.ev-chapter-faq {
+  --chapter-faq-row: var(--ev-surface-list);
+  --chapter-faq-row-alt: var(--ev-surface-list-alt);
+  /* Pointed row: one tonal step toward the foreground. */
+  --chapter-faq-row-hover: color-mix(in oklab, var(--ev-fg) 5%, var(--chapter-faq-row));
+  /* Open row: a ≤ 10 % accent wash (RULES §5); the orb and the answer carry the state. */
+  --chapter-faq-row-open: color-mix(in oklab, var(--chapter-accent) 9%, var(--chapter-faq-row));
+  /* Host navbar clearance for the sticky column. */
+  --chapter-faq-sticky-top: calc(6 * var(--ev-rem));
+}
+
+/* ── Composition ─────────────────────────────────────────────────────── */
+.ev-chapter-faq__body { display: grid; gap: calc(2 * var(--ev-rem)); align-items: start; }
+.ev-chapter-faq[data-layout="split"] .ev-chapter-faq__body { gap: var(--ev-gap-heading); }
+.ev-chapter-faq__head .ev-chapter__heading { margin-bottom: 0; }
+.ev-chapter-faq__head .ev-chapter__support { margin-top: calc(1.25 * var(--ev-rem)); }
+
+.ev-chapter-faq__media {
+  position: relative;
+  margin: 0;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--ev-radius-surface);
+  background: var(--ev-well);
+}
+.ev-chapter-faq__media img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+@media (min-width: 768px) {
+  /* Media: list = the larger side, media .62 (RULES §4 question/side). */
+  .ev-chapter-faq[data-layout="media"] .ev-chapter-faq__body {
+    grid-template-columns: minmax(0, 0.62fr) minmax(0, 1fr);
+    column-gap: calc(3 * var(--ev-rem));
+  }
+  /* Split: heading/copy .72 / 1.28. */
+  .ev-chapter-faq[data-layout="split"] .ev-chapter-faq__body {
+    grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr);
+    column-gap: calc(3.5 * var(--ev-rem));
+  }
+  .ev-chapter-faq[data-layout="split"] .ev-chapter__heading--split { flex-direction: column; align-items: flex-start; }
+  .ev-chapter-faq[data-layout="split"] .ev-chapter__heading--split .ev-chapter__main { flex: 0 1 auto; }
+  /* The column holds still while answers open beside it. */
+  .ev-chapter-faq__media,
+  .ev-chapter-faq__head { position: sticky; top: var(--chapter-faq-sticky-top); }
+  .ev-chapter-faq__media { aspect-ratio: 2 / 3; }
+}
+
+/* Stacked: one centred column on the reading rail. */
+.ev-chapter-faq[data-layout="stacked"] .ev-chapter-faq__stack { width: 100%; max-width: calc(46 * var(--ev-rem)); margin-inline: auto; }
+
+/* ── Rows ────────────────────────────────────────────────────────────── */
+.ev-chapter-faq__list { display: grid; gap: var(--ev-gap-internal); }
+.ev-chapter-faq__item {
+  border-radius: var(--ev-radius-surface);
+  background: var(--chapter-faq-row);
+  transition: background-color var(--ev-dur-control) var(--ev-ease);
+}
+.ev-chapter-faq__item:nth-child(even) { background: var(--chapter-faq-row-alt); }
+@media (hover: hover) {
+  .ev-chapter-faq__item:has(.ev-chapter-faq__trigger:hover):not([data-open]) { background: var(--chapter-faq-row-hover); }
+}
+.ev-chapter-faq__item[data-open] { background: var(--chapter-faq-row-open); }
+
+.ev-chapter-faq__q { margin: 0; font: inherit; }
+.ev-chapter-faq__trigger {
+  display: flex;
+  width: 100%;
+  min-height: 48px;
+  align-items: center;
+  gap: calc(1 * var(--ev-rem));
+  padding: 0.95em 1em 0.95em 1.25em;
+  border: 0;
+  border-radius: var(--ev-radius-surface);
+  background: none;
+  color: var(--ev-fg);
+  cursor: pointer;
+  text-align: left;
+}
+.ev-chapter-faq__item[data-open] .ev-chapter-faq__trigger { border-end-start-radius: 0; border-end-end-radius: 0; }
+.ev-chapter-faq__trigger:focus-visible { outline: 2px solid var(--chapter-signal); outline-offset: -2px; }
+.ev-chapter-faq__question {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--ev-font-display);
+  font-size: max(1.0625em, 15px);
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: -0.005em;
+  text-wrap: pretty;
+}
+
+/* Toggle orb: + at rest, the accent rises as liquid with − on it (OrbFill, RULES §1). */
+.ev-chapter-faq__orb {
+  position: relative;
+  display: block;
+  width: 2em;
+  height: 2em;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  --ev-orb-rest: color-mix(in oklab, var(--ev-fg) 7%, transparent);
+  --ev-orb-rest-ink: var(--ev-fg-65);
+  --ev-orb-lit: var(--chapter-accent);
+  --ev-orb-lit-ink: var(--chapter-accent-ink);
+}
+.ev-chapter-faq__orb svg { width: 0.8em; height: 0.8em; }
+
+/* Answers stay rendered; closed panels collapse to 0 and leave the tab order. */
+.ev-chapter-faq__panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  visibility: hidden;
+  transition: grid-template-rows var(--ev-dur-control) var(--ev-ease), visibility 0s linear var(--ev-dur-control);
+}
+.ev-chapter-faq__item[data-open] .ev-chapter-faq__panel {
+  grid-template-rows: 1fr;
+  visibility: visible;
+  transition: grid-template-rows var(--ev-dur-control) var(--ev-ease), visibility 0s;
+}
+.ev-chapter-faq__clip { min-height: 0; overflow: hidden; }
+.ev-chapter-faq__answer {
+  display: grid;
+  justify-items: start;
+  gap: calc(0.25 * var(--ev-rem));
+  padding: 0 calc(4.25em) 1.25em 1.25em;
+  opacity: 0;
+  transform: translateY(-0.4em);
+  transition: opacity var(--ev-dur-control) var(--ev-ease), transform var(--ev-dur-control) var(--ev-ease);
+}
+.ev-chapter-faq__item[data-open] .ev-chapter-faq__answer { opacity: 1; transform: none; }
+.ev-chapter-faq__answer .ev-t-body { max-width: 40em; color: var(--ev-fg-65); text-wrap: pretty; }
+.ev-chapter-faq__follow { margin-bottom: -0.5em; }
+/* Text actions: their 4px hit padding hangs outside the text column. */
+.ev-chapter-faq__follow,
+.ev-chapter-faq__ask { margin-inline: -4px; }
+
+/* ── Phones: the first questions, then one row that shows the rest ─────── */
+.ev-chapter-faq__more { display: none; }
+@media (max-width: 767.98px) {
+  .ev-chapter-faq__answer { padding-right: 1.25em; }
+  .ev-chapter-faq__list:not([data-expanded]) > [data-extra] { display: none; }
+  .ev-chapter-faq__more {
+    display: flex;
+    width: 100%;
+    min-height: 48px;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6em;
+    margin-top: var(--ev-gap-internal);
+    padding: 0.75em 1em;
+    border: 0;
+    border-radius: var(--ev-radius-surface);
+    background: var(--ev-surface);
+    color: var(--ev-fg);
+    cursor: pointer;
+  }
+  .ev-chapter-faq__more svg { width: 16px; height: 16px; }
+  .ev-chapter-faq__more:focus-visible { outline: 2px solid var(--chapter-signal); outline-offset: 2px; }
+}

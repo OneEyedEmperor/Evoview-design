@@ -1,0 +1,180 @@
+/* Evoview chapter story — the client's story with drifting lanes of its
+   pictures. Scoped under .ev-chapter-story (on the Chapter root). Lanes are
+   columns from 1024 (data-axis="y"), sideways rows below and in the `above`
+   layout (data-axis="x"). Accent: the heading marker / accent word only. */
+
+.ev-chapter-story {
+  --chapter-story-gap: max(0.75em, 10px);
+  --chapter-story-height: min(48em, 82svh);
+  --chapter-story-row: 13em;
+  --chapter-story-band: calc(3 * var(--ev-rem));
+  overflow-x: clip;
+}
+.ev-chapter-story[data-density="dense"] { --chapter-story-row: 10em; }
+@media (min-width: 768px) {
+  .ev-chapter-story { --chapter-story-row: 16em; }
+  .ev-chapter-story[data-density="dense"] { --chapter-story-row: 12em; }
+}
+@media (min-width: 1024px) {
+  .ev-chapter-story { --chapter-story-row: 21em; --chapter-story-band: var(--ev-gap-heading); }
+  .ev-chapter-story[data-density="dense"] { --chapter-story-row: 14.5em; }
+}
+
+/* The frame sits on the wide rail; rows bleed edge to edge. */
+.ev-chapter-story__frame {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--chapter-story-band);
+  width: 100%;
+  max-width: calc(var(--ev-rail-wide) + 2 * var(--ev-gutter));
+  margin-inline: auto;
+  padding-inline: var(--ev-gutter);
+}
+
+/* ── Copy ─────────────────────────────────────────────────────────────── */
+.ev-chapter-story__copy {
+  display: flex;
+  flex-direction: column;
+  gap: calc(1.5 * var(--ev-rem));
+  min-width: 0;
+}
+.ev-chapter-story .ev-chapter__heading { margin-bottom: 0; }
+.ev-chapter-story__emblem {
+  display: block;
+  width: fit-content;
+  height: calc(2.75 * var(--ev-rem));
+  color: var(--ev-fg);
+  line-height: 0;
+}
+.ev-chapter-story__emblem > svg,
+.ev-chapter-story__emblem > img { display: block; width: auto; height: 100%; }
+.ev-chapter-story__text { display: grid; gap: calc(2.5 * var(--ev-rem)); }
+.ev-chapter-story__story { display: grid; gap: 1em; max-width: 34em; color: var(--ev-fg-65); }
+.ev-chapter-story__story p { text-wrap: pretty; }
+
+.ev-chapter-story__quote { display: grid; gap: 1em; max-width: 34em; margin: 0; }
+.ev-chapter-story__quote blockquote { margin: 0; }
+.ev-chapter-story__quote blockquote p {
+  margin: 0;
+  color: var(--ev-fg-90);
+  font-family: var(--ev-font-body);
+  font-size: max(calc(1.0625 * var(--ev-rem)), 15px);
+  font-weight: 500;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+.ev-chapter-story__quote figcaption { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25em 0.75em; }
+.ev-chapter-story__name { color: var(--ev-fg); }
+.ev-chapter-story__role { color: var(--ev-fg-55); }
+/* Phones drop the quote (secondary object) before shrinking the story. */
+@media (max-width: 767.98px) {
+  .ev-chapter-story__quote { display: none; }
+}
+
+.ev-chapter-story[data-layout="center"] .ev-chapter-story__copy { align-items: center; text-align: center; }
+.ev-chapter-story[data-layout="center"] .ev-chapter-story__story,
+.ev-chapter-story[data-layout="center"] .ev-chapter-story__quote { margin-inline: auto; }
+.ev-chapter-story[data-layout="center"] .ev-chapter-story__quote figcaption { justify-content: center; }
+
+/* ── Lanes ────────────────────────────────────────────────────────────── */
+.ev-chapter-story__media { position: relative; min-width: 0; overflow: hidden; }
+.ev-chapter-story__media[data-slot="before"] { order: -1; }
+.ev-chapter-story__lane { position: relative; min-width: 0; }
+.ev-chapter-story__track { display: flex; will-change: transform; }
+
+/* Margin, not gap: the trailing space keeps the half-length loop exact. */
+.ev-chapter-story__tile {
+  position: relative;
+  flex: none;
+  margin: 0;
+  overflow: hidden;
+  border-radius: var(--ev-radius-surface);
+  background: var(--ev-well);
+}
+.ev-chapter-story__tile > img,
+.ev-chapter-story__tile > video {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Rows: sideways lanes, edge to edge, faded at the screen edges. */
+.ev-chapter-story[data-axis="x"] .ev-chapter-story__media {
+  display: grid;
+  gap: var(--chapter-story-gap);
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+}
+.ev-chapter-story[data-axis="x"] .ev-chapter-story__lane { height: var(--chapter-story-row); }
+.ev-chapter-story[data-axis="x"] .ev-chapter-story__track { width: max-content; height: 100%; }
+.ev-chapter-story[data-axis="x"] .ev-chapter-story__tile { height: 100%; margin-right: var(--chapter-story-gap); }
+
+/* Columns: vertical lanes in a window faded top and bottom. */
+.ev-chapter-story[data-axis="y"] .ev-chapter-story__media {
+  display: flex;
+  gap: var(--chapter-story-gap);
+  height: var(--chapter-story-height);
+  mask-image: linear-gradient(180deg, transparent, #000 12%, #000 88%, transparent);
+}
+.ev-chapter-story[data-axis="y"] .ev-chapter-story__lane { flex: 1 1 0; }
+.ev-chapter-story[data-axis="y"][data-density="dense"] .ev-chapter-story__media[data-slot="side"] .ev-chapter-story__lane:nth-child(2) { flex-grow: 1.25; }
+.ev-chapter-story[data-axis="y"] .ev-chapter-story__track { flex-direction: column; }
+.ev-chapter-story[data-axis="y"] .ev-chapter-story__tile { width: 100%; margin-bottom: var(--chapter-story-gap); }
+
+/* ── Desktop compositions (≥ 1024) ────────────────────────────────────── */
+@media (min-width: 1024px) {
+  .ev-chapter-story__frame { align-items: center; column-gap: calc(4.5 * var(--ev-rem)); }
+  .ev-chapter-story__copy { grid-area: copy; }
+  .ev-chapter-story__media[data-slot="side"] { grid-area: side; }
+  .ev-chapter-story__media[data-slot="before"] { grid-area: before; }
+  .ev-chapter-story__media[data-slot="after"] { grid-area: after; }
+
+  .ev-chapter-story[data-layout="start"] .ev-chapter-story__frame {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    grid-template-areas: "copy side";
+  }
+  .ev-chapter-story[data-layout="end"] .ev-chapter-story__frame {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    grid-template-areas: "side copy";
+  }
+  .ev-chapter-story[data-layout="center"] .ev-chapter-story__frame {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 30em) minmax(0, 1fr);
+    grid-template-areas: "before copy after";
+    column-gap: calc(3.5 * var(--ev-rem));
+  }
+  /* Above: title (.72) beside story (1.28), the band under both. */
+  .ev-chapter-story[data-layout="above"] .ev-chapter-story__frame { grid-template-areas: "copy" "after"; }
+  .ev-chapter-story[data-layout="above"] .ev-chapter-story__copy {
+    display: grid;
+    grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr);
+    grid-template-rows: auto 1fr;
+    align-items: start;
+    gap: calc(1.5 * var(--ev-rem)) calc(4.5 * var(--ev-rem));
+  }
+  .ev-chapter-story[data-layout="above"] .ev-chapter-story__copy > * { grid-column: 1; }
+  .ev-chapter-story[data-layout="above"] .ev-chapter-story__text { grid-column: 2; grid-row: 1 / span 2; padding-top: 0.35em; }
+}
+
+/* ── Reveal: copy rises once in view (stagger 80); the lanes rise once in
+   view and their pictures are decoded. ────────────────────────────────── */
+.ev-chapter-story__reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity var(--ev-dur-reveal) var(--ev-ease-cinematic) var(--ev-chapter-story-delay, 0ms),
+    transform var(--ev-dur-reveal) var(--ev-ease-cinematic) var(--ev-chapter-story-delay, 0ms);
+}
+.ev-chapter-story__frame[data-revealed] .ev-chapter-story__reveal { opacity: 1; transform: none; }
+
+.ev-chapter-story__media { opacity: 0; }
+.ev-chapter-story__media[data-shown] {
+  animation: ev-chapter-story-in var(--ev-dur-cinematic) var(--ev-ease-cinematic) var(--ev-chapter-story-delay, 0ms) both;
+}
+@keyframes ev-chapter-story-in {
+  from { opacity: 0; transform: translateY(28px); }
+  to { opacity: 1; transform: none; }
+}

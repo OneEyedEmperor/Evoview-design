@@ -1,0 +1,154 @@
+/* ChapterFooter layout="panel" — brand + tagline · page tiles · socials,
+   over contact · legal, the Evoview credit centred last. No rules: bands
+   are separated by space (neighbour, then group), the page links by tone. */
+
+.ev-chapter.ev-chapter--panel { padding-block: calc(2.5 * var(--ev-rem)) calc(1.5 * var(--ev-rem)); }
+@media (min-width: 768px) {
+  .ev-chapter.ev-chapter--panel { padding-block: calc(3.5 * var(--ev-rem)) calc(2 * var(--ev-rem)); }
+}
+
+.ev-chapter__panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "brand socials" "nav nav";
+  align-items: center;
+  gap: calc(1.25 * var(--ev-rem)) calc(1.5 * var(--ev-rem));
+}
+.ev-chapter__panel-brand { grid-area: brand; display: flex; min-width: 0; align-items: center; gap: calc(1.25 * var(--ev-rem)); }
+.ev-chapter__panel-brand .ev-chapter__brand { flex: 0 0 auto; }
+.ev-chapter__tagline { display: none; max-width: 24em; color: var(--ev-fg-55); text-wrap: pretty; }
+
+/* Page links: tonal tiles (founder rule: text lists on tonal surfaces), an
+   accent bar wipes in from the left under the pointed one, full under the current page. */
+.ev-chapter__nav { grid-area: nav; min-width: 0; }
+.ev-chapter__nav ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.5em), 1fr));
+  gap: calc(0.375 * var(--ev-rem));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ev-chapter__nav li { display: flex; }
+.ev-chapter__nav-link {
+  position: relative;
+  display: inline-flex;
+  width: 100%;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 0.7em 1.15em;
+  border-radius: var(--ev-radius-control);
+  background: var(--ev-surface-list);
+  color: var(--ev-fg-65);
+  font-family: var(--ev-font-display);
+  font-size: max(calc(0.8125 * var(--ev-rem)), 12px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: background-color var(--ev-dur-control) var(--ev-ease);
+}
+.ev-chapter__nav li:nth-child(even) .ev-chapter__nav-link { background: var(--ev-surface-list-alt); }
+.ev-chapter__nav-link::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 2px;
+  background: var(--chapter-signal);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 420ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+@media (hover: hover) {
+  .ev-chapter__nav-link:hover::after { transform: scaleX(1); }
+}
+.ev-chapter__nav-link:focus-visible::after { transform: scaleX(1); }
+.ev-chapter__nav-link[aria-current="page"] { background: var(--ev-surface); }
+.ev-chapter__nav-link[aria-current="page"]::after { transform: scaleX(1); }
+
+/* Socials: 44px orbs; the accent rises on hover / focus (OrbFill, RULES §1). */
+.ev-chapter__socials { grid-area: socials; display: flex; gap: calc(0.5 * var(--ev-rem)); margin: 0; padding: 0; list-style: none; }
+.ev-chapter__social { display: block; border-radius: 999px; color: var(--ev-fg-90); }
+.ev-chapter__social-orb {
+  position: relative;
+  display: block;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  --ev-orb-rest: color-mix(in oklab, var(--ev-fg) 6%, transparent);
+  --ev-orb-rest-ink: var(--ev-fg-90);
+  --ev-orb-lit: var(--chapter-accent);
+  --ev-orb-lit-ink: var(--chapter-accent-ink);
+}
+.ev-chapter__social-orb svg { width: 18px; height: 18px; }
+
+/* Meta: contact · legal, compact voice. */
+.ev-chapter__meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(0.5 * var(--ev-rem));
+  margin-top: calc(1.5 * var(--ev-rem));
+  text-align: center;
+}
+.ev-chapter__contact,
+.ev-chapter__meta-legal,
+.ev-chapter__meta-legal ul {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  column-gap: calc(1.25 * var(--ev-rem));
+  margin: 0;
+  padding: 0;
+  font-style: normal;
+  list-style: none;
+}
+.ev-chapter__meta-legal .ev-t-compact { color: var(--ev-fg-55); letter-spacing: 0.025em; }
+.ev-chapter__meta-link {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ev-fg-55);
+  cursor: pointer;
+  font-family: var(--ev-font-body);
+  font-size: max(calc(0.8125 * var(--ev-rem)), 12px);
+  line-height: 1.4;
+  text-decoration: none;
+}
+.ev-chapter__contact .ev-chapter__meta-link { color: var(--ev-fg-65); }
+.ev-chapter__panel-credit { display: flex; justify-content: center; margin-top: calc(2 * var(--ev-rem)); }
+
+.ev-chapter__nav-link:focus-visible,
+.ev-chapter__social:focus-visible,
+.ev-chapter__meta-link:focus-visible {
+  outline: 2px solid var(--chapter-signal);
+  outline-offset: 3px;
+}
+.ev-chapter__nav-link:focus-visible { outline-offset: 2px; }
+.ev-chapter__meta-link:focus-visible { border-radius: var(--ev-radius-badge); }
+
+@media (min-width: 768px) {
+  .ev-chapter__tagline { display: block; }
+  .ev-chapter__nav ul { display: flex; flex-wrap: wrap; }
+  .ev-chapter__nav-link { width: auto; }
+  .ev-chapter__meta { flex-direction: row; flex-wrap: wrap; justify-content: space-between; column-gap: calc(2 * var(--ev-rem)); text-align: left; }
+  .ev-chapter__contact { justify-content: flex-start; }
+  .ev-chapter__meta-legal { justify-content: flex-end; }
+}
+
+/* One row from 1024: brand · tiles · socials. */
+@media (min-width: 1024px) {
+  .ev-chapter__panel {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-areas: "brand nav socials";
+    column-gap: calc(2 * var(--ev-rem));
+  }
+}

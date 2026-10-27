@@ -1,6 +1,6 @@
 ---
 name: evoview-chapter
-description: Evoview page-section shell as React components — Chapter (tone light / paper / dark with hard cuts, rhythm standard / compact / cinematic, reading / wide rail, data-nav-tone for the navbar), ChapterHeading (centered / split, standard / feature, accent marker, inline client mark, subtitle, ticker, side instrument) and ChapterFooter (logo, legal, links, the approved Evoview attribution). Use when building or restructuring the sections of an Evoview client page. Triggers on "evoview chapter", "section shell", "chapter heading", "tone cut", "evoview footer".
+description: Evoview page-section shell as React components — Chapter (tone light / paper / dark with hard cuts, rhythm standard / compact / cinematic, reading / wide rail, data-nav-tone for the navbar), ChapterHeading (centered / split, standard / feature, accent marker, inline client mark, subtitle, ticker, side instrument), ChapterFaq (crawlable FAQ accordion with JSON-LD), ChapterStory (story beside scroll-linked drifting picture lanes), ChapterContact (booking action, place, channels, hours with live open state) and ChapterFooter (bar or panel: logo, pages, socials, contact, legal, the approved Evoview attribution). Use when building or restructuring the sections of an Evoview client page. Triggers on "evoview chapter", "section shell", "chapter heading", "tone cut", "evoview footer", "evoview faq", "evoview contact section", "opening hours", "story section", "about section".
 ---
 
 # Evoview chapter
@@ -30,6 +30,34 @@ Read `README.md` ("What is Evoview", attribution, API) and the library's
    `<ChapterHeading>`; put `<ChapterFooter config>` last. Remove any
    `data-nav-tone="dark"` page wrapper; feed the navbar
    `sections: chapterNavSections(…, clientAccent)`.
+   - FAQ: fill `buildChapterFaqConfig` (plain-text answers, optional
+     `link` per answer, `more` = text link to contact, portrait for
+     `layout="media"`), render `<ChapterFaq config layout tone />`. Keep
+     `structuredData` on unless the page head already carries a FAQPage;
+     one FAQ chapter with JSON-LD per page. Set `--chapter-faq-sticky-top`
+     to the host navbar's height + gap if it differs from 6rem.
+   - Footer: `layout="bar"` for a one-page site, `layout="panel"` for a
+     multi-page site (fill `footer.tagline`, `nav` with `current` per route,
+     `socials` with currentColor glyphs, `contact`; cookie settings as a
+     `links` entry with `onSelect`).
+   - Contact: fill `buildChapterContactConfig` with the client's real
+     destinations (maps link for the address, `tel:`, `mailto:`, messaging,
+     socials; values are what the visitor reaches), services and the week in
+     the business's IANA zone, the booking `action.href`; render
+     `<ChapterContact config layout hours tone />`. Pick `layout`
+     (columns with a place photo · split for a place worth showing · band
+     for a compact closing block) and `hours` (`week` if hours vary by day).
+     Never place an Evoview mark beside the action.
+   - Story (the chapter after the hero): fill `buildChapterStoryConfig`
+     with the client's story (title with one `<em>`, 1–2 paragraphs,
+     optional signed `quote`, optional `emblem`) and ≥ 9 of its own pictures
+     (`ratio` per item; clips as short forward seamless loops with a
+     first-frame poster). Try `layout` / `density` on the showcase's story
+     scene first: `start` / `end` beside the text (alternate them for
+     several stories), `center` to open a page, `above` for landscape
+     photos; `ample` for few strong pictures, `dense` for a rich library.
+     Render `<ChapterStory content layout density tone />`. Keep the drift,
+     the one-clip-at-a-time playback and the media-gated reveal as shipped.
 6. Check the host `--primary` / `--primary-foreground`; fix those tokens
    rather than restyling headings.
 7. Verify with the README checklist, then log an activity record
@@ -45,7 +73,10 @@ Read `README.md` ("What is Evoview", attribution, API) and the library's
   linked, in the footer credit. Never place it next to a client CTA; keep
   CTAs inside chapters.
 - Client copy, media and accent change freely; marker, heading anatomy,
-  rhythm, rails and tone values do not.
+  rhythm, rails and tone values do not. FAQ and footer panel: tonal tiles,
+  the liquid orbs / ink, single-open accordion and the centred credit are the
+  protected signature (README "ChapterFaq", "Footer panel"); no `01`
+  indices, no dividers, no decorative icons.
 - Never fork for a client: fixes go into the library (`VERSION`,
   `CHANGELOG.md`), clients re-run `install.sh`.
 - Respond in English even when the client interface is French.
