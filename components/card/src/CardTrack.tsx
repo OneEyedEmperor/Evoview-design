@@ -10,9 +10,10 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from "react";
-import { Index, cn, useInViewPause, useMediaQuery } from "../foundation";
+import { cn, useInViewPause, useMediaQuery } from "../foundation";
 import { MediaCard } from "./MediaCard";
-import type { CardTrackCopy, CardTrackDefinition, CardTrackItem } from "./types";
+import { nearestToCentre } from "./strip";
+import type { CardHeadingLevel, CardTrackCopy, CardTrackDefinition, CardTrackItem } from "./types";
 
 /** scrub: sticky, vertical scroll drives the track · snap: native horizontal scroll · static: everything fits. */
 export type CardTrackMode = "scrub" | "snap" | "static";
@@ -28,7 +29,9 @@ export type CardTrackProps = {
   rhythm?: "standard" | "compact" | "cinematic";
   /** Card activation (open a dossier, navigate…). Without it cards are not buttons. */
   onOpen?: (item: CardTrackItem, index: number) => void;
-  /** Scrub length (wrapper height). Default `calc(100vh + n × 35vh)` — 240vh for four cards. */
+  /** Card title level. Default 3 (the chapter heading is the h2). */
+  cardHeadingLevel?: CardHeadingLevel;
+  /** Scrub length (wrapper height). Default the pinned stage's height + n × 35vh of scrub. */
   length?: string;
   id?: string;
   className?: string;
@@ -45,8 +48,12 @@ const PENDING_MS = 1200;
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
 
-export function CardTrack({ track, copy, heading, tone, rhythm = "standard", onOpen, length, id, className }: CardTrackProps) {
-  const { items, variant, ribbon = "light", showIndex = false } = track;
+/* Scrub geometry, read on mount and on every resize, never per frame:
+   `top` is the root's page offset, `pin` the stage's resolved sticky top. */
+type Geometry = { range: number; maxX: number; pin: number; top: number };
+
+export function CardTrack({ track, copy, heading, tone, rhythm = "standard", onOpen, cardHeadingLevel = 3, length, id, className }: CardTrackProps) {
+  const { items, variant, ribbon = "light" } = track;
   const n = items.length;
   const phone = useMediaQuery(PHONE_QUERY);
   const fine = useMediaQuery(FINE_QUERY);
@@ -57,6 +64,7 @@ export function CardTrack({ track, copy, heading, tone, rhythm = "standard", onO
   const trackRef = useRef<HTMLDivElement>(null);
   const fillRef = useRef<HTMLSpanElement>(null);
   const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const geoRef = useRef<Geometry>({ range: 0, maxX: 0, pin: 0, top: 0 });
   const resyncRef = useRef<() => void>(() => undefined);
   const pendingRef = useRef<{ index: number; at: number } | null>(null);
   const onOpenRef = useRef(onOpen);
@@ -71,11 +79,12 @@ export function CardTrack({ track, copy, heading, tone, rhythm = "standard", onO
   const activeRef = useRef(0);
   const [focusIdx, setFocusIdx] = useState(0);
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
-  const [near, setNear] = useState(false);
-  const [revealed, setRevealed] = useState(false);
   const instructionsId = useId();
   const hasHeading = !!heading;
 
+  // Media loads once the track approaches; the reveal plays once.
+  const near = useInViewPause(viewportRef, { once: true, rootMargin: "1200px 0px" }).active;
+  const revealed = useInViewPause(viewportRef, { once: true, rootMargin: "0px 0px -20px 0px", threshold: 0.15 }).active;
   const pause = useInViewPause(viewportRef);
   const { suspended } = pause;
 
@@ -100,25 +109,8 @@ export function CardTrack({ track, copy, heading, tone, rhythm = "standard", onO
     [items],
   );
 
-  // Media loads once the track approaches; the reveal plays once.
-  useEffect(() => {
-    const el = viewportRef.current;
-    if (!el || typeof IntersectionObserver === "undefined") {
-      setNear(true);
-      setRevealed(true);
-      return;
-    }
-    const nearIo = new IntersectionObserver(([e]) => e?.isIntersecting && (setNear(true), nearIo.disconnect()), { rootMargin: "1200px 0px" });
-    const revealIo = new IntersectionObserver(([e]) => e?.isIntersecting && (setRevealed(true), revealIo.disconnect()), { rootMargin: "0px 0px -20px 0px", threshold: 0.15 });
-    nearIo.observe(el);
-    revealIo.observe(el);
-    return () => {
-      nearIo.disconnect();
-      revealIo.disconnect();
-    };
-  }, []);
-
-  // Mechanism only. Scrub geometry is read live (scrubGeometry) so it can never go stale.
+  // Mechanism and geometry, on mount and every size change (the track, its
+  // stage, or anything above it that moves the root down the page).
   useLayoutEffect(() => {
     const root = rootRef.current;
     const stage = stageRef.current;
@@ -135,10 +127,20 @@ export function CardTrack({ track, copy, heading, tone, rhythm = "standard", onO
       const boxes = Array.from(stage.children, (c) => c.getBoundingClientRect()).filter((r) => r.height > 0);
       const first = boxes[0]?.top ?? 0;
       const last = boxes[boxes.length - 1]?.bottom ?? 0;
-      const em = Number.parseFloat(getComputedStyle(stage).fontSize) || 16;
+      const cs = getComputedStyle(stage);
+      const em = Number.parseFloat(cs.fontSize) || 16;
       const tooTall = last - first + 7.5 * em > window.innerHeight;
       stage.style.setProperty("--ctr-span", `${Math.round(last - first)}px`);
+      stage.style.setProperty("--ctr-pad-top", cs.paddingTop);
+      root.style.setProperty("--ctr-stage", `${stage.offsetHeight}px`);
       setMode(phone || n < 2 ? (n < 2 ? "static" : "snap") : overflow <= 4 ? "static" : tooTall ? "snap" : "scrub");
+      const pin = Number.parseFloat(getComputedStyle(stage).top);
+      geoRef.current = {
+        range: Math.max(0, root.offsetHeight - stage.offsetHeight),
+        maxX: Math.max(0, inner.offsetWidth - viewport.clientWidth),
+        pin: Number.isFinite(pin) ? pin : 0,
+        top: root.getBoundingClientRect().top + window.scrollY,
+      };
       resyncRef.current();
     };
     const schedule = () => {
@@ -147,9 +149,9 @@ export function CardTrack({ track, copy, heading, tone, rhythm = "standard", onO
 
     measure();
     const ro = new ResizeObserver(schedule);
-    // The stage children too: in scrub the stage is pinned at 100vh, so a heading
-    // that reflows (locale, fonts) only shows up on its own box.
-    [root, stage, viewport, inner, ...Array.from(stage.children)].forEach((el) => ro.observe(el));
+    // The stage children too (a heading that reflows on locale or fonts), and
+    // the body: content above the track moves the root without resizing it.
+    [document.body, root, stage, viewport, inner, ...Array.from(stage.children)].forEach((el) => ro.observe(el));
     window.addEventListener("resize", schedule);
     document.fonts?.addEventListener?.("loadingdone", schedule);
     return () => {
@@ -174,12 +176,16 @@ export function CardTrack({ track, copy, heading, tone, rhythm = "standard", onO
     if (suspended) return;
 
     const read = () => {
-      const { range, maxX } = scrubGeometry(root, stage, viewport, inner);
-      return { maxX, goal: range > 0 ? clamp(-root.getBoundingClientRect().top / range, 0, 1) : 0 };
+      const { range, maxX, pin, top } = geoRef.current;
+      return { maxX, goal: range > 0 ? clamp((window.scrollY + pin - top) / range, 0, 1) : 0 };
     };
+    let shown = "";
     const apply = (p: number, maxX: number) => {
-      inner.style.transform = `translate3d(${(-p * maxX).toFixed(2)}px, 0, 0)`;
-      if (fillRef.current) fillRef.current.style.transform = `scaleX(${p})`;
+      const x = (-p * maxX).toFixed(2);
+      if (x === shown) return;
+      shown = x;
+      inner.style.transform = `translate3d(${x}px, 0, 0)`;
+      if (fillRef.current) fillRef.current.style.transform = `scaleX(${p.toFixed(4)})`;
       setActiveIdx(Math.round(p * (n - 1)));
     };
 
@@ -207,7 +213,10 @@ export function CardTrack({ track, copy, heading, tone, rhythm = "standard", onO
       last = 0;
       raf = requestAnimationFrame(tick);
     };
-    resyncRef.current = onScroll;
+    resyncRef.current = () => {
+      shown = "";
+      onScroll();
+    };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
       window.removeEventListener("scroll", onScroll);
@@ -226,22 +235,8 @@ export function CardTrack({ track, copy, heading, tone, rhythm = "standard", onO
       raf = 0;
       const max = viewport.scrollWidth - viewport.clientWidth;
       const p = max > 0 ? clamp(viewport.scrollLeft / max, 0, 1) : 0;
-      if (fillRef.current) fillRef.current.style.transform = `scaleX(${p})`;
-      const vr = viewport.getBoundingClientRect();
-      const center = vr.left + viewport.clientWidth / 2;
-      let best = 0;
-      let bestDist = Infinity;
-      Array.from(inner.children).forEach((card, i) => {
-        const r = card.getBoundingClientRect();
-        const d = Math.abs(r.left + r.width / 2 - center);
-        if (d < bestDist) {
-          bestDist = d;
-          best = i;
-        }
-      });
-      // At the ends the edge cards win even if not centred (short last scroll).
-      if (max > 0 && viewport.scrollLeft >= max - 2) best = n - 1;
-      if (viewport.scrollLeft <= 2) best = 0;
+      const best = nearestToCentre(viewport, inner.children);
+      if (fillRef.current) fillRef.current.style.transform = `scaleX(${p.toFixed(4)})`;
       setActiveIdx(best);
     };
     const onScroll = () => {
@@ -266,15 +261,12 @@ export function CardTrack({ track, copy, heading, tone, rhythm = "standard", onO
   const select = useCallback(
     (i: number) => {
       const next = clamp(i, 0, n - 1);
-      const root = rootRef.current;
-      const stage = stageRef.current;
       const viewport = viewportRef.current;
       const inner = trackRef.current;
       if (mode !== "static") pendingRef.current = { index: next, at: performance.now() };
-      if (mode === "scrub" && root && stage && viewport && inner) {
-        const { range } = scrubGeometry(root, stage, viewport, inner);
-        const top = window.scrollY + root.getBoundingClientRect().top + (n > 1 ? (range * next) / (n - 1) : 0);
-        window.scrollTo({ top, behavior: "smooth" });
+      if (mode === "scrub") {
+        const { range, pin, top } = geoRef.current;
+        window.scrollTo({ top: top - pin + (n > 1 ? (range * next) / (n - 1) : 0), behavior: "smooth" });
       } else if (mode === "snap" && viewport && inner) {
         const card = inner.children[next] as HTMLElement | undefined;
         if (card) {
@@ -307,7 +299,7 @@ export function CardTrack({ track, copy, heading, tone, rhythm = "standard", onO
 
   const tabStop = mode === "static" ? focusIdx : active;
   const canPlay = near && pause.active;
-  const length_ = length ?? `calc(100vh + ${n} * 35vh)`;
+  const length_ = length ?? `calc(var(--ctr-stage, 100vh) + ${n} * 35vh)`;
 
   return (
     <div
@@ -358,6 +350,7 @@ export function CardTrack({ track, copy, heading, tone, rhythm = "standard", onO
                     near={near}
                     play={play}
                     tabbable={i === tabStop}
+                    headingLevel={cardHeadingLevel}
                     onOpen={onOpen ? handlers[i]?.open : undefined}
                     onHover={fine ? handlers[i]?.hover : undefined}
                     onFocusCard={handlers[i]?.focus}
@@ -375,24 +368,15 @@ export function CardTrack({ track, copy, heading, tone, rhythm = "standard", onO
           <span className="ctr-progress__rail">
             <span ref={fillRef} className="ctr-progress__fill" />
           </span>
-          {showIndex && <Index current={active + 1} total={n} size="lg" className="ctr-progress__index" />}
         </div>
         <div className="ctr-dots" aria-hidden="true">
           {items.map((item, i) => (
-            <span key={item.id} className="ctr-dot" data-current={i === active || undefined} />
+            <span key={item.id} className="ctc-dot" data-current={i === active || undefined} />
           ))}
         </div>
       </div>
     </div>
   );
-}
-
-/** Scrub geometry, read when used: the sticky span (wrapper − stage) and the track's overflow. */
-function scrubGeometry(root: HTMLElement, stage: HTMLElement, viewport: HTMLElement, inner: HTMLElement) {
-  return {
-    range: Math.max(0, root.offsetHeight - stage.offsetHeight),
-    maxX: Math.max(0, inner.offsetWidth - viewport.clientWidth),
-  };
 }
 
 export type { CardTrackCopy };

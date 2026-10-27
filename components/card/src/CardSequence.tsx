@@ -1,6 +1,18 @@
 import { memo, useCallback, useEffect, useRef, useState, type CSSProperties, type FocusEvent, type MouseEvent, type PointerEvent, type ReactNode } from "react";
 import { GhostAction, PrimaryPlate } from "../controls";
-import { ArrowRight, ChannelSwitch, EvoviewLogo, OrbFill, Readout, cn, useInViewPause, useMediaReady, useSequenceClock, type SequenceClock } from "../foundation";
+import {
+  ArrowRight,
+  ChannelSwitch,
+  EvoviewLogo,
+  OrbFill,
+  Readout,
+  cn,
+  sequenceFillStyle,
+  useInViewPause,
+  useMediaReady,
+  useSequenceClock,
+  type SequenceClock,
+} from "../foundation";
 import type { CardSequenceClip, CardSequenceCopy, CardSequenceDefinition, CardSequenceLayout } from "./types";
 
 /* Timed focus over video cards (extracted from the Tchin Tchin karaoke clip
@@ -24,7 +36,7 @@ export type CardSequenceProps = {
   copy: CardSequenceCopy;
   layout?: CardSequenceLayout;
   tone?: "dark" | "light" | "paper";
-  /** Heading level of the section title. Default 2. */
+  /** Heading level of the section title; the fact tiles take the next level. Default 2. */
   headingLevel?: 2 | 3;
   /** Called on a card click; `event.preventDefault()` keeps the page. */
   onOpen?: (clip: CardSequenceClip, event: MouseEvent<HTMLAnchorElement>) => void;
@@ -76,6 +88,7 @@ export function CardSequence({ sequence, copy, layout = "gallery", tone = "dark"
 
   const shown = held ?? focus;
   const Heading = headingLevel === 3 ? "h3" : "h2";
+  const FactHeading = headingLevel === 3 ? "h4" : "h3";
   const board = layout === "board";
 
   const cards = (
@@ -95,7 +108,8 @@ export function CardSequence({ sequence, copy, layout = "gallery", tone = "dark"
           focused={shown === i}
           playing={shown === i && live}
           held={held === i}
-          clock={held === null && focus === i ? clock : null}
+          clock={focus === i ? clock : null}
+          clockHidden={held !== null && held !== i}
           watermark={sequence.watermark ?? true}
           onHold={hold}
           onRelease={letGo}
@@ -128,7 +142,7 @@ export function CardSequence({ sequence, copy, layout = "gallery", tone = "dark"
               <ul className="csq-facts">
                 {sequence.facts.map((fact, i) => (
                   <li key={fact.title} className="csq-fact" style={{ "--csq-i": count + i } as CSSProperties}>
-                    <h3 className="ev-t-label csq-fact__title">{fact.title}</h3>
+                    <FactHeading className="ev-t-label csq-fact__title">{fact.title}</FactHeading>
                     <p className="ev-t-body csq-fact__body">{fact.body}</p>
                   </li>
                 ))}
@@ -180,15 +194,17 @@ type CardProps = {
   focused: boolean;
   playing: boolean;
   held: boolean;
-  /** The running clock when this card is the sequence's own focus. */
+  /** The clock when this card is the sequence's own focus. */
   clock: SequenceClock | null;
+  /** Another card is held: this one's dwell line waits, hidden, where it stopped. */
+  clockHidden: boolean;
   watermark: boolean;
   onHold: (index: number) => void;
   onRelease: () => void;
   onOpen?: CardSequenceProps["onOpen"];
 };
 
-const SequenceCard = memo(function SequenceCard({ clip, index, copy, near, focused, playing, held, clock, watermark, onHold, onRelease, onOpen }: CardProps) {
+const SequenceCard = memo(function SequenceCard({ clip, index, copy, near, focused, playing, held, clock, clockHidden, watermark, onHold, onRelease, onOpen }: CardProps) {
   const gate = useMediaReady(near, [clip.poster]);
   const linkRef = useRef<HTMLElement | null>(null);
   const frame = useRef(0);
@@ -275,14 +291,18 @@ const SequenceCard = memo(function SequenceCard({ clip, index, copy, near, focus
           </span>
         )}
       </span>
+      {/* The dwell: mounted for the whole run of its key, so pausing (hold,
+          off-screen, hidden tab) freezes it and resuming continues it. */}
       <span className="csq-card__progress" aria-hidden="true">
-        {held ? <span className="csq-card__fill" data-full="" /> : clock && <DwellFill clock={clock} />}
+        {clock && <span key={clock.key} className="csq-card__fill" data-hidden={clockHidden || held || undefined} style={sequenceFillStyle(clock)} />}
+        {held && <span className="csq-card__fill" data-full="" />}
       </span>
     </>
   );
 
   return (
     <li className="csq-card" data-focused={focused || undefined} data-media={gate.ready ? "ready" : "pending"} style={{ "--csq-i": index } as CSSProperties}>
+      <span className="csq-card__bloom" aria-hidden="true" />
       {clip.href ? (
         <a
           ref={(n) => void (linkRef.current = n)}
@@ -308,23 +328,6 @@ const SequenceCard = memo(function SequenceCard({ clip, index, copy, near, focus
     </li>
   );
 });
-
-/* The dwell as the card's one line of information: it fills with the clock,
-   freezes when the clock pauses, resumes from where it stood. Remounted on
-   every run so the negative delay always equals the time already spent. */
-function DwellFill({ clock }: { clock: SequenceClock }) {
-  return (
-    <span
-      key={`${clock.key}:${clock.running ? "run" : "hold"}:${clock.elapsed}`}
-      className="csq-card__fill"
-      style={{
-        animationDuration: `${clock.duration}ms`,
-        animationDelay: `${-Math.min(clock.elapsed, clock.duration)}ms`,
-        animationPlayState: clock.running ? "running" : "paused",
-      }}
-    />
-  );
-}
 
 /** Muted loop: the source attaches the first time the card goes live, frames show once playing. */
 function ClipVideo({ src, play, position }: { src: string; play: boolean; position?: string }) {

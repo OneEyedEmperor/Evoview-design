@@ -27,18 +27,18 @@ the site footer (`chapter`'s `ChapterFooter`).
 Read `STRATEGY.md`. The track is a client utility (browse services or work
 one at a time) and a recognisable Evoview piece. Keep:
 
-- **Scrub, not carousel arrows.** Desktop: sticky stage, vertical scroll →
-  horizontal translate, lerped (.25 per 60 Hz frame, time-based), first card
-  on the wide rail, track bleeding right, 2px progress hairline on the wide
-  rail **under the card row** (the chapter's only line: it is information;
-  above the cards, under a heading, it would read as an underline), optional
-  `01 / 04` index. Phone changes the mechanism: native snap at 82vw, dots
-  (18 vs 6) under the strip replace the hairline. Do not replace with arrow buttons, autoplay or a
-  slider lib.
+- **Scrub, not carousel arrows.** Desktop: the stage pins with its content
+  centred in the viewport, vertical scroll → horizontal translate, lerped
+  (.25 per 60 Hz frame, time-based), first card on the wide rail, track
+  bleeding right, 2px progress hairline on the wide rail **under the card
+  row** (the chapter's only line: it is information; above the cards, under
+  a heading, it would read as an underline). Phone changes the mechanism:
+  native snap at 82vw, dots (18 vs 6) under the strip replace the hairline.
+  Do not replace with arrow buttons, autoplay or a slider lib.
 - **Media first.** Ribbon cards: media ~70 %, information ribbon below with
   the title (Overused 900, uppercase) and ≤ 3 clamped lines; ribbons are equal
   height across siblings. Portrait cards: full-bleed media, bottom scrim,
-  identity bottom-left `01 / 05` → title → meta.
+  identity bottom-left: (affordance) → title → meta.
 - **Square against round.** 16 (`--ev-radius-surface`) cards; the ribbon
   seam and the optional tab are square. Affordance label is glass on media.
 - **One subject at a time** (portrait): the current card is undimmed (others
@@ -46,14 +46,16 @@ one at a time) and a recognisable Evoview piece. Keep:
   accent bloom and is the only one whose video plays.
 - **Graded media at rest, released on focus** (hover, keyboard focus,
   current card).
-- **Indexed everything**: card index, `01 / 04` readout, spoken positions.
+- **Positions are spoken, never counted on screen** (RULES §1): the hairline
+  and the dots show where the reader is; "2 sur 5 : Title" is announced. No
+  `01 / 04` readout on the rail or the cards (`showIndex` is ignored).
 
 Client-adaptable: items, media, copy, accent, tone per chapter, variant,
 ribbon colour, track length, card count.
 
 **Accent = the client's**, read from the host `--primary` /
 `--primary-foreground` (`--card-track-accent`, `-ink`, `-signal`, `-deep`
-map the foundation tokens). It drives the progress fill, index, active dot,
+map the foundation tokens). It drives the progress fill, active dot,
 focus ring, tab fill (with contrast ink) and the portrait bloom. Never a
 background, card surface or body text.
 
@@ -91,6 +93,7 @@ card or next to the affordance.
 | `src/card-deck.css` | `.ev-card-deck` token block + `.cdk-*` (places `MediaCard`) | no |
 | `src/CardSequence.tsx` | Sequence: timed focus, hold, channel switch, board / gallery | no |
 | `src/card-sequence.css` | `.ev-card-sequence` token block + `.csq-*` | no |
+| `src/strip.ts` | Snap strips (track phone mode, deck below 1024): the centred card | no |
 
 `showcase.css` is the library page's sheet; not installed.
 
@@ -109,8 +112,10 @@ React 19, Vite, TypeScript strict; no other dependency. Browsers with CSS
 subgrid, container query units, `:has()` and `overflow: clip` (all evergreen
 since 2023). No ancestor of the track may be a scroll container
 (`overflow: hidden/auto`), or the sticky stage stops sticking. The pinned
-scene is centred with the space above it capped at the chapter's top rhythm
-(never under 5em), so a fixed host header up to ~5em always clears it.
+stage keeps its content height and its chapter rhythm and pins with that
+content centred in the viewport, never closer than 5em to the top, so a
+fixed host header up to ~5em always clears it. The cut to the next chapter
+is the stage's own bottom rhythm, never spare viewport.
 
 ## API
 
@@ -124,8 +129,9 @@ const config = buildCardTrackConfig(locale);
   tone="dark"                    // "dark" | "light" | "paper"; omit to inherit
   rhythm="cinematic"             // "standard" (default) | "compact" | "cinematic"
   heading={<MyChapterHeading />} // inside the sticky stage, above the cards
+  cardHeadingLevel={3}           // card titles; one below the chapter heading (default 3)
   onOpen={(item, index) => openDossier(item.id)}
-  length="260vh"                 // optional; default calc(100vh + n × 35vh)
+  length="260vh"                 // optional wrapper height; default the stage's height + n × 35vh of scrub
 />
 ```
 
@@ -135,7 +141,7 @@ type CardTrackDefinition = {
   label: string;                         // carousel name
   variant: "ribbon" | "portrait";
   ribbon?: "light" | "dark";             // ribbon variant, default light
-  showIndex?: boolean;                   // 01 / 04 at the hairline's end (ribbon; portrait cards carry their own)
+  showIndex?: boolean;                   // deprecated, ignored (RULES §1: no counting readouts)
   items: {
     id: string; title: string;
     body?: string;                       // ribbon, 3-line clamp
@@ -149,13 +155,16 @@ type CardTrackCopy = { carousel; slide; instructions; position(current, total, t
 ```
 
 `MediaCard` is exported for a single card outside a track (same props the
-track passes; `showIndex={false}` drops the portrait `01 / 05` readout).
-Its accent comes from `--ctc-accent / -ink / -signal / -deep` on `.ctc`:
-the track's tokens inside a track, foundation's `--ev-accent*` elsewhere.
+track passes; `headingLevel` sets its title level, default 3). Its accent
+comes from `--ctc-accent / -ink / -signal / -deep` on `.ctc`: the track's or
+the deck's tokens inside them, foundation's `--ev-accent*` elsewhere.
 
-Media: poster `src` sized ~2× the card width (≈1100px ribbon, ≈860px
-portrait), webp; loops muted, short, ≤ 300 KB, poster-matched first frame.
-No `srcSet` (the media gate decodes `src`).
+Media: a still `src` sized ~2× the card width (≈1100px ribbon, ≈860px
+portrait), webp. A card with a loop: muted, short, ≤ 300 KB, and its `src`
+is **the loop's first frame at the loop's own size and ratio** (cards crop
+both with the same `object-fit: cover`, so a poster cut to another ratio or
+taken from another still jumps when the loop starts). A paused loop rewinds
+to that frame. No `srcSet` (the media gate decodes `src`).
 
 ## Behaviour
 
@@ -163,7 +172,7 @@ No `srcSet` (the media gate decodes `src`).
 | --- | --- | --- |
 | Mechanism | `scrub` when the track overflows; `static` row when it fits; `snap` when the stage is taller than the viewport | `snap`, centred, 82vw cards (portrait min(82vw, 350px)) |
 | Card | ribbon `min(78vw, 40em)` × `clamp(340px, 50vh, 600px)`; portrait `min(clamp(20em, 31vw, 31.25em), 46vh)` at .90 | ribbon 82vw × same height; portrait .70 |
-| Progress | hairline (+ index) — scrub and snap | dots only |
+| Progress | hairline — scrub and snap | dots only |
 | Focus (portrait) | current card per scroll progress | card nearest the centre |
 | Video | ribbon: hover preview on fine pointers only (resets on leave); portrait: current card | portrait: current card; ribbon: none |
 | Affordance | `Voir` / `View` | `Toucher` / `Tap` (coarse pointer); tap vs swipe by a 6px slop |
@@ -181,28 +190,36 @@ Reveal: cards y 30 → 0 + fade, 600ms cinematic, 80ms stagger, once.
 One full-motion experience, no `prefers-reduced-motion` branch (architecture
 skill). Every state is complete at rest: posters are the stable state, all
 cards are reachable by scroll, swipe or keyboard. The scrub is driven by
-scroll events only (no running loop); its geometry (sticky span, overflow)
-is read on each frame it runs, never cached; it stops while a modal
-suspends the page and re-syncs on resume. Videos play only when the track is on-screen,
+scroll events only (no running loop) and writes transforms only, skipping
+unchanged frames; its geometry (scrub span, overflow, pin offset, page
+offset) is read on mount and on every resize of the track, its stage or the
+page body, never inside a frame; it stops while a modal suspends the page
+and re-syncs on resume. Videos play only when the track is on-screen,
 the document is visible and no modal suspends the page
 (`useInViewPause`), only on the allowed card, after a 160ms settle; they are
-revealed only once frames play. Posters go through `useMediaReady`
-(loading readout after 350ms, failure + retry).
+revealed only once frames play and rewind when paused. Posters go through
+`useMediaReady` (loading readout after 350ms, failure + retry). The
+portrait bloom stays a `box-shadow` transition on the frame: a separately
+faded bloom layer measured fewer paints but more dropped frames on the
+scrub.
 
 ## Verification
 
 1. `pnpm build`. Showcase at 1440, 1024 and 390: no horizontal overflow,
    nothing below 9px (readouts) / 13px (body).
-2. Desktop scrub: first card on the wide rail at progress 0, last card ends on
-   the rail's right edge at 1; hairline and index follow; portrait focus moves.
+2. Desktop scrub: the pinned content sits centred in the viewport; first card
+   on the wide rail at progress 0, last card ends on the rail's right edge at
+   1; the hairline follows; portrait focus moves; under the rail only the
+   chapter's bottom rhythm before the next chapter. No counter anywhere.
 3. Phone: snap centres each card, dots follow (no hairline), inactive
    portrait identities hidden.
-4. Palette: default, indigo, yellow, off-white — fill, index, dot, tab, focus
+4. Palette: default, indigo, yellow, off-white — fill, dot, tab, focus
    ring, bloom readable on light and dark chapters.
 5. Keyboard: Tab lands on the current card, arrows / Home / End move (three
    quick presses move three cards), Enter calls `onOpen`.
 6. Video: plays only on the current portrait card / hovered ribbon card;
-   pauses when scrolled away or the tab is hidden.
+   pauses when scrolled away or the tab is hidden; starting a loop never
+   jumps (poster = first frame).
 7. A track whose cards fit the rail renders static (no hairline, no scrub);
    check it with the client's own card count at their widest breakpoint.
 
@@ -227,7 +244,9 @@ scene on `/layouts/card` (Atelier Sorel, card anatomy and rows on the desk).
   category's card (450ms) while the others re-deal (950ms, 650 / 0 / 650 ·
   510 / 430 / 510). Any click reverses cards from the frame they are on
   (back to the shown category: mirror; a third category: retargets the
-  flip). Change timings in small steps only; the founder tunes them.
+  flip). The new hand mounts in the same task that ends the flip-out, so
+  the flip-in starts on the next frame. Change timings in small steps only;
+  the founder tunes them.
 - **One hand:** 3 or 6 peer cards (no counting readout), the rest behind
   `more`. Media decoded before the flip (posters preloaded on idle once the
   deck is near), so no card turns over blank.
@@ -255,6 +274,7 @@ const { deck, copy } = buildCardDeckConfig(locale);
   rows={2}                      // 2 (six cards, default) | 1 (three)
   tone="dark" rhythm="standard" // chapter paint and padding
   heading={<MyChapterHeading />}
+  cardHeadingLevel={3}          // card titles; one below the chapter heading (default 3)
   onOpen={(item, category) => openDetail(item.id)}  // omit: cards are not buttons
   onMore={(e) => …}             // optional; the link follows deck.more.href by default
 />
@@ -274,7 +294,8 @@ type CardDeckCopy = CardTrackCopy & { showing(category, count): string };
 Items are `CardTrackItem`: `portrait` shows `title` + `meta` (one line),
 `ribbon` shows `title` + `body` (3 lines). Labels: one or two short words,
 four categories fit a 390 phone. Each category should fill the hand (3 or
-6 items). Posters ~860px wide webp; optional short muted loops.
+6 items). Stills ~860px wide webp; optional short muted loops with their
+first frame as poster (as `CardTrack`).
 
 ### Behaviour
 
@@ -296,8 +317,10 @@ No reduced-motion branch. Server HTML and a deck that never reaches the
 viewport show every card at rest (cards are hidden only on the client until
 the deal starts). The deal starts only while the deck is on screen and the
 document visible; videos play only on the hovered card while on screen,
-visible and not suspended (`useInViewPause`). Leaving the desktop
-breakpoint mid-sequence settles at rest on the selected category.
+visible and not suspended (`useInViewPause`), and rewind on leave. Deal,
+undeal and flips are Web Animations on transform and opacity only; the
+pointed card's bloom is a fading layer. Leaving the desktop breakpoint
+mid-sequence settles at rest on the selected category.
 
 ### Verification
 
@@ -322,7 +345,8 @@ switches).
 
 - **The timed focus**: 2,000 ms dwell per card (approved), wraps, one card
   plays, the others recede (black veil .46 at rest, .79 while the sequence
-  runs, 0 on the focused card, 700ms). Only enabled time counts
+  runs on dark, .64 on light and paper so each picture still reads, 0 on
+  the focused card, 700ms). Only enabled time counts
   (`useSequenceClock`); the remaining dwell is carried across every pause.
 - **The hold**: a mouse (≥ 768) or keyboard focus takes the focus and holds
   the clock; moving to a neighbour hands over without resuming (release
@@ -331,10 +355,13 @@ switches).
 - **Tune-in**: each time a card goes live it changes by foundation
   `ChannelSwitch` (poster folds to a line, opens on the decoded loop with
   the sideways shudder and signal lines). No other signal effect.
-- **State as frame**: focused card = accent edge (1px) + deep bloom, title
-  lifts 2px, the arrow orb fills with the accent as liquid (`OrbFill`),
-  the 2px dwell line at the card's foot fills with the clock, freezes with
-  it, and wipes full while a card is held (the scene's one line).
+- **State as frame**: focused card = accent edge (1px) + bloom (deep accent
+  on dark; on light and paper a softer accent halo over a neutral ground
+  shadow every well carries), title lifts 2px, the arrow orb fills with the
+  accent as liquid (`OrbFill`), the 2px dwell line at the card's foot fills
+  with the clock (`sequenceFillStyle`), freezes with it, and wipes full
+  while a card is held (the scene's one line). Edge and bloom are layers
+  that fade (opacity only); the bloom's blur exists only while it shows.
 - Pointer tilt on mouse (±10° / ±12°, 1200px perspective, white glare),
   reveal rise y 32 + fade, 600ms cinematic, 80ms stagger (cards → facts →
   offer), three voices, surface radius on the wells.
@@ -366,7 +393,7 @@ const { sequences, copy } = buildCardSequenceConfig(locale);
   sequence={sequences.page} copy={copy}
   layout="gallery"            // "gallery" (default): all clips in one row | "board": clips + facts + offer
   tone="dark"                 // "dark" (default) | "light" | "paper"; cards stay dark wells
-  headingLevel={2}
+  headingLevel={2}            // section title; fact tiles take the next level (3 → facts h4)
   onOpen={(clip, e) => …}     // optional; e.preventDefault() keeps the page
 />
 ```
@@ -386,9 +413,10 @@ type CardSequenceDefinition = {
 type CardSequenceCopy = { newTab; loading; failed; retry };
 ```
 
-Media: poster = the loop's first frame, webp, ~2× card width; loops muted,
-short, seamless, ≤ ~300 KB at the card's size. The loop's source attaches
-the first time its card goes live and stays attached.
+Media: poster = the loop's first frame at the loop's own size and ratio,
+webp; loops muted, short, seamless, ≤ ~300 KB at the card's size. The
+loop's source attaches the first time its card goes live and stays
+attached (no reload or decode when the focus comes back).
 
 ### Behaviour
 

@@ -12,7 +12,6 @@
   --cdk-col-gap: 1.75em;
   --cdk-row-gap: 1.5em;
   --cdk-ratio: 3 / 4;
-  --ctc-grade: saturate(0.78) contrast(1.06) brightness(0.88);
 
   position: relative;
   overflow-x: clip;
@@ -53,8 +52,27 @@
 .ev-card-deck .ctc__affordance { opacity: 0; transition: opacity var(--ev-dur-control) ease; }
 .ev-card-deck .ctc:is([data-released], :focus-within) .ctc__affordance { opacity: 1; }
 @media (hover: none) { .ev-card-deck .ctc__affordance { opacity: 1; } }
-.ev-card-deck .ctc[data-released] .ctc__frame {
+/* The pointed card's bloom: a layer under the card that fades (opacity
+   only) while the deal moves the card. Its blur exists only while it
+   shows: on as the fade in starts, off once the fade out has ended (0s
+   box-shadow step), so the dealt cards carry no shadow. */
+.ev-card-deck .ctc__frame::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: none;
+  opacity: 0;
+  transition:
+    opacity var(--ev-dur-reveal) var(--ev-ease-cinematic),
+    box-shadow 0s linear var(--ev-dur-reveal);
+  pointer-events: none;
+}
+.ev-card-deck .ctc[data-released] .ctc__frame::before {
   box-shadow: 0 1.5em 3em -0.75em color-mix(in oklab, var(--card-deck-deep) 70%, transparent);
+  opacity: 1;
+  transition: opacity var(--ev-dur-reveal) var(--ev-ease-cinematic);
 }
 
 /* ── Desktop ≥ 1024: the deck ────────────────────────────────────────── */
@@ -106,17 +124,4 @@
   .ev-card-deck .ctc__title--portrait { font-size: clamp(1.6em, 8vw, 2.125em); }
 }
 
-.cdk-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: var(--ev-radius-round);
-  background: var(--ev-fg-12);
-  transition: width var(--ev-dur-control) var(--ev-ease), background-color var(--ev-dur-control) var(--ev-ease);
-}
-.cdk-dot[data-current] { width: 18px; background: var(--card-deck-signal); }
-
 .cdk-more { display: flex; justify-content: center; margin-top: 2.5em; padding-inline: var(--ev-gutter); }
-
-@media (forced-colors: active) {
-  .cdk-dot[data-current] { background: Highlight; }
-}

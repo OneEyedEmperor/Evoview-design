@@ -10,10 +10,12 @@ import {
   type MouseEvent,
   type ReactNode,
 } from "react";
+import { flushSync } from "react-dom";
 import { GhostAction, SegmentedControl } from "../controls";
 import { ArrowRight, cn, preloadMedia, useHydrated, useInViewPause, useMediaQuery } from "../foundation";
 import { MediaCard } from "./MediaCard";
-import type { CardDeckCategory, CardDeckCopy, CardDeckDefinition, CardTrackItem, CardTrackVariant } from "./types";
+import { nearestToCentre } from "./strip";
+import type { CardDeckCategory, CardDeckCopy, CardDeckDefinition, CardHeadingLevel, CardTrackItem, CardTrackVariant } from "./types";
 
 export type CardDeckProps = {
   deck: CardDeckDefinition;
@@ -30,6 +32,8 @@ export type CardDeckProps = {
   rhythm?: "standard" | "compact" | "cinematic";
   /** Chapter heading, above the category switch. */
   heading?: ReactNode;
+  /** Card title level. Default 3 (the chapter heading is the h2). */
+  cardHeadingLevel?: CardHeadingLevel;
   /** Card activation (the host's detail view). Without it cards are not buttons. */
   onOpen?: (item: CardTrackItem, category: CardDeckCategory) => void;
   /** Plain click on the `more` link; leave the default to follow its href. */
@@ -161,6 +165,7 @@ export function CardDeck({
   tone,
   rhythm = "standard",
   heading,
+  cardHeadingLevel = 3,
   onOpen,
   onMore,
   id,
@@ -172,7 +177,6 @@ export function CardDeck({
   const fine = useMediaQuery(FINE_QUERY);
   const hydrated = useHydrated();
 
-  const rootRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const stripRef = useRef<HTMLDivElement>(null);
   const [selected, setSelected] = useState(first);
@@ -248,10 +252,14 @@ export function CardDeck({
     phase.current = "deal";
   };
 
-  const show = (next: string) => {
+  const show = (next: string, sync = false) => {
     entering.current = true;
     shownRef.current = next;
-    setShown(next);
+    // Mid-sequence the new hand must mount in the task that ends the flip-out,
+    // so the flip-in starts on the next frame (a scheduled render left two
+    // still frames edge-on: a dead gap).
+    if (sync) flushSync(() => setShown(next));
+    else setShown(next);
   };
 
   const restore = () => {
@@ -272,7 +280,7 @@ export function CardDeck({
   const swap = () => {
     if (target.current === shownRef.current) return restore();
     phase.current = "deal";
-    show(target.current);
+    show(target.current, true);
   };
 
   const flip = (token: number) => {
@@ -403,21 +411,7 @@ export function CardDeck({
     let raf = 0;
     const update = () => {
       raf = 0;
-      const max = strip.scrollWidth - strip.clientWidth;
-      const centre = strip.getBoundingClientRect().left + strip.clientWidth / 2;
-      let best = 0;
-      let bestDist = Infinity;
-      cards().forEach((card, i) => {
-        const r = card.getBoundingClientRect();
-        const d = Math.abs(r.left + r.width / 2 - centre);
-        if (d < bestDist) {
-          bestDist = d;
-          best = i;
-        }
-      });
-      if (max > 0 && strip.scrollLeft >= max - 2) best = items.length - 1;
-      if (strip.scrollLeft <= 2) best = 0;
-      setCurrent(best);
+      setCurrent(nearestToCentre(strip, cards()));
     };
     const onScroll = () => {
       if (!raf) raf = requestAnimationFrame(update);
@@ -438,7 +432,6 @@ export function CardDeck({
 
   return (
     <div
-      ref={rootRef}
       id={id}
       className={cn("ev-root ev-card-deck", tone && `ev-tone-${tone}`, rhythm === "standard" ? "ev-chapter" : `ev-chapter ev-chapter--${rhythm}`, className)}
       data-variant={variant}
@@ -477,7 +470,7 @@ export function CardDeck({
                 variant={variant}
                 ribbon={ribbon}
                 copy={copy}
-                showIndex={false}
+                headingLevel={cardHeadingLevel}
                 released={hoverId === item.id}
                 near={near}
                 play={fine && live.active && hoverId === item.id && !!item.media.video}
@@ -491,7 +484,7 @@ export function CardDeck({
         </div>
         <div className="cdk-dots" aria-hidden="true">
           {items.map((item, i) => (
-            <span key={`${shown}:${item.id}`} className="cdk-dot" data-current={i === current || undefined} />
+            <span key={`${shown}:${item.id}`} className="ctc-dot" data-current={i === current || undefined} />
           ))}
         </div>
       </div>

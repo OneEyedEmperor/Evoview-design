@@ -79,8 +79,7 @@ function Demo() {
               id={`card-track-${chapter.key}`}
               tone={chapter.tone}
               rhythm={chapter.rhythm}
-              /* No counter: RULES §1 forbids `01 / 04` readouts; the rail is the position. */
-              track={{ ...(config.tracks[chapter.key] as CardTrackDefinition), showIndex: false }}
+              track={config.tracks[chapter.key] as CardTrackDefinition}
               copy={config.copy}
               onOpen={(item: CardTrackItem) => setOpened((o) => ({ ...o, [chapter.key]: item.title }))}
               heading={

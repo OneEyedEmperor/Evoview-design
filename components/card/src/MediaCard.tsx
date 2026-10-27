@@ -1,7 +1,7 @@
 import { memo, useEffect, useRef, useState, type CSSProperties, type Ref } from "react";
 import { GhostAction } from "../controls";
-import { Readout, cn, pad, useMediaReady } from "../foundation";
-import type { CardTrackCopy, CardTrackItem, CardTrackMedia, CardTrackVariant } from "./types";
+import { Readout, cn, useMediaReady } from "../foundation";
+import type { CardHeadingLevel, CardTrackCopy, CardTrackItem, CardTrackMedia, CardTrackVariant } from "./types";
 
 /* A rapid scrub must not start a media load per card it passes. */
 const VIDEO_SETTLE_MS = 160;
@@ -25,8 +25,10 @@ export type MediaCardProps = {
   play?: boolean;
   /** Roving tab stop. */
   tabbable?: boolean;
-  /** Portrait: the `01 / 05` position readout over the title. Default true; off for peers (CardDeck). */
+  /** @deprecated Ignored (RULES §1: no counting readouts). Kept so older call sites compile. */
   showIndex?: boolean;
+  /** Level of the card title. Default 3 (under the host's h2 section heading). */
+  headingLevel?: CardHeadingLevel;
   onOpen?: () => void;
   onHover?: (hovering: boolean) => void;
   onFocusCard?: () => void;
@@ -47,7 +49,7 @@ export const MediaCard = memo(function MediaCard({
   near = true,
   play = false,
   tabbable = true,
-  showIndex = true,
+  headingLevel = 3,
   onOpen,
   onHover,
   onFocusCard,
@@ -59,6 +61,7 @@ export const MediaCard = memo(function MediaCard({
   const start = useRef<{ x: number; y: number; moved: boolean } | null>(null);
   const label = copy.position(index + 1, total, item.title);
   const portrait = variant === "portrait";
+  const Title = `h${headingLevel}` as const;
 
   return (
     <article
@@ -85,7 +88,7 @@ export const MediaCard = memo(function MediaCard({
               style={{ objectFit: item.media.fit ?? "cover", objectPosition: item.media.position }}
             />
           )}
-          {item.media.video && near && <CardVideo media={item.media} play={play && gate.ready} rewind={!portrait} />}
+          {item.media.video && near && <CardVideo media={item.media} play={play && gate.ready} />}
           {(gate.slow || gate.failed) && (
             <div className="ctc__status ev-tone-dark" role="status">
               <Readout>{gate.failed ? copy.failed : copy.loading}</Readout>
@@ -102,25 +105,20 @@ export const MediaCard = memo(function MediaCard({
 
         {portrait ? (
           <div className="ctc__identity">
-            {(showIndex || onOpen) && (
+            {onOpen && (
               <div className="ctc__readout">
-                {showIndex && (
-                  <Readout aria-hidden="true">
-                    {pad(index + 1)} / {pad(total)}
-                  </Readout>
-                )}
-                {onOpen && <Affordance copy={copy} className="ctc__affordance--inline" />}
+                <Affordance copy={copy} className="ctc__affordance--inline" />
               </div>
             )}
-            <h3 className="ctc__title ctc__title--portrait">
+            <Title className="ctc__title ctc__title--portrait">
               <span className="ctc__wipe">{item.title}</span>
-            </h3>
+            </Title>
             {item.meta && <p className="ctc__meta ev-t-readout">{item.meta}</p>}
           </div>
         ) : (
           <div className="ctc__ribbon">
             {item.tab && <span className="ctc__tab ev-t-readout">{item.tab}</span>}
-            <h3 className="ctc__title ev-t-card">{item.title}</h3>
+            <Title className="ctc__title ev-t-card">{item.title}</Title>
             {item.body && <p className="ctc__body">{item.body}</p>}
           </div>
         )}
@@ -161,8 +159,10 @@ function Affordance({ copy, className }: { copy: CardTrackCopy; className: strin
   );
 }
 
-/** Muted loop: the source attaches after a short settle, shows only once frames play. */
-function CardVideo({ media, play, rewind }: { media: CardTrackMedia; play: boolean; rewind: boolean }) {
+/** Muted loop: the source attaches after a short settle, shows only once frames play.
+    Pausing rewinds: the poster is the loop's first frame, so the next play
+    picks up exactly the picture the card shows. */
+function CardVideo({ media, play }: { media: CardTrackMedia; play: boolean }) {
   const ref = useRef<HTMLVideoElement>(null);
   const [attached, setAttached] = useState(false);
   const [playing, setPlaying] = useState(false);
@@ -181,9 +181,9 @@ function CardVideo({ media, play, rewind }: { media: CardTrackMedia; play: boole
       v.play().catch(() => undefined);
     } else {
       v.pause();
-      if (rewind) v.currentTime = 0;
+      v.currentTime = 0;
     }
-  }, [play, attached, rewind, media.playbackRate]);
+  }, [play, attached, media.playbackRate]);
 
   return (
     <video

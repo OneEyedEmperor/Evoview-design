@@ -117,6 +117,7 @@ export default function SequenceScene() {
         id="card-sequence-specimen"
         layout={layout}
         tone={tone}
+        headingLevel={3}
         sequence={layout === "board" ? config.sequences.home : config.sequences.page}
         copy={config.copy}
         onOpen={(clip, e) => {

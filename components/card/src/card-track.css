@@ -7,7 +7,6 @@
   --card-track-ink: var(--ev-accent-ink);
   --card-track-signal: var(--ev-accent-signal);
   --card-track-deep: var(--ev-accent-deep);
-  --ctc-grade: saturate(0.78) contrast(1.06) brightness(0.88);
 
   position: relative;
   overflow-x: clip;
@@ -31,22 +30,14 @@
 
 /* ── Mechanism ───────────────────────────────────────────────────────── */
 .ev-card-track[data-mode="scrub"] { height: var(--ctr-length); }
-/* Pinned for the scrub. The scene is centred in the viewport, but the space
-   above it never exceeds the chapter's own top rhythm (a short scene keeps
-   its spare room below instead of pushing the cards out of the entry
-   viewport) and never drops under 5em (room for a host header).
-   --ctr-span is the measured content height. */
-.ctr-stage { --ctr-rhythm-top: var(--ev-chapter-standard); }
-.ctr-stage.ev-chapter--compact { --ctr-rhythm-top: var(--ev-chapter-compact); }
-.ctr-stage.ev-chapter--cinematic { --ctr-rhythm-top: var(--ev-chapter-cinematic-top); }
+/* Pinned for the scrub. The stage keeps its content height and its chapter
+   rhythm (the cut to the next chapter is that rhythm, never spare viewport);
+   it pins with its content centred in the viewport, never closer than 5em
+   to the top (room for a host header). Measured: --ctr-span (content
+   height), --ctr-pad-top (the rhythm's top padding). */
 .ev-card-track[data-mode="scrub"] .ctr-stage {
   position: sticky;
-  top: 0;
-  display: flex;
-  min-height: 100vh;
-  padding-block: max(5em, min(var(--ctr-rhythm-top), (100vh - var(--ctr-span, 0px)) / 2)) 2.5em;
-  flex-direction: column;
-  justify-content: flex-start;
+  top: calc(max(5em, (100vh - var(--ctr-span, 0px)) / 2) - var(--ctr-pad-top, 0px));
 }
 .ctr-head { margin-bottom: var(--ev-gap-heading); }
 
@@ -68,8 +59,6 @@
   transform: scaleX(0);
   transform-origin: left center;
 }
-.ctr-progress__index { flex: 0 0 auto; color: var(--ev-fg-55); }
-.ctr-progress__index .ev-index__current { color: var(--card-track-signal); }
 
 /* One progress indicator per mechanism: the hairline on desktop (scrub, or snap
    on a short viewport), dots on the phone strip. */
@@ -78,14 +67,15 @@
   .ev-card-track[data-mode="snap"] .ctr-progress { display: none; }
   .ev-card-track[data-mode="snap"] .ctr-dots { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 1.25em; }
 }
-.ctr-dot {
+/* Strip dots, shared by the track and the deck (6 → 18 on the centred card). */
+.ctc-dot {
   width: 6px;
   height: 6px;
   border-radius: var(--ev-radius-round);
   background: var(--ev-fg-12);
   transition: width var(--ev-dur-control) var(--ev-ease), background-color var(--ev-dur-control) var(--ev-ease);
 }
-.ctr-dot[data-current] { width: 18px; background: var(--card-track-signal); }
+.ctc-dot[data-current] { width: 18px; background: var(--card-track-signal, var(--card-deck-signal, var(--ev-accent-signal))); }
 .ev-card-track[data-mode="static"] :is(.ctr-progress, .ctr-dots) { display: none; }
 
 .ctr-region:focus-visible { outline: 2px solid var(--card-track-signal); outline-offset: -2px; }
@@ -127,10 +117,11 @@
 /* The card's own accent names: the host's track tokens when it sits in one,
    foundation's accent otherwise (MediaCard alone, CardDeck). */
 .ctc {
-  --ctc-accent: var(--card-track-accent, var(--ev-accent));
-  --ctc-ink: var(--card-track-ink, var(--ev-accent-ink));
-  --ctc-signal: var(--card-track-signal, var(--ev-accent-signal));
-  --ctc-deep: var(--card-track-deep, var(--ev-accent-deep));
+  --ctc-accent: var(--card-track-accent, var(--card-deck-accent, var(--ev-accent)));
+  --ctc-ink: var(--card-track-ink, var(--card-deck-ink, var(--ev-accent-ink)));
+  --ctc-signal: var(--card-track-signal, var(--card-deck-signal, var(--ev-accent-signal)));
+  --ctc-deep: var(--card-track-deep, var(--card-deck-deep, var(--ev-accent-deep)));
+  --ctc-grade: saturate(0.78) contrast(1.06) brightness(0.88);
 
   position: relative;
   display: grid;
@@ -151,7 +142,6 @@
   min-width: 0;
   grid-row: 1 / span 2;
   grid-template-rows: subgrid;
-  overflow: hidden;
   border-radius: var(--ev-radius-surface);
   isolation: isolate;
   transition:
@@ -170,7 +160,16 @@
 }
 .ctc__frame:has(.ctc__open:focus-visible) { outline: 2px solid var(--ctc-signal); outline-offset: 3px; }
 
-.ctc__media { position: relative; min-height: 0; overflow: hidden; grid-row: 1; background: #121214; }
+/* Media and ribbon clip themselves: the frame does not, so the deck's bloom
+   layer (a ::before of the frame) can show around it. */
+.ctc__media {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  grid-row: 1;
+  border-radius: var(--ev-radius-surface) var(--ev-radius-surface) 0 0;
+  background: #121214;
+}
 .ctc__img,
 .ctc__video {
   position: absolute;
@@ -269,6 +268,7 @@
   z-index: 1;
   grid-row: 2;
   padding: 2em;
+  border-radius: 0 0 var(--ev-radius-surface) var(--ev-radius-surface);
   background: #ffffff;
   color: #151515;
 }
@@ -316,7 +316,7 @@
 
 /* ── Portrait variant: full-bleed media, identity bottom-left ───────── */
 .ctc--portrait { --ctc-edge: rgba(255, 255, 255, 0.16); }
-.ctc--portrait .ctc__media { position: absolute; inset: 0; }
+.ctc--portrait .ctc__media { position: absolute; inset: 0; border-radius: inherit; }
 :where(.ev-tone-light, .ev-tone-paper) .ctc--portrait .ctc__frame { box-shadow: 0 12px 28px rgba(18, 17, 19, 0.14); }
 .ctc__scrim {
   position: absolute;
@@ -338,7 +338,6 @@
   transition: opacity var(--ev-dur-control) ease;
 }
 .ctc__readout { display: flex; min-height: 22px; align-items: center; gap: 9px; margin-bottom: 0.75em; }
-.ctc__readout > .ev-t-readout { opacity: 0.72; }
 .ctc__title--portrait {
   margin: 0;
   font-family: var(--ev-font-display);
@@ -363,6 +362,9 @@
 .ev-card-track[data-variant="portrait"]:is([data-mode="scrub"], [data-mode="snap"]) .ctc__frame { opacity: 0.4; scale: 0.94; }
 .ev-card-track[data-variant="portrait"]:is([data-mode="scrub"], [data-mode="snap"]) .ctc:not([data-current]) .ctc__wipe { clip-path: inset(0 100% 0 0); }
 .ev-card-track[data-variant="portrait"]:is([data-mode="scrub"], [data-mode="snap"]) .ctc:not([data-current]) :is(.ctc__meta, .ctc__affordance--inline) { opacity: 0; }
+/* The bloom stays a box-shadow transition here: measured on the scrub, a
+   separately faded bloom layer cost frames (one extra layer re-composited
+   on every card change) for fewer paints. */
 .ev-card-track[data-variant="portrait"] .ctc[data-current] .ctc__frame {
   opacity: 1;
   scale: 1;
@@ -380,5 +382,5 @@
 
 @media (forced-colors: active) {
   .ctc__frame { border: 1px solid CanvasText; }
-  .ctr-progress__fill, .ctr-dot[data-current] { background: Highlight; }
+  .ctr-progress__fill, .ctc-dot[data-current] { background: Highlight; }
 }

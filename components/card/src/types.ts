@@ -2,8 +2,11 @@ export type Locale = "fr" | "en";
 
 export type CardTrackVariant = "ribbon" | "portrait";
 
+/** Card title level: one below the section heading the composition sits under. */
+export type CardHeadingLevel = 2 | 3 | 4;
+
 export type CardTrackMedia = {
-  /** Poster image: the card's stable state. Size it for ~2× the card width (≈1100px). */
+  /** Poster image: the card's stable state. A still: ~2× the card width. With `video`: the loop's first frame at the loop's size and ratio. */
   src: string;
   /** Empty by default: the card title names the slide. */
   alt?: string;
@@ -33,7 +36,7 @@ export type CardTrackDefinition = {
   variant: CardTrackVariant;
   /** Ribbon colour (ribbon variant). Default "light". */
   ribbon?: "light" | "dark";
-  /** `01 / 04` readout at the end of the progress hairline. */
+  /** @deprecated Ignored (RULES §1: no counting readouts; the hairline is the position). Kept so older configs compile. */
   showIndex?: boolean;
   items: CardTrackItem[];
 };
@@ -71,7 +74,7 @@ export type CardSequenceClip = {
   title: string;
   /** One line under the title (place, use, moment). No kicker above the title. */
   meta?: string;
-  /** Poster image: the stable state, ideally the loop's first frame. */
+  /** Poster image: the stable state, the loop's first frame at the loop's own size and ratio. */
   poster: string;
   /** Muted loop, played only while the card holds the focus. */
   video?: string;

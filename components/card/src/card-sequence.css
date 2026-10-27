@@ -11,6 +11,12 @@
   /* The accent on a dark well, whatever the environment tone. */
   --card-sequence-well-signal: color-mix(in oklab, var(--card-sequence-accent) 88%, #fff);
   --csq-gap: clamp(8px, 1.25em, 20px);
+  /* Veil over the cards the sequence is not on. */
+  --csq-recede: 0.79;
+  --csq-bloom:
+    0 1.25em 3em -1em var(--card-sequence-deep),
+    0 0 3.5em -0.75em color-mix(in oklab, var(--card-sequence-deep) 70%, transparent);
+  --csq-ground: none;
 
   position: relative;
   overflow-x: clip;
@@ -19,6 +25,17 @@
   color: var(--ev-fg);
 }
 .ev-card-sequence[data-layout="board"] { --csq-gap: clamp(10px, 1.5em, 24px); }
+/* Light grounds: dark screens set on the page. Each well sits on a soft
+   neutral shadow, the receded pictures stay legible under a lighter veil,
+   and the focus bloom is the accent, not its deep shade (a deep halo greys
+   a white page). */
+.ev-card-sequence:is(.ev-tone-light, .ev-tone-paper) {
+  --csq-recede: 0.64;
+  --csq-ground: 0 0.9em 1.75em -1em rgb(18 17 19 / 0.34);
+  --csq-bloom:
+    0 1.4em 2.75em -1.1em color-mix(in oklab, var(--card-sequence-deep) 55%, transparent),
+    0 0 3em -0.5em color-mix(in oklab, var(--card-sequence-accent) 42%, transparent);
+}
 
 /* ── Heading: title / lead, .72 : 1.28 from 768 ──────────────────────── */
 .csq-head { display: grid; gap: 0.75em; margin-bottom: var(--ev-gap-heading); }
@@ -76,23 +93,42 @@
   aspect-ratio: var(--csq-ratio, 9 / 16);
   border-radius: var(--ev-radius-surface);
   background: #080808;
+  box-shadow: var(--csq-ground);
   color: #fff;
   text-decoration: none;
   touch-action: manipulation;
   transform: rotateX(var(--csq-rx)) rotateY(var(--csq-ry));
-  transition:
-    transform 700ms cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 700ms ease;
+  transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
 }
-.csq-card__frame[data-tilting="true"] { will-change: transform; transition-duration: 100ms, 700ms; }
+.csq-card__frame[data-tilting="true"] { will-change: transform; transition-duration: 100ms; }
 .csq-card__frame:focus-visible { outline: 2px solid var(--card-sequence-signal); outline-offset: 3px; }
-/* State as frame: the focused card takes the accent edge and a deep bloom. */
-.csq-card[data-focused] .csq-card__frame {
-  box-shadow:
-    0 0 0 1px var(--card-sequence-signal),
-    0 1.25em 3em -1em var(--card-sequence-deep),
-    0 0 3.5em -0.75em color-mix(in oklab, var(--card-sequence-deep) 70%, transparent);
+/* State as frame: the focused card takes the accent edge and the bloom.
+   Both are layers that fade (opacity only, 700ms): the edge inside the
+   frame so it tilts with it, the bloom under the card. */
+.csq-card__frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px var(--card-sequence-signal);
+  opacity: 0;
+  transition: opacity 700ms ease;
+  pointer-events: none;
 }
+/* The blur exists only while the card blooms: on as the fade in starts,
+   off once the fade out has ended (0s box-shadow step). */
+.csq-card__bloom {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--ev-radius-surface);
+  box-shadow: none;
+  opacity: 0;
+  transition: opacity 700ms ease, box-shadow 0s linear 700ms;
+  pointer-events: none;
+}
+.csq-card[data-focused] .csq-card__bloom { box-shadow: var(--csq-bloom); opacity: 1; transition: opacity 700ms ease; }
+.csq-card[data-focused] .csq-card__frame::after { opacity: 1; }
 
 .csq-card__poster,
 .csq-card__video {
@@ -117,7 +153,7 @@
   pointer-events: none;
   transition: opacity 700ms ease-out;
 }
-.ev-card-sequence[data-live] .csq-card:not([data-focused]) .csq-card__dim { opacity: 0.79; }
+.ev-card-sequence[data-live] .csq-card:not([data-focused]) .csq-card__dim { opacity: var(--csq-recede); }
 .csq-card[data-focused] .csq-card__dim { opacity: 0; }
 .csq-card__scrim {
   position: absolute;
@@ -206,14 +242,15 @@
   pointer-events: none;
 }
 .csq-card__fill {
-  display: block;
-  height: 100%;
+  position: absolute;
+  inset: 0;
   background: var(--card-sequence-well-signal);
   transform-origin: left center;
   animation-name: csq-dwell;
   animation-timing-function: linear;
   animation-fill-mode: both;
 }
+.csq-card__fill[data-hidden] { opacity: 0; }
 .csq-card__fill[data-full] { animation: csq-dwell 700ms cubic-bezier(0.16, 1, 0.3, 1) both; }
 @keyframes csq-dwell { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 

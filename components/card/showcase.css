@@ -1,5 +1,5 @@
 /* Showcase-only: the open acknowledgement inside the pinned stage of
-   /layouts/card-track (not installed into clients). The frame's
+   /layouts/card (not installed into clients). The frame's
    ShowcaseVariant carries the captions and all outer spacing. */
 
 .ev-card-track .ctr-head:has(> .ctp-opened) { margin-bottom: 0.75em; }

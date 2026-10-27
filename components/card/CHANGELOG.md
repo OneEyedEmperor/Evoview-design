@@ -1,6 +1,6 @@
 # card changelog
 
-## Unreleased
+## 2.1.0
 
 - Showcase only (`/layouts/card`, not installed): title captions in the
   page's voice (were `CARDTRACK · …` readouts); the deck's desk leaves the
@@ -12,6 +12,58 @@
   hard cut under the deck and a clean end on the library footer, and the
   receded cards read as dark screens on white. Scene order unchanged.
   No package, config or API change.
+- **No counting readouts anywhere (RULES §1).** `MediaCard` no longer
+  renders the portrait `01 / 05` readout and `CardTrack` no longer renders
+  the `01 / 04` index at the hairline's end; both `showIndex` options are
+  **deprecated and ignored** (kept in the types so existing configs
+  compile). Config: `tracks.services.showIndex: true` removed from the
+  reference. Clients: nothing to change; delete `showIndex` from your
+  config when convenient.
+- **CardTrack pinned stage sized to its content.** In scrub mode the stage
+  is no longer `100vh` with its content at the top (it left ~300px of empty
+  chapter under the rail at 1440 / 1024): it keeps its content height and
+  chapter rhythm and pins with the content centred in the viewport (sticky
+  `top`, never closer than 5em to the top). The cut to the next chapter is
+  the stage's bottom rhythm. **API: default `length` is now the stage's
+  height + n × 35vh** (was `100vh + n × 35vh`): the scrub distance is
+  unchanged, the page is shorter by the spare viewport. A client `length`
+  still sets the wrapper height; scrub progress, keyboard targets and resize
+  follow the pin offset.
+- **First-frame posters.** Every card with a loop takes the loop's first
+  frame as its poster, at the loop's size and ratio, so a card never jumps
+  when its loop starts; a paused `MediaCard` loop rewinds to that frame (it
+  used to resume mid-loop on portrait cards). **Media renamed (showcase
+  placeholders):** `pf-maison|pf-pavillon|pf-cafe.webp` →
+  `pf-*-540.webp` (540×810), `svc-interior|svc-furniture.webp` →
+  `svc-*-960.webp` (960×640); the old files are removed. Config: a `LOOP`
+  table pairs each loop with its poster; the deck, track and sequence use
+  it. Poster weight for the five loops 305 → 191 KB.
+- **Heading levels.** New `cardHeadingLevel` (2 | 3 | 4, default 3) on
+  `CardTrack` and `CardDeck`, `headingLevel` on `MediaCard`: the card title
+  level. `CardSequence` fact tiles take the level under `headingLevel`
+  (h4 under an h3 title). New exported type `CardHeadingLevel`.
+- **Performance.** The deck's pointed-card bloom and the sequence's focus
+  edge and bloom are layers that fade (opacity only) and carry their blur
+  only while they show, instead of animated `box-shadow`s (sequence: −22 %
+  paints over three advances, same frames). The track's portrait bloom
+  stays a `box-shadow` transition: as a layer it cut paints 25 % but cost
+  ~6 % of frames on the scrub. `MediaCard` media and ribbon clip
+  themselves (the frame no longer has `overflow: hidden`). The scrub reads
+  its geometry on mount and resize (track, stage, page body), never per
+  frame, and skips unchanged writes. Deck switch: the new hand mounts in
+  the task that ends the flip-out (`flushSync`), removing a two-frame
+  still at the swap; deck switch p95 frame 29–42 → 18–19 ms, frames over
+  25 ms 15–43 → 1–2 at 4× CPU. `CardTrack` reveal and lazy load use foundation
+  `useInViewPause` (were local observers); the sequence dwell line uses
+  foundation `sequenceFillStyle` (was a local remounting copy).
+- **CardSequence on light and paper:** the receded veil is .64 (was .79,
+  the pictures went black on white), every well sits on a soft neutral
+  ground shadow, the focus bloom is a softer accent halo; dark unchanged.
+- Code: strip dots shared (`.ctc-dot`, was `.ctr-dot` / `.cdk-dot`), the
+  centred-card search shared (`src/strip.ts`), `--ctc-grade` declared once
+  on `.ctc`; card accent tokens resolve the deck's tokens too. Showcase:
+  the deck's opening selection shows deck-only pictures (category items
+  reordered), the sequence title is an h3 under the scene caption.
 
 ## 2.0.0
 

@@ -26,6 +26,7 @@ export type {
 } from "./types";
 // /CardSequence
 export type {
+  CardHeadingLevel,
   CardTrackConfig,
   CardTrackCopy,
   CardTrackDefinition,

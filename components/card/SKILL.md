@@ -17,17 +17,20 @@ Read `README.md` ("What is Evoview", decisions, behaviour) and the library's
    and to yellow / off-white.
 2. Pick the variant from the content: `ribbon` when each card needs a
    sentence (services, offers), `portrait` when the image is the argument
-   (projects, rooms, dishes). One variant per track. `showIndex` only on
-   ribbon tracks: portrait cards already carry their own `01 / 05`.
+   (projects, rooms, dishes). One variant per track. No counters: the
+   hairline and dots are the position (`showIndex` is ignored, RULES §1).
 3. `components/card/install.sh /root/.vibehub/projects/<client>`
    (installs / upgrades controls and foundation first).
 4. Edit only `src/components/card/card.config.tsx`: the client's
    tracks, items, copy FR / EN (reuse the client's wording). Replace every
-   reference media path with the client's own posters (webp, ~2× card
-   width) and optional short muted loops.
+   reference media path with the client's own stills (webp, ~2× card
+   width) and optional short muted loops; a card with a loop takes the
+   loop's first frame as poster, at the loop's size and ratio
+   (`ffmpeg -i clip.mp4 -frames:v 1 -c:v libwebp -quality 80 clip-<w>.webp`).
 5. Mount one `<CardTrack>` per chapter with the chapter's `tone` and
    `rhythm`; pass the chapter heading as `heading` so it stays in the sticky
-   stage. Wire `onOpen` to the client's real destination (dossier, page);
+   stage, and `cardHeadingLevel` one below it (default 3 under an h2).
+   Wire `onOpen` to the client's real destination (dossier, page);
    omit it if cards open nothing.
 6. Check the host `--primary` / `--primary-foreground`; fix tokens rather than
    restyling the cards. Make sure no ancestor is a scroll container.
@@ -38,7 +41,9 @@ Read `README.md` ("What is Evoview", decisions, behaviour) and the library's
 ## Rules
 
 - Keep the mechanism (scrub on desktop, snap on phone), the card anatomy,
-  square tab / seam against round cards, indices and the graded-at-rest media.
+  square tab / seam against round cards, spoken positions and the
+  graded-at-rest media. No counting readouts, no `prefers-reduced-motion`
+  branch (stable state + pause model).
 - No Evoview mark on the track or its cards; attribution belongs to a
   chassis strip (dossier) or the footer, never next to a client CTA.
 - Track: no arrow buttons, autoplay timers or third-party slider libraries.
@@ -60,8 +65,9 @@ README "CardDeck" holds the protected choreography and the API.
    `ribbon`: each item needs its sentence, e.g. dish descriptions) and
    `rows` (2 = six cards and the full deal; 1 = three).
 3. Mount `<CardDeck deck copy tone rhythm heading onOpen />` in the
-   section; `heading` takes the client's chapter heading. Wire `onOpen` to
-   the client's detail view; never to a booking CTA inside the card.
+   section; `heading` takes the client's chapter heading (`cardHeadingLevel`
+   one below it). Wire `onOpen` to the client's detail view; never to a
+   booking CTA inside the card.
 4. Do not retime the deal or the switch sequence (founder-approved, zero
    dead time) and do not add a counting readout, watermarks or a reduced
    motion branch. Verify with the README CardDeck checklist at 1440, 1024,
@@ -84,7 +90,8 @@ timing and the API.
    watermark stays decorative (`watermark` on by default).
 3. One accent display word per scene: `accent` on a gallery title, none on
    a board title whose offer shows the price.
-4. Mount `<CardSequence sequence copy layout tone />` in the section. Keep
+4. Mount `<CardSequence sequence copy layout tone headingLevel />` in the
+   section (`headingLevel={3}` when it sits under the page's own h2). Keep
    the 2,000 ms dwell, the hold / remaining-dwell behaviour and the channel
    switch; no CRT, noise or flicker layers, no kicker above the titles, no
    reduced-motion branch. Verify with the README CardSequence checklist at
