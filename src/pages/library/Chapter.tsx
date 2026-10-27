@@ -10,7 +10,7 @@ import {
 import { PrimaryPlate, SegmentedControl, Switch, rovingKeyDown } from "../../../components/controls/src";
 import { OrbFill, Readout, useInViewPause, useSequenceClock } from "../../../components/foundation/src";
 import "../../../components/chapter/showcase.css";
-import ShowcasePage from "../../library/ShowcasePage";
+import ShowcasePage, { ShowcaseVariant } from "../../library/ShowcasePage";
 import { useLibraryLocale, type Locale } from "../../library/locale";
 import EveilMark from "./EveilMark";
 import ContactScene from "./chapter/ContactScene";
@@ -21,9 +21,8 @@ import { DeskSetting, Scene, SceneDesk, deskOptions } from "./scene/Scene";
 
 /* Scenes, each a caption → desk → component on the component's ground
    (./scene/Scene), in the order a client page unfolds: the chapter
-   specimen, the story, a page of content chapters, the FAQ, the contact,
-   and the footer with the Evoview credit. Grounds alternate, so every seam
-   between scenes is a hard cut. Colour comes from the frame's --primary
+   specimen, the story and its visit band, the FAQ, the contact, and the
+   footer with the Evoview credit. Colour comes from the frame's --primary
    only; a swatch never re-renders. */
 export default function Chapter() {
   return (
@@ -93,18 +92,6 @@ const T = {
       ],
       drawings: ["Relevé · plan du rez", "Esquisse · coupe A–A", "Chantier · façade sud", "Livraison · façade sud, le soir"],
     },
-    page: {
-      name: "Page",
-      when: "Les chapitres bout à bout : chacun garde son ton et son rythme, la coupe nette les sépare, sans trait.",
-    },
-    projects: {
-      title: "Maison du Pré",
-      subtitle: "Une longère reprise pour une famille de cinq. Les mêmes murs, une autre lumière.",
-      views: { plan: "Plan", section: "Coupe", elevation: "Façade" },
-      viewsLabel: "Dessin affiché",
-      captions: { plan: "Plan du rez · 1:100", section: "Coupe A–A · 1:100", elevation: "Façade sud · 1:100" },
-      place: "Habitat · 2025",
-    },
     visit: {
       title: "Visiter l'atelier",
       subtitle: "Gand, Dok Noord 4. Sur rendez-vous, du mardi au vendredi.",
@@ -160,18 +147,6 @@ const T = {
       ],
       drawings: ["Survey · ground floor plan", "Sketch · section A–A", "Build · south elevation", "Handover · south elevation, evening"],
     },
-    page: {
-      name: "Page",
-      when: "Chapters end to end: each keeps its tone and its rhythm, the hard cut separates them, no rule.",
-    },
-    projects: {
-      title: "Meadow House",
-      subtitle: "A farmhouse reworked for a family of five. The same walls, another light.",
-      views: { plan: "Plan", section: "Section", elevation: "Elevation" },
-      viewsLabel: "Drawing shown",
-      captions: { plan: "Ground floor plan · 1:100", section: "Section A–A · 1:100", elevation: "South elevation · 1:100" },
-      place: "Housing · 2025",
-    },
     visit: {
       title: "Visit the studio",
       subtitle: "Ghent, Dok Noord 4. By appointment, Tuesday to Friday.",
@@ -203,10 +178,12 @@ function Demo() {
         <Specimen t={t} />
       </Scene>
       <StoryScene />
-      {/* The page opens on its paper chapter and ends on its dark one. */}
-      <Scene id="chd-page" name={t.page.name} when={t.page.when} tone="paper" exit="dark" rhythm="standard">
-        <Page t={t} />
-      </Scene>
+      {/* The visit band continues the story's dark ground: no caption. */}
+      <ShowcaseVariant id="chd-page" caption="none" tone="dark" rhythm="standard">
+        <div className="lib-scene" data-exit="dark">
+          <Visit t={t} />
+        </div>
+      </ShowcaseVariant>
       <FaqScene />
       <ContactScene />
       <FooterScene config={config} />
@@ -512,49 +489,24 @@ function PhaseList({
   );
 }
 
-/* ── Scene 2 · the page ───────────────────────────────────────────────── */
+/* ── The visit band ───────────────────────────────────────────────────── */
 
 const PHASE_VIEW: View[] = ["plan", "section", "elevation", "elevation"];
 
 const MOMENT_MS = 4200;
 
-function Page({ t }: { t: Copy }) {
-  const [view, setView] = useState<View>("plan");
-  const views = deskOptions(t.projects.views);
-
+function Visit({ t }: { t: Copy }) {
   return (
-    <>
-      <ChapterShell id="projets" tone="paper" rhythm="standard" rail="wide">
-        <ChapterHeading
-          level={3}
-          marker={false}
-          layout="split"
-          title={t.projects.title}
-          subtitle={t.projects.subtitle}
-          side={<SegmentedControl options={views} value={view} onChange={(v) => setView(v as View)} label={t.projects.viewsLabel} />}
-        />
-        <figure className="chd-figure">
-          <div className="chd-sheet">
-            <Drawing key={view} view={view} />
-          </div>
-          <figcaption className="chd-caption">
-            <Readout>{t.projects.captions[view]}</Readout>
-            <Readout className="chd-caption__aside">{t.projects.place}</Readout>
-          </figcaption>
-        </figure>
-      </ChapterShell>
-
-      <ChapterShell id="visite" tone="dark" rhythm="standard" rail="reading">
-        <ChapterHeading
-          level={3}
-          marker={false}
-          layout="split"
-          title={t.visit.title}
-          subtitle={t.visit.subtitle}
-          side={<PrimaryPlate onClick={() => undefined}>{t.visit.cta}</PrimaryPlate>}
-        />
-      </ChapterShell>
-    </>
+    <ChapterShell id="visite" tone="dark" rhythm="standard" rail="reading">
+      <ChapterHeading
+        level={2}
+        marker={false}
+        layout="split"
+        title={t.visit.title}
+        subtitle={t.visit.subtitle}
+        side={<PrimaryPlate onClick={() => undefined}>{t.visit.cta}</PrimaryPlate>}
+      />
+    </ChapterShell>
   );
 }
 
