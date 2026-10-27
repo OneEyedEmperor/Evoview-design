@@ -15,10 +15,6 @@ export default function CardTrackPage() {
     <ShowcasePage
       entryId="card-track"
       title={(l) => (l === "fr" ? <>Piste de <em>cartes</em></> : <>Card <em>track</em></>)}
-      intro={{
-        fr: "Des cartes média parcourues une à une : sur ordinateur, le défilement de la page fait avancer la piste ; sur mobile, on la balaie.",
-        en: "Media cards browsed one at a time: on desktop the page scroll drives the track; on phones you swipe it.",
-      }}
       tone="dark"
       defaultAccent="#c8693c"
     >

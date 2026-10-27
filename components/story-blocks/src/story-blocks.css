@@ -16,6 +16,7 @@
   /* Text lists sit on tonal surfaces (RULES §3), never on rules or bare ground. */
   --story-blocks-list: var(--ev-surface-list, color-mix(in oklab, var(--ev-fg) 4%, var(--ev-bg)));
   --story-blocks-list-alt: var(--ev-surface-list-alt, color-mix(in oklab, var(--ev-fg) 6%, var(--ev-bg)));
+  --story-blocks-wash: var(--ev-accent-wash, linear-gradient(90deg, color-mix(in oklab, var(--story-blocks-accent-deep) 36%, transparent), color-mix(in oklab, var(--story-blocks-accent-deep) 8%, transparent) 75%));
   /* The chapter band: the only thing between two chapters. */
   --story-blocks-chapter: var(--ev-chapter-cinematic-top);
 
@@ -157,7 +158,7 @@
   row-gap: 0.45em;
   align-items: baseline;
   padding: 1.15em 1.35em 1.25em 1.15em;
-  background: var(--story-blocks-list);
+  background: var(--story-blocks-wash), var(--story-blocks-list);
 }
 .evsb-row__index { color: var(--story-blocks-signal); white-space: nowrap; }
 /* Gauge spans the label + first detail line, top-aligned with the label. */
@@ -174,7 +175,7 @@
 /* Joined rows: one rounded surface, rows alternate a step (schedules). */
 .evsb-rows[data-surface="rows"] { overflow: hidden; border-radius: var(--ev-radius-surface); }
 .evsb-rows[data-surface="rows"] > .evsb-row { padding-block: 1.3em 1.4em; }
-.evsb-rows[data-surface="rows"] > .evsb-row:nth-child(even) { background: var(--story-blocks-list-alt); }
+.evsb-rows[data-surface="rows"] > .evsb-row:nth-child(even) { background: var(--story-blocks-wash), var(--story-blocks-list-alt); }
 @media (min-width: 768px) {
   /* Wide column: time · label · detail on one line, like a programme. */
   .evsb-rows[data-surface="rows"] > .evsb-row {

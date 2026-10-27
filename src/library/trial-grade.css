@@ -1,0 +1,67 @@
+/* TRIAL — the "La méthode" stage grade on the hero and every dark section,
+   as one multi-layer background (no masks: phosphor and grain alphas are
+   baked in, vignette radial only). Top layer first: vignette, grain
+   (screen), scan, phosphor, lights, base. Pinned to the viewport, so every
+   dark block shows the one same gradient and adjacent blocks join without a
+   seam. Remove this file and its import to revert. */
+
+/* The two light layers follow the picked accent (--lib-nav-eye, set on the
+   root by every palette page): hue kept, lightness pulled toward the
+   indigo's and chroma capped, so a yellow or emerald pick glows as strongly
+   as the default without going muddy. Registered so a pick fades in. */
+@property --grade-glow { syntax: "<color>"; inherits: true; initial-value: rgb(63 81 181); }
+@property --grade-sky { syntax: "<color>"; inherits: true; initial-value: rgb(178 172 216); }
+:root {
+  --grade-glow: oklch(from var(--lib-nav-eye, #818cf8) calc(0.47 + (l - 0.673) * 0.4) min(c, 0.17) h);
+  --grade-sky: oklch(from var(--lib-nav-eye, #818cf8) 0.75 min(c, 0.05) h);
+  transition: --grade-glow 700ms ease, --grade-sky 700ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root { transition: none; }
+}
+.ev-library {
+  --trial-grade:
+    radial-gradient(120% 95% at 50% 40%, transparent 55%, rgb(2 2 4 / 0.62) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.78 0 0 0 0 0.79 0 0 0 0 0.9 0 0 0 0.9 -0.32'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.054'/%3E%3C/svg%3E") 0 0 / 200px 200px,
+    repeating-linear-gradient(0deg, transparent 0 2px, rgb(220 222 255 / 0.01) 2px 3px),
+    radial-gradient(rgb(206 210 236 / 0.03) 0.55px, transparent 0.75px) 0 0 / 3px 3px,
+    radial-gradient(70% 55% at 50% -6%, rgb(from var(--grade-sky) r g b / 0.09) 0%, rgb(from var(--grade-sky) r g b / 0.028) 45%, transparent 75%),
+    radial-gradient(55% 45% at 88% 104%, rgb(from var(--grade-glow) r g b / 0.22) 0%, transparent 70%),
+    radial-gradient(32% 28% at 2% 64%, rgb(196 42 52 / 0.03) 0%, transparent 70%),
+    linear-gradient(180deg, #0a0a0f 0%, #08080c 45%, #060608 100%);
+}
+/* The grade is a fixed full-viewport layer behind each dark block, clipped
+   to the block by clip-path (overflow cannot clip a fixed descendant).
+   background-attachment: fixed repainted every block on every scroll
+   frame; the promoted layer is rasterised once and only composited. */
+.ev-library .lib-hero.lib-toned,
+.ev-library .lib-showcase__head > .lib-showcase__ground,
+.ev-library .lib-chapter.lib-toned[data-tone="dark"],
+.lib-showcase .lib-showcase__stage .lib-variant.lib-variant[data-tone="dark"],
+.lib-showcase .lib-showcase__stage > .ev-root.ev-root.ev-tone-dark,
+.lib-showcase .lib-showcase__stage:has(> .ev-root.ev-tone-dark:first-child) {
+  background: transparent;
+  isolation: isolate;
+  clip-path: inset(0);
+}
+.ev-library .lib-hero.lib-toned::before,
+.ev-library .lib-showcase__head > .lib-showcase__ground::before,
+.ev-library .lib-chapter.lib-toned[data-tone="dark"]::before,
+.lib-showcase .lib-showcase__stage .lib-variant.lib-variant[data-tone="dark"]::before,
+.lib-showcase .lib-showcase__stage > .ev-root.ev-root.ev-tone-dark::before,
+.lib-showcase .lib-showcase__stage:has(> .ev-root.ev-tone-dark:first-child)::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--trial-grade);
+  background-blend-mode: normal, screen, normal, normal, normal, normal, normal, normal;
+  will-change: transform;
+}
+/* The demo's own flat dark root lets the variant's grade through, so a
+   variant reads as one graded section. */
+.lib-showcase__stage .lib-variant[data-tone="dark"] .ev-root.ev-tone-dark:not(.ev-root .ev-root) { background: transparent; }
+
+/* The title strip continues the hero's grade (its ground layer above). */
+.ev-library .lib-showcase__head.lib-toned[data-tone="dark"] { background: transparent; }

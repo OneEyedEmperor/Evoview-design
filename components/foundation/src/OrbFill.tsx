@@ -1,5 +1,8 @@
 import { useEffect, useRef, type CSSProperties, type MutableRefObject, type ReactNode } from "react";
 import { bindLiquidHover, createLiquid, liquidClips, type LiquidController } from "./liquid";
+/* The aria-hidden copy renders its content only once hydrated, so prerendered
+   HTML carries each text once. */
+import { useHydrated } from "./hydration";
 import { cn } from "./utils";
 
 /* RULES §1: an orb never switches colour by a cut or a fade. The new colour
@@ -81,6 +84,7 @@ export function OrbFill({ on = false, hoverWithin, withFocus = true, withPress =
   const dry = useRef<HTMLSpanElement>(null);
   const wet = useRef<HTMLSpanElement>(null);
   const [dryClip, wetClip] = useLiquid({ root, dry, wet }, { on, hoverWithin, withFocus, withPress, controller });
+  const hydrated = useHydrated();
 
   return (
     <span
@@ -101,7 +105,7 @@ export function OrbFill({ on = false, hoverWithin, withFocus = true, withPress =
         className="ev-orb-fill__lit"
         style={{ ...layer, background: "var(--ev-orb-lit, var(--primary, currentColor))", color: "var(--ev-orb-lit-ink, inherit)", clipPath: wetClip }}
       >
-        {lit ?? children}
+        {hydrated || on ? (lit ?? children) : null}
       </span>
     </span>
   );

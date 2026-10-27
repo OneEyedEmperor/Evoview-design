@@ -43,8 +43,6 @@ export type ProcessStep = {
 export type CompletionMark = "check" | "numeral" | "icon";
 
 export type ProcessSequenceCopy = {
-  /** Small readout above the heading (optional). */
-  kicker?: string;
   title: ReactNode;
   /** Accessible name of the segmented instrument and of the phone index. */
   instrumentLabel: string;

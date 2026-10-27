@@ -12,10 +12,6 @@ export default function StoryBlocks() {
     <ShowcasePage
       entryId="story-blocks"
       title={(l) => (l === "fr" ? <>Blocs de <em>récit</em></> : <>Story <em>blocks</em></>)}
-      intro={{
-        fr: "Quatre blocs ouverts qui mènent une offre jusqu'à son action : une image qui ouvre, une séquence, des preuves, un bandeau final.",
-        en: "Four open blocks that carry an offer to its action: an opening image, a sequence, the proof, a closing band.",
-      }}
       tone="dark"
     >
       <Stories />

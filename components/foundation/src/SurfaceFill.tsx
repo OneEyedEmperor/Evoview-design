@@ -1,5 +1,8 @@
 import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { bindLiquidHover, createLiquid } from "./liquid";
+/* The aria-hidden copy renders its content only once hydrated, so prerendered
+   HTML carries each text once. */
+import { useHydrated } from "./hydration";
 import { cn } from "./utils";
 
 /* RULES §1, for buttons: a button whose surface changes colour (hover /
@@ -52,6 +55,7 @@ const layer: CSSProperties = {
 
 export function SurfaceFill({ hoverWithin, withFocus = false, withPress = false, withHover = true, children, className, style }: SurfaceFillProps) {
   const wet = useRef<HTMLSpanElement>(null);
+  const hydrated = useHydrated();
 
   useEffect(() => {
     const el = wet.current;
@@ -68,7 +72,7 @@ export function SurfaceFill({ hoverWithin, withFocus = false, withPress = false,
 
   return (
     <span ref={wet} className={cn("ev-surface-fill", className)} aria-hidden="true" style={{ ...layer, ...style }}>
-      {children}
+      {hydrated ? children : null}
     </span>
   );
 }

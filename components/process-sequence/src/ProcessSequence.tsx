@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
 import { SegmentedProgress } from "../controls";
-import { Check, cn, pad, SectionMarker, TextFill, useInViewPause, useMediaQuery, useMediaReady, useRouteHistory, useSequenceClock, type RouteViewProps } from "../foundation";
+import { Check, cn, pad, TextFill, useInViewPause, useMediaQuery, useMediaReady, useRouteHistory, useSequenceClock, type RouteViewProps } from "../foundation";
 import { isVideo } from "./media";
 import { processSequenceRoutes } from "./routes";
 import { StepCard } from "./StepCard";
@@ -171,10 +171,8 @@ export function ProcessSequence({
       <div className="ev-rail ev-rail--wide ps-rail">
         <header className="ps-head">
           <div className="ps-head__title">
-            {copy.kicker && <span className="ev-t-readout ps-head__kicker">{copy.kicker}</span>}
             <h2 id={headingId} className="ev-t-section ps-head__h">
-              <SectionMarker live={pause.active} />
-              <span>{copy.title}</span>
+              {copy.title}
             </h2>
           </div>
           {wide && (

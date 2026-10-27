@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { bindLiquidHover, createLiquid, type LiquidController } from "./liquid";
+/* The aria-hidden copy renders its content only once hydrated, so prerendered
+   HTML carries each text once. */
+import { useHydrated } from "./hydration";
 import { cn } from "./utils";
 
 /* RULES §1, for text: a text colour switch is the same liquid fill as the
@@ -52,6 +55,7 @@ export function TextFill({ on = false, ink, hoverWithin, hoverInk, withHover = t
   const wet = useRef<HTMLSpanElement>(null);
   const liquid = useRef<(LiquidController & { destroy(): void }) | null>(null);
   const [hovered, setHovered] = useState(false);
+  const hydrated = useHydrated();
   const colour = hovered ? (hoverInk ?? LIT) : on ? LIT : (ink ?? REST);
   /* Colours of the two layers; the level says how much of `wet` shows. */
   const inks = useRef({ dry: colour, wet: colour });
@@ -107,7 +111,7 @@ export function TextFill({ on = false, ink, hoverWithin, hoverInk, withHover = t
         aria-hidden="true"
         style={{ gridArea: "1 / 1", color: inks.current.wet, clipPath: "inset(50%)", userSelect: "none", pointerEvents: "none", ...(truncate && CLIP) }}
       >
-        {children}
+        {hydrated ? children : null}
       </span>
     </span>
   );

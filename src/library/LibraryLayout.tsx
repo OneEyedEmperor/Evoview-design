@@ -7,6 +7,7 @@ import { buildLibraryNavbarConfig, HOME_SECTIONS } from "./library.navbar.config
 import { useLibraryLocale } from "./locale";
 import { CHAPTER_ROUTES, RouteBoundary, RoutePending, pagePath } from "./routing";
 import "./library.css";
+import "./trial-grade.css";
 
 export const EVOVIEW_URL = "https://evoview.be/";
 

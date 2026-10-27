@@ -64,7 +64,6 @@ import ShowcasePage from "../../library/ShowcasePage";
 <ShowcasePage
   entryId="selector-stage"                  // registry id → version, status
   title={(l) => <>Selector <em>Stage</em></>} // em = accent word
-  intro={{ fr: "…", en: "…" }}              // one sentence
   tone="dark"                               // page environment: "dark" | "light"
   defaultAccent="#818cf8"                   // optional
   palette                                   // default true; false for non-colourable pages
@@ -86,7 +85,7 @@ header (lockup links to `/`; LIBRARY takes the picked accent, Evoview indigo
 while on the page default). The index renders it with its h1, bars and palette.
 
 Page changes inside `LibraryLayout` play the page curtain (`src/library/PageCurtain.tsx`,
-wired in `App.tsx`): a night panel rises from the bottom (cover), then drops back down (reveal), over everything below
+wired in `App.tsx`): a night panel rises from the bottom (cover), then drops back down (reveal); between a `/layouts/*` and a `/components/*` page it is always one right-to-left swipe instead (in from the right, out to the left). Navbar and title-strip navigation play the same curtain; the strip has no transition of its own. Over everything below
 `.lib-hero` (top follows the hero's bottom, 0 once scrolled past), routes render
 the lagged location until it covers. The hero must read as shared: after its
 first reveal, remounts start revealed (no card rise, shine or eye draw) and the
@@ -95,9 +94,41 @@ the swap never flashes the Suspense fallback. Reduced motion, iframes and the
 full-screen navbar demos swap instantly.
 
 The frame renders the hero (palette slot left empty off the index) and the
-header: a centred stack (title, intro, version, no breadcrumb) on a full-bleed
-band in the page's opposite tone, with the compact swatch capsule centred on
-the band's bottom edge (half on the band, half on the demos). It wraps children in an element that sets `--primary`,
+header (`.lib-deck`, no band colour or shell of its own, on the strip's
+"La méthode" stage grade; glass in a flat neutral tint, no gradient,
+accent only in the white section bars' faint glow and the keys' liquid hover
+fill): one module centred on the sections' rail, inset on each side
+(`clamp(0px, 4vw − 16px, 48px)`, none on phones) and at most 980 px wide,
+so each half keeps a picture's proportions (≈ 16:10 at 1440).
+One shell (one radius, one surface, parts told apart by tone, no rule)
+holds two equal parts side by side from 768, stacked below: the player
+(the shown page's photograph, `src/library/art.tsx`, `public/library/art/
+<id>-640|1280.webp` via srcset, warmed on idle, under a dark veil;
+placeholders for the four layouts, also used for their list thumbnails
+(`-192.webp`) and index cards; otherwise its glyph, `EntryIcon`, on an
+accent bloom) and the page
+list (every page of one category, always shown, in registry order:
+thumbnail, title, meta line, bare number orb, this page's orb white; the
+rows set the shell's height; two columns on small tablets, a sideways snap
+strip scrolled to this page on phones). One glass pill straddles the
+shell's lower edge, centred, its two equal halves meeting on the parts'
+seam: the title over the player (h1, one line, over the category label,
+linking to its index chapter, beside the section bars as the position
+track, the shown page lit; a category of one keeps only the title and
+label; no step keys, the list is the navigation) and the list's
+Layouts | Composants switch over the list (white
+plate slides to the listed category; it opens on the page's own, layouts
+for the navbar). On phones the halves stack inside the one pill.
+Linking: pointing at (hover / focus) a row previews that page on the
+player, glyph, title, category and lit bar, by the channel switch
+(RULES §6); the previewed row takes the accent orb fill. Pointing away returns after 140 ms; the h1 keeps this
+page's title throughout (visually hidden while a preview shows). The
+category switch retunes the list by the same switch. No controls float
+outside the pill. No version, no intro sentence, no breadcrumb. The version sits small
+over the top-left corner of the first captioned `ShowcaseVariant`; a page
+whose demos are all `caption="none"` shows none. The accent picker is
+the floating capsule bottom-right (`FloatingPalette`), always shown except
+over the footer. It wraps children in an element that sets `--primary`,
 `--primary-foreground` (contrast ink), `--foreground`, `--muted-foreground`,
 `--font-heading`. The pick is shared across pages for the visit
 (`src/library/accentChoice.tsx`, matched by colour, custom swatch when a page

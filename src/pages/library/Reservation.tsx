@@ -13,10 +13,6 @@ export default function ReservationShowcase() {
     <ShowcasePage
       entryId="reservation"
       title={(l) => <em>{l === "fr" ? "Réservation" : "Reservation"}</em>}
-      intro={{
-        fr: "Une demande de réservation en étapes, une question à la fois, dans l'accent de chaque client. Essayez-la : rien n'est envoyé.",
-        en: "A stepped booking request, one question at a time, in each client's accent. Try it: nothing is sent.",
-      }}
       tone="dark"
     >
       <Variants />

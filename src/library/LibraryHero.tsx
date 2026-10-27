@@ -15,7 +15,12 @@ const HOME_LINK: Localized = {
 /* The hero is mounted per page, yet reads as one shared section: after its
    first reveal, later mounts start revealed (no card rise, shine or eye
    draw) and the reel resumes from the shared clock instead of restarting. */
-const REEL_MS = 48000;
+/* One set repeats the four panels so it outruns a 2560px-wide viewport
+   (27-inch class) at the widest card size; the duration is sized to the
+   set's length to hold the reel's speed. Keep in step with the
+   lib-hero-reel duration in library.css. */
+const REEL_REPEAT = 4;
+const REEL_MS = 144000;
 const reelEpoch = typeof performance === "undefined" ? 0 : performance.now();
 let heroRevealed = false;
 
@@ -105,9 +110,11 @@ function BarsSlot() {
   );
 }
 
-/* The method cards as an endless reel behind the lockup: the set is laid
-   twice and the track slides one set's width, so the seam never shows. The
-   loop obeys the pause model by pausing the CSS animation in place. */
+/* The method cards as an endless, full-bleed reel behind the lockup: the
+   set is laid twice and the track slides one set's width, so the seam never
+   shows. The loop obeys the pause model by pausing the CSS animation in
+   place. */
+const REEL_SET = Array.from({ length: REEL_REPEAT }, () => HERO_PANELS).flat();
 function HeroReel({ label, revealed }: { label: string; revealed: boolean }) {
   const { t } = useLibraryLocale();
   const ref = useRef<HTMLDivElement>(null);
@@ -117,11 +124,14 @@ function HeroReel({ label, revealed }: { label: string; revealed: boolean }) {
     <div ref={ref} className="lib-hero__reel" data-live={active || undefined}>
       <ul className="lib-hero__track" aria-label={label} style={phase ? { animationDelay: `${Math.round(phase)}ms` } : undefined}>
         {[0, 1].map((copy) =>
-          HERO_PANELS.map((panel, i) => (
-            <li key={`${copy}-${panel.id}`} aria-hidden={copy === 1 || undefined}>
-              <HeroPanel id={panel.id} alt={copy === 0 ? t(panel.alt) : ""} index={i} revealed={revealed} />
-            </li>
-          )),
+          REEL_SET.map((panel, i) => {
+            const decorative = copy > 0 || i >= HERO_PANELS.length;
+            return (
+              <li key={`${copy}-${i}`} aria-hidden={decorative || undefined}>
+                <HeroPanel id={panel.id} alt={decorative ? "" : t(panel.alt)} index={i} revealed={revealed} />
+              </li>
+            );
+          }),
         )}
       </ul>
     </div>

@@ -1,13 +1,18 @@
-import { Children, createContext, Fragment, isValidElement, useContext, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactElement, type ReactNode, type RefObject } from "react";
+import { createContext, useCallback, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
+import { ChannelSwitch } from "../../components/foundation/src/ChannelSwitch";
+import { OrbFill } from "../../components/foundation/src/OrbFill";
 import { TextFill } from "../../components/foundation/src/TextFill";
-import AccentPalette, { inkFor } from "./AccentPalette";
+import { inkFor } from "./AccentPalette";
+import { EntryArt, EntryThumb, warmEntryArt } from "./art";
 import { Cover } from "./covers";
 import { useAccentChoice } from "./accentChoice";
 import FloatingPalette from "./FloatingPalette";
 import LibraryHero from "./LibraryHero";
+import { CATEGORY_DOT } from "./library.navbar.config";
 import { useLibraryLocale, type Locale, type Localized } from "./locale";
-import { CATEGORY_ROUTE, getEntry, pad2 } from "./registry";
+import { CATEGORY_LABEL, CATEGORY_ROUTE, entriesOf, getEntry, pad2, type Category, type RegistryEntry } from "./registry";
 import StatusTag from "./StatusTag";
 import { useNavEyeAccent } from "./useNavEyeAccent";
 
@@ -18,8 +23,6 @@ type Props = {
   entryId: string;
   /** Display title; wrap the accent word in <em>. */
   title: (locale: Locale) => ReactNode;
-  /** One sentence. */
-  intro: Localized;
   tone?: "dark" | "light";
   defaultAccent?: string;
   /** Live accent palette. Off for pages that are not colourable. */
@@ -50,6 +53,8 @@ const COPY = {
     default: "Par défaut",
     buildingBody: "Ce package est en cours d'extraction depuis evoview.be. La démo live remplacera cette page dès sa première version.",
     back: "Retour à l'index",
+    pages: "Toutes les pages",
+    category: "Catégorie de pages",
   },
   en: {
     paletteStrong: "Client accent",
@@ -58,29 +63,172 @@ const COPY = {
     default: "Default",
     buildingBody: "This package is being extracted from evoview.be. The live demo replaces this page with its first version.",
     back: "Back to the index",
+    pages: "All pages",
+    category: "Page category",
   },
 } satisfies Record<Locale, Record<string, string>>;
 
-/* The title's accent word takes each picked colour as a liquid rise
-   (RULES §1): its <em> is wrapped in a TextFill fed the concrete signal
-   colour (the CSS var would just cut). Light frames pull the accent toward
-   ink as .lib-toned does. */
-function liquidAccent(node: ReactNode, ink: string): ReactNode {
-  return Children.map(node, (child) => {
-    if (!isValidElement(child)) return child;
-    const el = child as ReactElement<{ children?: ReactNode }>;
-    if (el.type === "em") return <em>{<TextFill ink={ink}>{el.props.children}</TextFill>}</em>;
-    if (el.type === Fragment) return <>{liquidAccent(el.props.children, ink)}</>;
-    return child;
-  });
+/* The homepage's section bars, one per page of the category, the shown
+   page's lit; it draws in on arrival. The lit bar is one segment sliding
+   over the tracks, so previewing another page glides it there and back. */
+function GroupBars({ entry, shown }: { entry: RegistryEntry; shown: RegistryEntry }) {
+  const category = shown.category;
+  const group = entriesOf(category);
+  const dot = (CATEGORY_DOT as Partial<Record<Category, string>>)[category];
+  const [seen, setSeen] = useState(false);
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setSeen(true));
+    return () => cancelAnimationFrame(frame);
+  }, [entry.id]);
+  const lit = group.findIndex((e) => e.id === shown.id);
+  return (
+    <span
+      className="lib-bars lib-showcase__group-bars"
+      data-role="separator"
+      data-seen={seen || undefined}
+      style={{ gridTemplateColumns: `repeat(${group.length}, minmax(0, 1fr))`, "--lib-bars-n": group.length, "--lib-bars-i": Math.max(lit, 0) } as CSSProperties}
+      aria-hidden="true"
+    >
+      {group.map((e) => (
+        <span key={e.id} className="lib-bars__bar" />
+      ))}
+      <span className="lib-showcase__bars-lit" data-off={lit < 0 || undefined}>
+        {dot && <span className="lib-bars__dot" style={{ "--lib-bar-dot": dot } as CSSProperties} />}
+      </span>
+    </span>
+  );
+}
+
+/* The categories the page screen can list. */
+const SCREEN_CATEGORIES: Category[] = ["layouts", "components"];
+
+/* Pointing at a page in the list previews it on the player. Pointing away
+   returns after a beat, so travel between two rows never flashes this page
+   in between. */
+function usePreview(entryId: string): [string | null, (id: string | null) => void] {
+  const [id, setId] = useState<string | null>(null);
+  const timer = useRef(0);
+  const point = useCallback((next: string | null) => {
+    window.clearTimeout(timer.current);
+    if (next) setId(next);
+    else timer.current = window.setTimeout(() => setId(null), 140);
+  }, []);
+  useEffect(() => {
+    window.clearTimeout(timer.current);
+    setId(null);
+  }, [entryId]);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+  return [id, point];
+}
+
+const pointer = (id: string, point: (id: string | null) => void) => ({
+  onPointerEnter: () => point(id),
+  onPointerLeave: () => point(null),
+  onFocus: () => point(id),
+  onBlur: () => point(null),
+});
+
+/* The shell's second part: every page of a category, always shown, in
+   registry order. A row previews its page on the player part. The pill's
+   category switch retunes it to the other category (a channel switch, like
+   the player). */
+function PageList({
+  id,
+  entry,
+  category,
+  previewId,
+  point,
+}: {
+  id: string;
+  entry: RegistryEntry;
+  category: Category;
+  previewId: string | null;
+  point: (id: string | null) => void;
+}) {
+  const { locale } = useLibraryLocale();
+  const copy = COPY[locale];
+  const group = entriesOf(category);
+  const listRef = useRef<HTMLElement>(null);
+
+  // Phones scroll the rows sideways: keep this page's row in view.
+  useLayoutEffect(() => {
+    const list = listRef.current?.querySelector<HTMLElement>(".lib-screen__list");
+    const row = list?.querySelector<HTMLElement>("[aria-current='page']");
+    if (!list || !row || list.scrollWidth <= list.clientWidth) return;
+    list.scrollLeft = row.offsetLeft - (list.clientWidth - row.offsetWidth) / 2;
+  }, [category, entry.id]);
+
+  return (
+    <nav ref={listRef} id={id} className="lib-screen" aria-label={copy.pages}>
+      <ChannelSwitch channel={category} className="lib-screen__channel">
+        <ul className="lib-screen__list">
+          {group.map((e, i) => {
+            const cued = previewId === e.id;
+            return (
+              <li key={e.id}>
+                <Link
+                  to={e.route}
+                  className="lib-screen__row"
+                  aria-current={e.id === entry.id ? "page" : undefined}
+                  data-cued={cued || undefined}
+                  {...pointer(e.id, point)}
+                  onClick={(event) => {
+                    if (e.id === entry.id) event.preventDefault();
+                  }}
+                >
+                  <span className="lib-screen__thumb" aria-hidden="true">
+                    <EntryThumb id={e.id} />
+                  </span>
+                  <span className="lib-screen__text">
+                    <span className="lib-screen__title">{e.title[locale]}</span>
+                    <span className="lib-screen__meta">{e.meta[locale]}</span>
+                  </span>
+                  <span className="lib-screen__num" aria-hidden="true">
+                    <OrbFill on={cued}>{i + 1}</OrbFill>
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </ChannelSwitch>
+    </nav>
+  );
+}
+
+/* The pill's second half: which category the page list shows, the listed
+   one on a white plate that slides between the keys (paper inversion). */
+function CategorySwitch({ category, onCategory, controls }: { category: Category; onCategory: (category: Category) => void; controls: string }) {
+  const { locale } = useLibraryLocale();
+  const active = SCREEN_CATEGORIES.indexOf(category);
+  return (
+    <div className="lib-screen__switch" role="group" aria-label={COPY[locale].category} style={{ "--lib-switch-i": Math.max(active, 0) } as CSSProperties}>
+      <span className="lib-screen__plate" data-off={active < 0 || undefined} aria-hidden="true" />
+      {SCREEN_CATEGORIES.map((c) => (
+        <button key={c} type="button" className="lib-screen__option lib-voice-state" aria-pressed={c === category} aria-controls={controls} onClick={() => onCategory(c)}>
+          <TextFill ink={c === category ? "#0b0b0e" : undefined} hoverWithin={c === category ? undefined : ".lib-screen__option"} hoverInk="#fff" withFocus={false}>
+            {CATEGORY_LABEL[c][locale]}
+          </TextFill>
+        </button>
+      ))}
+    </div>
+  );
 }
 
 const same = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
 
-export default function ShowcasePage({ entryId, title, intro, tone = "dark", defaultAccent, palette = true, children }: Props) {
+export default function ShowcasePage({ entryId, title, tone = "dark", defaultAccent, palette = true, children }: Props) {
   const { locale } = useLibraryLocale();
   const copy = COPY[locale];
   const entry = getEntry(entryId);
+  // The page screen opens on this page's category (layouts for the navbar).
+  const ownList = SCREEN_CATEGORIES.includes(entry.category) ? entry.category : SCREEN_CATEGORIES[0];
+  const [listCategory, setListCategory] = useState<Category>(ownList);
+  useEffect(() => setListCategory(ownList), [ownList]);
+  const [previewId, point] = usePreview(entry.id);
+  const shown = previewId ? getEntry(previewId) : entry;
+  const listId = useId();
+  useEffect(warmEntryArt, []);
   const fallback = defaultAccent ?? (tone === "dark" ? NEAR_WHITE : NEAR_INK);
 
   // Evoview indigo is selected on arrival; it is the "default" swatch itself
@@ -109,12 +257,13 @@ export default function ShowcasePage({ entryId, title, intro, tone = "dark", def
 
   const body = children === undefined ? <InConstruction entryId={entry.id} category={entry.category} /> : typeof children === "function" ? children({ locale, accent, ink }) : children;
 
-  const paletteRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-  const tonedByContent = useHasNavTone(stageRef);
+  const leadRef = useRef<HTMLSpanElement>(null);
+  const tonedByContent = useHasNavTone(stageRef, tone === "dark" ? leadRef : null);
   const ready = usePageReady(stageRef);
+  const versionSlot = useFirstVersionSlot(stageRef);
   const dark = tone === "dark" ? "dark" : undefined;
-  const headTone = tone === "dark" ? "light" : "dark";
+  const headTone = "dark" as "dark" | "light";
   const paletteProps = {
     swatches,
     value: accentId,
@@ -132,37 +281,101 @@ export default function ShowcasePage({ entryId, title, intro, tone = "dark", def
   return (
     <div className="lib-showcase lib-toned ev-library" data-tone={tone} data-lib-ready={ready ? "" : undefined} style={style}>
       {/* LIBRARY follows the accent on the index only; here it stays white.
-          The palette lives in the title block, so the hero's slot is empty. */}
+          The palette floats bottom-right, so the hero's slot is empty. */}
       <LibraryHero />
       {/* The title block takes the opposite tone of the page: a full cut
           segments it from the demos. */}
       <header className="lib-showcase__head lib-toned" data-tone={headTone} data-nav-tone={headTone === "dark" ? "dark" : undefined}>
+        {/* The hero's viewport-pinned grade carries on behind the strip
+            (trial-grade.css). */}
+        <div className="lib-stage-grade lib-showcase__ground" aria-hidden="true" />
+        {/* One module on the rail: one shell holding the player (the shown
+            page's glyph) and the page list, under one glass pill centred on
+            the shell's lower edge (title over category and the position
+            track, then the list's category switch). Whatever page is
+            pointed at in the list plays on the player by a channel switch,
+            as on the evoview application's first question. */}
         <div className="lib-showcase__intro lib-rail">
-          <Title className="lib-display">
-            {/* A page without a palette has no accent to show: its accent word
-                takes the band's ink. */}
-            {liquidAccent(title(locale), !palette ? "var(--lib-fg)" : headTone === "dark" ? accent : `color-mix(in oklab, ${accent} 62%, var(--lib-ink))`)}
-          </Title>
-          <p className="lib-lead">{intro[locale]}</p>
-          <StatusTag status={entry.status} version={entry.version} />
-        </div>
-        {/* Swatches only, on the seam between the band and the demos: the
-            choice belongs to both, and costs the band no height. */}
-        {palette && (
-          <div ref={paletteRef} className="lib-showcase__palette">
-            <AccentPalette {...paletteProps} compact />
+          <div className="lib-deck">
+            <div className="lib-deck__shell">
+              <ChannelSwitch as="span" channel={shown.id} className="lib-player__art" aria-hidden="true">
+                <EntryArt id={shown.id} />
+              </ChannelSwitch>
+              <PageList id={listId} entry={entry} category={listCategory} previewId={previewId} point={point} />
+            </div>
+            <div className="lib-deck__pill">
+              <div className="lib-player__transport">
+                <div className="lib-player__track">
+                  {/* The h1 stays this page's title; a preview shows over it. */}
+                  <ChannelSwitch channel={shown.id} signal={false} className="lib-showcase__title">
+                    {shown.id === entry.id ? (
+                      <Title className="lib-display">{title(locale)}</Title>
+                    ) : (
+                      <>
+                        <Title className="lib-sr">{title(locale)}</Title>
+                        <span className="lib-display" aria-hidden="true">
+                          {shown.title[locale]}
+                        </span>
+                      </>
+                    )}
+                  </ChannelSwitch>
+                  <div className="lib-player__scrub">
+                    <Link to={CATEGORY_ROUTE[shown.category]} className="lib-voice-state lib-showcase__group">
+                      <ChannelSwitch as="span" channel={shown.category} signal={false} className="lib-showcase__group-label">
+                        {CATEGORY_LABEL[shown.category][locale]}
+                      </ChannelSwitch>
+                    </Link>
+                    {entriesOf(shown.category).length > 1 && <GroupBars entry={entry} shown={shown} />}
+                  </div>
+                </div>
+              </div>
+              <CategorySwitch category={listCategory} onCategory={setListCategory} controls={listId} />
+            </div>
           </div>
-        )}
+        </div>
       </header>
       <div ref={stageRef} className="lib-showcase__stage" data-nav-tone={tonedByContent ? undefined : dark}>
         <FrameTone.Provider value={tone}>
           <ViewOpen.Provider value={setViewOpen}>{body}</ViewOpen.Provider>
         </FrameTone.Provider>
       </div>
+      {versionSlot && createPortal(<StatusTag status={entry.status} version={entry.version} />, versionSlot)}
+      {dark && (
+        <div className="lib-showcase__lead" aria-hidden="true">
+          <span ref={leadRef} data-nav-tone="dark" />
+        </div>
+      )}
       <div className="lib-showcase__tail" data-nav-tone={dark} aria-hidden="true" />
-      {palette && <FloatingPalette {...paletteProps} anchor={paletteRef} tone={tone} accent={accent} />}
+      {palette && <FloatingPalette {...paletteProps} tone={tone} accent={accent} />}
     </div>
   );
+}
+
+/* The page's version sits over the first captioned demo's title: every
+   ShowcaseVariant caption carries an empty slot, the first one in the stage
+   receives the tag through a portal. Re-resolved when the stage's tree
+   changes (variants swapped by specimen switches). */
+function useFirstVersionSlot(ref: RefObject<HTMLElement | null>): HTMLElement | null {
+  const [slot, setSlot] = useState<HTMLElement | null>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let frame = 0;
+    const find = () => {
+      frame = 0;
+      setSlot(el.querySelector<HTMLElement>("[data-version-slot]"));
+    };
+    find();
+    const mo = new MutationObserver(() => {
+      if (!frame) frame = requestAnimationFrame(find);
+    });
+    mo.observe(el, { subtree: true, childList: true });
+    return () => {
+      mo.disconnect();
+      cancelAnimationFrame(frame);
+    };
+  }, [ref]);
+  return slot;
 }
 
 const FrameTone = createContext<"dark" | "light">("dark");
@@ -230,6 +443,7 @@ export function ShowcaseVariant({ name, when, index, tone, rhythm = "flush", cap
       {caption === "none" ? null : caption === "title" ? (
         <header className="lib-variant__caption lib-variant__caption--title lib-rail">
           <h2 id={nameId} className="lib-title lib-variant__title">
+            <span className="lib-variant__version" data-version-slot="" aria-hidden="true" />
             {name}
           </h2>
           <p className="lib-lead lib-variant__when">{when}</p>
@@ -237,6 +451,7 @@ export function ShowcaseVariant({ name, when, index, tone, rhythm = "flush", cap
       ) : (
         <header className="lib-variant__caption lib-rail">
           <p id={nameId} className="lib-voice-state lib-variant__name">
+            <span className="lib-variant__version" data-version-slot="" aria-hidden="true" />
             {index && (
               <span className="lib-variant__index">
                 {pad2(index.current)} / {pad2(index.total)}
@@ -244,7 +459,7 @@ export function ShowcaseVariant({ name, when, index, tone, rhythm = "flush", cap
             )}
             {name}
           </p>
-          <p className="lib-body lib-variant__when">{when}</p>
+          {when && <p className="lib-body lib-variant__when">{when}</p>}
         </header>
       )}
       <div ref={bodyRef} className="lib-variant__body">
@@ -460,13 +675,34 @@ const BRIDGED = "data-nav-tone-bridged";
    foundation's `ev-tone-*` class on a section root (no `data-nav-tone`) are
    bridged: outermost dark roots get `data-nav-tone="dark"`. Nested tone
    elements (cards, modals) are ignored — the navbar probe is a horizontal
-   line, so a dark card inside a light chapter must not darken the bar. */
-function useHasNavTone(ref: RefObject<HTMLElement | null>): boolean {
+   line, so a dark card inside a light chapter must not darken the bar.
+
+   `lead` (dark frames only) marks the stage's own ground above its first
+   toned region — the palette seam, a captionless variant's top — which no
+   region declares, so the bar would flash light there. It sits after the
+   stage (first/last-child rules) and is placed back over its top. */
+function useHasNavTone(ref: RefObject<HTMLElement | null>, lead: RefObject<HTMLElement | null> | null): boolean {
   const [has, setHas] = useState(false);
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
     let frame = 0;
+    let roots: HTMLElement[] = [];
+    const docTop = (n: HTMLElement) => {
+      let top = 0;
+      for (let cur: HTMLElement | null = n; cur; cur = cur.offsetParent as HTMLElement | null) top += cur.offsetTop;
+      return top;
+    };
+    const placeLead = () => {
+      const strip = lead?.current;
+      const holder = strip?.parentElement;
+      if (!strip || !holder) return;
+      const stageTop = docTop(el);
+      const first = roots.length ? Math.min(...roots.map(docTop)) : stageTop;
+      // offsetTop is whole px: 1px of overlap at each end leaves no subpixel hole.
+      strip.style.top = `${stageTop - docTop(holder) - 1}px`;
+      strip.style.height = first > stageTop ? `${Math.ceil(first - stageTop) + 2}px` : "0px";
+    };
     const sync = () => {
       frame = 0;
       /* A dark variant left on the frame tone (no `tone`, so no ev-tone
@@ -492,7 +728,7 @@ function useHasNavTone(ref: RefObject<HTMLElement | null>): boolean {
           n.setAttribute("data-nav-tone", "dark");
         }
       }
-      const roots =Array.from(el.querySelectorAll<HTMLElement>(TONED)).filter((n) => {
+      roots = Array.from(el.querySelectorAll<HTMLElement>(TONED)).filter((n) => {
         const outer = n.parentElement?.closest(TONED);
         return !outer || outer === el || !el.contains(outer);
       });
@@ -509,17 +745,22 @@ function useHasNavTone(ref: RefObject<HTMLElement | null>): boolean {
         }
       }
       setHas(roots.length > 0);
+      placeLead();
     };
     sync();
     const mo = new MutationObserver(() => {
       if (!frame) frame = requestAnimationFrame(sync);
     });
     mo.observe(el, { subtree: true, childList: true, attributes: true, attributeFilter: ["class", "data-nav-tone"] });
+    // Layout moves the first region without a tone mutation (fonts, media, width).
+    const ro = lead ? new ResizeObserver(placeLead) : null;
+    ro?.observe(el);
     return () => {
       mo.disconnect();
+      ro?.disconnect();
       cancelAnimationFrame(frame);
     };
-  }, [ref]);
+  }, [ref, lead]);
   return has;
 }
 

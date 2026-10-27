@@ -3,6 +3,7 @@ import { Blocks, Languages, LayoutTemplate, type LucideIcon } from "lucide-react
 import { NavLangSwitch } from "../../components/navbar/src";
 import EvoviewLogo from "../../components/navbar/src/brand/EvoviewLogo";
 import type { NavbarConfig, NavbarLabels, NavSection, NavTray } from "../../components/navbar/src/types";
+import { entryPhotoSrc } from "./art";
 import { coverSrc } from "./covers";
 import { LOCALES, type Locale } from "./locale";
 import { CATEGORY_LABEL, CATEGORY_ROUTE, entriesOf, type Category } from "./registry";
@@ -77,7 +78,7 @@ function trayFor(category: "layouts" | "components", locale: Locale): NavTray {
       meta: entry.meta[locale],
       href: entry.route,
       accent: PILL_ACCENT[category],
-      cover: coverSrc(entry.id, "banner"),
+      cover: entryPhotoSrc(entry.id) ?? coverSrc(entry.id, "banner"),
     })),
   };
 }

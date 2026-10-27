@@ -185,6 +185,21 @@ The copy lies over the button (inset 0, display / padding / gap / alignment
 / radius inherited) on `--ev-surface-lit`, ink `--ev-surface-lit-ink`; the
 original stays in flow for layout and the accessible name. Host:
 `position: relative`, no CSS hover background swap.
+`<ChannelSwitch channel as? feedClassName? signal? mediaTimeout?>` — the
+only way a hover-preview screen changes (RULES §6): a new `channel` folds
+the picture to a horizontal line (180 ms), opens the new content from it
+with a sideways shudder (360 ms) and flashes signal lines over the host
+(360 ms; colour `--ev-channel-signal`, off with `signal={false}` for copy).
+Pass the content of `channel` as children; the previous content is held
+while it folds. A newer channel during the fold replaces the pending one
+(a sweep plays one switch); the channel on screen coming back mid-fold
+reopens from where it is. `<img>` / `<video>` in the incoming content are
+awaited (decoded, capped at `mediaTimeout`, default 600 ms) before it
+opens. The host (`div`, or `span` with `as`) takes `className`, `style`
+and other attributes; position it and give it the screen's box, the inner
+layer fills it. Web Animations, no CSS; renders statically on the server.
+Debounce the return to rest in the caller (~140 ms) so travel between two
+options never flashes it.
 Icons: `ArrowRight`, `ArrowLeft`, `ArrowUpRight`, `Check`, `Close`,
 `Chevron dir`.
 

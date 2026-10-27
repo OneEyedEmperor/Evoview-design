@@ -11,10 +11,6 @@ export default function SelectorStage() {
     <ShowcasePage
       entryId="selector-stage"
       title={(l) => (l === "fr" ? <>Sélecteur et <em>scène</em></> : <>Selector <em>stage</em></>)}
-      intro={{
-        fr: "Un chapitre qui fait comparer : le visiteur change une chose, la scène montre ce qu'elle change. Cas et images fictifs.",
-        en: "A chapter for comparing: the visitor changes one thing, the stage shows what it changes. Fictional case and images.",
-      }}
       tone="dark"
     >
       <Demo />

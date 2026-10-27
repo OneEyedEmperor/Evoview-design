@@ -29,10 +29,6 @@ export default function Controls() {
     <ShowcasePage
       entryId="controls"
       title={(l) => (l === "fr" ? <em>Contrôles</em> : <em>Controls</em>)}
-      intro={{
-        fr: "Les pièces que chaque composant Evoview partage : agir, choisir, remplir, suivre le temps. Changez l'accent, elles suivent la marque du client.",
-        en: "The pieces every Evoview component shares: act, choose, fill in, follow time. Change the accent and they follow the client's brand.",
-      }}
       tone="dark"
     >
       <Sheet />
@@ -185,24 +181,26 @@ function Sheet() {
   const { locale } = useLibraryLocale();
   return (
     <ControlsProvider config={buildControlsConfig(locale)}>
-      <Role n={0} locale={locale}><Commands locale={locale} /></Role>
-      <Role n={1} locale={locale}><Choices locale={locale} /></Role>
-      <Role n={2} locale={locale}><Fields locale={locale} /></Role>
-      <Role n={3} locale={locale}><Timed locale={locale} /></Role>
-      <Role n={4} locale={locale} paper><PaperFlow locale={locale} /></Role>
+      <Role n={0} locale={locale} width="wide"><Commands locale={locale} /></Role>
+      <Role n={1} locale={locale} width="wide"><Choices locale={locale} /></Role>
+      <Role n={2} locale={locale} width="narrow"><Fields locale={locale} /></Role>
+      <Role n={3} locale={locale} width="wide"><Timed locale={locale} /></Role>
+      <Role n={4} locale={locale} width="narrow" paper><PaperFlow locale={locale} /></Role>
     </ControlsProvider>
   );
 }
 
-/* The frame owns the spacing; the scene sits on the caption's 1.28 column.
-   The paper scene brings its own chapter padding (rhythm "standard") so the
-   tone band closes below the flow. */
-function Role({ n, locale, paper = false, children }: { n: number; locale: Locale; paper?: boolean; children: ReactNode }) {
+type SceneWidth = "full" | "wide" | "narrow";
+
+/* Each role is a centred section: title and lead on the page axis, the scene
+   on a column sized to what it holds. The paper scene brings its own chapter
+   padding (rhythm "standard") so the tone band closes below the flow. */
+function Role({ n, locale, width, paper = false, children }: { n: number; locale: Locale; width: SceneWidth; paper?: boolean; children: ReactNode }) {
   const r = T.roles[n];
   return (
-    <ShowcaseVariant name={tr(r.name, locale)} when={tr(r.when, locale)} tone={paper ? "paper" : undefined} rhythm={paper ? "standard" : "flush"}>
+    <ShowcaseVariant caption="title" name={tr(r.name, locale)} when={tr(r.when, locale)} tone={paper ? "paper" : undefined} rhythm={paper ? "standard" : "flush"}>
       <div className={paper ? "lib-rail ctl-stage ctl-stage--chapter" : "lib-rail ctl-stage"}>
-        <div className={paper ? "ev-root ev-tone-paper ctl-scene" : "ev-root ctl-scene"}>{children}</div>
+        <div className={`${paper ? "ev-root ev-tone-paper" : "ev-root"} ctl-scene ctl-scene--${width}`}>{children}</div>
       </div>
     </ShowcaseVariant>
   );

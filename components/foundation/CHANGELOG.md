@@ -1,5 +1,29 @@
 # foundation changelog
 
+## 1.8.0
+
+No config changes. New primitive `ChannelSwitch` (RULES §6, the norm for
+hover-preview screens): the evoview contact application's channel switch
+(fold to a line, open with a shudder, signal lines), with coalescing of
+fast pointer travel, turn-back mid-fold and media decode before opening.
+Exported from the index and importable alone as `../foundation/ChannelSwitch`
+(no CSS).
+
+## 1.7.1
+
+No config changes, no API changes. Fix:
+
+- `OrbFill`, `TextFill`, `SurfaceFill`: the aria-hidden filled copy renders
+  its content only after hydration (foundation's `useHydrated()`), so
+  prerendered HTML carries each label, link text and button
+  name once (crawlers, accessible names) and hydration still matches.
+  `OrbFill` renders it at once when it starts `on`.
+
+## 1.7.0
+
+No config changes. New token `--ev-accent-wash`: the accent gradient layer
+(deep accent 36 % → 8 % at 75 %, left to right) laid over a list surface.
+
 ## 1.6.1
 
 No config changes, no API changes. Fix:

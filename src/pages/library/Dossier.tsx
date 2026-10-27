@@ -20,10 +20,6 @@ export default function DossierPage() {
     <ShowcasePage
       entryId="dossier"
       title={() => <em>Dossier</em>}
-      intro={{
-        fr: "Pour une offre en plusieurs parties : le visiteur choisit, lit, puis agit — sans quitter la page, et revient toujours où il était.",
-        en: "For an offer in several parts: visitors choose, read, then act — without leaving the page, and always come back where they were.",
-      }}
       tone="dark"
     >
       <Showcase />

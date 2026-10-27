@@ -23,7 +23,7 @@ installs `foundation` (and `controls` where used) first.
 | Components | [selector-stage](components/selector-stage/README.md) | 1.4.0 |
 | Components | [controls](components/controls/README.md) | 1.3.0 |
 | Navbar | [navbar](components/navbar/README.md) | 2.7.0 |
-| — | [foundation](components/foundation/README.md) (base, not showcased) | 1.6.1 |
+| — | [foundation](components/foundation/README.md) (base, not showcased) | 1.8.0 |
 
 Design rules: [docs/RULES.md](docs/RULES.md).
 

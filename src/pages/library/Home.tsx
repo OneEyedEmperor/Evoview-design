@@ -2,8 +2,9 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import { Link } from "react-router-dom";
 import AccentPalette, { inkFor } from "../../library/AccentPalette";
 import { useAccentChoice } from "../../library/accentChoice";
-import { Cover } from "../../library/covers";
+import { EntryCover } from "../../library/art";
 import EyeMark from "../../library/hero/EyeMark";
+import FloatingPalette from "../../library/FloatingPalette";
 import LibraryHero from "../../library/LibraryHero";
 import { useLibraryLocale, type Localized } from "../../library/locale";
 import { CATEGORY_DOT } from "../../library/library.navbar.config";
@@ -211,6 +212,18 @@ export default function Home() {
           </ol>
         </div>
       </section>
+      <FloatingPalette
+        swatches={swatches}
+        value={accentId}
+        custom={custom}
+        caption={{ strong: copy.accent, rest: "" }}
+        customLabel={copy.custom}
+        onChange={onChange}
+        onCustom={onCustom}
+        tone="dark"
+        accent={accent}
+        yieldTo=".lib-hero .lib-palette"
+      />
     </div>
   );
 }
@@ -221,7 +234,7 @@ function EntryCard({ entry, index }: { entry: RegistryEntry; index?: number }) {
   return (
     <Link to={entry.route} className="lib-card">
       <div className="lib-well">
-        <Cover id={entry.id} />
+        <EntryCover id={entry.id} />
         <span className="lib-well__tag">
           <EyeMark artwork={3} />
         </span>

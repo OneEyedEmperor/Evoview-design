@@ -71,9 +71,6 @@
 }
 .ev-process[data-revealed] .ps-head { opacity: 1; transform: none; }
 .ps-head__title { display: grid; gap: 0.9em; min-width: 0; }
-.ps-head__kicker { color: var(--process-signal); }
-.ps-head__h { display: flex; align-items: flex-start; gap: 0.55em; }
-.ps-head__h .ev-marker { margin-top: 0.1em; }
 @media (min-width: 768px) {
   .ps-head {
     grid-template-columns: minmax(0, 0.37fr) minmax(0, 0.63fr);
@@ -581,7 +578,7 @@ a.ps-card { display: block; color: inherit; text-decoration: none; }
   padding: 7px 18px 7px 7px;
   border-radius: 999px;
   background:
-    linear-gradient(90deg, color-mix(in oklab, var(--ev-accent-deep) 36%, transparent), color-mix(in oklab, var(--ev-accent-deep) 8%, transparent) 75%),
+    var(--ev-accent-wash),
     color-mix(in oklab, var(--ev-fg) 3%, transparent);
   color: var(--ev-fg-90);
   font-size: max(calc(0.875 * var(--ev-rem)), var(--ev-floor-body));

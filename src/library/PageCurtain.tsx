@@ -5,13 +5,17 @@ import "./page-curtain.css";
 
 /* Page curtain: on a page change, a night panel rises from the bottom
    over everything under the hero, the page swaps behind it, then the panel
-   drops back down, uncovering the new page from the top. The hero above stays put, so the library's
-   lockup reads as the one fixed thing while the pages slide under it.
+   drops back down, uncovering the new page from the top. A sideways move
+   (`side`, e.g. switching category) plays on the other axis as one
+   right-to-left swipe: in from the right, out to the left, uncovering from
+   the right. The hero above
+   stays put, so the library's lockup reads as the one fixed thing while
+   the pages slide under it.
 
    The router keeps rendering the old location until the curtain covers,
    whatever triggered the navigation; the curtain's top follows the hero's
-   bottom edge every frame (0 once the hero is scrolled away), so the
-   scroll-to-top at the swap lowers it onto the new page's hero. */
+   bottom edge every frame (0 once the hero is scrolled away); pages swap at
+   the scroll position they were left at (ScrollManager). */
 
 const IN_MS = 380;
 const OUT_MS = 520;
@@ -24,12 +28,16 @@ type Options = {
   pageKey: (location: Location) => string | null;
   /* Resolves when the incoming page can render without a fallback. */
   prepare?: (location: Location) => Promise<unknown> | void;
+  /* True when the move plays on the horizontal axis. */
+  side?: (from: Location, to: Location) => boolean;
 };
+
+const OFF = { y: "translateY(100%)", x: "translateX(100%)" };
 
 const raf = () => new Promise<number>((r) => requestAnimationFrame(r));
 const sleep = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));
 
-export function usePageCurtain({ pageKey, prepare }: Options): {
+export function usePageCurtain({ pageKey, prepare, side }: Options): {
   location: Location;
   layer: ReactNode;
 } {
@@ -46,6 +54,8 @@ export function usePageCurtain({ pageKey, prepare }: Options): {
   keyOf.current = pageKey;
   const prepareRef = useRef(prepare);
   prepareRef.current = prepare;
+  const sideRef = useRef(side);
+  sideRef.current = side;
 
   const root = useRef<HTMLDivElement>(null);
   const panel = useRef<HTMLDivElement>(null);
@@ -92,8 +102,13 @@ export function usePageCurtain({ pageKey, prepare }: Options): {
           continue;
         }
         scrolls.current.set(from.key, window.scrollY);
+        // A sideways move is one right-to-left swipe: in from the right,
+        // out to the left. Otherwise up from and back down to the bottom.
+        const sideways = Boolean(sideRef.current?.(from, latest.current.location));
+        const enter = sideways ? OFF.x : OFF.y;
+        const leave = sideways ? "translateX(-100%)" : OFF.y;
         const ready = Promise.race([Promise.resolve(prepareRef.current?.(latest.current.location)).catch(() => undefined), sleep(PREPARE_TIMEOUT_MS)]);
-        await sheet.animate([{ transform: "translateY(100%)" }, { transform: "translateY(0)" }], { duration: IN_MS, easing: EASE, fill: "forwards" }).finished;
+        await sheet.animate([{ transform: enter }, { transform: "none" }], { duration: IN_MS, easing: EASE, fill: "forwards" }).finished;
         await ready;
         // Redirects (<Navigate replace>) land while the curtain still covers.
         for (let guard = 0; guard < 4 && latest.current.location !== shownRef.current; guard++) {
@@ -103,7 +118,7 @@ export function usePageCurtain({ pageKey, prepare }: Options): {
           await raf();
           await raf();
         }
-        await sheet.animate([{ transform: "translateY(0)" }, { transform: "translateY(100%)" }], { duration: OUT_MS, easing: EASE, fill: "forwards" }).finished;
+        await sheet.animate([{ transform: "none" }, { transform: leave }], { duration: OUT_MS, easing: EASE, fill: "forwards" }).finished;
       }
     } finally {
       cancelAnimationFrame(frame);
@@ -141,7 +156,7 @@ export function usePageCurtain({ pageKey, prepare }: Options): {
 
   const layer = enabled
     ? createPortal(
-        <div ref={root} className="page-curtain" hidden aria-hidden="true">
+        <div ref={root} className="page-curtain ev-library" hidden aria-hidden="true">
           <div ref={panel} className="page-curtain__panel" />
         </div>,
         document.body,

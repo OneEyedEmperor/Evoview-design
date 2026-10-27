@@ -45,6 +45,12 @@ const curtainKey = ({ pathname }: Location) => {
   if (OUTSIDE_LAYOUT.test(path)) return null;
   return path in CHAPTER_ROUTES ? "/" : path;
 };
+const categoryOf = ({ pathname }: Location) => /^\/(layouts|components)\/./.exec(pathname)?.[1];
+const curtainSide = (from: Location, to: Location) => {
+  const a = categoryOf(from);
+  const b = categoryOf(to);
+  return Boolean(a && b && a !== b);
+};
 const curtainPrepare = (location: Location) => LAYOUT_PAGES[curtainKey(location) ?? ""]?.preload();
 
 function AppRoutes() {
@@ -52,6 +58,7 @@ function AppRoutes() {
   const { location, layer } = usePageCurtain({
     pageKey: curtainKey,
     prepare: curtainPrepare,
+    side: curtainSide,
   });
   const { pathname } = location;
   return (

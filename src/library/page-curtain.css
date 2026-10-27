@@ -13,5 +13,4 @@
   background: var(--lib-night, #0e0e0e);
   transform: translateY(100%);
   will-change: transform;
-}
-html.page-curtaining .lib-float { opacity: 0; pointer-events: none; transition: opacity 200ms ease-out; }
+}html.page-curtaining .lib-float { opacity: 0; pointer-events: none; transition: opacity 200ms ease-out; }

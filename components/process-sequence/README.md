@@ -55,7 +55,7 @@ neutral field + one accent floor bloom.
 **Accent = the client's** (`--primary` / `--primary-foreground`), driving:
 completed segment fills (ramp .4 / .6 / .8 / 1, oldest dimmest), complete
 frame, mark ring, mobile complete tint, ribbon progress, focus rings,
-kicker / indices, dossier item tints and chips, close radial, backdrop and
+indices, dossier item tints and chips, close radial, backdrop and
 floor bloom. Never the active state, body text, surfaces or the resting plate.
 
 **Attribution** (approved placement): one linked `EvoviewMark` in the
@@ -127,7 +127,7 @@ type ProcessSequenceConfig = {
            detail?: { heading: string[]; intro; items: string[] /* ≤ 42 chars */; objective? } }[];
   durations?: number[];               // used only if length === steps.length
   completionMark?: "check" | "numeral" | "icon";   // icon = step.mark (falls back to check)
-  copy: { kicker?; title; instrumentLabel; status: { idle; active; complete };
+  copy: { title; instrumentLabel; status: { idle; active; complete };
           stepOf(c, t); openHint; dossier: { label; close; previous; next; progress; objective; loading; failed; retry };
           attributionLabel };
   cta?: { label; href?; onClick? };   // last dossier step

@@ -2,17 +2,23 @@
    The library frame (ShowcaseVariant) owns every gap between captions and
    scenes; this sheet only lays out the scenes. */
 
-/* From 1024 the scene sits on the caption's 1.28 column (same grid, same
-   em as .lib-variant__caption), so caption text and scene share one edge. */
-.ctl-scene { min-width: 0; background: none; color: var(--ev-fg); }
-.ctl-stage--chapter { padding-block: var(--ev-chapter-standard); }
-@media (min-width: 1024px) {
-  .ctl-stage { display: grid; grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr); column-gap: 3.5em; }
-  .ctl-scene { grid-column: 2; }
-}
+/* Centred sheet: every role's title and lead sit on the page axis, under the
+   centred page header; the scene takes a column sized to its content. */
+.lib-variant:has(.ctl-stage) > .lib-variant__caption { justify-items: center; text-align: center; }
+.lib-variant:has(.ctl-stage) > .lib-variant__caption .lib-variant__when { max-width: 34em; text-wrap: balance; }
 
-/* Scenes and asks: neighbour spacing between, internal inside. */
+.ctl-scene { min-width: 0; margin-inline: auto; background: none; color: var(--ev-fg); }
+.ctl-scene--full { max-width: 100%; }
+.ctl-scene--wide { max-width: calc(68 * var(--lib-rem, 14px)); }
+.ctl-scene--narrow { max-width: calc(40 * var(--lib-rem, 14px)); }
+.ctl-stage--chapter { padding-block: var(--ev-chapter-standard); }
+
+/* Scenes and asks: neighbour spacing between, internal inside. From 1024 the
+   choices sit beside the frame they change, the two halves on one axis. */
 .ctl-scenes { display: grid; gap: calc(4 * var(--ev-rem)); }
+@media (min-width: 1024px) {
+  .ctl-scenes { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); column-gap: calc(5 * var(--ev-rem)); align-items: center; }
+}
 .ctl-form { display: grid; gap: calc(2.75 * var(--ev-rem)); }
 .ctl-ask { display: grid; gap: 14px; }
 .ctl-question { margin: 0; color: var(--ev-fg); font-family: var(--ev-font-body); font-size: 15px; font-weight: 600; line-height: 1.4; }
@@ -72,7 +78,7 @@
 }
 
 /* 02 — room setup */
-.ctl-setup { display: grid; gap: 16px; justify-items: start; }
+.ctl-setup { display: grid; gap: 16px; justify-items: center; }
 .ctl-setup__frame { width: 100%; aspect-ratio: 16 / 9; }
 @media (max-width: 639px) { .ctl-setup__frame { aspect-ratio: 4 / 3; } }
 .ctl-setup__meta {

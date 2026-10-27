@@ -88,6 +88,8 @@
   /* Strokes, thin fills, focus: pulled toward the tone's foreground so a
      light accent still shows on paper and a dark one on black. */
   --ev-accent-signal: color-mix(in oklab, var(--ev-accent) var(--ev-signal-mix), var(--ev-signal-toward));
+  /* Accent wash: a background layer laid over a list surface, fading left to right. */
+  --ev-accent-wash: linear-gradient(90deg, color-mix(in oklab, var(--ev-accent-deep) 36%, transparent), color-mix(in oklab, var(--ev-accent-deep) 8%, transparent) 75%);
 }
 
 /* ── Tones (environment). Dark is the default outside any tone. ─────── */

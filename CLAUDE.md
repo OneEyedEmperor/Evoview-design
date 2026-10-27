@@ -39,12 +39,12 @@ and `controls`; follow `docs/BUILD-BRIEF.md`.
 
 | Component | Status | Skill |
 | --- | --- | --- |
-| `foundation` — tokens, scale, tones, type voices, pause-model hooks, attribution mark, step gauge, orb + text liquid fill, SSR + crawlable-modal routing | 1.6.1 | `evoview-foundation` |
+| `foundation` — tokens, scale, tones, type voices, pause-model hooks, attribution mark, step gauge, orb + text liquid fill, channel switch (hover-preview screens, RULES §6), SSR + crawlable-modal routing | 1.8.0 | `evoview-foundation` |
 | `controls` — plate, ghost, glass close/pager, chips, rows, fields, switch, segmented control/progress, view links (`/components/controls`) | 1.3.0 | `evoview-controls` |
 | `chapter` — section shell, headings, tone cuts, footer with attribution (`/layouts/chapter`) | 1.1.0 | `evoview-chapter` |
 | `card-track` — media card + scroll-scrubbed track (`/layouts/card-track`) | 1.2.1 | `evoview-card-track` |
-| `process-sequence` — timed step board + step dossier, crawlable step views (`/layouts/process-sequence`) | 1.3.1 | `evoview-process-sequence` |
-| `story-blocks` — intro split, indexed sequence, proof collage, payoff (`/layouts/story-blocks`) | 2.2.0 | `evoview-story-blocks` |
+| `process-sequence` — timed step board + step dossier, crawlable step views (`/layouts/process-sequence`) | 1.4.0 | `evoview-process-sequence` |
+| `story-blocks` — intro split, indexed sequence, proof collage, payoff (`/layouts/story-blocks`) | 2.3.0 | `evoview-story-blocks` |
 | `dossier` — portal modal, selection board, chapter strip, mobile dock, crawlable views (`/components/dossier`) | 1.4.0 | `evoview-dossier` |
 | `selector-stage` — selector ↔ stage, before/after, atlas (`/components/selector-stage`) | 1.4.0 | `evoview-selector-stage` |
 | `navbar` — finder capsule, desktop + mobile, cover-card trays (`/navbar`) | 2.7.0 | `evoview-navbar` |
@@ -79,5 +79,6 @@ Facts learned about this codebase, maintained by Vibehub. Everything from this h
 - Concurrent agent edits make the vhdev showcase full-reload/remount pages (fake blank views, stuck reveals); confirm intermittent bugs on a production preview (pnpm build && pnpm preview on a spare port, stop only that PID). <!--vh:a8750c48-->
 - Showcase navbar: home (`/`) runs one-page with `sectionPill` via HOME_SECTIONS (ids `library-top` on <main>, `layouts`, `components`, `navbar` in Home.tsx — renaming them breaks the pill); library.css intentionally pins the menu eye to the page accent, not the live dot. <!--vh:72f01e84-->
 - Showcase specimen switches (Félix's bar): every option must visibly change the layout in every combination with the other switches — a state that only nudges size/padding (e.g. chapter rhythm) is cut; keep demo content true to the section's role (no CTA in the presentation/intro specimen). <!--vh:5e8b1ce7-->
-- Showcase hero (`LibraryHero`) opens every library page and its lockup must sit at the exact coordinates it has on `/` across page changes (non-index pages keep invisible bars + palette slots; `.lib-hero__palette` min-height 42px = compact capsule height); the accent palette lives only in the hero (no header palette, no breadcrumb); LIBRARY takes the accent on `/` only, white elsewhere; the eye iris follows the accent everywhere. <!--vh:570793a5-->
+- Showcase hero (`LibraryHero`) opens every library page and its lockup must sit at the exact coordinates it has on `/` across page changes (non-index pages keep invisible bars + palette slots; `.lib-hero__palette` min-height 42px = compact capsule height); accent palette: in the hero on `/` only, on showcase pages only the always-visible bottom-right `FloatingPalette` (none in the title band, no breadcrumb); LIBRARY takes the accent on `/` only, white elsewhere; the eye iris follows the accent everywhere. <!--vh:570793a5-->
+- Showcase title strip (`.lib-deck`, SHOWCASE-CONTRACT): one module centred on the sections' rail, inset each side and max 980px wide (Félix found it stretched wider). ONE shell (player part: layout photos in src/library/art.tsx, glyphs otherwise + always-open page list, equal halves, told apart by tone) under ONE glass pill centred on the seam (title/category/bars + Layouts|Composants switch). No step keys. Hover/focus on a row previews it on the player via foundation ChannelSwitch (RULES §6). Page changes play the navbar's PageCurtain. <!--vh:b7834828-->
 <!-- vibehub:knowledge:end -->

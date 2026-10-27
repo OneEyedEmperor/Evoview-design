@@ -149,7 +149,6 @@ const STEPS: Record<Locale, Record<StepId, StepCopy>> = {
 
 const COPY: Record<Locale, ProcessSequenceCopy> = {
   fr: {
-    kicker: "Notre méthode",
     title: "Quatre étapes, un seul interlocuteur",
     instrumentLabel: "Progression de la méthode",
     status: { idle: "À venir", active: "En cours", complete: "Terminée" },
@@ -169,7 +168,6 @@ const COPY: Record<Locale, ProcessSequenceCopy> = {
     attributionLabel: "Evoview — ouvrir evoview.be dans un nouvel onglet",
   },
   en: {
-    kicker: "Our method",
     title: "Four steps, one point of contact",
     instrumentLabel: "Method progress",
     status: { idle: "Upcoming", active: "In progress", complete: "Done" },

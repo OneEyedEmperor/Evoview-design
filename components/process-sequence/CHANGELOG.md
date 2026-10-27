@@ -1,5 +1,17 @@
 # process-sequence changelog
 
+## 1.4.0
+
+Config change: `copy.kicker` is removed (delete it from client configs).
+
+- Heading is the title alone: no kicker readout, no `SectionMarker`
+  (blinking dot in a square is evoview.be-specific).
+
+## 1.3.2
+
+Requires `foundation` ≥ 1.7.0. No config changes. Dossier item pills paint
+`--ev-accent-wash` (same gradient, now a foundation token).
+
 ## 1.3.1
 
 Requires `controls` ≥ 1.3.0 and `foundation` ≥ 1.6.1 (`install.sh`

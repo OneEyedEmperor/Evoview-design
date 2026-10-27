@@ -1,11 +1,12 @@
-import { useEffect, useId, useState, type ComponentProps, type RefObject } from "react";
+import { useEffect, useId, useState, type ComponentProps } from "react";
 import { useMediaQuery } from "../../components/foundation/src/useMediaQuery";
 import { useBackgroundSuspended } from "../../components/foundation/src/suspension";
 import AccentPalette from "./AccentPalette";
 import { useLibraryLocale } from "./locale";
 
-/* Glass capsule of the same swatches, bottom corner, shown once the header
-   palette leaves the viewport or (desktop) while a modal suspends the page.
+/* The page's accent picker: a glass capsule in the bottom corner, shown at
+   all times except over the footer (and, desktop only, kept while a modal
+   suspends the page).
    `data-ev-keep-interactive` exempts it from the modal packages' inert walk
    (see components/dossier/README.md). While a modal is open it is pointer
    only: mousedown never moves focus out of the dialog, and the dialog's Tab
@@ -18,14 +19,24 @@ const COPY = {
   en: { open: "Change the accent", close: "Collapse the palette" },
 };
 
-/* Fixed navbar: 0.75rem top inset + 3.5em capsule (≈ 62 px) + air. */
-const NAV_BAND = 80;
-
 type Props = ComponentProps<typeof AccentPalette> & {
-  anchor: RefObject<HTMLElement | null>;
   tone: "dark" | "light";
   accent: string;
+  /** Selector of an in-page palette: the float steps aside while it is on screen. */
+  yieldTo?: string;
 };
+
+function useOnScreen(selector: string | undefined): boolean {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    const el = selector ? document.querySelector(selector) : null;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(([entry]) => setOn(entry.isIntersecting));
+    io.observe(el);
+    return () => io.disconnect();
+  }, [selector]);
+  return on;
+}
 
 function useMobileMenuOpen(): boolean {
   const [open, setOpen] = useState(false);
@@ -41,44 +52,19 @@ function useMobileMenuOpen(): boolean {
   return open;
 }
 
-export default function FloatingPalette({ anchor, tone, accent, ...palette }: Props) {
+export default function FloatingPalette({ tone, accent, yieldTo, ...palette }: Props) {
   const { locale } = useLibraryLocale();
   const suspended = useBackgroundSuspended();
   const phone = !useMediaQuery("(min-width: 768px)");
   const menuOpen = useMobileMenuOpen();
-  const [away, setAway] = useState(false);
   const [open, setOpen] = useState(false);
   const panelId = useId();
 
-  /* The header palette counts as gone once it reaches the navbar's band:
-     it fades there (data-away) instead of showing through the bar's glass,
-     and this capsule takes over in the same frame. */
-  useEffect(() => {
-    const el = anchor.current;
-    if (!el || typeof IntersectionObserver === "undefined") return;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        const gone = entry.intersectionRatio < 0.98;
-        el.toggleAttribute("data-away", gone && entry.boundingClientRect.top < NAV_BAND + 4);
-        setAway(gone);
-      },
-      { rootMargin: `-${NAV_BAND}px 0px 0px 0px`, threshold: [0, 0.98, 1] },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [anchor]);
-
   // The page's end: the footer carries its own locale toggle bottom-right.
-  const [atFooter, setAtFooter] = useState(false);
-  useEffect(() => {
-    const footer = document.querySelector(".lib-footer");
-    if (!footer || typeof IntersectionObserver === "undefined") return;
-    const io = new IntersectionObserver(([entry]) => setAtFooter(entry.isIntersecting));
-    io.observe(footer);
-    return () => io.disconnect();
-  }, []);
+  const atFooter = useOnScreen(".lib-footer");
+  const yielded = useOnScreen(yieldTo);
 
-  const visible = !menuOpen && (suspended ? !phone : away && !atFooter);
+  const visible = !menuOpen && (suspended ? !phone : !atFooter && !yielded);
   useEffect(() => {
     if (!visible) setOpen(false);
   }, [visible]);

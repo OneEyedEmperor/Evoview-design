@@ -1,5 +1,11 @@
 # story-blocks changelog
 
+## 2.3.0
+
+Requires `foundation` 1.7.0 (`--ev-accent-wash`, with a local fallback).
+No config changes. `IndexedRows` rows (tiles and joined rows) carry the
+accent wash over their list surface, matching the process-sequence dossier pills.
+
 ## 2.2.0 — step gauge on sequence rows (RULES §1)
 
 Requires `foundation` 1.4.0 (`StepGauge`).

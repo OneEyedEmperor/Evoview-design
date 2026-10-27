@@ -37,10 +37,6 @@ export default function NavbarPage() {
     <ShowcasePage
       entryId="navbar"
       title={() => <em>Navbar</em>}
-      intro={{
-        fr: "La navigation des sites Evoview : une capsule de verre qui se déplie en pilules et en plateaux de cartes. Celle en haut de cette page est le package lui-même : ouvrez MENU.",
-        en: "The navigation of Evoview sites: a glass capsule that unfolds into pills and cover-card trays. The one at the top of this page is the package itself: open MENU.",
-      }}
       palette={false}
     >
       <Demos />

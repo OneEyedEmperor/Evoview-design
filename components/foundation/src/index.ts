@@ -30,5 +30,6 @@ export { Readout, Index, StepGauge, SectionMarker, EvoviewMark, EvoviewLogo } fr
 export { OrbFill, type OrbFillProps, type OrbFillController } from "./OrbFill";
 export { TextFill, type TextFillProps } from "./TextFill";
 export { SurfaceFill, type SurfaceFillProps } from "./SurfaceFill";
+export { ChannelSwitch, type ChannelSwitchProps } from "./ChannelSwitch";
 export type { LiquidController } from "./liquid";
 export { ArrowRight, ArrowLeft, ArrowUpRight, Check, Close, Chevron } from "./icons";

@@ -147,6 +147,30 @@ export class RouteBoundary extends Component<BoundaryProps, { error: Error | nul
   }
 }
 
+/* Keeps the reader at `y` across a page swap: re-applied while the new page
+   is still too short to hold it (lazy content, media sizing in), for up to a
+   second, and dropped as soon as the reader scrolls. */
+function holdScroll(y: number): () => void {
+  let frame = 0;
+  const started = performance.now();
+  const stop = () => {
+    cancelAnimationFrame(frame);
+    window.removeEventListener("wheel", stop);
+    window.removeEventListener("touchstart", stop);
+    window.removeEventListener("keydown", stop);
+  };
+  const apply = () => {
+    if (Math.abs(window.scrollY - y) > 1) window.scrollTo(0, y);
+    if (performance.now() - started < 1000) frame = requestAnimationFrame(apply);
+    else stop();
+  };
+  window.addEventListener("wheel", stop, { passive: true });
+  window.addEventListener("touchstart", stop, { passive: true });
+  window.addEventListener("keydown", stop);
+  apply();
+  return stop;
+}
+
 /* Category routes land on the index, scrolled to their chapter. */
 export const CHAPTER_ROUTES: Record<string, string> = { "/layouts": "layouts", "/components": "components" };
 
@@ -156,18 +180,31 @@ const findTarget = (pathname: string, hash: string) => {
   return id ? document.getElementById(id) : null;
 };
 
-/* New pages open at the top; a hash or a category route scrolls to its
-   target, waiting for a lazy page to mount it and re-aligning once layout
-   settles. Back/forward keep the browser's own restoration. A click on the
-   current category pill (the navbar only scrolls to top on same-URL clicks)
-   still lands on its chapter. `location` is the rendered one when it lags
-   the URL (see library/experimental-transition). */
+/* New pages open at the scroll position the previous one was left at (the
+   hero above every page stays put, so only the page under it changes); a
+   hash or a category route scrolls to its target, waiting for a lazy page to
+   mount it and re-aligning once layout settles. Back/forward keep the
+   browser's own restoration. A click on the current category pill (the
+   navbar only scrolls to top on same-URL clicks) still lands on its chapter.
+   `location` is the rendered one when it lags the URL (see
+   library/experimental-transition). */
 export function ScrollManager({ location }: { location?: Location }) {
   const current = useLocation();
   const { pathname, hash, key } = location ?? current;
   const action = useNavigationType();
   // Per location key, so a StrictMode re-run reaches the same decision.
   const seen = useRef<{ key: string; page: string; samePage: boolean; first: boolean } | null>(null);
+  // Last position before the swap: read in the layout effect, the document
+  // may already have shrunk under the new page and clamped scrollY.
+  const lastY = useRef(0);
+  useEffect(() => {
+    const track = () => {
+      lastY.current = window.scrollY;
+    };
+    track();
+    window.addEventListener("scroll", track, { passive: true });
+    return () => window.removeEventListener("scroll", track);
+  }, []);
 
   useLayoutEffect(() => {
     if (seen.current?.key !== key) {
@@ -180,8 +217,8 @@ export function ScrollManager({ location }: { location?: Location }) {
     if (action === "POP" && !first) return;
     const wantsTarget = Boolean(hash) || pathname.replace(/\/+$/, "") in CHAPTER_ROUTES;
     if (!wantsTarget) {
-      if (!samePage && !first) window.scrollTo(0, 0);
-      return;
+      if (samePage || first) return;
+      return holdScroll(lastY.current);
     }
     // An in-page hash with no target leaves the reader where they are.
     if (samePage && hash && !findTarget(pathname, hash)) return;
@@ -197,7 +234,6 @@ export function ScrollManager({ location }: { location?: Location }) {
         frame = requestAnimationFrame(seek);
       }
     };
-    if (!samePage && !first) window.scrollTo(0, 0);
     seek();
     return () => {
       cancelAnimationFrame(frame);

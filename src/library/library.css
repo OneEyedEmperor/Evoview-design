@@ -196,13 +196,13 @@
    equal shelves. */
 /* --lib-hero-u: the lockup's unit, a share of the stage width (cqi resolves
    where it is used, inside the stage). Scales logo, stamp, word and bars. */
-.lib-hero { --lib-hero-gap: 0.75em; --lib-hero-u: 0.75cqi; padding-block: 5em 3.5em; overflow: hidden; }
+.lib-hero { --lib-hero-gap: 0.75em; --lib-hero-u: 0.68cqi; padding-block: 6.5em 3.5em; overflow: hidden; }
 .lib-hero__stage {
   position: relative;
   display: grid;
   place-items: center;
   align-content: center;
-  min-height: calc(var(--lib-hero-card) + 4em);
+  min-height: calc(var(--lib-hero-card) * 0.75 + 3em);
   --lib-hero-card: clamp(9em, 30vw, 19em);
 }
 /* Sizes are in --lib-hero-u; the frame shrink-wraps the lockup so the
@@ -346,11 +346,14 @@ a.lib-hero__lockup:focus-visible { outline: 2px solid var(--lib-signal); outline
    opacity and blur, softened at both ends so the title stays the subject.
    Each item carries its own trailing gap, so one set is exactly half the
    track. */
+/* Full bleed: the frame sits on the viewport's axis, so the reel spans the
+   whole screen from its centre (the hero clips the scrollbar overrun). */
 .lib-hero__reel {
   position: absolute;
-  inset-inline: 0;
+  left: 50%;
+  width: 100vw;
   top: 50%;
-  translate: 0 -50%;
+  translate: -50% -50%;
   overflow: hidden;
   opacity: 0.32;
   filter: blur(3px);
@@ -364,11 +367,13 @@ a.lib-hero__lockup:focus-visible { outline: 2px solid var(--lib-signal); outline
   margin: 0;
   padding: 0;
   list-style: none;
-  animation: lib-hero-reel 48s linear infinite;
+  animation: lib-hero-reel 144s linear infinite; /* = REEL_MS in LibraryHero */
   animation-play-state: paused;
 }
 .lib-hero__reel[data-live] .lib-hero__track { animation-play-state: running; }
-.lib-hero__track > li { flex: none; width: var(--lib-hero-card); padding-right: var(--lib-hero-gap); }
+/* Square cards show the full square artwork; held to the former 4:3 card's
+   height (card × 0.75), which still sets the stage's min-height. */
+.lib-hero__track > li { flex: none; width: calc(var(--lib-hero-card) * 0.75); padding-right: var(--lib-hero-gap); }
 @keyframes lib-hero-reel { to { transform: translateX(-50%); } }
 .lib-hero__panel {
   padding: 1px;
@@ -437,7 +442,7 @@ a.lib-hero__lockup:focus-visible { outline: 2px solid var(--lib-signal); outline
 }
 
 @media (min-width: 768px) {
-  .lib-hero { --lib-hero-gap: 1em; padding-block: 7em 5em; }
+  .lib-hero { --lib-hero-gap: 1em; padding-block: 8em 4em; }
 }
 
 .lib-chapter { padding-block: 5em; scroll-margin-top: 0; }
@@ -707,27 +712,294 @@ a.lib-hero__lockup:focus-visible { outline: 2px solid var(--lib-signal); outline
 .lib-showcase[data-tone="dark"] { --foreground: oklch(0.98 0 0); --muted-foreground: oklch(0.6 0 0); }
 .lib-showcase[data-tone="light"] { --foreground: #151515; --muted-foreground: #6b6b6b; }
 
-/* Title block: one centred stack — title, its sentence, the version — on a
-   full-bleed band in the page's opposite tone. */
+/* Title strip: one module spanning the rail, on the strip's own grade (no
+   band colour of its own; ShowcasePage). One shell holds two parts on one
+   surface, told apart by tone, never a rule: the player (the shown page's
+   glyph) and the page list. One glass pill straddles the shell's lower
+   edge, centred on the seam between the parts: the title over category and
+   the position track over the player half, the list's category switch over
+   the list half. Pointing at a page in the list plays it on the player by
+   a channel switch (foundation ChannelSwitch, RULES §6). The pill's glass is a pseudo
+   layer, never the pill itself (a backdrop root would flatten what
+   overlaps it). */
 .lib-showcase__head { position: relative; z-index: 3; padding-block: 7.5em var(--lib-chapter); }
-.lib-showcase__intro { display: grid; justify-items: center; text-align: center; }
-.lib-showcase__intro .lib-lead { max-width: 34em; margin-top: 1.1em; font-size: max(14px, 0.9375em); text-wrap: balance; }
-.lib-showcase__intro .lib-status { margin-top: 1em; }
-/* The palette sits on the seam, centred on the band's bottom edge: half on
-   the band, half on the demos' ground, an opaque capsule so it reads on
-   both. The band keeps half its height of air under the version. */
-.lib-showcase__head:has(.lib-showcase__palette) { padding-bottom: 0; }
-.lib-showcase__palette { display: flex; justify-content: center; margin-top: calc(var(--lib-lead) / 2); translate: 0 50%; }
-.lib-showcase__palette .lib-palette { margin: 0; padding: 3px; border-radius: 999px; box-shadow: 0 10px 28px -12px rgb(0 0 0 / 0.45); backdrop-filter: none; -webkit-backdrop-filter: none; }
-.lib-showcase__palette .lib-palette__row { max-width: none; flex-wrap: nowrap; }
-.lib-showcase__palette .lib-palette__swatch { width: 34px; height: 34px; }
-.lib-showcase__palette .lib-palette__swatch > span { width: 20px; height: 20px; }
-.lib-showcase__palette .lib-palette__swatch svg { width: 11px; height: 11px; }
-.lib-toned.lib-showcase__head[data-tone="dark"] .lib-palette { background: #18181a; }
-.lib-toned.lib-showcase__head[data-tone="light"] .lib-palette { background: #fff; }
-/* Room for the capsule's lower half before the first demo. */
-.lib-showcase__head:has(.lib-showcase__palette) + .lib-showcase__stage { --lib-seam: 21px; padding-top: var(--lib-seam); }
+.lib-deck {
+  --lib-ribbon-h: 70px;
+  --lib-ribbon-inset: 14px;
+  --lib-ribbon-orb: 44px;
+  --lib-screen-radius: 28px;
+  --lib-row-h: 56px;
+  /* The pill's height; it hangs half under the shell. */
+  --lib-pill-h: var(--lib-ribbon-h);
+  /* Pure glass: one flat neutral tint over the blurred backdrop, a uniform
+     hairline rim and a top highlight; no gradient, no accent. */
+  --lib-glass-rim: inset 0 0 0 1px rgb(255 255 255 / 0.12), inset 0 1px 0 rgb(255 255 255 / 0.2);
+  position: relative;
+  /* Inside the sections' rail: a small inset on each side (none on phones)
+     and never wider than 980 px, so each half keeps a picture's
+     proportions instead of a banner's. */
+  width: min(calc(100% - 2 * clamp(0px, 4vw - 16px, 48px)), 980px);
+  margin-inline: auto;
+  padding-bottom: calc(var(--lib-pill-h) / 2);
+  color: var(--lib-fg);
+  /* backwards, not both: a held blur(0) filter would make the module a
+     backdrop root and flatten the pill's glass. */
+  animation: lib-player-in 900ms var(--lib-ease-cine) backwards;
+}
+@keyframes lib-player-in { from { opacity: 0; transform: translateY(14px) scale(0.975); filter: blur(6px); } }
+.lib-deck__shell {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  overflow: hidden;
+  border-radius: var(--lib-screen-radius);
+  /* No tint of its own: the list part sits on the page's own grade. */
+  background: none;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.07), 0 30px 70px -30px rgb(0 0 0 / 0.85);
+}
+/* The player part: the shown page's glyph (icons.tsx) on a soft accent
+   bloom, a tone lighter than the list part, centred on the part the pill
+   leaves clear. */
+.lib-player__art {
+  display: block;
+  min-width: 0;
+  height: clamp(150px, 40vw, 240px);
+  background:
+    radial-gradient(42% 58% at 50% 42%, color-mix(in oklab, var(--showcase-accent) 16%, transparent) 0%, transparent 72%),
+    rgb(255 255 255 / 0.04);
+}
+.lib-player__glyph {
+  position: absolute;
+  top: calc(50% - var(--lib-ribbon-h) / 4);
+  left: 50%;
+  width: clamp(88px, 34%, 150px);
+  height: auto;
+  overflow: visible;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 0 22px color-mix(in oklab, var(--showcase-accent) 30%, transparent));
+}
+/* Or a photograph (art.tsx), filling the part edge to edge. */
+.lib-player__photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 45%; user-select: none; }
+/* A dark veil over the photograph, deeper toward the pill. Over the
+   switching layer, so it holds still while the picture changes. */
+.lib-player__art:has(.lib-player__photo)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgb(6 6 9 / 0.3) 0%, rgb(6 6 9 / 0.38) 55%, rgb(6 6 9 / 0.62) 100%);
+}
+/* The pill: half over the shell's foot, half under it, so the glass frosts
+   both parts; two equal halves, so its middle sits on the parts' seam. */
+.lib-deck__pill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: center;
+  column-gap: 10px;
+  width: min(calc(100% - 2 * var(--lib-ribbon-inset)), 780px);
+  height: var(--lib-pill-h);
+  margin-inline: auto;
+  padding-inline: calc((var(--lib-ribbon-h) - var(--lib-ribbon-orb)) / 2);
+  border-radius: 999px;
+  --lib-signal: rgb(255 255 255 / 0.8);
+}
+.lib-deck__pill::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: rgb(16 16 21 / 0.58);
+  -webkit-backdrop-filter: blur(32px) saturate(1.6);
+  backdrop-filter: blur(32px) saturate(1.6);
+  box-shadow: var(--lib-glass-rim), 0 18px 40px -16px rgb(0 0 0 / 0.8);
+}
+.lib-player__transport { display: flex; align-items: center; min-width: 0; text-align: center; }
+.lib-player__track {
+  flex: 1;
+  display: grid;
+  row-gap: 8px;
+  min-width: 0;
+  padding-inline: 18px;
+}
+.lib-player__track .lib-showcase__title { --lib-title-fs: 1.05rem; }
+.lib-player__track .lib-showcase__title .lib-display { overflow: hidden; margin: 0; white-space: nowrap; text-overflow: ellipsis; line-height: 1.15; }
+/* Category beside the position track, like a player's readout next to its
+   scrubber. */
+.lib-player__scrub { display: flex; align-items: center; justify-content: center; gap: 10px; min-width: 0; }
+.lib-player__scrub .lib-showcase__group { flex: none; font-size: 0.62rem; }
+.lib-player__scrub .lib-showcase__group-bars { flex: 1; max-width: 200px; }
+.lib-showcase__group { display: block; color: var(--lib-faint); text-decoration: none; transition: color 160ms ease; }
+/* The position track: one bar per page of the category, like a media
+   scrubber. */
+.lib-showcase__group-bars { --lib-bar-h: 4px; --lib-bar-gap: 4px; position: relative; width: 100%; }
+.lib-showcase__group-bars .lib-bars__bar { background: rgb(255 255 255 / 0.14); }
+/* White bars under a faint halo in the picked accent. */
+.lib-deck .lib-bars__bar { box-shadow: 0 0 8px 0 color-mix(in oklab, var(--showcase-accent) 12%, transparent); }
+.lib-deck .lib-showcase__bars-lit {
+  box-shadow:
+    0 0 5px 0 color-mix(in oklab, var(--showcase-accent) 45%, transparent),
+    0 0 14px 1px color-mix(in oklab, var(--showcase-accent) 20%, transparent);
+}
+/* One lit segment over the tracks (ShowcasePage GroupBars): drawn in on
+   arrival like a lit bar, then glides to the previewed page. */
+.lib-showcase__bars-lit {
+  --lib-bar-w: calc((100% - (var(--lib-bars-n) - 1) * var(--lib-bar-gap)) / var(--lib-bars-n));
+  position: absolute;
+  top: 0;
+  left: calc(var(--lib-bars-i) * (var(--lib-bar-w) + var(--lib-bar-gap)));
+  width: var(--lib-bar-w);
+  height: var(--lib-bar-h);
+  border-radius: 999px;
+  background: var(--lib-fg);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: left 420ms cubic-bezier(0.45, 0.05, 0.2, 1), transform 900ms var(--lib-ease-cine) 150ms, opacity 240ms var(--lib-ease);
+}
+.lib-showcase__group-bars[data-seen] .lib-showcase__bars-lit { transform: none; }
+.lib-showcase__bars-lit[data-off] { opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .lib-showcase__bars-lit { transition: none; } }
+@media (hover: hover) { .lib-showcase__group:hover { color: var(--lib-fg); } }
+.lib-showcase__group:focus-visible { outline: 2px solid var(--lib-signal); outline-offset: 4px; border-radius: 4px; }
+.lib-showcase__title { --lib-title-fs: 1.3em; min-width: 0; max-width: 100%; }
+.lib-deck .lib-bars__dot { display: none; }
+@media (prefers-reduced-motion: reduce) { .lib-deck { animation: none; } }
+
+/* The list part: the pages of one category as rows on quiet tonal tiles
+   (no rules), thumbnail graded at rest, the order as a bare number in an
+   orb. This page's row is lit (white orb); the row previewed on the player,
+   by the pointer or focus, takes the accent as liquid. */
+.lib-screen { position: relative; min-width: 0; text-align: left; }
+.lib-screen__channel { height: 100%; }
+.lib-screen__list {
+  display: grid;
+  grid-auto-rows: var(--lib-row-h);
+  gap: 6px;
+  height: 100%;
+  margin: 0;
+  padding: 10px 10px calc(var(--lib-pill-h) / 2 + 10px);
+  list-style: none;
+}
+.lib-screen__list > li { min-width: 0; min-height: 0; }
+.lib-screen__row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  height: 100%;
+  padding: 6px 14px 6px 6px;
+  border-radius: 18px;
+  background: rgb(255 255 255 / 0.035);
+  color: var(--lib-fg);
+  text-decoration: none;
+  transition: background-color 220ms var(--lib-ease);
+}
+.lib-screen__row[aria-current="page"] { background: rgb(255 255 255 / 0.12); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.1); }
+.lib-screen__row[data-cued] { background: rgb(255 255 255 / 0.08); }
+.lib-screen__row[aria-current="page"][data-cued] { background: rgb(255 255 255 / 0.15); }
+.lib-screen__row:focus-visible { outline: 2px solid var(--lib-signal); outline-offset: 2px; }
+.lib-screen__thumb {
+  position: relative;
+  display: block;
+  width: 64px;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--lib-night);
+}
+.lib-screen__thumb > :is(img, svg) { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: saturate(0.4) brightness(0.78); transition: filter 260ms var(--lib-ease); }
+.lib-screen__row:is([aria-current="page"], [data-cued]) .lib-screen__thumb > :is(img, svg) { filter: none; }
+.lib-screen__text { display: grid; row-gap: 3px; min-width: 0; }
+.lib-screen__title { overflow: hidden; font-family: var(--lib-font-display); font-size: 1.02rem; font-weight: 700; line-height: 1.15; white-space: nowrap; text-overflow: ellipsis; }
+.lib-screen__meta { overflow: hidden; color: var(--lib-faint); font-size: max(12px, 0.8rem); line-height: 1.3; white-space: nowrap; text-overflow: ellipsis; }
+.lib-screen__num {
+  --ev-orb-rest: rgb(255 255 255 / 0.08);
+  --ev-orb-rest-ink: rgb(255 255 255 / 0.62);
+  --ev-orb-lit: var(--primary);
+  --ev-orb-lit-ink: var(--primary-foreground);
+  position: relative;
+  width: 28px;
+  height: 28px;
+  overflow: hidden;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.lib-screen__row[aria-current="page"] .lib-screen__num { --ev-orb-rest: var(--lib-fg); --ev-orb-rest-ink: #0b0b0e; }
+/* The category switch: the pill's list half, two keys, the listed one on a
+   white plate that slides between them (paper inversion). */
+.lib-screen__switch { position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); height: var(--lib-ribbon-orb); }
+.lib-screen__plate {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 50%;
+  border-radius: 999px;
+  background: var(--lib-fg);
+  box-shadow: 0 0 14px 0 color-mix(in oklab, var(--showcase-accent) 22%, transparent);
+  transform: translateX(calc(var(--lib-switch-i) * 100%));
+  transition: transform 420ms cubic-bezier(0.45, 0.05, 0.2, 1);
+}
+.lib-screen__option {
+  position: relative;
+  min-width: 0;
+  padding: 0 0.8em;
+  white-space: nowrap;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--lib-faint);
+  cursor: pointer;
+  font-size: max(11px, 0.66rem);
+}
+.lib-screen__option[aria-pressed="true"] { cursor: default; }
+.lib-screen__option:focus-visible { outline: 2px solid var(--lib-signal); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .lib-screen__plate { transition: none; } }
+.lib-showcase__title .lib-display { font-size: var(--lib-title-fs); font-weight: 700; line-height: 1.04; text-transform: none; text-wrap: balance; }
+.lib-showcase__title .lib-display em { color: inherit; }
+/* A dark band takes the site's "La méthode" stage grade (evoview
+   IntroSection.css .method-stage). Its vignette keeps only the radial
+   falloff: the top/bottom fades are sized for a full section and would
+   swallow a band this short. */
+.lib-toned.lib-showcase__head[data-tone="dark"] { background: linear-gradient(180deg, #0a0a0f 0%, #08080c 45%, #060608 100%); }
+.lib-showcase__head > :not(.lib-stage-grade) { position: relative; z-index: 1; }
+.lib-stage-grade { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.lib-stage-grade > span { position: absolute; inset: 0; }
+.lib-stage-grade__light {
+  background:
+    radial-gradient(70% 55% at 50% -6%, rgb(178 172 216 / 0.09) 0%, rgb(178 172 216 / 0.028) 45%, transparent 75%),
+    radial-gradient(55% 45% at 88% 104%, rgb(63 81 181 / 0.22) 0%, transparent 70%),
+    radial-gradient(32% 28% at 2% 64%, rgb(196 42 52 / 0.03) 0%, transparent 70%);
+}
+.lib-stage-grade__phosphor {
+  opacity: 0.55;
+  background-image: radial-gradient(rgb(206 210 236 / 0.075) 0.55px, transparent 0.75px);
+  background-size: 3px 3px;
+  -webkit-mask-image: radial-gradient(85% 70% at 50% 18%, #000 0%, rgb(0 0 0 / 0.35) 55%, transparent 90%);
+  mask-image: radial-gradient(85% 70% at 50% 18%, #000 0%, rgb(0 0 0 / 0.35) 55%, transparent 90%);
+}
+.lib-stage-grade__scan {
+  background-image: repeating-linear-gradient(0deg, transparent 0 2px, rgb(220 222 255 / 0.014) 2px 3px);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, rgb(0 0 0 / 0.5) 60%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0%, rgb(0 0 0 / 0.5) 60%, transparent 100%);
+}
+.lib-stage-grade__grain {
+  opacity: 0.6;
+  mix-blend-mode: screen;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.78 0 0 0 0 0.79 0 0 0 0 0.9 0 0 0 0.9 -0.32'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.09'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
+.lib-stage-grade__vignette { background: radial-gradient(120% 95% at 50% 40%, transparent 55%, rgb(2 2 4 / 0.62) 100%); }
 .lib-showcase__tail { height: var(--lib-chapter); }
+.lib-showcase__lead { position: relative; height: 0; pointer-events: none; }
+.lib-showcase__lead > span { position: absolute; inset-inline: 0; }
 /* Under the library hero the navbar clearance is the hero's: the header
    opens one heading band below it, the hero's empty palette slot being air
    enough on top. */
@@ -736,16 +1008,58 @@ a.lib-hero__lockup:focus-visible { outline: 2px solid var(--lib-signal); outline
    slot itself stays, it is the reel's run-out (pulling it would clip the
    cards). */
 .lib-showcase > .lib-hero:has(.lib-hero__palette:empty) .lib-hero__stage { margin-bottom: -2.5em; }
-.lib-hero + .lib-showcase__head { padding-top: calc(var(--lib-chapter) - var(--lib-lead) / 2); }
+.lib-hero + .lib-showcase__head { padding-block: calc(var(--lib-lead) * 0.6); }
 /* The page's title block is full bleed in the page's opposite tone
    (ShowcasePage), its own segment between the hero and the demos. */
 /* A first demo on the frame tone starts one heading band under the band. */
 .lib-showcase__stage > .lib-variant[data-frame]:first-child { --lib-variant-top: var(--lib-lead); }
-.lib-showcase .lib-showcase__stage:not(:has(> .lib-variant)) { padding-top: calc(var(--lib-lead) + var(--lib-seam, 0px)); }
+.lib-showcase .lib-showcase__stage:not(:has(> .lib-variant)) { padding-top: var(--lib-lead); }
+/* Under 768 the parts stack inside the shell, player over list, the list's
+   rows side by side: two columns on small tablets, a sideways snap strip on
+   phones (RULES §7). Nothing overlaps the player part then, so its glyph
+   sits in its middle. */
+@media (max-width: 767px) {
+  .lib-screen__list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lib-player__glyph { top: 50%; }
+}
+/* Phones: the pill's two halves stack (transport over switch), still one
+   pill, still centred on the shell's lower edge. */
+@media (max-width: 599px) {
+  .lib-deck {
+    --lib-ribbon-h: 62px;
+    --lib-ribbon-inset: 6px;
+    --lib-ribbon-orb: 36px;
+    --lib-screen-radius: 22px;
+    --lib-pill-h: calc(2 * var(--lib-ribbon-orb) + 26px);
+  }
+  .lib-deck__pill { grid-template-columns: minmax(0, 1fr); row-gap: 8px; align-content: center; padding-inline: 9px; border-radius: 30px; }
+  .lib-player__transport { height: var(--lib-ribbon-orb); }
+  .lib-player__track { padding-inline: 4px; }
+  .lib-player__track .lib-showcase__title { --lib-title-fs: 0.94rem; }
+  .lib-screen__list {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: 80%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 10px;
+    scrollbar-width: none;
+  }
+  .lib-screen__list::-webkit-scrollbar { display: none; }
+  .lib-screen__list > li { scroll-snap-align: center; }
+}
+/* From 768 the parts sit side by side in equal halves, the list's rows
+   setting the shell's height, the player part stretching to it. */
 @media (min-width: 768px) {
   .lib-showcase__head { padding-top: 9em; }
-  .lib-hero + .lib-showcase__head { padding-top: calc(var(--lib-chapter) - var(--lib-lead) / 2); }
-  .lib-showcase__intro .lib-lead { font-size: 1.05em; }
+  .lib-hero + .lib-showcase__head { padding-top: calc(var(--lib-lead) * 0.6); }
+  .lib-deck__shell { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lib-player__art { height: auto; }
+}
+@media (min-width: 1024px) {
+  .lib-deck { --lib-ribbon-h: 74px; --lib-ribbon-orb: 46px; --lib-row-h: 58px; }
+  .lib-player__track .lib-showcase__title { --lib-title-fs: 1.2rem; }
 }
 
 /* ShowcaseVariant. A caption opening a new environment gets a chapter band
@@ -805,10 +1119,13 @@ a.lib-hero__lockup:focus-visible { outline: 2px solid var(--lib-signal); outline
   padding-bottom: max(0px, var(--lib-chapter) - var(--lib-variant-trail, var(--lib-chapter)));
 }
 .lib-variant[data-frame]:last-child > .lib-variant__body { padding-bottom: 0; }
-/* No caption: the band above the first ink is the header's own. */
-.lib-variant:not(:has(> .lib-variant__caption)) > .lib-variant__body {
+/* No caption on the first scene: the band above the first ink is the
+   header's own. A later captionless scene keeps its place: pulled up, it
+   would paint over the previous scene's bottom. */
+.lib-variant:first-child:not(:has(> .lib-variant__caption)) > .lib-variant__body {
   margin-top: calc(-1 * clamp(0px, var(--lib-variant-pad), var(--lib-lead) + var(--lib-chapter)));
 }
+.lib-variant:not(:first-child):not(:has(> .lib-variant__caption)) > .lib-variant__body { margin-top: 0; }
 @media (min-width: 768px) {
   .lib-variant__caption { grid-template-columns: 0.72fr 1.28fr; column-gap: 3.5em; align-items: baseline; }
 }
@@ -816,6 +1133,27 @@ a.lib-hero__lockup:focus-visible { outline: 2px solid var(--lib-signal); outline
 .lib-variant__caption--title { gap: 1em; }
 @media (min-width: 768px) { .lib-variant__caption--title { grid-template-columns: minmax(0, 1fr); } }
 .lib-variant__title { color: var(--lib-fg); text-wrap: balance; }
+/* Page version over the first caption's top-left corner, adding no height
+   (ShowcasePage useFirstVersionSlot). In a title the slot is a zero-width
+   inline anchor at the first line's start, lifted past the caps and their
+   accents (~0.84em in Overused Grotesk 900); a readout is flex, so its slot
+   is pinned to the top-left instead. */
+.lib-variant__version { position: relative; top: -0.84em; display: inline-block; width: 0; height: 0; vertical-align: baseline; }
+.lib-variant__name { position: relative; }
+.lib-variant__name > .lib-variant__version { position: absolute; top: 0; left: 0; }
+.lib-variant__version > .lib-status {
+  position: absolute;
+  bottom: 0.3rem;
+  left: 0.04em;
+  color: var(--lib-muted);
+  font-family: var(--lib-font-state);
+  font-size: max(10px, calc(var(--lib-rem) * 0.66));
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.lib-variant__name > .lib-variant__version > .lib-status { bottom: 0.6em; left: 0; }
 .lib-variant__title em { font-style: normal; color: var(--lib-signal); }
 .lib-variant__caption--title .lib-variant__when { max-width: 40em; }
 @media (min-width: 768px) { .lib-variant__caption--title .lib-variant__when { font-size: 1.05em; } }
@@ -1044,10 +1382,6 @@ a.lib-hero__lockup:focus-visible { outline: 2px solid var(--lib-signal); outline
 }
 /* The frame edge sits above the iframe (the content paints over the well's inset ring). */
 .lib-preview::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14); pointer-events: none; }
-
-/* Header palette leaving under the navbar: fade rather than show through its glass. */
-.lib-showcase__palette { transition: opacity 180ms var(--lib-ease), visibility 0s linear 0s; }
-.lib-showcase__palette[data-away] { opacity: 0; visibility: hidden; transition: opacity 180ms var(--lib-ease), visibility 0s linear 180ms; }
 
 /* A last demo that ends in its own footer meets the library footer directly. */
 .lib-variant[data-ends-in-footer]:last-child > .lib-variant__body { padding-bottom: 0; }

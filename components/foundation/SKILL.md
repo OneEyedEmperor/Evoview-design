@@ -1,6 +1,6 @@
 ---
 name: evoview-foundation
-description: Evoview library foundation — tokens (--ev-scale, type voices, radius roles, rails, rhythm, motion, tones, accent mapping), pause-model hooks (useInViewPause, useSequenceClock, useMediaReady, suspendBackground), crawlable-modal routing (useRouteHistory, RouteLink, HeldCopy, useHydrated) and the approved Evoview attribution mark. Use when building or adapting any Evoview library package, installing one into a client, server-rendering / prerendering one, or when asked about Evoview tokens, scale, tones or the pause model. Triggers on "evoview foundation", "ev-scale", "evoview tokens", "pause model", "useSequenceClock", "useMediaReady", "crawlable modal", "useRouteHistory".
+description: Evoview library foundation — tokens (--ev-scale, type voices, radius roles, rails, rhythm, motion, tones, accent mapping), pause-model hooks (useInViewPause, useSequenceClock, useMediaReady, suspendBackground), crawlable-modal routing (useRouteHistory, RouteLink, HeldCopy, useHydrated), the channel switch for hover-preview screens (ChannelSwitch) and the approved Evoview attribution mark. Use when building or adapting any Evoview library package, installing one into a client, server-rendering / prerendering one, building a screen that previews the hovered option, or when asked about Evoview tokens, scale, tones or the pause model. Triggers on "evoview foundation", "ev-scale", "evoview tokens", "pause model", "useSequenceClock", "useMediaReady", "crawlable modal", "useRouteHistory", "channel switch", "hover preview glitch".
 ---
 
 # Evoview foundation
@@ -44,6 +44,11 @@ library's `STRATEGY.md` + `docs/RULES.md` first.
   `color` rule on `:hover` or a state selector. A button whose surface
   changes colour on hover gets `<SurfaceFill>` (its content again, filled
   state) instead of a hover `background` swap.
+- A screen previewing the option under the pointer or focus (options beside
+  a picture, selector beside a stage, list beside a player) changes through
+  `<ChannelSwitch channel={id}>` (RULES §6), never a cut, crossfade or
+  slide. Copy belonging to the screen (title, category) switches in its own
+  `<ChannelSwitch signal={false}>`; debounce the return to rest (~140 ms).
 - Accent is signal only (selection, progress, focus, indices, blooms,
   primary hover). Light accents (yellow, near-white) must still read: use
   `--ev-accent-signal` for strokes and accent text, never colour alone.

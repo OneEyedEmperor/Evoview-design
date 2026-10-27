@@ -26,10 +26,6 @@ export default function ProcessSequence() {
     <ShowcasePage
       entryId="process-sequence"
       title={(l) => (l === "fr" ? <>Séquence de <em>processus</em></> : <>Process <em>sequence</em></>)}
-      intro={{
-        fr: "La méthode d'un client, jouée étape par étape : une seule étape vit à la fois, les étapes faites gardent leur image et leur marque. Cliquez une carte pour ouvrir son dossier.",
-        en: "A client's method, played step by step: one step is live at a time, finished steps keep their picture and their mark. Click a card to open its dossier.",
-      }}
       tone="dark"
       defaultAccent="#c8a46e"
     >

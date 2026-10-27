@@ -187,6 +187,20 @@ Tokens: fast 180 · control 280 · reveal 600 · cinematic 900 ms; standard
 Reveal = y 24–45 + fade, once. State = clip-path wipes, frame/fill changes,
 progress. Ambient stays quieter than state. Every motion has a job (acknowledge,
 reveal, compare, progress, atmosphere).
+**Preview screens: the channel switch (norm).** A screen that previews the
+option under the pointer or keyboard focus (options beside a picture, a
+selector beside its stage, a page list beside a player) changes by the
+channel switch, `ChannelSwitch` from `foundation`, never by a cut, crossfade
+or slide: the picture folds to a horizontal line (180 ms, ease-in), the new
+one opens from that line with a sideways shudder (360 ms,
+`cubic-bezier(.16,1,.3,1)`), faint signal lines flash over the screen (360 ms,
+stepped). Copy belonging to the screen (its title, category) switches with
+it, without the lines. Fast travel coalesces to the last option; pointing
+away returns the screen to its rest content after ~140 ms, so moving between
+neighbours never flashes it; incoming media is decoded before the screen
+opens. The pointed option answers on its own side (tonal step, accent orb
+fill). Reference: evoview contact application, question 1; the showcase
+title strip (`src/library/ShowcasePage.tsx`).
 **Pause model (mandatory):** loops and clocks run only while the component is
 on-screen, the document is visible and no modal suspends the page; resume with
 remaining time; never advance because time passed while unavailable. Media is
@@ -209,7 +223,8 @@ media-gated reveals, timed sequences with the pause model.
 Do **not** clone into neutral packages: eye artwork, REC dots, CRT/TV power-on,
 scanlines/phosphor/grain, viewfinder brackets, Gaegu numerals, `méthode`
 wordmark, `EVV` prefixes, red reset. Replace by role (see
-`extraction/method.md` §8 table).
+`extraction/method.md` §8 table). One exception: the channel switch (§6),
+whose signal lines exist only while a preview screen switches, never at rest.
 
 ## 9. Attribution
 

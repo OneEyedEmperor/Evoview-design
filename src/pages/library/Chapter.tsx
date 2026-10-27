@@ -24,10 +24,6 @@ export default function Chapter() {
     <ShowcasePage
       entryId="chapter"
       title={(l) => (l === "fr" ? <>Rythme des <em>sections</em></> : <>Section <em>pacing</em></>)}
-      intro={{
-        fr: "Une page Evoview se découpe en chapitres : chacun choisit son ton, son rythme et son titre, et la coupe de ton remplace tout trait.",
-        en: "An Evoview page is cut into chapters: each picks its tone, rhythm and heading, and the tone cut replaces every rule.",
-      }}
       tone="dark"
       defaultAccent="#b4532a"
     >
@@ -91,7 +87,6 @@ const T = {
     },
     page: {
       name: "Rythme des sections · page",
-      when: "La page livrée — Atelier Halde, cabinet imaginaire : des chapitres coupés par le ton, le pied de page qui signe Evoview.",
     },
     projects: {
       title: "Maison du Pré",
@@ -156,7 +151,6 @@ const T = {
     },
     page: {
       name: "Section pacing · page",
-      when: "The delivered page — Atelier Halde, an imaginary studio: chapters cut by tone, the footer that signs Evoview.",
     },
     projects: {
       title: "Meadow House",
@@ -200,7 +194,7 @@ function Demo() {
       </ShowcaseVariant>
       {/* No `tone`: the page cuts dark → paper → light inside; its
           caption stays on the dark frame the first chapter continues. */}
-      <ShowcaseVariant id="chd-page" name={t.page.name} when={t.page.when} rhythm="flush">
+      <ShowcaseVariant id="chd-page" name={t.page.name} caption="none" rhythm="flush">
         <Page t={t} />
         <ChapterFooter config={config} tone="light" />
       </ShowcaseVariant>
