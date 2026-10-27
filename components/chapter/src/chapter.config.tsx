@@ -358,26 +358,38 @@ export function buildChapterFaqConfig(locale: Locale = "fr"): ChapterFaqConfig {
    emblem above it, paragraphs, an optional signed quote, and the pictures
    that drift in lanes beside / around / under the text. Media are
    atmosphere (decorative): stills and short forward loops whose poster is
-   their first frame. Replace with the client's own; keep ≥ 9 items. */
+   their first frame. Replace with the client's own; keep ≥ 9 items. Each
+   still and poster: cut to its `ratio`, at 400w and ~2× the widest tile
+   (640–800w), webp; the lanes pick one per tile size. */
 import type { ChapterStoryContent, ChapterStoryMedia } from "./ChapterStory";
 
 export type ChapterStoryConfig = ChapterStoryContent & { locale: Locale };
 
+const sized = (name: string, large: number) => ({
+  src: `/library/chapter/story-${name}-${large}.webp`,
+  srcSet: `/library/chapter/story-${name}-400.webp 400w, /library/chapter/story-${name}-${large}.webp ${large}w`,
+});
+const still = (name: string, large: number, ratio: string): ChapterStoryMedia => ({ kind: "image", ...sized(name, large), ratio });
+const clip = (src: string, poster: string, large: number, ratio: string): ChapterStoryMedia => {
+  const p = sized(poster, large);
+  return { kind: "video", src, poster: p.src, posterSrcSet: p.srcSet, ratio };
+};
+
 const STORY_MEDIA: ChapterStoryMedia[] = [
-  { kind: "video", src: "/library/card/pf-maison.mp4", poster: "/library/card/pf-maison.webp", ratio: "4 / 5" },
-  { kind: "image", src: "/library/chapter/story-facade.webp", ratio: "4 / 5" },
-  { kind: "video", src: "/library/card/svc-interior.mp4", poster: "/library/card/svc-interior.webp", ratio: "1 / 1" },
-  { kind: "image", src: "/library/chapter/story-drawing.webp", ratio: "1 / 1" },
-  { kind: "video", src: "/library/card/pf-pavillon.mp4", poster: "/library/card/pf-pavillon.webp", ratio: "4 / 5" },
-  { kind: "image", src: "/library/chapter/story-model.webp", ratio: "4 / 5" },
-  { kind: "image", src: "/library/card/svc-architecture.webp", ratio: "4 / 3" },
-  { kind: "video", src: "/library/card/pf-cafe.mp4", poster: "/library/card/pf-cafe.webp", ratio: "4 / 5" },
-  { kind: "image", src: "/library/chapter/story-courtyard.webp", ratio: "1 / 1" },
-  { kind: "image", src: "/library/card/pf-atelier.webp", ratio: "4 / 5" },
-  { kind: "video", src: "/library/card/svc-furniture.mp4", poster: "/library/card/svc-furniture.webp", ratio: "4 / 3" },
-  { kind: "image", src: "/library/chapter/story-stair.webp", ratio: "4 / 5" },
-  { kind: "image", src: "/library/card/pf-loft.webp", ratio: "4 / 5" },
-  { kind: "image", src: "/library/card/svc-renovation.webp", ratio: "4 / 3" },
+  clip("/library/card/pf-maison.mp4", "maison", 540, "4 / 5"),
+  still("facade", 640, "4 / 5"),
+  clip("/library/card/svc-interior.mp4", "interior", 640, "1 / 1"),
+  still("drawing", 640, "1 / 1"),
+  clip("/library/card/pf-pavillon.mp4", "pavillon", 540, "4 / 5"),
+  still("model", 640, "4 / 5"),
+  still("architecture", 800, "4 / 3"),
+  clip("/library/card/pf-cafe.mp4", "cafe", 540, "4 / 5"),
+  still("courtyard", 640, "1 / 1"),
+  still("atelier", 800, "4 / 5"),
+  clip("/library/card/svc-furniture.mp4", "furniture", 800, "4 / 3"),
+  still("stair", 640, "4 / 5"),
+  still("loft", 800, "4 / 5"),
+  still("renovation", 800, "4 / 3"),
 ];
 
 const STORY_COPY: Record<Locale, Omit<ChapterStoryContent, "media" | "emblem">> = {
@@ -432,7 +444,6 @@ const CONTACT_WEEK: (string | null)[][] = [
 const CONTACT_PICTURE = {
   src: "/library/chapter/contact-studio-1200.webp",
   srcSet: "/library/chapter/contact-studio-720.webp 720w, /library/chapter/contact-studio-1200.webp 1200w",
-  sizes: "(min-width: 1024px) 60vw, 100vw",
   width: 1200,
   height: 800,
 };

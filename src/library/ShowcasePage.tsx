@@ -497,8 +497,11 @@ function inkBounds(body: HTMLElement): { top: number; bottom: number } | null {
     let edge = clips.get(el);
     if (edge === undefined) {
       edge = clipEdge(el.parentElement);
-      const top = getComputedStyle(el).overflowY !== "visible" ? topWithin(el, body) : Number.NaN;
-      if (!Number.isNaN(top)) edge = Math.min(edge, top + el.offsetHeight);
+      const style = getComputedStyle(el);
+      const top = style.overflowY !== "visible" ? topWithin(el, body) : Number.NaN;
+      // A masked window fading out over its padding (story lanes): ink stops at its content edge.
+      const fade = style.maskImage && style.maskImage !== "none" ? parseFloat(style.paddingBottom) || 0 : 0;
+      if (!Number.isNaN(top)) edge = Math.min(edge, top + el.offsetHeight - fade);
       clips.set(el, edge);
     }
     return edge;

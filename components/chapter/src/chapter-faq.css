@@ -107,13 +107,20 @@
 }
 .ev-chapter-faq__orb svg { width: 0.8em; height: 0.8em; }
 
-/* Answers stay rendered; closed panels collapse to 0 and leave the tab order. */
+/* Answers stay rendered; closed panels collapse to 0 and leave the tab order
+   and the accessibility tree. Hydrated, they are hidden="until-found" (its
+   content-visibility does it, held to the end of the collapse, and
+   find-in-page still reaches them); before that, visibility does it. */
 .ev-chapter-faq__panel {
   display: grid;
   grid-template-rows: 0fr;
   visibility: hidden;
-  transition: grid-template-rows var(--ev-dur-control) var(--ev-ease), visibility 0s linear var(--ev-dur-control);
+  transition:
+    grid-template-rows var(--ev-dur-control) var(--ev-ease),
+    visibility 0s linear var(--ev-dur-control),
+    content-visibility var(--ev-dur-control) allow-discrete;
 }
+.ev-chapter-faq__panel[hidden] { visibility: visible; }
 .ev-chapter-faq__item[data-open] .ev-chapter-faq__panel {
   grid-template-rows: 1fr;
   visibility: visible;
@@ -124,7 +131,7 @@
   display: grid;
   justify-items: start;
   gap: calc(0.25 * var(--ev-rem));
-  padding: 0 calc(4.25em) 1.25em 1.25em;
+  padding: 0 4.25em 1.25em 1.25em;
   opacity: 0;
   transform: translateY(-0.4em);
   transition: opacity var(--ev-dur-control) var(--ev-ease), transform var(--ev-dur-control) var(--ev-ease);

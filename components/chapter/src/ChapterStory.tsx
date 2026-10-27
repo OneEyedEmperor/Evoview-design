@@ -1,15 +1,18 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
-import { cn, useInViewPause, useMediaQuery, useMediaReady } from "../foundation";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
+import { cn, preloadMedia, useInViewPause, useMediaQuery, useMediaReady } from "../foundation";
 import { Chapter, ChapterHeading, type ChapterRhythm, type ChapterTone } from "./Chapter";
 
 /* Story chapter: the client's story beside (around, above) lanes of its
    pictures that drift slowly and travel with the scroll. Lanes are vertical
    columns from 1024, sideways rows below. */
 
+/* `srcSet` / `posterSrcSet` ("url 400w, url 800w"): one file per picture is
+   picked from its tile size, so the reveal gate decodes exactly the file the
+   tile shows. `src` / `poster` alone = one size for every width. */
 export type ChapterStoryMedia =
-  | { kind: "image"; src: string; srcSet?: string; sizes?: string; ratio: string }
-  /** `poster` = the first frame (webp); the clip loops forward, seamless. */
-  | { kind: "video"; src: string; poster: string; ratio: string };
+  | { kind: "image"; src: string; srcSet?: string; ratio: string }
+  /** `poster` = the clip's first frame (webp); the clip loops forward, seamless. */
+  | { kind: "video"; src: string; poster: string; posterSrcSet?: string; ratio: string };
 
 export type ChapterStoryContent = {
   /** Overused 900 uppercase; one `<em>` = the accent word; a `<ChapterMark>` may replace a word. */
@@ -75,8 +78,31 @@ const DRIFT_PX_PER_MS = 0.014;
 const SCROLL_TRAVEL_PX = 520;
 const MAX_PLAYING = 1;
 const VIDEO_SYNC_MS = 250;
+/* Files are picked for the tile × device pixel ratio, capped: a third
+   pixel per point is not worth its bytes. */
+const MAX_DPR = 2;
 
 const mod = (n: number, m: number) => ((n % m) + m) % m;
+
+type Candidate = { url: string; w: number };
+const candidates = (src: string, srcSet?: string): Candidate[] => {
+  const list = (srcSet ?? "")
+    .split(",")
+    .map((part) => part.trim().split(/\s+/))
+    .map(([url, d]) => ({ url, w: parseFloat(d ?? "") }))
+    .filter((c) => c.url && c.w > 0)
+    .sort((a, b) => a.w - b.w);
+  return list.length ? list : [{ url: src, w: Infinity }];
+};
+const aspect = (ratio: string) => {
+  const [w, h = 1] = ratio.split("/").map((n) => parseFloat(n));
+  return w > 0 && h > 0 ? w / h : 1;
+};
+/* The smallest file at least `need` px wide, else the largest. */
+const pick = (m: ChapterStoryMedia, need: number): Candidate => {
+  const list = m.kind === "image" ? candidates(m.src, m.srcSet) : candidates(m.poster, m.posterSrcSet);
+  return list.find((c) => c.w >= need) ?? list[list.length - 1];
+};
 
 /* Round-robin deal; each lane then borrows from the lane across (half the
    count away) before the others, so a short lane extends with pictures its
@@ -109,14 +135,26 @@ export function ChapterStory({
   const lanes = useMemo(() => deal(content.media, laneCount), [content.media, laneCount]);
 
   const { active: revealed } = useInViewPause(rootRef, { once: true, threshold: 0.15 });
-  /* Media is fetched only once the chapter comes within 400px. */
+  /* Stills and posters are fetched only once the chapter comes within 400px. */
   const { active: near } = useInViewPause(rootRef, { once: true, rootMargin: "400px 0px", ignoreSuspension: true });
-  const stills = useMemo(() => content.media.map((m) => (m.kind === "image" ? m.src : m.poster)), [content.media]);
-  const gate = useMediaReady(near, stills);
-  const shown = revealed && (gate.ready || gate.failed);
 
-  const clips = useMemo(() => content.media.flatMap((m) => (m.kind === "video" ? [m.src] : [])), [content.media]);
-  const clipUrls = useSharedClipUrls(clips, near);
+  /* Widest column / tallest row seen so far (device px), from the lanes. */
+  const [box, setBox] = useState({ x: 0, y: 0 });
+  const onBox = useCallback((dim: Axis, px: number) => setBox((b) => (px > b[dim] ? { ...b, [dim]: px } : b)), []);
+  const [latched, setLatched] = useState(false);
+  const picks = usePicks(content.media, axis, box[axis], latched);
+  const stills = useMemo(() => (picks ? content.media.map((m) => picks.get(m)) : []), [content.media, picks]);
+  const gate = useMediaReady(near && !!picks, stills);
+  const ready = revealed && (gate.ready || gate.failed);
+  useEffect(() => {
+    if (ready) setLatched(true);
+  }, [ready]);
+  const shown = latched || ready;
+
+  /* A clip is fetched the first time it is the one to play. */
+  const [wanted, setWanted] = useState<string[]>([]);
+  const onWant = useCallback((src: string) => setWanted((w) => (w.includes(src) ? w : [...w, src])), []);
+  const clipUrls = useSharedClipUrls(wanted);
 
   const centered = layout === "center";
   const copy = (
@@ -177,10 +215,12 @@ export function ChapterStory({
           axis={axis}
           groups={groups}
           lanes={lanes}
-          near={near}
+          stills={near ? picks : null}
           shown={shown}
           clipUrls={clipUrls}
           frameRef={rootRef}
+          onBox={onBox}
+          onWant={onWant}
         />
       </div>
     </Chapter>
@@ -189,23 +229,62 @@ export function ChapterStory({
 
 const delay = (ms: number) => ({ "--ev-chapter-story-delay": `${ms}ms` }) as CSSProperties;
 
+/* One file per picture for the current tile size: never a step down, and a
+   step up (a resize, dense → ample) is decoded before it replaces a shown
+   file, so the lanes never blank. */
+function usePicks(media: ChapterStoryMedia[], axis: Axis, need: number, shown: boolean): Map<ChapterStoryMedia, string> | null {
+  // By content, not identity: a config rebuilt on every render keeps its picks.
+  const sig = media.map((m) => (m.kind === "image" ? `${m.src} ${m.srcSet ?? ""}` : `${m.poster} ${m.posterSrcSet ?? ""}`)).join("|");
+  const [held, setHeld] = useState<{ sig: string; picks: Candidate[] } | null>(null);
+  const base = held?.sig === sig ? held.picks : null;
+  const next = useMemo(() => {
+    if (!need) return null;
+    const target = media.map((m) => pick(m, axis === "y" ? need : need * aspect(m.ratio)));
+    const merged = target.map((c, i) => (base && base[i].w >= c.w ? base[i] : c));
+    return base && merged.every((c, i) => c === base[i]) ? null : merged;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sig, axis, need, base]);
+
+  useEffect(() => {
+    if (!next) return;
+    if (!base || !shown) {
+      setHeld({ sig, picks: next });
+      return;
+    }
+    let live = true;
+    void preloadMedia(next.filter((c, i) => c !== base[i]).map((c) => c.url)).then(() => {
+      if (live) setHeld({ sig, picks: next });
+    });
+    return () => {
+      live = false;
+    };
+  }, [next, base, shown, sig]);
+
+  return useMemo(() => (base ? new Map(media.map((m, i) => [m, base[i].url])) : null), [media, base]);
+}
+
+type DriftHooks = { onBox: (axis: Axis, px: number) => void; onWant: (src: string) => void };
+
 function Mosaic({
   axis,
   groups,
   lanes,
-  near,
+  stills,
   shown,
   clipUrls,
   frameRef,
+  onBox,
+  onWant,
 }: {
   axis: Axis;
   groups: Group[];
   lanes: LanePool[];
-  near: boolean;
+  /** File per picture, once the chapter is near (null: no fetch yet). */
+  stills: Map<ChapterStoryMedia, string> | null;
   shown: boolean;
   clipUrls: Record<string, string>;
   frameRef: RefObject<HTMLDivElement | null>;
-}) {
+} & DriftHooks) {
   const laneRefs = useRef<(HTMLDivElement | null)[]>([]);
   const trackRefs = useRef<(HTMLDivElement | null)[]>([]);
   const { active } = useInViewPause(frameRef, { rootMargin: "-1px 0px" });
@@ -217,13 +296,13 @@ function Mosaic({
     const lanesEls = laneRefs.current.slice(0, count);
     const tracks = trackRefs.current.slice(0, count);
     if (!frame || lanesEls.some((el) => !el) || tracks.some((el) => !el)) return;
-    const instance = createDrift(frame, lanesEls as HTMLElement[], tracks as HTMLElement[], axis);
+    const instance = createDrift(frame, lanesEls as HTMLElement[], tracks as HTMLElement[], axis, { onBox, onWant });
     controller.current = instance;
     return () => {
       instance.destroy();
       controller.current = null;
     };
-  }, [axis, count, frameRef]);
+  }, [axis, count, frameRef, onBox, onWant]);
 
   useEffect(() => {
     controller.current?.setActive(active && shown);
@@ -248,7 +327,7 @@ function Mosaic({
               key={lane}
               axis={axis}
               lane={lanes[lane] ?? EMPTY_LANE}
-              near={near}
+              stills={stills}
               clipUrls={clipUrls}
               laneRef={(el) => {
                 laneRefs.current[lane] = el;
@@ -273,14 +352,14 @@ const EMPTY_LANE: LanePool = { own: 0, pool: [] };
 function Lane({
   axis,
   lane: { own, pool },
-  near,
+  stills,
   clipUrls,
   laneRef,
   trackRef,
 }: {
   axis: Axis;
   lane: LanePool;
-  near: boolean;
+  stills: Map<ChapterStoryMedia, string> | null;
   clipUrls: Record<string, string>;
   laneRef: (el: HTMLDivElement | null) => void;
   trackRef: (el: HTMLDivElement | null) => void;
@@ -329,21 +408,22 @@ function Lane({
         }}
       >
         {[...copy, ...copy].map((item, i) => (
-          <Tile key={i} item={item} near={near} clipUrl={item.kind === "video" ? clipUrls[item.src] : undefined} />
+          <Tile key={i} item={item} still={stills?.get(item)} clipUrl={item.kind === "video" ? clipUrls[item.src] : undefined} />
         ))}
       </div>
     </div>
   );
 }
 
-function Tile({ item, near, clipUrl }: { item: ChapterStoryMedia; near: boolean; clipUrl?: string }) {
+function Tile({ item, still, clipUrl }: { item: ChapterStoryMedia; still?: string; clipUrl?: string }) {
   return (
     <figure className="ev-chapter-story__tile" style={{ aspectRatio: item.ratio }} data-kind={item.kind}>
       {item.kind === "video" ? (
         // No autoPlay: the drift controller plays the one clip most in view.
         <video
           src={clipUrl}
-          poster={near ? item.poster : undefined}
+          poster={still}
+          data-clip={item.src}
           loop
           muted
           playsInline
@@ -352,14 +432,7 @@ function Tile({ item, near, clipUrl }: { item: ChapterStoryMedia; near: boolean;
           disableRemotePlayback
         />
       ) : (
-        <img
-          src={near ? item.src : undefined}
-          srcSet={near ? item.srcSet : undefined}
-          sizes={item.sizes}
-          alt=""
-          decoding="async"
-          draggable={false}
-        />
+        <img src={still} alt="" decoding="async" draggable={false} />
       )}
     </figure>
   );
@@ -372,13 +445,15 @@ function Tile({ item, near, clipUrl }: { item: ChapterStoryMedia; near: boolean;
 type Clip = { el: HTMLVideoElement; start: number; size: number };
 type LaneState = { lane: HTMLElement; track: HTMLElement; motion: LaneMotion; half: number; size: number; anim: Animation | null; clips: Clip[] };
 
-function createDrift(frame: HTMLElement, lanes: HTMLElement[], tracks: HTMLElement[], axis: Axis) {
+function createDrift(frame: HTMLElement, lanes: HTMLElement[], tracks: HTMLElement[], axis: Axis, hooks: DriftHooks) {
   const states: LaneState[] = tracks.map((track, i) => ({ lane: lanes[i], track, motion: MOTION[i % MOTION.length], half: 0, size: 0, anim: null, clips: [] }));
   const vertical = axis === "y";
+  const asked = new Set<string>();
   let active = false;
   let windowH = window.innerHeight;
   let frameH = frame.offsetHeight;
   let lastScrollY = window.scrollY;
+  let scrollY = lastScrollY;
   let raf = 0;
   let timer = 0;
 
@@ -397,14 +472,23 @@ function createDrift(frame: HTMLElement, lanes: HTMLElement[], tracks: HTMLEleme
         for (const { el, start, size } of s.clips) {
           const at = start + at0;
           const visible = Math.max(0, Math.min(at + size, s.size) - Math.max(at, 0));
-          if (visible > 0 && el.hasAttribute("src")) candidates.push({ el, visible });
+          if (visible > 0) candidates.push({ el, visible });
         }
       }
     }
     const selected = new Set(candidates.sort((a, b) => b.visible - a.visible).slice(0, MAX_PLAYING).map((c) => c.el));
     // Pause every outgoing clip before starting its replacement: never above the cap.
     for (const s of states) for (const { el } of s.clips) if (!selected.has(el) && !el.paused) el.pause();
-    for (const el of selected) if (el.paused) void el.play().catch(() => undefined);
+    for (const el of selected) {
+      // Not fetched yet: ask once and hold the poster (its first frame) until it arrives.
+      if (!el.getAttribute("src")) {
+        const clip = el.dataset.clip;
+        if (clip && !asked.has(clip)) {
+          asked.add(clip);
+          hooks.onWant(clip);
+        }
+      } else if (el.paused) void el.play().catch(() => undefined);
+    }
   };
 
   const measure = (s: LaneState) => {
@@ -436,7 +520,6 @@ function createDrift(frame: HTMLElement, lanes: HTMLElement[], tracks: HTMLEleme
 
   const applyScroll = () => {
     raf = 0;
-    const scrollY = window.scrollY;
     const delta = scrollY - lastScrollY;
     lastScrollY = scrollY;
     if (delta) {
@@ -450,7 +533,10 @@ function createDrift(frame: HTMLElement, lanes: HTMLElement[], tracks: HTMLEleme
     sync();
   };
 
+  // The offset is read in the scroll event (layout is clean there), the
+  // frame callback only writes.
   const onScroll = () => {
+    scrollY = window.scrollY;
     if (!raf) raf = requestAnimationFrame(applyScroll);
   };
   const onResize = () => {
@@ -460,6 +546,9 @@ function createDrift(frame: HTMLElement, lanes: HTMLElement[], tracks: HTMLEleme
   const ro = new ResizeObserver(() => {
     frameH = frame.offsetHeight;
     states.forEach(measure);
+    // Tile size for the file pick: column width / row height, device px.
+    const cross = Math.max(0, ...states.map((s) => (vertical ? s.lane.clientWidth : s.lane.clientHeight)));
+    if (cross) hooks.onBox(axis, cross * Math.min(window.devicePixelRatio || 1, MAX_DPR));
     sync();
   });
   ro.observe(frame);
@@ -475,7 +564,7 @@ function createDrift(frame: HTMLElement, lanes: HTMLElement[], tracks: HTMLEleme
       if (next === active) return;
       active = next;
       if (active) {
-        lastScrollY = window.scrollY;
+        lastScrollY = scrollY = window.scrollY;
         windowH = window.innerHeight;
         states.forEach((s) => s.anim?.play());
         window.addEventListener("scroll", onScroll, { passive: true });
@@ -506,11 +595,10 @@ function createDrift(frame: HTMLElement, lanes: HTMLElement[], tracks: HTMLEleme
    session and share an object URL (falls back to the URL itself). */
 const clipCache = new Map<string, Promise<string>>();
 
-function useSharedClipUrls(srcs: string[], enabled: boolean): Record<string, string> {
+function useSharedClipUrls(srcs: string[]): Record<string, string> {
   const [urls, setUrls] = useState<Record<string, string>>({});
   const key = srcs.join("|");
   useEffect(() => {
-    if (!enabled) return;
     let live = true;
     for (const src of srcs) {
       let p = clipCache.get(src);
@@ -529,6 +617,6 @@ function useSharedClipUrls(srcs: string[], enabled: boolean): Record<string, str
       live = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, enabled]);
+  }, [key]);
   return urls;
 }

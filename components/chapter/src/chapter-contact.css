@@ -11,7 +11,7 @@
   --chapter-contact-tile-gap: 6px;
 }
 
-.ev-chapter-contact__body { display: flex; flex-direction: column; }
+.ev-chapter-contact__body { display: flex; flex-direction: column; --ev-text-lit: var(--chapter-contact-signal); }
 .ev-chapter-contact__col { display: flex; flex-direction: column; min-width: 0; }
 
 /* ── Tiles (place + channels) ───────────────────────────────────────── */
@@ -62,7 +62,6 @@
 @media (hover: hover) {
   .ev-chapter-contact__tile:has(.ev-chapter-contact__link:hover) { background: color-mix(in oklab, var(--ev-fg) 7%, var(--ev-surface-list)); }
 }
-.ev-chapter-contact__body { --ev-text-lit: var(--chapter-contact-signal); }
 
 /* ── Hours ──────────────────────────────────────────────────────────── */
 .ev-chapter-contact__hours { display: flex; flex-direction: column; gap: 0.75em; min-width: 0; }
@@ -186,20 +185,18 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
-.ev-chapter-contact__table tbody tr { background: var(--ev-surface-list-alt); }
-.ev-chapter-contact__table tbody tr:nth-child(even) { background: var(--ev-surface-list); }
-.ev-chapter-contact__hours[data-view="week"] .ev-chapter-contact__table tbody tr { background: var(--ev-surface-list); }
-.ev-chapter-contact__hours[data-view="week"] .ev-chapter-contact__table tbody tr:nth-child(even) { background: var(--ev-surface-list-alt); }
+.ev-chapter-contact__table tbody tr { background: var(--ev-surface-list); }
+.ev-chapter-contact__table tbody tr:nth-child(even) { background: var(--ev-surface-list-alt); }
 .ev-chapter-contact__table tbody th { color: var(--ev-fg); font-weight: 600; border-radius: var(--ev-radius-control) 0 0 var(--ev-radius-control); }
 .ev-chapter-contact__table td { color: var(--ev-fg-65); }
 .ev-chapter-contact__table td:last-child { border-radius: 0 var(--ev-radius-control) var(--ev-radius-control) 0; }
 .ev-chapter-contact__table td[data-closed] { color: var(--ev-fg-35); }
-.ev-chapter-contact__table tbody tr[data-today],
-.ev-chapter-contact__hours[data-view] .ev-chapter-contact__table tbody tr[data-today] { background: var(--chapter-contact-today); }
+.ev-chapter-contact__table tbody tr[data-today] { background: var(--chapter-contact-today); }
 .ev-chapter-contact__table tr[data-today] td { color: var(--ev-fg); }
 
+/* Today's marker (with the wash, the weight and the spoken "today"). */
 .ev-chapter-contact__mark {
-  display: none;
+  display: inline-block;
   width: 6px;
   height: 6px;
   margin-right: 0.6em;
@@ -207,7 +204,6 @@
   background: var(--chapter-contact-signal);
   vertical-align: 0.15em;
 }
-[data-today] .ev-chapter-contact__mark { display: inline-block; }
 
 /* Week strip (band): seven day tiles across. */
 .ev-chapter-contact__strip {

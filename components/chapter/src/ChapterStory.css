@@ -80,7 +80,7 @@
 .ev-chapter-story__media { position: relative; min-width: 0; overflow: hidden; }
 .ev-chapter-story__media[data-slot="before"] { order: -1; }
 .ev-chapter-story__lane { position: relative; min-width: 0; }
-.ev-chapter-story__track { display: flex; will-change: transform; }
+.ev-chapter-story__track { display: flex; }
 
 /* Margin, not gap: the trailing space keeps the half-length loop exact. */
 .ev-chapter-story__tile {
@@ -113,14 +113,21 @@
 .ev-chapter-story[data-axis="x"] .ev-chapter-story__track { width: max-content; height: 100%; }
 .ev-chapter-story[data-axis="x"] .ev-chapter-story__tile { height: 100%; margin-right: var(--chapter-story-gap); }
 
-/* Columns: vertical lanes in a window faded top and bottom. */
+/* Columns: vertical lanes in a window whose two ends fade out over the
+   chapter's block padding (capped at the smallest rhythm): the copy centres
+   against the opaque part, the faded foot ends before the next tone cut.
+   The fades are the window's padding; the lanes run through it. */
 .ev-chapter-story[data-axis="y"] .ev-chapter-story__media {
+  --chapter-story-fade: min(calc(0.12 * var(--chapter-story-height)), var(--ev-chapter-compact));
   display: flex;
   gap: var(--chapter-story-gap);
+  box-sizing: border-box;
   height: var(--chapter-story-height);
-  mask-image: linear-gradient(180deg, transparent, #000 12%, #000 88%, transparent);
+  padding-block: var(--chapter-story-fade);
+  margin-block: calc(-1 * var(--chapter-story-fade));
+  mask-image: linear-gradient(180deg, transparent, #000 var(--chapter-story-fade), #000 calc(100% - var(--chapter-story-fade)), transparent);
 }
-.ev-chapter-story[data-axis="y"] .ev-chapter-story__lane { flex: 1 1 0; }
+.ev-chapter-story[data-axis="y"] .ev-chapter-story__lane { flex: 1 1 0; margin-block: calc(-1 * var(--chapter-story-fade)); }
 .ev-chapter-story[data-axis="y"][data-density="dense"] .ev-chapter-story__media[data-slot="side"] .ev-chapter-story__lane:nth-child(2) { flex-grow: 1.25; }
 .ev-chapter-story[data-axis="y"] .ev-chapter-story__track { flex-direction: column; }
 .ev-chapter-story[data-axis="y"] .ev-chapter-story__tile { width: 100%; margin-bottom: var(--chapter-story-gap); }

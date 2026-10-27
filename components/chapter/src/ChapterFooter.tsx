@@ -119,7 +119,8 @@ function PanelLink({ link, className, newTab, current }: { link: ChapterFooterLi
 function Panel({ config }: { config: ChapterConfig }) {
   const { brand, footer, attribution } = config;
   const { nav = [], socials = [], contact } = footer;
-  const tel = contact?.phone && (contact.phoneHref ?? `tel:${contact.phone.replace(/[^\d+]/g, "")}`);
+  const phone = contact?.phone;
+  const tel = phone ? (contact.phoneHref ?? `tel:${phone.replace(/[^\d+]/g, "")}`) : undefined;
 
   return (
     <>
@@ -162,7 +163,7 @@ function Panel({ config }: { config: ChapterConfig }) {
             ) : (
               <span className="ev-chapter__meta-link">{contact.address}</span>
             )}
-            {tel && <PanelLink link={{ label: contact.phone!, href: tel }} className="ev-chapter__meta-link" newTab={footer.newTab} />}
+            {phone && tel && <PanelLink link={{ label: phone, href: tel }} className="ev-chapter__meta-link" newTab={footer.newTab} />}
             {contact.email && <PanelLink link={{ label: contact.email, href: `mailto:${contact.email}` }} className="ev-chapter__meta-link" newTab={footer.newTab} />}
           </address>
         )}

@@ -105,7 +105,8 @@ export default function StoryScene() {
         </SceneDesk>
       }
     >
-      <ChapterStory id="chs-story" content={content} layout={layout} density={density} tone="dark" rhythm="compact" />
+      {/* The scene caption is the h2: the story heading nests under it. */}
+      <ChapterStory id="chs-story" content={content} layout={layout} density={density} tone="dark" rhythm="compact" level={3} />
     </Scene>
   );
 }

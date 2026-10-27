@@ -107,7 +107,7 @@ export default function ContactScene() {
       }
     >
       <div onClickCapture={holdLinks}>
-        <ChapterContact id="chc-contact" config={config} layout={layout} hours={hours} tone="dark" rhythm="compact" />
+        <ChapterContact id="chc-contact" config={config} layout={layout} hours={hours} tone="dark" rhythm="compact" level={3} />
       </div>
     </Scene>
   );

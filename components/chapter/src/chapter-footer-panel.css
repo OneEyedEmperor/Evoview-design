@@ -128,10 +128,7 @@
 
 .ev-chapter__nav-link:focus-visible,
 .ev-chapter__social:focus-visible,
-.ev-chapter__meta-link:focus-visible {
-  outline: 2px solid var(--chapter-signal);
-  outline-offset: 3px;
-}
+.ev-chapter__meta-link:focus-visible { outline: 2px solid var(--chapter-signal); outline-offset: 3px; }
 .ev-chapter__nav-link:focus-visible { outline-offset: 2px; }
 .ev-chapter__meta-link:focus-visible { border-radius: var(--ev-radius-badge); }
 

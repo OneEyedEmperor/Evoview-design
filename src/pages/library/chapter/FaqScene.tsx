@@ -65,7 +65,7 @@ export default function FaqScene() {
         </SceneDesk>
       }
     >
-      <ChapterFaq config={config} layout={layout} tone="light" defaultOpen={1} />
+      <ChapterFaq config={config} layout={layout} tone="light" defaultOpen={1} level={3} />
     </Scene>
   );
 }

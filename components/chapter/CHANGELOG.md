@@ -14,6 +14,53 @@
   chapter (paper) now comes before the visit band (dark). Defaults unchanged.
   The frame's stage grade now also covers a dark chapter inside a pale scene
   (`src/library/trial-grade.css`). No package, config or API change.
+- **API (additive):** `ChapterContact` takes `level?: 2 | 3` (default 2), like
+  `ChapterFaq` / `ChapterStory`; at 3 the title is h3 and the hours title h4.
+  The showcase FAQ and contact scenes pass `level={3}` under their h2
+  captions.
+- **Config:** `ChapterContactConfig.picture.sizes` is now an override; when
+  absent the picture gets a per-layout default (`columns` `50vw`, `split`
+  `(min-width: 1024px) 50vw, 100vw`). The reference config drops its
+  `sizes` (was `(min-width: 1024px) 60vw, 100vw`, which picked the 1200w
+  file at 1440 for a 640px picture). Existing client configs keep theirs.
+- ChapterContact: the venue clock re-reads just after each minute turns (one
+  timeout, was a 30 s interval), only on screen with the tab visible, and
+  re-reads at once on return. The weekday comes from the venue's calendar
+  date (no locale day-name matching); an unknown `timeZone` leaves today /
+  the state unresolved instead of throwing. Today's dot is rendered only on
+  today's row / tile; duplicate week-row rules removed (no visual change).
+- ChapterFaq: once hydrated, closed answers are `hidden="until-found"` where
+  supported, so find-in-page reaches them and opens that question
+  (`beforematch`); server HTML is unchanged (no `hidden`), the open / close
+  animation is kept. Without support, `visibility: hidden` as before.
+- ChapterFooter panel: no behaviour change (phone link typed without a
+  non-null assertion).
+- **ChapterStory · config (breaking for configs that set it):**
+  `ChapterStoryMedia` image `sizes` removed (it was never applied: the reveal
+  gate decoded `src` while the tile picked from `srcSet`, fetching twice);
+  delete the key. Video media take `posterSrcSet?`. `srcSet` /
+  `posterSrcSet` now drive a per-tile pick: one file per picture from the
+  measured tile × device pixel ratio (capped at 2), decoded by the gate,
+  stepped up only after decoding, never down.
+- ChapterStory · config: the reference media are cut to their tile ratio at
+  400w + 540–800w (`public/library/chapter/story-*-{400,540,640,800}.webp`,
+  was five 640w stills plus the card package's 860–1100w posters); clip
+  posters are now each clip's first frame (the card posters are other
+  frames, which jumped when a clip started). Story media at 1440 × 1: 1668 →
+  388 KB; 1440 × 2: 689 KB; 390 × 3: 477 KB.
+- ChapterStory: a clip is fetched the first time it is the one to play (was:
+  all clips once the chapter came near; 849 → 143 KB in the first seconds);
+  the scroll offset is read in the passive scroll listener, the frame
+  callback only writes; `will-change` dropped from the tracks (the running
+  Web Animation promotes them).
+- ChapterStory · CSS: column lanes fade out over the chapter's block padding
+  (`--chapter-story-fade`: 12 % of the window, capped at the compact rhythm),
+  so the copy centres against the opaque part: desk → copy 183 → 104 px at
+  1440 in the showcase, and the faded foot sits in the bottom padding (was
+  above it, adding ~80 px of dark before the next cut). Rows unchanged.
+- Showcase: the story heading is `level={3}` under its h2 caption; the frame's
+  ink measure stops a masked clip box at its content edge
+  (`src/library/ShowcasePage.tsx`).
 
 ## 1.2.0
 

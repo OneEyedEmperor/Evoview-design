@@ -125,6 +125,7 @@ const config = buildChapterConfig(locale);
 | `ChapterFooter` | `config`, `tone?` (light), `layout?: "bar" \| "panel"` (bar) |
 | `ChapterFaq` | `config: ChapterFaqConfig`, `layout?: "media" \| "split" \| "stacked"` (media if `config.media`, else split), `id?` ("faq"), `tone?` (dark), `rhythm?`, `defaultOpen?: number \| null` (null), `level?: 2 \| 3` |
 | `chapterFaqJsonLd(config)` | FAQPage object from `config.items` (for a `<head>` script when `structuredData` is off) |
+| `ChapterContact` | `config: ChapterContactConfig`, `layout?: "columns" \| "split" \| "band"` (columns), `hours?: "today" \| "week"` (today), `id?`, `tone?` (dark), `rhythm?`, `level?: 2 \| 3` (2), `className?` — see [ChapterContact](#chaptercontact) |
 | `ChapterStory` | `content: ChapterStoryContent`, `layout?: "start" \| "center" \| "end" \| "above"` (start), `density?: "ample" \| "dense"` (dense), `id?`, `tone?` (dark), `rhythm?`, `accent?`, `headingVariant?` (feature), `level?`, `className?` — see [ChapterStory](#chapterstory) |
 | `chapterNavSections(chapters, accent)` | `[{ id, accent? }]` → navbar `sections` `[{ id, color }]` |
 
@@ -165,9 +166,13 @@ Source: Tchin Tchin karaoke "Tout ce que vous devez savoir"
   word, the "another question" link (a text link, never a CTA plate), the
   portrait, `phoneVisible`, layout, tone, `--chapter-faq-sticky-top` (host
   navbar clearance, default 6rem).
-- **Crawlable:** every answer is rendered (server too) and collapsed by
-  height (`grid-template-rows`, control 280ms); closed panels are
-  `visibility: hidden` (out of the tab order and the accessibility tree).
+- **Crawlable:** every answer is rendered (server too, never `hidden` in
+  server HTML) and collapsed by height (`grid-template-rows`, control
+  280ms); closed panels are out of the tab order and the accessibility tree.
+  Once hydrated, where the browser supports it, closed panels carry
+  `hidden="until-found"`: find-in-page reaches a closed answer and opens its
+  question (`beforematch`); otherwise `visibility: hidden`. Phone rows behind
+  "show more" are `display: none` (not findable until shown).
   `structuredData` emits FAQPage JSON-LD from the same strings, so visible
   and structured answers never drift; one FAQPage per page.
 - **A11y / keys:** questions are `h3` (`h4` at `level={3}`) buttons with
@@ -209,6 +214,7 @@ Files `ChapterContact.tsx`, `chapter-contact.css`; config block `CONTACT`
 | --- | --- |
 | `layout` | `columns` (the original: centred heading + action over channels `.44` · hours `.56`, the place's picture filling the hours column) · `split` (heading, action, hours `.37` beside the picture 16:10 and channels two across `.63`, from 1024) · `band` (compact closing band: split heading, the five details on one row from 1280, the hours as a head + today row or a seven-day strip) |
 | `hours` | `today` (live state line, today's slots on the selection surface, the week folded in `<details>`) · `week` (all seven days laid out: table rows, or day tiles in `band`) |
+| `level` | `2` (default) · `3`: section heading level; the hours title is one level below |
 | `tone`, `rhythm`, `id`, `className` | as `Chapter` (rail is always `wide`) |
 
 Config (`ChapterContactConfig`): `title` (one `<em>` accent word), `lead?`,
@@ -216,7 +222,9 @@ Config (`ChapterContactConfig`): `title` (one `<em>` accent word), `lead?`,
 (`{ label, value, href?, external? }` — `value` is what the visitor reaches,
 never a slogan), `hours { title, timeZone (IANA), services[], week[7][services]
 ("HH:MM–HH:MM" | null; past-midnight slots allowed), note?, labels }`,
-`picture? { src, srcSet?, sizes?, alt, width, height }`, `newTab`.
+`picture? { src, srcSet?, sizes?, alt, width, height }` (`sizes` defaults per
+layout: `columns` `50vw`, `split` `(min-width: 1024px) 50vw, 100vw`; set it
+only to override), `newTab`.
 
 - **Protected (Evoview):** one primary action (`PrimaryPlate`, no Evoview
   mark beside it); details and hours as tonal tiles / alternating rows, no
@@ -237,10 +245,13 @@ never a slogan), `hours { title, timeZone (IANA), services[], week[7][services]
   resolve after hydration (`useSyncExternalStore` server snapshot `null`; a
   reserved line and dashes meanwhile), so a prerender built on another day
   never mismatches. The week is a real `<table>` (`th scope`), `aria-current`
-  on today.
-- **Pause model:** the state re-reads the clock every 30 s only while the
-  chapter is on screen and the tab visible (`useInViewPause`); it never ticks
-  off-screen and catches up when it returns. No other motion loop.
+  on today. Today and the state come from the venue's wall clock in
+  `timeZone` (DST included), whatever the visitor's zone; an unknown zone
+  leaves them unresolved instead of throwing.
+- **Pause model:** one timeout re-reads the clock just after each minute
+  turns, only while the chapter is on screen and the tab visible
+  (`useInViewPause`); off-screen or hidden it is cleared, and it re-reads at
+  once when the chapter returns. No other motion loop.
 - **Attribution:** none (the page's one linked mark lives in the footer).
 - Choose **columns** when the place has a photo and the hours matter as much
   as the details, **split** for a place worth showing large, **band** for a
@@ -267,13 +278,22 @@ block `STORY` (`buildChapterStoryConfig(locale)`).
 Config (`ChapterStoryConfig`): `title` (one `<em>` accent word; a
 `<ChapterMark>` may replace a word), `emblem?` (client mark above the title,
 decorative, replaces the heading marker), `story[]` (paragraphs), `quote?
-{ text, name, role? }`, `media[]` — `{ kind: "image", src, srcSet?, sizes?,
-ratio }` or `{ kind: "video", src, poster, ratio }` (`ratio` as CSS
-`"4 / 5"`; poster = first frame). Media are dealt round-robin into the
-lanes; a short lane borrows from the lane across before repeating. Give
-≥ 9 items (≥ 18 for `center` + `dense` to avoid the same picture on both
-sides), stills ≤ ~150 KB at ≈ 640px wide, clips short **forward** seamless
-loops ≤ ~1.5 MB.
+{ text, name, role? }`, `media[]` — `{ kind: "image", src, srcSet?, ratio }`
+or `{ kind: "video", src, poster, posterSrcSet?, ratio }` (`ratio` as CSS
+`"4 / 5"`). Media are dealt round-robin into the lanes; a short lane borrows
+from the lane across before repeating. Give ≥ 9 items (≥ 18 for `center` +
+`dense` to avoid the same picture on both sides).
+
+Media files: cut each still and poster to its `ratio` (centre crop) and give
+two widths, `400w` and ~2× the widest tile (640–800w; tiles are ≤ 330 px at
+1440, ≤ 280 px on phones), webp, as `srcSet` / `posterSrcSet`
+(`"a-400.webp 400w, a-800.webp 800w"`, `src` / `poster` = the largest). The
+lanes pick one file per picture from the measured tile × device pixel ratio
+(capped at 2), so the reveal gate decodes exactly the file the tile shows;
+no `sizes`. A poster **is** the clip's first frame (extract it from the clip,
+e.g. `ffmpeg -i clip.mp4 -frames:v 1`): any other still jumps when the clip
+starts. Clips: short **forward** seamless loops, ≤ ~300 KB, about the poster's
+larger width.
 
 - **Protected (Evoview):** the drift is a Web Animation per lane (two-copy
   track, 0 → −50 %, 0.014 px/ms, linear) nudged by the scroll (520 px of
@@ -285,15 +305,23 @@ loops ≤ ~1.5 MB.
   `useMediaReady`); copy rises once in view (y 28 + fade, 600 ms, stagger
   80: emblem, title, story, quote; lanes from 120 ms); media true to colour
   on `--ev-well` wells (surface radius), soft fades at the lane ends, no
-  rules, glows, tints or scrims; phones change the mechanism (rows) and put
-  media first (except `above`); the quote drops on phones.
+  rules, glows, tints or scrims; columns fade out over the chapter's block
+  padding (12 % of the window, capped at the compact rhythm), so the copy
+  centres against the opaque part and the foot is clear before the next
+  tone cut; phones change the mechanism (rows) and put media first (except
+  `above`); the quote drops on phones.
 - **Client-adaptable:** all copy, emblem / inline mark, media and ratios,
   layout, density, tone, accent.
 - **Pause model:** drift, scroll link and clip playback run only while the
   chapter is on screen, the tab visible and no modal suspends the page
-  (`useInViewPause`); paused they keep their offset and resume from it. Media
-  (and clip blobs, fetched once per session and shared by both track copies)
-  load only within 400 px of the viewport. No reduced-motion branch; the
+  (`useInViewPause`); paused they keep their offset and resume from it. The
+  scroll offset is read in a passive scroll listener, the frame callback only
+  writes `currentTime`; layout is read in a `ResizeObserver`, never per
+  frame; no React render per frame. Stills and posters load within 400 px of
+  the viewport; a clip is fetched (once per session, a blob shared by both
+  track copies) the first time it is the one to play, its poster holding
+  until then. A larger tile (resize, `dense` → `ample`) steps a file up only
+  after decoding it; files never step down. No reduced-motion branch; the
   stable state is the paused frame.
 - **A11y / SSR:** the heading labels the section, the story and quote are
   real text rendered on the server; the lanes are decorative
@@ -353,3 +381,14 @@ with sequences use foundation's hooks themselves.
 9. Panel: tiles / socials / meta at 1440 (one row), 1024 (two rows), 390
    (two-by-two tiles, centred meta); current page marked without colour
    alone (surface + bar + `aria-current`).
+10. Contact: each layout × hours view at 1440 / 1024 / 390; with a mocked
+    clock (venue zone ≠ visitor zone) the state flips at opening and closing
+    minutes and at the venue's midnight; no timer while off-screen or hidden;
+    the week toggle opens with Enter / Space and the picture yields; SSR
+    output holds every day and slot but no today / state.
+11. Story: each layout × density at 1440 / 1024 / 390, lanes risen with
+    every tile filled, one animation per track, at most one clip playing;
+    column fades end inside the chapter padding (no dark band under them);
+    off-screen / hidden tab → animations paused, no clip playing; network:
+    one file per picture (the `400w` set at 1440 × 1), clips only once
+    played; production preview, no CPU work while off-screen.

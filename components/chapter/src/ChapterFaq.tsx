@@ -1,4 +1,5 @@
-import { useId, useState, type KeyboardEvent } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
+import { flushSync } from "react-dom";
 import { GhostAction } from "../controls";
 import { ArrowRight, Chevron, cn, OrbFill } from "../foundation";
 import { Chapter, ChapterHeading, type ChapterRhythm, type ChapterTone } from "./Chapter";
@@ -49,16 +50,40 @@ const Minus = () => (
   </svg>
 );
 
-/** A chapter of questions: single-open accordion on alternating tonal rows. Answers are always rendered (crawlable, find-in-page), collapsed by height. */
+/** A chapter of questions: single-open accordion on alternating tonal rows. Answers are always rendered (crawlable), collapsed by height; find-in-page opens them where `hidden="until-found"` is supported. */
 export function ChapterFaq({ config, layout, id = "faq", tone = "dark", rhythm = "standard", defaultOpen = null, level = 2, className }: ChapterFaqProps) {
   const mode: ChapterFaqLayout = layout ?? (config.media ? "media" : "split");
   const [open, setOpen] = useState<number | null>(defaultOpen);
   const [expanded, setExpanded] = useState(false);
+  const listRef = useRef<HTMLDivElement>(null);
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   const listId = `${id}-${uid}-list`;
   const Q = level === 2 ? "h3" : "h4";
   const limit = config.phoneVisible > 0 ? config.phoneVisible : config.items.length;
   const hidden = Math.max(0, config.items.length - limit);
+
+  /* Closed answers become hidden="until-found" once hydrated (never in
+     server HTML, where they stay plain text): the browser's find-in-page
+     reaches them and fires beforematch, which opens that question. React
+     only knows boolean `hidden`, so the attribute is set here. */
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    if (!list || !("onbeforematch" in list)) return;
+    list.querySelectorAll<HTMLElement>(":scope > .ev-chapter-faq__item > .ev-chapter-faq__panel").forEach((panel, i) => {
+      if (i === open) panel.removeAttribute("hidden");
+      else panel.setAttribute("hidden", "until-found");
+    });
+  }, [open]);
+  useEffect(() => {
+    const list = listRef.current;
+    if (!list || !("onbeforematch" in list)) return;
+    const onMatch = (e: Event) => {
+      const i = Number((e.target as HTMLElement).closest<HTMLElement>(".ev-chapter-faq__item")?.dataset.index);
+      if (Number.isInteger(i)) flushSync(() => setOpen(i));
+    };
+    list.addEventListener("beforematch", onMatch);
+    return () => list.removeEventListener("beforematch", onMatch);
+  }, []);
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key)) return;
@@ -90,13 +115,13 @@ export function ChapterFaq({ config, layout, id = "faq", tone = "dark", rhythm =
 
   const list = (
     <div className="ev-chapter-faq__stack">
-      <div id={listId} className="ev-chapter-faq__list" data-expanded={expanded ? "" : undefined} onKeyDown={onKeyDown}>
+      <div ref={listRef} id={listId} className="ev-chapter-faq__list" data-expanded={expanded ? "" : undefined} onKeyDown={onKeyDown}>
         {config.items.map((item, i) => {
           const isOpen = open === i;
           const qId = `${id}-${uid}-q${i}`;
           const aId = `${id}-${uid}-a${i}`;
           return (
-            <div key={i} className="ev-chapter-faq__item" data-open={isOpen ? "" : undefined} data-extra={i >= limit ? "" : undefined}>
+            <div key={i} className="ev-chapter-faq__item" data-index={i} data-open={isOpen ? "" : undefined} data-extra={i >= limit ? "" : undefined}>
               <Q className="ev-chapter-faq__q">
                 <button
                   type="button"

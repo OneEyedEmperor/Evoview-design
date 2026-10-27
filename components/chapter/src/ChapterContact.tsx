@@ -50,7 +50,7 @@ export type ChapterContactConfig = {
   /** How to reach: phone, e-mail, messages, socials. */
   channels: ChapterContactChannel[];
   hours: ChapterContactHours;
-  /** The place itself (façade, room). Shown by `columns` (under the hours) and `split` (the large side). */
+  /** The place itself (façade, room). Shown by `columns` (under the hours) and `split` (the large side). `sizes` overrides the per-layout default. */
   picture?: { src: string; srcSet?: string; sizes?: string; alt: string; width: number; height: number };
   /** Spoken suffix for external links. */
   newTab: string;
@@ -68,32 +68,39 @@ export type ChapterContactProps = {
   id?: string;
   tone?: ChapterTone;
   rhythm?: ChapterRhythm;
+  /** Section heading level; the hours title is one level below. */
+  level?: 2 | 3;
   className?: string;
 };
 
 /* ── Business time ──────────────────────────────────────────────────── */
 
+/** Monday = 0; minutes since the business's midnight. */
 type Now = { day: number; minutes: number };
 type Slot = { start: number; end: number; from: string; to: string };
 
-const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const formatters = new Map<string, Intl.DateTimeFormat>();
+const DAY = 1440;
+const MINUTE_MS = 60_000;
+const clocks = new Map<string, Intl.DateTimeFormat | null>();
 
-function nowKey(timeZone: string): string {
-  let f = formatters.get(timeZone);
-  if (!f) {
-    f = new Intl.DateTimeFormat("en-GB", { timeZone, weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
-    formatters.set(timeZone, f);
+/** Weekday and wall-clock minutes at `date` in the business's IANA zone; null for an unknown zone. */
+function businessNow(timeZone: string, date: Date): Now | null {
+  let clock = clocks.get(timeZone);
+  if (clock === undefined) {
+    try {
+      clock = new Intl.DateTimeFormat("en-US", { timeZone, year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric", hourCycle: "h23" });
+    } catch {
+      clock = null;
+    }
+    clocks.set(timeZone, clock);
   }
-  const parts = f.formatToParts(new Date());
-  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "0";
-  return `${WEEKDAYS.indexOf(get("weekday"))}:${Number(get("hour")) * 60 + Number(get("minute"))}`;
+  if (!clock) return null;
+  const at: Record<string, number> = {};
+  for (const part of clock.formatToParts(date)) at[part.type] = Number(part.value);
+  /* The weekday from the zone's calendar date, not from locale day names. */
+  const sunday0 = new Date(Date.UTC(at.year, at.month - 1, at.day)).getUTCDay();
+  return { day: (sunday0 + 6) % 7, minutes: (at.hour % 24) * 60 + at.minute };
 }
-
-const parseKey = (key: string): Now => {
-  const [day, minutes] = key.split(":").map(Number);
-  return { day, minutes };
-};
 
 const toMinutes = (hhmm: string) => {
   const [h, m] = hhmm.split(":").map(Number);
@@ -107,40 +114,56 @@ function parseSlot(text: string | null): Slot | null {
   const start = toMinutes(from);
   const end = toMinutes(to);
   /* "18:00–01:00" runs past midnight. */
-  return { from, to, start, end: end <= start ? end + 1440 : end };
+  return { from, to, start, end: end <= start ? end + DAY : end };
 }
 
 const pretty = (text: string | null) => (text ? text.replace(/\s*[–—-]\s*/, "–") : text);
 
 /* Today and the open state, in the business's zone. Server and hydration
-   render `null` (the prerender is built on another day than it is read);
-   afterwards it ticks every 30 s, only while the chapter is on screen and
-   the tab visible (pause model). */
+   render `null` (the prerender is built on another day than it is read).
+   Afterwards it re-reads the clock just after each minute turns, only while
+   the chapter is on screen and the tab visible (pause model); coming back it
+   re-reads at once. The snapshot is one number (minute of the week), so
+   reads within a minute are equal. */
 function useBusinessNow(timeZone: string, active: boolean): Now | null {
   const subscribe = useCallback(
     (onChange: () => void) => {
       if (!active) return () => undefined;
-      const timer = window.setInterval(onChange, 30_000);
-      return () => window.clearInterval(timer);
+      let timer = 0;
+      const arm = () => {
+        timer = window.setTimeout(
+          () => {
+            onChange();
+            arm();
+          },
+          MINUTE_MS - (Date.now() % MINUTE_MS) + 250,
+        );
+      };
+      arm();
+      return () => window.clearTimeout(timer);
     },
     [active],
   );
-  const key = useSyncExternalStore(
+  const at = useSyncExternalStore(
     subscribe,
-    () => nowKey(timeZone),
+    () => {
+      const now = businessNow(timeZone, new Date());
+      return now ? now.day * DAY + now.minutes : null;
+    },
     () => null,
   );
-  return key ? parseKey(key) : null;
+  return at === null ? null : { day: Math.floor(at / DAY), minutes: at % DAY };
 }
 
 type Status = { open: boolean; text: string };
 
-function statusOf(now: Now, hours: ChapterContactHours): Status {
+/** Open until …, opens at … (today or the next open day), or closed for now. */
+function businessStatus(now: Now, hours: ChapterContactHours): Status {
   const { labels } = hours;
   const slotsOf = (day: number) => (hours.week[day] ?? []).map(parseSlot).filter((s): s is Slot => s !== null).sort((a, b) => a.start - b.start);
   const current =
     slotsOf(now.day).find((s) => now.minutes >= s.start && now.minutes < s.end) ??
-    slotsOf((now.day + 6) % 7).find((s) => now.minutes + 1440 >= s.start && now.minutes + 1440 < s.end);
+    slotsOf((now.day + 6) % 7).find((s) => now.minutes + DAY >= s.start && now.minutes + DAY < s.end);
   if (current) return { open: true, text: labels.openUntil(current.to) };
   const later = slotsOf(now.day).find((s) => s.start > now.minutes);
   if (later) return { open: false, text: labels.opensAt(null, later.from) };
@@ -250,7 +273,7 @@ function WeekTable({ hours, today }: { hours: ChapterContactHours; today: number
         {labels.days.map((name, d) => (
           <tr key={name} data-today={d === today ? "" : undefined} aria-current={d === today ? "date" : undefined}>
             <th scope="row">
-              <span className="ev-chapter-contact__mark" aria-hidden="true" />
+              {d === today && <span className="ev-chapter-contact__mark" aria-hidden="true" />}
               {name}
               {d === today && <span className="ev-sr"> — {labels.today}</span>}
             </th>
@@ -277,7 +300,7 @@ function WeekStrip({ hours, today }: { hours: ChapterContactHours; today: number
         return (
           <li key={name} data-today={d === today ? "" : undefined} aria-current={d === today ? "date" : undefined}>
             <span className="ev-t-label ev-chapter-contact__strip-day">
-              <span className="ev-chapter-contact__mark" aria-hidden="true" />
+              {d === today && <span className="ev-chapter-contact__mark" aria-hidden="true" />}
               {name}
               {d === today && <span className="ev-sr"> — {labels.today}</span>}
             </span>
@@ -320,21 +343,24 @@ function HoursBlock({
   now,
   strip,
   headingId,
+  level,
 }: {
   hours: ChapterContactHours;
   view: ChapterContactHoursView;
   now: Now | null;
   strip: boolean;
   headingId: string;
+  level: 2 | 3;
 }) {
-  const status = now ? statusOf(now, hours) : null;
+  const status = now ? businessStatus(now, hours) : null;
   const today = now?.day ?? null;
+  const H = level === 2 ? "h3" : "h4";
   return (
     <section className="ev-chapter-contact__hours" aria-labelledby={headingId} data-view={view}>
       <div className="ev-chapter-contact__hours-head">
-        <h3 id={headingId} className="ev-t-label ev-chapter-contact__hours-title">
+        <H id={headingId} className="ev-t-label ev-chapter-contact__hours-title">
           {hours.title}
-        </h3>
+        </H>
         <StatusLine status={status} />
       </div>
       <div className="ev-chapter-contact__hours-body">
@@ -354,10 +380,27 @@ function HoursBlock({
   );
 }
 
-function Picture({ picture }: { picture: NonNullable<ChapterContactConfig["picture"]> }) {
+/* Rendered width per layout (wide rail 85em): columns = the hours column
+   (≈ .56 of the rail from 768, hidden on phones), split = .63 of the rail
+   from 1024, the full rail below. */
+const PICTURE_SIZES: Record<Exclude<ChapterContactLayout, "band">, string> = {
+  columns: "50vw",
+  split: "(min-width: 1024px) 50vw, 100vw",
+};
+
+function Picture({ picture, layout }: { picture: NonNullable<ChapterContactConfig["picture"]>; layout: Exclude<ChapterContactLayout, "band"> }) {
   return (
     <figure className="ev-chapter-contact__picture">
-      <img src={picture.src} srcSet={picture.srcSet} sizes={picture.sizes} alt={picture.alt} width={picture.width} height={picture.height} loading="lazy" decoding="async" />
+      <img
+        src={picture.src}
+        srcSet={picture.srcSet}
+        sizes={picture.srcSet ? (picture.sizes ?? PICTURE_SIZES[layout]) : undefined}
+        alt={picture.alt}
+        width={picture.width}
+        height={picture.height}
+        loading="lazy"
+        decoding="async"
+      />
     </figure>
   );
 }
@@ -365,7 +408,7 @@ function Picture({ picture }: { picture: NonNullable<ChapterContactConfig["pictu
 /* ── The chapter ────────────────────────────────────────────────────── */
 
 /** The contact chapter: one booking action, where, how to reach, and the hours with today computed live. */
-export function ChapterContact({ config, layout = "columns", hours = "today", id, tone = "dark", rhythm = "standard", className }: ChapterContactProps) {
+export function ChapterContact({ config, layout = "columns", hours = "today", id, tone = "dark", rhythm = "standard", level = 2, className }: ChapterContactProps) {
   const ref = useRef<HTMLDivElement>(null);
   const { active } = useInViewPause(ref);
   const now = useBusinessNow(config.hours.timeZone, active);
@@ -384,7 +427,7 @@ export function ChapterContact({ config, layout = "columns", hours = "today", id
 
   const heading = (
     <ChapterHeading
-      level={2}
+      level={level}
       marker={false}
       layout={layout === "columns" ? "centered" : "split"}
       title={config.title}
@@ -394,8 +437,8 @@ export function ChapterContact({ config, layout = "columns", hours = "today", id
   );
   const place = <ChannelList items={config.place} newTab={config.newTab} className="ev-chapter-contact__place" />;
   const reach = <ChannelList items={config.channels} newTab={config.newTab} className="ev-chapter-contact__reach" />;
-  const hoursBlock = <HoursBlock hours={config.hours} view={hours} now={now} strip={layout === "band"} headingId={hoursId} />;
-  const picture = config.picture && layout !== "band" ? <Picture picture={config.picture} /> : null;
+  const hoursBlock = <HoursBlock hours={config.hours} view={hours} now={now} strip={layout === "band"} headingId={hoursId} level={level} />;
+  const picture = config.picture && layout !== "band" ? <Picture picture={config.picture} layout={layout} /> : null;
 
   return (
     <Chapter id={id} tone={tone} rhythm={rhythm} rail="wide" className={cn("ev-chapter-contact", className)}>
