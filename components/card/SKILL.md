@@ -27,6 +27,8 @@ Read `README.md` ("What is Evoview", decisions, behaviour) and the library's
    width) and optional short muted loops; a card with a loop takes the
    loop's first frame as poster, at the loop's size and ratio
    (`ffmpeg -i clip.mp4 -frames:v 1 -c:v libwebp -quality 80 clip-<w>.webp`).
+   Portrait cards are 2:3; for other footage set
+   `--card-track-portrait-ratio` (e.g. `4 / 5`) on the host.
 5. Mount one `<CardTrack>` per chapter with the chapter's `tone` and
    `rhythm`; pass the chapter heading as `heading` so it stays in the sticky
    stage, and `cardHeadingLevel` one below it (default 3 under an h2).

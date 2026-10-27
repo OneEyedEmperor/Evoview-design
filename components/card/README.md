@@ -37,8 +37,9 @@ one at a time) and a recognisable Evoview piece. Keep:
   Do not replace with arrow buttons, autoplay or a slider lib.
 - **Media first.** Ribbon cards: media ~70 %, information ribbon below with
   the title (Overused 900, uppercase) and ≤ 3 clamped lines; ribbons are equal
-  height across siblings. Portrait cards: full-bleed media, bottom scrim,
-  identity bottom-left: (affordance) → title → meta.
+  height across siblings. Portrait cards: tall (the footage's ratio, 2:3 by
+  default), full-bleed media, bottom scrim, identity bottom-left:
+  (affordance) → title → meta.
 - **Square against round.** 16 (`--ev-radius-surface`) cards; the ribbon
   seam and the optional tab are square. Affordance label is glass on media.
 - **One subject at a time** (portrait): the current card is undimmed (others
@@ -51,7 +52,9 @@ one at a time) and a recognisable Evoview piece. Keep:
   `01 / 04` readout on the rail or the cards (`showIndex` is ignored).
 
 Client-adaptable: items, media, copy, accent, tone per chapter, variant,
-ribbon colour, track length, card count.
+ribbon colour, track length, card count, portrait card ratio
+(`--card-track-portrait-ratio` on the host, width / height, default
+`2 / 3`: set it to the client footage's ratio so the whole frame shows).
 
 **Accent = the client's**, read from the host `--primary` /
 `--primary-foreground` (`--card-track-accent`, `-ink`, `-signal`, `-deep`
@@ -171,7 +174,7 @@ to that frame. No `srcSet` (the media gate decodes `src`).
 | | Desktop ≥ 768 | Phone < 768 |
 | --- | --- | --- |
 | Mechanism | `scrub` when the track overflows; `static` row when it fits; `snap` when the stage is taller than the viewport | `snap`, centred, 82vw cards (portrait min(82vw, 350px)) |
-| Card | ribbon `min(78vw, 40em)` × `clamp(340px, 50vh, 600px)`; portrait `min(clamp(20em, 31vw, 31.25em), 46vh)` at .90 | ribbon 82vw × same height; portrait .70 |
+| Card | ribbon `min(78vw, 40em)` × `clamp(340px, 50vh, 600px)`; portrait `min(clamp(20em, 31vw, 31.25em), 69vh × ratio)` wide at the ratio (2:3), the height yielding to what pins with it (heading, rail) so the stage stays centred with 5em above and below, never below .90 | ribbon 82vw × same height; portrait `min(82vw, 350px)` at the ratio |
 | Progress | hairline — scrub and snap | dots only |
 | Focus (portrait) | current card per scroll progress | card nearest the centre |
 | Video | ribbon: hover preview on fine pointers only (resets on leave); portrait: current card | portrait: current card; ribbon: none |
@@ -192,7 +195,7 @@ skill). Every state is complete at rest: posters are the stable state, all
 cards are reachable by scroll, swipe or keyboard. The scrub is driven by
 scroll events only (no running loop) and writes transforms only, skipping
 unchanged frames; its geometry (scrub span, overflow, pin offset, page
-offset) is read on mount and on every resize of the track, its stage or the
+offset, the heading + rail height the portrait cards yield to) is read on mount and on every resize of the track, its stage or the
 page body, never inside a frame; it stops while a modal suspends the page
 and re-syncs on resume. Videos play only when the track is on-screen,
 the document is visible and no modal suspends the page
@@ -207,7 +210,8 @@ scrub.
 
 1. `pnpm build`. Showcase at 1440, 1024 and 390: no horizontal overflow,
    nothing below 9px (readouts) / 13px (body).
-2. Desktop scrub: the pinned content sits centred in the viewport; first card
+2. Desktop scrub: the pinned content sits centred in the viewport, with the
+   client's heading in the stage too (at 1366×650 as well); first card
    on the wide rail at progress 0, last card ends on the rail's right edge at
    1; the hairline follows; portrait focus moves; under the rail only the
    chapter's bottom rhythm before the next chapter. No counter anywhere.

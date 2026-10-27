@@ -18,14 +18,21 @@
   --ctc-h: clamp(340px, 50vh, 600px);
   --ctc-gap: 1.25em;
 }
+/* Portrait cards take the footage's ratio (width / height): the whole frame
+   shows. The width is capped at 69vh of height, so any ratio fits the pinned
+   stage. The height also yields to what pins with the cards
+   (--ctr-chrome: heading, rail), keeping the stage centred with 5em above
+   and below. It never goes squatter than the 9:10 card it replaced; past
+   that the track falls back to snap, as before. */
 .ev-card-track[data-variant="portrait"] {
-  --ctc-w: min(clamp(20em, 31vw, 31.25em), 46vh);
-  --ctc-h: calc(var(--ctc-w) / 0.9);
+  --ctc-ratio: var(--card-track-portrait-ratio, 2 / 3);
+  --ctc-w: min(clamp(20em, 31vw, 31.25em), 69vh * (var(--ctc-ratio)));
+  --ctc-h: min(var(--ctc-w) / (var(--ctc-ratio)), max(100vh - 10em - var(--ctr-chrome, 4em), var(--ctc-w) / 0.9));
   --ctc-gap: clamp(18px, 2vw, 30px);
 }
 @media (max-width: 767px) {
   .ev-card-track[data-variant="ribbon"] { --ctc-w: 82vw; --ctc-gap: 16px; }
-  .ev-card-track[data-variant="portrait"] { --ctc-w: min(82vw, 350px); --ctc-h: calc(var(--ctc-w) / 0.7); --ctc-gap: 14px; }
+  .ev-card-track[data-variant="portrait"] { --ctc-w: min(82vw, 350px); --ctc-h: calc(var(--ctc-w) / (var(--ctc-ratio))); --ctc-gap: 14px; }
 }
 
 /* ── Mechanism ───────────────────────────────────────────────────────── */

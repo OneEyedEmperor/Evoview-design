@@ -15,7 +15,7 @@ installs `foundation` (and `controls` where used) first.
 | Pill | Package | Version |
 | --- | --- | --- |
 | Layouts | [chapter](components/chapter/README.md) | 1.2.0 |
-| Layouts | [card](components/card/README.md) | 2.1.0 |
+| Layouts | [card](components/card/README.md) | 2.2.0 |
 | Layouts | [process-sequence](components/process-sequence/README.md) | 1.3.1 |
 | Layouts | [story-blocks](components/story-blocks/README.md) | 2.2.0 |
 | Components | [reservation](components/reservation/README.md) | 2.10.0 |

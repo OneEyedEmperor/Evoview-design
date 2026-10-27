@@ -1,5 +1,21 @@
 # card changelog
 
+## 2.2.0
+
+- **Portrait cards are 2:3** (were 9:10 desktop, 7:10 phone), the ratio of
+  the portrait footage and its first-frame posters: the whole frame shows.
+  Widths are unchanged (the old `46vh` width cap is now `69vh` of height ×
+  ratio); at 1440×900 the card is 414 × 621 (was 414 × 460). The height
+  yields to what pins with the cards (heading, rail; measured as
+  `--ctr-chrome`), so the stage stays centred with ≥ 5em above and below
+  with a client heading too. It never drops below the old 9:10; past that
+  the track falls back to snap, as before. Ribbon cards, deck and sequence
+  unchanged.
+- **Config: new optional host token `--card-track-portrait-ratio`**
+  (width / height, default `2 / 3`): set it to the client footage's ratio.
+  Clients: nothing to change; portrait tracks get taller on upgrade. Check
+  the client's heading + cards at 1440, 1366×650 and 1024.
+
 ## 2.1.0
 
 - Showcase only (`/layouts/card`, not installed): title captions in the
