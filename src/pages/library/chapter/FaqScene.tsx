@@ -1,13 +1,13 @@
 import { useMemo, useState } from "react";
 import { ChapterFaq, buildChapterFaqConfig, type ChapterFaqLayout } from "../../../../components/chapter/src";
 import { SegmentedControl } from "../../../../components/controls/src";
-import { Readout } from "../../../../components/foundation/src";
-import { ShowcaseVariant } from "../../../library/ShowcasePage";
 import { useLibraryLocale, type Locale } from "../../../library/locale";
-import "./faq-footer.css";
+import { DeskSetting, Scene, SceneDesk } from "../scene/Scene";
 
 const T = {
   fr: {
+    name: "FAQ",
+    when: "Avant le contact : les questions que les clients posent, une réponse ouverte à la fois, lisibles par les moteurs de recherche.",
     label: "Mise en page",
     options: { media: "Image", split: "Côte à côte", stacked: "Empilé" },
     hint: "Une question à la fois : la réponse s'ouvre sur sa rangée. Sur téléphone, quatre questions, puis une rangée pour le reste.",
@@ -18,6 +18,8 @@ const T = {
     },
   },
   en: {
+    name: "FAQ",
+    when: "Before the contact: the questions clients ask, one answer open at a time, readable by search engines.",
     label: "Layout",
     options: { media: "Image", split: "Side by side", stacked: "Stacked" },
     hint: "One question at a time: the answer opens on its own row. On phones, four questions, then one row for the rest.",
@@ -32,7 +34,7 @@ const T = {
 const LAYOUTS: ChapterFaqLayout[] = ["media", "split", "stacked"];
 
 /* FAQ chapter (Tchin "Tout ce que vous devez savoir"): one layout setting,
-   the chapter on a light ground under it. */
+   the scene on the FAQ's light ground. */
 export default function FaqScene() {
   const { locale } = useLibraryLocale();
   const t = T[locale];
@@ -41,13 +43,14 @@ export default function FaqScene() {
   const [said, setSaid] = useState(false);
 
   return (
-    <ShowcaseVariant caption="none" rhythm="flush">
-      <div className="lib-rail">
-        <div className="ev-root ev-tone-dark chd-desk chf-desk">
-          <div className="chd-setting">
-            <Readout className="chd-setting__label" aria-hidden="true">
-              {t.label}
-            </Readout>
+    <Scene
+      name={t.name}
+      when={t.when}
+      tone="light"
+      rhythm="standard"
+      desk={
+        <SceneDesk say={said ? t.say[layout] : t.hint} sayAll={[t.hint, ...Object.values(t.say)]}>
+          <DeskSetting label={t.label}>
             <SegmentedControl
               block
               label={t.label}
@@ -58,13 +61,11 @@ export default function FaqScene() {
                 setSaid(true);
               }}
             />
-          </div>
-          <p className="ev-t-body chd-desk__say" aria-live="polite">
-            {said ? t.say[layout] : t.hint}
-          </p>
-        </div>
-      </div>
-      <ChapterFaq config={config} layout={layout} tone="light" defaultOpen={1} className="chf-faq" />
-    </ShowcaseVariant>
+          </DeskSetting>
+        </SceneDesk>
+      }
+    >
+      <ChapterFaq config={config} layout={layout} tone="light" defaultOpen={1} />
+    </Scene>
   );
 }

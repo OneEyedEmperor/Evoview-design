@@ -3,24 +3,22 @@
 /* Spacing between header, captions and demos belongs to the frame
    (ShowcaseVariant); nothing here pads the page. */
 
-/* ── Scene 1 · specimen: settings (.37) beside one chapter in its page (.63) */
-.chd-specimen__grid { display: grid; gap: 2em; }
-.chd-desk { display: grid; align-content: start; gap: 1.5em; background: none; }
-.chd-desk__controls { display: grid; gap: 1.25em 2em; }
-@media (min-width: 640px) { .chd-desk__controls { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.chd-setting { display: grid; gap: var(--ev-gap-internal); }
-.chd-setting__label { color: var(--ev-fg-55); }
-.chd-desk .evc-seg__option { padding-inline: 10px; }
-/* Three lines reserved: the frame below does not jump when the sentence changes. */
-.chd-desk__say { min-height: calc(3 * 1.6em); max-width: 30em; color: var(--ev-fg-65); text-wrap: pretty; }
+/* ── Specimen: the scene desk (src/pages/library/scene) in its column
+   layout, beside one chapter in its page (.37 / .63) from 1024, above it
+   below. The desk's ground is the scene's, so it only drops the tone fill. */
+.chd-specimen__grid { display: grid; gap: var(--lib-lead, 48px); }
+.chd-desk { background: none; }
+@media (min-width: 640px) and (max-width: 1023.98px) {
+  .chd-desk .lib-desk__settings { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 
-/* From 1024 the settings sit beside the frame, so the specimen heading
-   shares the first viewport with them (RULES §12). */
+/* From 1024 the settings sit beside the frame and stay in reach while the
+   chapter scrolls by (sticky), so the scene's caption and settings share
+   the first viewport with the chapter (RULES §12). */
 @media (min-width: 1024px) {
   .chd-specimen__grid { grid-template-columns: minmax(0, 0.37fr) minmax(0, 0.63fr); column-gap: 3.5em; align-items: start; }
-  .chd-desk { position: sticky; top: 92px; gap: 1.25em; }
-  .chd-desk__controls { grid-template-columns: minmax(0, 1fr); gap: 1em; }
-  .chd-desk__say { min-height: calc(3 * 1.6em); }
+  .chd-desk { position: sticky; top: 92px; }
+  .chd-desk .lib-desk__settings { gap: 1em; }
 }
 @media (min-width: 1024px) and (max-width: 1279.98px) { .chd-desk .evc-seg__option { padding-inline: 6px; } }
 

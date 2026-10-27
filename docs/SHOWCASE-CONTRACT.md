@@ -165,7 +165,10 @@ padding, strips or rules of their own.
   load and DOM change) and pulls the body into its own top padding, so
   this holds whatever padding the package brings; `rhythm` is only the
   pre-measure guess. A component opening on another ground (its own tone
-  cut) is not pulled: the caption sits one lead above the cut.
+  cut) is not pulled: the caption sits one lead above the cut. Ink is what
+  can be seen: content past a clipping box's edge is held to that edge,
+  content in a closed `<details>` is skipped; a painted object the walk
+  cannot see (a framed crop) opts in with `data-lib-ink`.
 - Between variants: a tone cut gets a chapter band (`--lib-chapter`, 80 /
   120) above the next caption; at least one chapter band always follows a
   variant's last ink (measured), so a same-tone continuation starts right
@@ -175,6 +178,15 @@ padding, strips or rules of their own.
   is wrapped without `tone`.
 - A page with one demo uses no `ShowcaseVariant` (the header already says
   what it is).
+- **Scenes with settings** (`src/pages/library/scene/Scene.tsx`, used by
+  the chapter and card pages): `Scene` = a titled `ShowcaseVariant` whose
+  caption, `SceneDesk` (settings label-over-control side by side, one
+  sentence under them, the tallest sentence reserved) and component all
+  stand on the component's opening ground (`tone`; omitted when the
+  component lays its own grounds on the frame's, `exit` when it ends on
+  another one), so cuts fall only between scenes and any scene can be
+  reordered. A setting that changes the scene's ground keeps the desk
+  under the pointer.
 
 `data-lib-ready` is set on the frame once fonts are loaded and the stage's
 eager images have settled (≤ 10 s); tooling waits for it (`scripts/covers/`).

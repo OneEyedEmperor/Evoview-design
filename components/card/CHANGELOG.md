@@ -1,5 +1,14 @@
 # card changelog
 
+## Unreleased
+
+- Showcase only (`/layouts/card`, not installed): title captions in the
+  page's voice (were `CARDTRACK · …` readouts); the deck's desk leaves the
+  deck's heading slot for the shared scene desk on the caption's rail; the
+  sequence scene takes the chosen tone as a whole (caption and desk follow
+  the section). The ribbon track is shown with `showIndex: false` (no
+  `01 / 04` counter). No package, config or API change.
+
 ## 2.0.0
 
 - **Breaking (install path):** package renamed `card-track` → `card`.

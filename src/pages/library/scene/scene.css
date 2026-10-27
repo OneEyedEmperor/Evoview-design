@@ -1,0 +1,47 @@
+/* Showcase scenes (Scene.tsx): caption → desk → component on the
+   component's ground. Library only, not installed in clients. */
+
+/* ── Desk ─────────────────────────────────────────────────────────────── */
+.lib-scene > .lib-scene__desk { background: none; }
+.lib-desk { display: grid; gap: var(--ev-gap-neighbour); }
+.lib-desk__settings { display: grid; gap: var(--ev-gap-neighbour) 2.5em; }
+.lib-desk__setting { display: grid; align-content: start; gap: var(--ev-gap-internal); min-width: 0; }
+.lib-desk__label { color: var(--ev-fg-55); }
+.lib-desk .evc-seg__option { padding-inline: 8px; }
+/* Every sentence the desk can say shares one cell, all but the current one
+   hidden: the cell holds the tallest, the component below never jumps. */
+.lib-desk__say { display: grid; max-width: 40em; }
+.lib-desk__say > p { grid-area: 1 / 1; color: var(--ev-fg-65); text-wrap: pretty; }
+.lib-desk__say > [aria-hidden] { visibility: hidden; }
+
+/* Strip: from 640 the settings sit side by side at their own width (a wide
+   choice keeps its segments readable, a two-way choice stays short). */
+@media (min-width: 640px) {
+  .lib-desk[data-layout="strip"] .lib-desk__settings { display: flex; flex-wrap: wrap; align-items: end; }
+  .lib-desk[data-layout="strip"] .evc-seg--block { display: inline-grid; width: auto; }
+  .lib-desk[data-layout="strip"] .evc-seg__option { padding-inline: 16px; }
+}
+
+/* ── Seams ────────────────────────────────────────────────────────────── */
+/* The frame decides the band above a scene from the previous scene's
+   opening tone. A scene that ends on another ground (a page of chapters)
+   declares it, and the next scene's band follows that ground instead: a
+   cut gets the chapter band, a continuation none. */
+.lib-variant:has(> .lib-variant__body > .lib-scene[data-exit="dark"]) + .lib-variant:not([data-tone="dark"]),
+.lib-variant:has(> .lib-variant__body > .lib-scene[data-exit="light"]) + .lib-variant:not([data-tone="light"]),
+.lib-variant:has(> .lib-variant__body > .lib-scene[data-exit="paper"]) + .lib-variant:not([data-tone="paper"]) {
+  --lib-variant-top: var(--lib-chapter);
+}
+.lib-variant:has(> .lib-variant__body > .lib-scene[data-exit="dark"]) + .lib-variant[data-tone="dark"],
+.lib-variant:has(> .lib-variant__body > .lib-scene[data-exit="light"]) + .lib-variant[data-tone="light"],
+.lib-variant:has(> .lib-variant__body > .lib-scene[data-exit="paper"]) + .lib-variant[data-tone="paper"] {
+  --lib-variant-top: 0px;
+}
+/* Two pale grounds meeting on a fractional edge are painted a pixel apart,
+   and the dark stage shows through as a hairline: a pale scene laps one
+   pixel over the scene above (positioned, so it paints over its chapters). */
+.lib-variant[data-tone="light"]:has(> .lib-variant__body > .lib-scene),
+.lib-variant[data-tone="paper"]:has(> .lib-variant__body > .lib-scene) {
+  position: relative;
+  box-shadow: 0 -1px 0 var(--ev-bg);
+}

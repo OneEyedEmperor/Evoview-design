@@ -1,7 +1,6 @@
 import { useMemo, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import {
   Chapter as ChapterShell,
-  ChapterFooter,
   ChapterHeading,
   ChapterMark,
   ChapterTicker,
@@ -11,18 +10,20 @@ import {
 import { PrimaryPlate, SegmentedControl, Switch, rovingKeyDown } from "../../../components/controls/src";
 import { OrbFill, Readout, useInViewPause, useSequenceClock } from "../../../components/foundation/src";
 import "../../../components/chapter/showcase.css";
-import ShowcasePage, { ShowcaseVariant } from "../../library/ShowcasePage";
+import ShowcasePage from "../../library/ShowcasePage";
 import { useLibraryLocale, type Locale } from "../../library/locale";
 import EveilMark from "./EveilMark";
 import ContactScene from "./chapter/ContactScene";
 import FaqScene from "./chapter/FaqScene";
 import FooterScene from "./chapter/FooterScene";
 import StoryScene from "./chapter/StoryScene";
+import { DeskSetting, Scene, SceneDesk, deskOptions } from "./scene/Scene";
 
-/* Two scenes. 1 · one chapter the reader sets (tone, heading, instrument)
-   between the two chapters it really sits between. 2 · the page those
-   chapters belong to, ending on the footer and its Evoview credit. Colour
-   comes from the frame's --primary only; a swatch never re-renders. */
+/* Scenes, each a caption → desk → component on the component's ground
+   (./scene/Scene): the chapter specimen, then the section chapters in
+   ./chapter/*, the page those chapters belong to, and its footer with the
+   Evoview credit. Colour comes from the frame's --primary only; a swatch
+   never re-renders. */
 export default function Chapter() {
   return (
     <ShowcasePage
@@ -44,6 +45,8 @@ type Said = { tone: ChapterTone } | { instrument: Instrument } | { heading: Head
 const T = {
   fr: {
     specimen: {
+      name: "Chapitre",
+      when: "La coque de chaque section du site : le ton, le titre et l'instrument se choisissent chapitre par chapitre.",
       hint: "Changez un réglage : le chapitre change, ses voisins restent.",
       controls: {
         tone: { label: "Ton", options: { light: "Clair", paper: "Papier", dark: "Sombre" } },
@@ -90,7 +93,8 @@ const T = {
       drawings: ["Relevé · plan du rez", "Esquisse · coupe A–A", "Chantier · façade sud", "Livraison · façade sud, le soir"],
     },
     page: {
-      name: "Rythme des sections · page",
+      name: "Page",
+      when: "Les chapitres bout à bout : chacun garde son ton et son rythme, la coupe nette les sépare, sans trait.",
     },
     projects: {
       title: "Maison du Pré",
@@ -108,6 +112,8 @@ const T = {
   },
   en: {
     specimen: {
+      name: "Chapter",
+      when: "The shell of every section on the site: tone, heading and instrument are chosen chapter by chapter.",
       hint: "Change a setting: the chapter changes, its neighbours stay.",
       controls: {
         tone: { label: "Tone", options: { light: "Light", paper: "Paper", dark: "Dark" } },
@@ -154,7 +160,8 @@ const T = {
       drawings: ["Survey · ground floor plan", "Sketch · section A–A", "Build · south elevation", "Handover · south elevation, evening"],
     },
     page: {
-      name: "Section pacing · page",
+      name: "Page",
+      when: "Chapters end to end: each keeps its tone and its rhythm, the hard cut separates them, no rule.",
     },
     projects: {
       title: "Meadow House",
@@ -174,9 +181,6 @@ const T = {
 
 type Copy = (typeof T)[Locale];
 
-const options = <K extends string>(labels: Record<K, string>) =>
-  (Object.keys(labels) as K[]).map((value) => ({ value, label: labels[value] }));
-
 const preventDefault = (e: MouseEvent<HTMLElement>) => e.preventDefault();
 
 function Demo() {
@@ -193,20 +197,18 @@ function Demo() {
 
   return (
     <>
-      <ShowcaseVariant caption="none" rhythm="flush">
+      {/* No `tone`: the specimen is a framed crop on the frame's ground. */}
+      <Scene name={t.specimen.name} when={t.specimen.when}>
         <Specimen t={t} />
-      </ShowcaseVariant>
-      {/* Section scenes, each owned by its file in ./chapter/. */}
+      </Scene>
       <StoryScene />
       <FaqScene />
       <ContactScene />
-      {/* No `tone`: the page cuts dark → paper → light inside; its
-          caption stays on the dark frame the first chapter continues. */}
-      <ShowcaseVariant id="chd-page" name={t.page.name} caption="none" rhythm="flush">
+      {/* No `tone`: the page opens on its dark chapter and cuts to paper. */}
+      <Scene id="chd-page" name={t.page.name} when={t.page.when} exit="paper" rhythm="standard">
         <Page t={t} />
-        <ChapterFooter tone="light" {...FooterScene.usePageFooter(config)} />
-      </ShowcaseVariant>
-      <FooterScene />
+      </Scene>
+      <FooterScene config={config} />
     </>
   );
 }
@@ -233,6 +235,7 @@ function Specimen({ t }: { t: Copy }) {
             ? s.say.logo[heading]
             : s.say.logo.off
           : s.say.heading[said.heading];
+  const sayAll = [s.hint, ...Object.values(s.say.tone), ...Object.values(s.say.instrument), ...Object.values(s.say.heading), ...Object.values(s.say.logo)];
 
   const phases = t.studio.phases;
 
@@ -291,32 +294,32 @@ function Specimen({ t }: { t: Copy }) {
     <div className="chd-specimen">
       <div className="lib-rail chd-specimen__grid">
         <div className="ev-root ev-tone-dark chd-desk">
-          <div className="chd-desk__controls">
-            <Setting label={s.controls.tone.label}>
+          <SceneDesk layout="column" say={sentence} sayAll={sayAll}>
+            <DeskSetting label={s.controls.tone.label}>
               <SegmentedControl
                 block
                 label={s.controls.tone.label}
-                options={options(s.controls.tone.options)}
+                options={deskOptions(s.controls.tone.options)}
                 value={tone}
                 onChange={(v) => {
                   setTone(v as ChapterTone);
                   setSaid({ tone: v as ChapterTone });
                 }}
               />
-            </Setting>
-            <Setting label={s.controls.instrument.label}>
+            </DeskSetting>
+            <DeskSetting label={s.controls.instrument.label}>
               <SegmentedControl
                 block
                 label={s.controls.instrument.label}
-                options={options(s.controls.instrument.options)}
+                options={deskOptions(s.controls.instrument.options)}
                 value={instrument}
                 onChange={(v) => {
                   setInstrument(v as Instrument);
                   setSaid({ instrument: v as Instrument });
                 }}
               />
-            </Setting>
-            <Setting label={s.controls.heading.label}>
+            </DeskSetting>
+            <DeskSetting label={s.controls.heading.label}>
               <LayoutPicker
                 label={s.controls.heading.label}
                 labels={s.controls.heading.options}
@@ -326,8 +329,8 @@ function Specimen({ t }: { t: Copy }) {
                   setSaid({ heading: v });
                 }}
               />
-            </Setting>
-            <Setting label={s.controls.logo.label}>
+            </DeskSetting>
+            <DeskSetting label={s.controls.logo.label}>
               <Switch
                 label={s.controls.logo.switch}
                 checked={logo}
@@ -336,14 +339,13 @@ function Specimen({ t }: { t: Copy }) {
                   setSaid({ logo: on });
                 }}
               />
-            </Setting>
-          </div>
-          <p className="ev-t-body chd-desk__say" aria-live="polite">
-            {sentence}
-          </p>
+            </DeskSetting>
+          </SceneDesk>
         </div>
 
-        <div ref={frameRef} className="chd-frame">
+        {/* data-lib-ink: the crop is a painted object, so the frame keeps a
+            chapter band under its edge, not under its last line. */}
+        <div ref={frameRef} className="chd-frame" data-lib-ink="">
           <ChapterShell
             id="chd-specimen"
             tone={tone}
@@ -391,17 +393,6 @@ function Specimen({ t }: { t: Copy }) {
           </ChapterShell>
         </div>
       </div>
-    </div>
-  );
-}
-
-function Setting({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="chd-setting">
-      <Readout className="chd-setting__label" aria-hidden="true">
-        {label}
-      </Readout>
-      {children}
     </div>
   );
 }
@@ -528,7 +519,7 @@ const MOMENT_MS = 4200;
 
 function Page({ t }: { t: Copy }) {
   const [view, setView] = useState<View>("plan");
-  const views = options(t.projects.views);
+  const views = deskOptions(t.projects.views);
 
   return (
     <>

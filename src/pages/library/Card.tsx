@@ -2,16 +2,17 @@ import { useMemo, useState } from "react";
 import { CardTrack, buildCardTrackConfig, type CardTrackDefinition, type CardTrackItem } from "../../../components/card/src";
 import { Readout } from "../../../components/foundation/src";
 import "../../../components/card/showcase.css";
-import ShowcasePage, { ShowcaseVariant } from "../../library/ShowcasePage";
+import ShowcasePage from "../../library/ShowcasePage";
 import { useLibraryLocale, type Localized } from "../../library/locale";
 import DeckScene from "./card/DeckScene";
 import SequenceScene from "./card/SequenceScene";
+import { Scene } from "./scene/Scene";
 
 /* One studio, its cards: the portfolio as portrait cards (dark, continuing
    the header), the services as ribbon cards (light), then the scenes in
-   ./card/*. The frame owns every space between header, captions and
-   tracks. Colour comes only from the frame's --primary, so a swatch never
-   re-renders the cards. */
+   ./card/*. Each is a scene (./scene/Scene): caption → (desk) → component
+   on the component's ground. Colour comes only from the frame's --primary,
+   so a swatch never re-renders the cards. */
 export default function CardPage() {
   return (
     <ShowcasePage
@@ -29,7 +30,7 @@ export default function CardPage() {
 
 type Chapter = {
   key: "portfolio" | "services";
-  name: string;
+  name: Localized;
   tone: "light" | "dark";
   rhythm: "standard" | "compact";
   when: Localized;
@@ -38,7 +39,7 @@ type Chapter = {
 const CHAPTERS: Chapter[] = [
   {
     key: "portfolio",
-    name: "CardTrack · portrait",
+    name: { fr: "Piste · portraits", en: "Track · portraits" },
     tone: "dark",
     rhythm: "compact",
     when: {
@@ -48,7 +49,7 @@ const CHAPTERS: Chapter[] = [
   },
   {
     key: "services",
-    name: "CardTrack · ribbon",
+    name: { fr: "Piste · rubans", en: "Track · ribbons" },
     tone: "light",
     rhythm: "standard",
     when: {
@@ -73,12 +74,13 @@ function Demo() {
       {CHAPTERS.map((chapter) => {
         const title = opened[chapter.key];
         return (
-          <ShowcaseVariant key={chapter.key} name={chapter.name} when={chapter.when[locale]} tone={chapter.tone} rhythm={chapter.rhythm}>
+          <Scene key={chapter.key} name={chapter.name[locale]} when={chapter.when[locale]} tone={chapter.tone} rhythm={chapter.rhythm}>
             <CardTrack
               id={`card-track-${chapter.key}`}
               tone={chapter.tone}
               rhythm={chapter.rhythm}
-              track={config.tracks[chapter.key] as CardTrackDefinition}
+              /* No counter: RULES §1 forbids `01 / 04` readouts; the rail is the position. */
+              track={{ ...(config.tracks[chapter.key] as CardTrackDefinition), showIndex: false }}
               copy={config.copy}
               onOpen={(item: CardTrackItem) => setOpened((o) => ({ ...o, [chapter.key]: item.title }))}
               heading={
@@ -87,7 +89,7 @@ function Demo() {
                 </Readout>
               }
             />
-          </ShowcaseVariant>
+          </Scene>
         );
       })}
     </>

@@ -1,5 +1,14 @@
 # chapter changelog
 
+## Unreleased
+
+- Showcase only (`/layouts/chapter`, not installed): every scene is caption →
+  desk → component on the component's own ground (shared `Scene` /
+  `SceneDesk`, `src/pages/library/scene/`). The specimen, FAQ, contact and
+  page scenes gain title captions; the footer becomes its own scene with its
+  desk above it (was below, on another ground); one desk pattern replaces the
+  four per-scene desks. No package, config or API change.
+
 ## 1.2.0
 
 - Depends on `controls` (install.sh installs controls + foundation first).

@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState } from "react";
 import {
   ChapterStory,
   buildChapterStoryConfig,
@@ -6,10 +6,8 @@ import {
   type ChapterStoryLayout,
 } from "../../../../components/chapter/src";
 import { SegmentedControl } from "../../../../components/controls/src";
-import { Readout } from "../../../../components/foundation/src";
-import { ShowcaseVariant } from "../../../library/ShowcasePage";
 import { useLibraryLocale, type Locale } from "../../../library/locale";
-import "./StoryScene.css";
+import { DeskSetting, Scene, SceneDesk, deskOptions } from "../scene/Scene";
 
 /* The story chapter after a hero: where the text sits against the client's
    pictures, and how many lanes carry them. Both settings change the
@@ -19,7 +17,7 @@ type Said = { layout: ChapterStoryLayout } | { density: ChapterStoryDensity } | 
 
 const T = {
   fr: {
-    name: "Le récit",
+    name: "Récit",
     when: "Le chapitre qui suit l'accueil : l'histoire du client, portée par ses images qui dérivent au rythme du défilement.",
     hint: "Placez le récit, choisissez la densité des images, puis faites défiler : les images avancent avec la page.",
     controls: {
@@ -40,7 +38,7 @@ const T = {
     },
   },
   en: {
-    name: "The story",
+    name: "Story",
     when: "The chapter after the hero: the client's story, carried by its pictures drifting with the scroll.",
     hint: "Place the story, choose the picture density, then scroll: the pictures travel with the page.",
     controls: {
@@ -62,9 +60,6 @@ const T = {
   },
 } satisfies Record<Locale, unknown>;
 
-const options = <K extends string>(labels: Record<K, string>) =>
-  (Object.keys(labels) as K[]).map((value) => ({ value, label: labels[value] }));
-
 export default function StoryScene() {
   const { locale } = useLibraryLocale();
   const t = T[locale];
@@ -76,52 +71,41 @@ export default function StoryScene() {
   const sentence = !said ? t.hint : "layout" in said ? t.say.layout[said.layout] : t.say.density[said.density];
 
   return (
-    <ShowcaseVariant name={t.name} when={t.when} caption="title" rhythm="flush">
-      <div className="lib-rail chs-desk-rail">
-        <div className="ev-root ev-tone-dark chs-desk">
-          <div className="chs-desk__controls">
-            <Setting label={t.controls.layout.label}>
-              <SegmentedControl
-                block
-                label={t.controls.layout.label}
-                options={options(t.controls.layout.options)}
-                value={layout}
-                onChange={(v) => {
-                  setLayout(v as ChapterStoryLayout);
-                  setSaid({ layout: v as ChapterStoryLayout });
-                }}
-              />
-            </Setting>
-            <Setting label={t.controls.density.label}>
-              <SegmentedControl
-                block
-                label={t.controls.density.label}
-                options={options(t.controls.density.options)}
-                value={density}
-                onChange={(v) => {
-                  setDensity(v as ChapterStoryDensity);
-                  setSaid({ density: v as ChapterStoryDensity });
-                }}
-              />
-            </Setting>
-          </div>
-          <p className="ev-t-body chs-desk__say" aria-live="polite">
-            {sentence}
-          </p>
-        </div>
-      </div>
+    <Scene
+      name={t.name}
+      when={t.when}
+      tone="dark"
+      rhythm="compact"
+      desk={
+        <SceneDesk say={sentence} sayAll={[t.hint, ...Object.values(t.say.layout), ...Object.values(t.say.density)]}>
+          <DeskSetting label={t.controls.layout.label}>
+            <SegmentedControl
+              block
+              label={t.controls.layout.label}
+              options={deskOptions(t.controls.layout.options)}
+              value={layout}
+              onChange={(v) => {
+                setLayout(v as ChapterStoryLayout);
+                setSaid({ layout: v as ChapterStoryLayout });
+              }}
+            />
+          </DeskSetting>
+          <DeskSetting label={t.controls.density.label}>
+            <SegmentedControl
+              block
+              label={t.controls.density.label}
+              options={deskOptions(t.controls.density.options)}
+              value={density}
+              onChange={(v) => {
+                setDensity(v as ChapterStoryDensity);
+                setSaid({ density: v as ChapterStoryDensity });
+              }}
+            />
+          </DeskSetting>
+        </SceneDesk>
+      }
+    >
       <ChapterStory id="chs-story" content={content} layout={layout} density={density} tone="dark" rhythm="compact" />
-    </ShowcaseVariant>
-  );
-}
-
-function Setting({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="chs-setting">
-      <Readout className="chs-setting__label" aria-hidden="true">
-        {label}
-      </Readout>
-      {children}
-    </div>
+    </Scene>
   );
 }

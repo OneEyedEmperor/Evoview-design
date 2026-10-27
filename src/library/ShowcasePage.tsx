@@ -483,11 +483,26 @@ const MEDIA = new Set(["IMG", "VIDEO", "CANVAS", "IFRAME", "PICTURE"]);
 
 /* Top of the first ink and bottom of the last (text, media) inside `body`,
    in layout px: offsetTop chains, so reveal transforms still in flight
-   never skew them. */
+   never skew them. Ink is what can be seen: content past the edge of a
+   clipping box (a lane window, a collapsed answer) is held to that edge,
+   content folded in a closed <details> is skipped. A painted object the
+   walk cannot see as ink (a framed crop) opts in with `data-lib-ink`. */
 function inkBounds(body: HTMLElement): { top: number; bottom: number } | null {
   let best: number | null = null;
   let last = 0;
   let seen = 0;
+  const clips = new Map<HTMLElement, number>();
+  const clipEdge = (el: HTMLElement | null): number => {
+    if (!el || el === body) return Infinity;
+    let edge = clips.get(el);
+    if (edge === undefined) {
+      edge = clipEdge(el.parentElement);
+      const top = getComputedStyle(el).overflowY !== "visible" ? topWithin(el, body) : Number.NaN;
+      if (!Number.isNaN(top)) edge = Math.min(edge, top + el.offsetHeight);
+      clips.set(el, edge);
+    }
+    return edge;
+  };
   const walker = document.createTreeWalker(body, NodeFilter.SHOW_ELEMENT);
   for (let node = walker.nextNode() as Element | null; node && seen < 4000; node = walker.nextNode() as Element | null) {
     seen += 1;
@@ -495,7 +510,9 @@ function inkBounds(body: HTMLElement): { top: number; bottom: number } | null {
     if (!el) continue;
     const isMedia = MEDIA.has(node.tagName) || (node.tagName.toLowerCase() === "svg" && (node as SVGSVGElement).getBoundingClientRect().width > 40);
     const hasText = !isMedia && Array.from(node.childNodes).some((c) => c.nodeType === Node.TEXT_NODE && c.textContent?.trim());
-    if (!isMedia && !hasText) continue;
+    if (!isMedia && !hasText && !(node === el && el.hasAttribute("data-lib-ink"))) continue;
+    const fold = el.closest("details:not([open])");
+    if (fold && !fold.querySelector(":scope > summary")?.contains(el)) continue;
     const style = getComputedStyle(el);
     // Layout boxes, not paint: media gated until decoded and copy waiting
     // for its reveal already occupy their place.
@@ -507,8 +524,10 @@ function inkBounds(body: HTMLElement): { top: number; bottom: number } | null {
       cur = cur.offsetParent as HTMLElement | null;
     }
     if (cur !== body) continue; // fixed or outside the body's layout
+    const bottom = Math.min(top + el.offsetHeight, clipEdge(el.parentElement));
+    if (bottom <= top) continue; // wholly past its clipping edge
     if (best === null || top < best) best = top;
-    last = Math.max(last, top + el.offsetHeight);
+    last = Math.max(last, bottom);
   }
   return best === null ? null : { top: best, bottom: last };
 }
