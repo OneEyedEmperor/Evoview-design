@@ -252,7 +252,7 @@ Configurable but on by default; README states it is the approved placement.
 
 | Pill | Entries |
 | --- | --- |
-| **Layouts** (page sections) | `chapter` — section shell + headings + tone cuts · `card-track` — media card + scroll-scrubbed track · `process-sequence` — timed step board · `story-blocks` — intro split, indexed rows, proof grid, payoff band |
+| **Layouts** (page sections) | `chapter` — section shell + headings + tone cuts · `card` — media card + scroll-scrubbed track (and the card compositions extracted from Tchin) · `process-sequence` — timed step board · `story-blocks` — intro split, indexed rows, proof grid, payoff band |
 | **Components** (interactive) | `reservation` (existing) · `dossier` — portal modal with selection board, chapter strip, mobile dock · `selector-stage` — selector ↔ stage + before/after compare · `controls` — buttons, chips, fields, segmented progress, switch |
 | **Navbar** | `/navbar` (the navbar package itself) |
 

@@ -1,12 +1,12 @@
-# card-track — media cards on a scroll-scrubbed track
+# card — Evoview media cards
 
-The mechanism shared by Evoview's Services slider and Portfolio archive,
+The package holds the library's card compositions. `CardTrack`: the mechanism shared by Evoview's Services slider and Portfolio archive,
 made neutral: a media card (`ribbon` or `portrait`) and its track. On
 desktop the page's vertical scroll drives the track sideways under a sticky
 stage; on phones the track is a native snap strip. Depends on `foundation`
 and `controls`.
 
-Showcase: `https://evoview-library.said.bet/layouts/card-track` (one studio,
+Showcase: `https://evoview-library.said.bet/layouts/card` (one studio,
 the two variants: the portfolio as portrait cards on a dark chapter, services
 as ribbon cards on a light one; live accent palette, FR / EN).
 
@@ -70,7 +70,7 @@ card or next to the affordance.
 
 | File | Role | Edit per site? |
 | --- | --- | --- |
-| `src/card-track.config.tsx` | `buildCardTrackConfig(locale)`: copy FR / EN and the site's tracks (items, media). | **yes — the only one** |
+| `src/card.config.tsx` | `buildCardTrackConfig(locale)`: copy FR / EN and the site's tracks (items, media). | **yes — the only one** |
 | `src/CardTrack.tsx` | Track: mechanism, geometry, progress, dots, keyboard, pause model | no |
 | `src/MediaCard.tsx` | Card (both variants), media gate, video, affordance, tap slop | no |
 | `src/types.ts` | Types | no |
@@ -81,11 +81,11 @@ card or next to the affordance.
 ## Install
 
 ```bash
-/root/.vibehub/projects/evoview-design-library/components/card-track/install.sh /root/.vibehub/projects/<client>
+/root/.vibehub/projects/evoview-design-library/components/card/install.sh /root/.vibehub/projects/<client>
 ```
 
 Installs / upgrades `controls` and `foundation` first, then copies `src/` to
-`<client>/src/components/card-track/`; re-runs keep `card-track.config.tsx`.
+`<client>/src/components/card/`; re-runs keep `card.config.tsx`.
 
 ## Host requirements
 
@@ -99,7 +99,7 @@ scene is centred with the space above it capped at the chapter's top rhythm
 ## API
 
 ```tsx
-import { CardTrack, buildCardTrackConfig } from "@/components/card-track";
+import { CardTrack, buildCardTrackConfig } from "@/components/card";
 
 const config = buildCardTrackConfig(locale);
 <CardTrack
