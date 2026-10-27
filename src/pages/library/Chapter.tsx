@@ -361,7 +361,7 @@ function Specimen({ t }: { t: Copy }) {
               </span>
             )}
             <ChapterHeading
-              level={2}
+              level={3}
               marker={false}
               live={instrument === "ticker"}
               layout={heading === "split" ? "split" : "centered"}
@@ -526,7 +526,7 @@ function Page({ t }: { t: Copy }) {
     <>
       <ChapterShell id="projets" tone="paper" rhythm="standard" rail="wide">
         <ChapterHeading
-          level={2}
+          level={3}
           marker={false}
           layout="split"
           title={t.projects.title}
@@ -546,7 +546,7 @@ function Page({ t }: { t: Copy }) {
 
       <ChapterShell id="visite" tone="dark" rhythm="standard" rail="reading">
         <ChapterHeading
-          level={2}
+          level={3}
           marker={false}
           layout="split"
           title={t.visit.title}

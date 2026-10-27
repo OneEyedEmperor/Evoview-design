@@ -69,8 +69,9 @@ Orchestrator's before-shots (1440):
   commits and versions per phase.
 - Build under concurrency: typecheck `pnpm exec tsc -b`; production check
   `pnpm exec vite build --outDir /tmp/<agent>-dist` (+ `vite preview --outDir
-  … --port <free>` when needed, stop only your PID); `pnpm verify:ssr chapter`
-  for chapter changes. Never `pnpm build`/`pnpm dev`. Showcase
+  … --port <free>` when needed, stop only your PID); `pnpm verify:chapter`
+  for chapter changes (`verify:ssr` covers modal packages only). Never
+  `pnpm build`/`pnpm dev`. Showcase
   `https://evoview-library.said.bet` (vhdev; `vhdev up` if 502). HMR remounts
   under concurrent edits: confirm intermittent bugs on your preview build.
 - Verify at 1440, 1024, 390: every switch combination, FR/EN, palette swatches
@@ -124,7 +125,7 @@ layout, order and defaults; report disagreements instead of changing them.
   measure (Performance trace or rAF timing) before and after.
 - Correctness: cold reloads, StrictMode double effects, resize, locale and
   palette changes, reduced motion, hidden tab, SSR/crawlability
-  (`verify:ssr`), a11y names and focus.
+  (`verify:chapter`), a11y names and focus.
 - Code: reuse foundation/controls instead of local copies, dead code and
   duplicated CSS removed, types tight, README/SKILL accurate to behaviour.
 

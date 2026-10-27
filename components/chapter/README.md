@@ -392,3 +392,6 @@ with sequences use foundation's hooks themselves.
     off-screen / hidden tab → animations paused, no clip playing; network:
     one file per picture (the `400w` set at 1440 × 1), clips only once
     played; production preview, no CPU work while off-screen.
+12. `pnpm verify:chapter` (library repo): the venue clock at fixed instants
+    and the FAQ / contact / footer server HTML (items 8 and 10, the mark of
+    item 7) against the reference config.
