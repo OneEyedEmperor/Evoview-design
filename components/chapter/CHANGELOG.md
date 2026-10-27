@@ -61,6 +61,14 @@
 - Showcase: the story heading is `level={3}` under its h2 caption; the frame's
   ink measure stops a masked clip box at its content edge
   (`src/library/ShowcasePage.tsx`).
+- Showcase only: the scene desks drop their sentence (the hint at rest, every
+  per-option line and the reserved tallest-sentence cell); settings and their
+  labels stay, as does each caption's description. Under its desk a story in
+  columns (≥ 1024) keeps one heading band and the footer one group gap, so
+  pictures and the footer line never touch the pills. Every scene caption
+  carries the dummy client's eye (`EveilMark`) at the rail's right edge, on
+  the title's cap line (0.7em, white 30 % / ink 22 %, decorative). No package,
+  config or API change.
 
 ## 1.2.0
 

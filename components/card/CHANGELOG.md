@@ -1,5 +1,13 @@
 # card changelog
 
+## Unreleased
+
+- Showcase only (`/layouts/card`, not installed): the deck and sequence
+  desks drop their sentence (hint, per-option lines, the "Ouvert : …"
+  acknowledgement and the reserved cell); the cards stay openable and a
+  click keeps the page. Every scene caption carries the dummy client's eye
+  at the rail's right edge. No package, config or API change.
+
 ## 2.2.0
 
 - **Portrait cards are 2:3** (were 9:10 desktop, 7:10 phone), the ratio of

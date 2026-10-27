@@ -1,10 +1,11 @@
 import { useLayoutEffect, useRef, type ReactNode } from "react";
 import { Readout, cn } from "../../../../components/foundation/src";
 import { ShowcaseVariant, type DemoRhythm, type DemoTone } from "../../../library/ShowcasePage";
+import EveilMark from "../EveilMark";
 import "./scene.css";
 
 /* One scene of a showcase page: caption (what it is, when a client picks it)
-   → desk (its settings and one sentence) → the live component, all on the
+   → desk (its settings) → the live component, all on the
    ground the component opens on, so the tone cut always falls between
    scenes. The frame (ShowcaseVariant) owns the bands: chapter band between
    scenes, heading band from caption to desk. The component keeps its own
@@ -53,7 +54,23 @@ export function Scene({ name, when, tone, exit, desk, rhythm = "flush", id, chil
   });
 
   return (
-    <ShowcaseVariant id={id} name={name} when={keepSpaces(when)} caption="title" tone={tone} rhythm={rhythm}>
+    <ShowcaseVariant
+      id={id}
+      name={
+        <>
+          {name}
+          {/* The dummy client's eye on the caption's right edge, marking the
+              scene. Inside the title so it sizes in the title's em; out of
+              flow, so it adds no height and the frame's ink measure (the
+              body) never sees it. */}
+          <EveilMark className="lib-scene__mark" />
+        </>
+      }
+      when={keepSpaces(when)}
+      caption="title"
+      tone={tone}
+      rhythm={rhythm}
+    >
       <div className="lib-scene" data-exit={exit ?? tone ?? "dark"}>
         {desk && (
           <div
@@ -74,33 +91,19 @@ export function Scene({ name, when, tone, exit, desk, rhythm = "flush", id, chil
 type SceneDeskProps = {
   /** <DeskSetting>s. */
   children: ReactNode;
-  /** The sentence for the current state. */
-  say: ReactNode;
-  /** Every sentence the desk can show: the tallest is reserved, so the
-      component below never moves when the sentence changes. */
-  sayAll?: ReactNode[];
-  /** strip: settings side by side over the sentence (default) · column:
-      settings stacked, for a desk standing beside its component. */
+  /** strip: settings side by side (default) · column: settings stacked,
+      for a desk standing beside its component. */
   layout?: "strip" | "column";
   className?: string;
 };
 
-/* The desk: settings (label over control) and one sentence under them,
-   on the same left edge. Tone comes from the element around it. */
-export function SceneDesk({ children, say, sayAll = [], layout = "strip", className }: SceneDeskProps) {
+/* The desk: settings (label over control) on the caption's left edge. The
+   controls speak for themselves: no sentence under them. Tone comes from
+   the element around it. */
+export function SceneDesk({ children, layout = "strip", className }: SceneDeskProps) {
   return (
     <div className={cn("lib-desk", className)} data-layout={layout}>
       <div className="lib-desk__settings">{children}</div>
-      <div className="lib-desk__say">
-        {sayAll.map((line, i) => (
-          <p key={i} className="ev-t-body" aria-hidden="true">
-            {keepSpaces(line)}
-          </p>
-        ))}
-        <p className="ev-t-body" aria-live="polite">
-          {keepSpaces(say)}
-        </p>
-      </div>
     </div>
   );
 }

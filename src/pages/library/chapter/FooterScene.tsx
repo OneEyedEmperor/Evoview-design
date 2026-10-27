@@ -17,20 +17,12 @@ const T = {
     when: "La dernière ligne de chaque page : le logo, les mentions, et le crédit Evoview à sa place approuvée.",
     label: "Disposition",
     options: { bar: "Barre", panel: "Panneau" },
-    say: {
-      bar: "Barre. Une ligne : logo, mentions, liens légaux, puis le crédit Evoview. Pour un site d'une page.",
-      panel: "Panneau. Le logo et sa phrase, les pages du site en tuiles, les réseaux ; dessous l'adresse et les mentions, le crédit Evoview au centre. Pour un site de plusieurs pages.",
-    },
   },
   en: {
     name: "Footer",
     when: "The last line of every page: the logo, the legal line, and the Evoview credit in its approved place.",
     label: "Layout",
     options: { bar: "Bar", panel: "Panel" },
-    say: {
-      bar: "Bar. One line: logo, legal line and links, then the Evoview credit. For a one-page site.",
-      panel: "Panel. The logo and its sentence, the site's pages as tiles, the socials; below, the address and legal line, the Evoview credit centred. For a site of several pages.",
-    },
   },
 } satisfies Record<Locale, unknown>;
 
@@ -52,7 +44,7 @@ export default function FooterScene({ config }: { config: ChapterConfig }) {
       when={t.when}
       tone="light"
       desk={
-        <SceneDesk say={t.say[layout]} sayAll={Object.values(t.say)}>
+        <SceneDesk>
           <DeskSetting label={t.label}>
             <SegmentedControl
               block

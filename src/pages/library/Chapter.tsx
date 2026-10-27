@@ -40,42 +40,17 @@ export default function Chapter() {
 type Heading = "centered" | "split" | "feature";
 type View = "plan" | "section" | "elevation";
 type Instrument = "phases" | "ticker" | "steps";
-type Said = { tone: ChapterTone } | { instrument: Instrument } | { heading: Heading } | { logo: boolean } | null;
 
 const T = {
   fr: {
     specimen: {
       name: "Chapitre",
       when: "La coque de chaque section du site : le ton, le titre et l'instrument se choisissent chapitre par chapitre.",
-      hint: "Changez un réglage : le chapitre change, ses voisins restent.",
       controls: {
         tone: { label: "Ton", options: { light: "Clair", paper: "Papier", dark: "Sombre" } },
         instrument: { label: "Instrument", options: { phases: "Phases", ticker: "Fil", steps: "Étapes" } },
         heading: { label: "Titre", options: { centered: "Centré", split: "Scindé", feature: "Vedette" } },
         logo: { label: "Logo", switch: "Logo du client" },
-      },
-      say: {
-        tone: {
-          light: "Clair. Entre deux chapitres sombres, la coupe nette sépare : aucun trait.",
-          paper: "Papier. Le blanc franc, pour un chapitre qui doit se détacher d'une page claire.",
-          dark: "Sombre. Entre deux sombres, plus de coupe : passez-le en compact, l'espace seul marque la suite.",
-        },
-        instrument: {
-          phases: "Phases. Un sélecteur dans le titre : le lecteur choisit la phase, le dessin suit.",
-          ticker: "Fil. Une ligne d'état : les phases défilent seules, la courante marquée. Retirée sur téléphone.",
-          steps: "Étapes. Les quatre gestes posés d'un coup, chacun avec sa phrase : l'introduction énonce toute la méthode, sans image.",
-        },
-        heading: {
-          centered: "Centré. Titre, phrase et instrument empilés sur le rail de lecture.",
-          split: "Scindé. Le titre à gauche, son instrument à droite, sur le rail large ; sur téléphone l'instrument passe dessous.",
-          feature: "Vedette. Titre un cran plus grand, le contenu prend la scène : les phases indexent le dessin, l'image va au bord, les étapes s'alignent. Une fois par région.",
-        },
-        logo: {
-          centered: "Logo, centré. La marque remplace le nom de l'atelier dans le titre, à la hauteur de la ligne.",
-          split: "Logo, scindé. La marque coiffe la colonne de l'instrument, face au titre.",
-          feature: "Logo, vedette. La marque ouvre la région, en grand au-dessus du titre.",
-          off: "Sans logo. Le nom de l'atelier s'écrit en toutes lettres dans le titre.",
-        },
       },
     },
     studio: {
@@ -97,35 +72,11 @@ const T = {
     specimen: {
       name: "Chapter",
       when: "The shell of every section on the site: tone, heading and instrument are chosen chapter by chapter.",
-      hint: "Change a setting: the chapter changes, its neighbours stay.",
       controls: {
         tone: { label: "Tone", options: { light: "Light", paper: "Paper", dark: "Dark" } },
         instrument: { label: "Instrument", options: { phases: "Phases", ticker: "Ticker", steps: "Steps" } },
         heading: { label: "Heading", options: { centered: "Centered", split: "Split", feature: "Feature" } },
         logo: { label: "Logo", switch: "Client logo" },
-      },
-      say: {
-        tone: {
-          light: "Light. Between two dark chapters, the hard cut separates: no rule.",
-          paper: "Paper. The clean white, for a chapter that must stand off a light page.",
-          dark: "Dark. Between two dark ones there is no cut: make it compact, space alone marks the continuation.",
-        },
-        instrument: {
-          phases: "Phases. A chooser in the heading: the reader picks the phase, the drawing follows.",
-          ticker: "Ticker. One state line: the phases run on their own, the current one marked. Dropped on phones.",
-          steps: "Steps. The four moves laid out at once, each with its sentence: the introduction states the whole method, no image.",
-        },
-        heading: {
-          centered: "Centered. Title, sentence and instrument stacked on the reading rail.",
-          split: "Split. The title on the left, its instrument on the right, on the wide rail; on phones the instrument drops below.",
-          feature: "Feature. Title one size up, the content takes the stage: the phases index the drawing, the image bleeds, the steps line up. Once per region.",
-        },
-        logo: {
-          centered: "Logo, centered. The mark replaces the studio's name inside the title, at line height.",
-          split: "Logo, split. The mark heads the instrument column, across from the title.",
-          feature: "Logo, feature. The mark opens the region, set large above the title.",
-          off: "No logo. The studio's name is spelled out in the title.",
-        },
       },
     },
     studio: {
@@ -184,20 +135,6 @@ function Specimen({ t }: { t: Copy }) {
   const [heading, setHeading] = useState<Heading>("feature");
   const [phase, setPhase] = useState(1);
   const [logo, setLogo] = useState(true);
-  const [said, setSaid] = useState<Said>(null);
-
-  const sentence = !said
-    ? s.hint
-    : "tone" in said
-      ? s.say.tone[said.tone]
-      : "instrument" in said
-        ? s.say.instrument[said.instrument]
-        : "logo" in said
-          ? said.logo
-            ? s.say.logo[heading]
-            : s.say.logo.off
-          : s.say.heading[said.heading];
-  const sayAll = [s.hint, ...Object.values(s.say.tone), ...Object.values(s.say.instrument), ...Object.values(s.say.heading), ...Object.values(s.say.logo)];
 
   const phases = t.studio.phases;
 
@@ -256,17 +193,14 @@ function Specimen({ t }: { t: Copy }) {
     <div className="chd-specimen">
       <div className="lib-rail chd-specimen__grid">
         <div className="ev-root ev-tone-dark chd-desk">
-          <SceneDesk layout="column" say={sentence} sayAll={sayAll}>
+          <SceneDesk layout="column">
             <DeskSetting label={s.controls.tone.label}>
               <SegmentedControl
                 block
                 label={s.controls.tone.label}
                 options={deskOptions(s.controls.tone.options)}
                 value={tone}
-                onChange={(v) => {
-                  setTone(v as ChapterTone);
-                  setSaid({ tone: v as ChapterTone });
-                }}
+                onChange={(v) => setTone(v as ChapterTone)}
               />
             </DeskSetting>
             <DeskSetting label={s.controls.instrument.label}>
@@ -275,32 +209,14 @@ function Specimen({ t }: { t: Copy }) {
                 label={s.controls.instrument.label}
                 options={deskOptions(s.controls.instrument.options)}
                 value={instrument}
-                onChange={(v) => {
-                  setInstrument(v as Instrument);
-                  setSaid({ instrument: v as Instrument });
-                }}
+                onChange={(v) => setInstrument(v as Instrument)}
               />
             </DeskSetting>
             <DeskSetting label={s.controls.heading.label}>
-              <LayoutPicker
-                label={s.controls.heading.label}
-                labels={s.controls.heading.options}
-                value={heading}
-                onChange={(v) => {
-                  setHeading(v);
-                  setSaid({ heading: v });
-                }}
-              />
+              <LayoutPicker label={s.controls.heading.label} labels={s.controls.heading.options} value={heading} onChange={setHeading} />
             </DeskSetting>
             <DeskSetting label={s.controls.logo.label}>
-              <Switch
-                label={s.controls.logo.switch}
-                checked={logo}
-                onCheckedChange={(on) => {
-                  setLogo(on);
-                  setSaid({ logo: on });
-                }}
-              />
+              <Switch label={s.controls.logo.switch} checked={logo} onCheckedChange={setLogo} />
             </DeskSetting>
           </SceneDesk>
         </div>

@@ -1,18 +1,43 @@
 /* Showcase scenes (Scene.tsx): caption → desk → component on the
    component's ground. Library only, not installed in clients. */
 
+/* ── Caption mark ─────────────────────────────────────────────────────── */
+/* The dummy client's eye on the caption's right edge (the rail's content
+   edge), on the title's first line: same height in every scene, whatever
+   the lead's length. It lives in the title, so `em` is the title's size:
+   0.7em reads as the caps' height (0.655em, the almond tapers), centred on
+   their middle (0.53em under the line top in Overused Grotesk 900 at line
+   height 0.95). Absolute against the caption: it adds no height. */
+.lib-scene__mark {
+  position: absolute;
+  top: 0.53em;
+  right: var(--lib-gutter);
+  height: 0.7em;
+  width: auto;
+  aspect-ratio: 1084 / 515;
+  translate: 0 -50%;
+  color: var(--lib-fg);
+  opacity: 0.3;
+  pointer-events: none;
+}
+/* Dark ink at an alpha weighs more on a pale ground than white on night. */
+.lib-variant[data-tone="light"] .lib-scene__mark,
+.lib-variant[data-tone="paper"] .lib-scene__mark { opacity: 0.22; }
+
 /* ── Desk ─────────────────────────────────────────────────────────────── */
 .lib-scene > .lib-scene__desk { background: none; }
-.lib-desk { display: grid; gap: var(--ev-gap-neighbour); }
 .lib-desk__settings { display: grid; gap: var(--ev-gap-neighbour) 2.5em; }
 .lib-desk__setting { display: grid; align-content: start; gap: var(--ev-gap-internal); min-width: 0; }
 .lib-desk__label { color: var(--ev-fg-55); }
 .lib-desk .evc-seg__option { padding-inline: 8px; }
-/* Every sentence the desk can say shares one cell, all but the current one
-   hidden: the cell holds the tallest, the component below never jumps. */
-.lib-desk__say { display: grid; max-width: 40em; }
-.lib-desk__say > p { grid-area: 1 / 1; color: var(--ev-fg-65); text-wrap: pretty; }
-.lib-desk__say > [aria-hidden] { visibility: hidden; }
+
+/* Under the desk the component opens on its own top padding (its rhythm).
+   Two open on less, counting on the previous section's air above them on a
+   client page: a story in columns (from 1024) runs its lanes through its
+   padding up to its edge, and a footer opens on a thin band. The desk keeps
+   that air, so pills never touch pictures or the footer's line. */
+.lib-scene:has(> .ev-chapter-story[data-axis="y"]) > .lib-scene__desk { padding-bottom: var(--lib-lead); }
+.lib-scene:has(> .ev-chapter--footer) > .lib-scene__desk { padding-bottom: var(--ev-gap-group); }
 
 /* Strip: from 640 the settings sit side by side at their own width (a wide
    choice keeps its segments readable, a two-way choice stays short). */

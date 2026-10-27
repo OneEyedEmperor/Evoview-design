@@ -180,8 +180,9 @@ padding, strips or rules of their own.
   what it is).
 - **Scenes with settings** (`src/pages/library/scene/Scene.tsx`, used by
   the chapter and card pages): `Scene` = a titled `ShowcaseVariant` whose
-  caption, `SceneDesk` (settings label-over-control side by side, one
-  sentence under them, the tallest sentence reserved) and component all
+  caption (the dummy client's eye, decorative, at the rail's right edge on
+  the title line), `SceneDesk` (settings label-over-control side by side,
+  no sentence) and component all
   stand on the component's opening ground (`tone`; omitted when the
   component lays its own grounds on the frame's, `exit` when it ends on
   another one), so cuts fall only between scenes and any scene can be
