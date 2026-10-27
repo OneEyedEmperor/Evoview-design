@@ -1,4 +1,14 @@
-# card-track changelog
+# card changelog
+
+## Unreleased
+
+- **Breaking (install path):** package renamed `card-track` → `card`.
+  Installs into `src/components/card/`, config file `card.config.tsx`
+  (was `card-track.config.tsx`), version marker `.card-version`, skill
+  `evoview-card`, showcase `/layouts/card`. Upgrade: move the client's
+  `card-track.config.tsx` to `src/components/card/card.config.tsx`, re-run
+  `install.sh`, delete `src/components/card-track/`, update imports to
+  `@/components/card`.
 
 ## 1.2.1
 

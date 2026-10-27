@@ -1,5 +1,9 @@
 # chapter changelog
 
+## Unreleased
+
+- Depends on `controls` (install.sh installs controls + foundation first).
+
 ## 1.1.0
 
 - Footer bar: no rules (RULES §3). The top hairline and the hairline before

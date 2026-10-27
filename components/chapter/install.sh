@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Installs / upgrades the Evoview chapter shell (and the foundation first) into a client project.
+# Installs / upgrades the Evoview chapter package (and controls + foundation first) into a client project.
 #
 #   components/chapter/install.sh <client-project-dir>
 #
@@ -13,7 +13,9 @@ TARGET="$(cd "$TARGET" && pwd)"
 DEST="$TARGET/src/components/chapter"
 VERSION="$(cat "$HERE/VERSION")"
 
-"$HERE/../foundation/install.sh" "$TARGET"
+# controls installs foundation first.
+"$HERE/../controls/install.sh" "$TARGET" >/dev/null
+echo "controls $(cat "$HERE/../controls/VERSION") + foundation $(cat "$HERE/../foundation/VERSION") installed"
 
 mkdir -p "$DEST"
 fresh=1
