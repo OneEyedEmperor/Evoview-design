@@ -1,6 +1,6 @@
 # card changelog
 
-## Unreleased
+## 2.0.0
 
 - **Breaking (install path):** package renamed `card-track` → `card`.
   Installs into `src/components/card/`, config file `card.config.tsx`
@@ -9,6 +9,43 @@
   `card-track.config.tsx` to `src/components/card/card.config.tsx`, re-run
   `install.sh`, delete `src/components/card-track/`, update imports to
   `@/components/card`.
+- **CardDeck** (new, from the Tchin Tchin home menu deck): a category
+  switch (`SegmentedControl`) over a dealt hand of `MediaCard`s, 3 or 6.
+  Desktop ≥ 1024: the founder-approved deck deal (centre column first, side
+  cards from under the opposite row's centre card) and the tab switch
+  (undeal → top-centre flip → swap edge-on → flip in + re-deal), source
+  timings, interruptible from the current frame. Below 1024: snap strip,
+  staggered rise, dots. Optional `more` link to the full catalogue.
+  Files `src/CardDeck.tsx`, `src/card-deck.css`. Config: new
+  `buildCardDeckConfig(locale)` → `{ locale, copy, deck }` (types
+  `CardDeckConfig`, `CardDeckDefinition`, `CardDeckCategory`,
+  `CardDeckCopy` = `CardTrackCopy` + `showing`); `buildCardTrackConfig` and
+  its keys unchanged. Clients upgrading keep their config: add a
+  `buildCardDeckConfig` export to it before mounting `CardDeck`. Media:
+  `public/library/card/deck/*.webp` (showcase placeholders).
+- **CardSequence** (new, from the Tchin Tchin karaoke clip board + "Vivez
+  l'Expérience" gallery): video cards under a timed focus (2,000 ms dwell,
+  one loop plays, the others recede), mouse / keyboard hold with neighbour
+  handoff and remaining-dwell resume, tune-in by foundation
+  `ChannelSwitch`, dwell line, `OrbFill` arrow orb, pointer tilt,
+  decorative watermark. Layouts `gallery` (one row) and `board` (clips +
+  fact tiles + price row with `PrimaryPlate`). Files
+  `src/CardSequence.tsx`, `src/card-sequence.css`. Config: new
+  `buildCardSequenceConfig(locale)` → `{ locale, copy, sequences }` (types
+  `CardSequenceConfig`, `CardSequenceDefinition`, `CardSequenceClip`,
+  `CardSequenceFact`, `CardSequenceOffer`, `CardSequenceCopy`,
+  `CardSequenceLayout`); `buildCardTrackConfig` / `buildCardDeckConfig`
+  unchanged. Clients upgrading keep their config: add a
+  `buildCardSequenceConfig` export before mounting `CardSequence`.
+- **MediaCard API:** new `showIndex?: boolean` (default `true`) omits the
+  portrait `01 / 05` readout; the readout row is not rendered when there is
+  neither index nor affordance. CardDeck passes `false`. CardTrack unchanged.
+- Fix: `MediaCard` used outside a `CardTrack` lost its focus ring (and the
+  ribbon tab fill), because its rules read `--card-track-*`, defined only on
+  `.ev-card-track`. The card root `.ctc` now maps its own `--ctc-accent`,
+  `-ink`, `-signal`, `-deep` from the track tokens with fallbacks to
+  foundation's `--ev-accent*`; inside a track it resolves to the same values.
+  No config change.
 
 ## 1.2.1
 

@@ -1,0 +1,267 @@
+/* Evoview card sequence — timed focus over video cards (board | gallery).
+   Scoped under .ev-card-sequence; structure in em on the foundation scale;
+   the host accent arrives through --primary (foundation --ev-accent*).
+   Cards are media wells: dark in every tone. */
+
+.ev-card-sequence {
+  --card-sequence-accent: var(--ev-accent);
+  --card-sequence-ink: var(--ev-accent-ink);
+  --card-sequence-signal: var(--ev-accent-signal);
+  --card-sequence-deep: var(--ev-accent-deep);
+  /* The accent on a dark well, whatever the environment tone. */
+  --card-sequence-well-signal: color-mix(in oklab, var(--card-sequence-accent) 88%, #fff);
+  --csq-gap: clamp(8px, 1.25em, 20px);
+
+  position: relative;
+  overflow-x: clip;
+  padding-block: var(--ev-chapter-standard);
+  background: var(--ev-bg);
+  color: var(--ev-fg);
+}
+.ev-card-sequence[data-layout="board"] { --csq-gap: clamp(10px, 1.5em, 24px); }
+
+/* ── Heading: title / lead, .72 : 1.28 from 768 ──────────────────────── */
+.csq-head { display: grid; gap: 0.75em; margin-bottom: var(--ev-gap-heading); }
+.csq-title { color: var(--ev-fg); }
+.csq-title__accent { font-style: normal; color: var(--card-sequence-signal); }
+.csq-lead { max-width: 34em; color: var(--ev-fg-65); text-wrap: pretty; }
+@media (min-width: 768px) {
+  .csq-head { grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr); align-items: end; column-gap: 3em; }
+  .csq-lead { justify-self: end; }
+}
+
+/* ── Boards ──────────────────────────────────────────────────────────── */
+.csq-board {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--csq-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 1024px) {
+  .ev-card-sequence[data-layout="gallery"] .csq-board { grid-template-columns: repeat(var(--csq-n, 4), minmax(0, 1fr)); }
+}
+.csq-split { display: grid; gap: calc(2 * var(--ev-rem)); }
+@media (min-width: 768px) {
+  .csq-split { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items: stretch; gap: var(--csq-gap); }
+}
+@media (min-width: 1024px) {
+  .csq-split { grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); }
+}
+
+/* ── Reveal: rise + fade once, staggered over cards, facts, offer ────── */
+.csq-card,
+.csq-fact,
+.csq-offer {
+  opacity: 0;
+  transform: translateY(32px);
+  transition:
+    opacity var(--ev-dur-reveal) var(--ev-ease-cinematic) calc(var(--csq-i, 0) * var(--ev-stagger)),
+    transform var(--ev-dur-reveal) var(--ev-ease-cinematic) calc(var(--csq-i, 0) * var(--ev-stagger));
+}
+.ev-card-sequence[data-revealed] :is(.csq-card, .csq-fact, .csq-offer) { opacity: 1; transform: none; }
+
+/* ── Card ────────────────────────────────────────────────────────────── */
+.csq-card { position: relative; perspective: 1200px; min-width: 0; }
+.csq-card__frame {
+  --csq-rx: 0deg;
+  --csq-ry: 0deg;
+  --csq-mx: 50%;
+  --csq-my: 50%;
+  position: relative;
+  isolation: isolate;
+  display: block;
+  overflow: hidden;
+  aspect-ratio: var(--csq-ratio, 9 / 16);
+  border-radius: var(--ev-radius-surface);
+  background: #080808;
+  color: #fff;
+  text-decoration: none;
+  touch-action: manipulation;
+  transform: rotateX(var(--csq-rx)) rotateY(var(--csq-ry));
+  transition:
+    transform 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 700ms ease;
+}
+.csq-card__frame[data-tilting="true"] { will-change: transform; transition-duration: 100ms, 700ms; }
+.csq-card__frame:focus-visible { outline: 2px solid var(--card-sequence-signal); outline-offset: 3px; }
+/* State as frame: the focused card takes the accent edge and a deep bloom. */
+.csq-card[data-focused] .csq-card__frame {
+  box-shadow:
+    0 0 0 1px var(--card-sequence-signal),
+    0 1.25em 3em -1em var(--card-sequence-deep),
+    0 0 3.5em -0.75em color-mix(in oklab, var(--card-sequence-deep) 70%, transparent);
+}
+
+.csq-card__poster,
+.csq-card__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.csq-card__poster { opacity: 0; transition: opacity var(--ev-dur-reveal) var(--ev-ease); }
+.csq-card[data-media="ready"] .csq-card__poster { opacity: 1; }
+.csq-card__video { opacity: 0; transition: opacity var(--ev-dur-control) var(--ev-ease); }
+.csq-card__video[data-visible] { opacity: 1; }
+
+/* The others recede while the sequence runs; the focused one is clean. */
+.csq-card__dim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: #000;
+  opacity: 0.46;
+  pointer-events: none;
+  transition: opacity 700ms ease-out;
+}
+.ev-card-sequence[data-live] .csq-card:not([data-focused]) .csq-card__dim { opacity: 0.79; }
+.csq-card[data-focused] .csq-card__dim { opacity: 0; }
+.csq-card__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(to top, rgb(0 0 0 / 0.88) 0%, rgb(0 0 0 / 0.36) 38%, rgb(0 0 0 / 0.04) 66%);
+}
+/* Decorative authorship mark (RULES §9): unlinked, .12, no filter over video. */
+.csq-card__mark {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  opacity: 0.12;
+  pointer-events: none;
+}
+.csq-card__mark svg { display: block; width: min(27%, 7em); height: auto; }
+.csq-card__mark :is(g, path) { fill: #fff; }
+.csq-card__glare {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: radial-gradient(circle at var(--csq-mx) var(--csq-my), rgb(255 255 255 / 0.16) 0%, rgb(255 255 255 / 0.05) 25%, transparent 60%);
+  opacity: 0;
+  transition: opacity 500ms ease;
+}
+.csq-card__frame[data-tilting="true"] .csq-card__glare { opacity: 1; }
+
+.csq-card__status {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  color: rgb(255 255 255 / 0.65);
+}
+.csq-card__retry { position: absolute; left: 50%; top: calc(50% + 1.75em); z-index: 6; transform: translateX(-50%); color: #fff; }
+
+.csq-card__foot {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 4;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75em;
+  padding: 1em;
+}
+@media (min-width: 1024px) { .csq-card__foot { padding: 1.25em 1.25em 1.4em; } }
+.csq-card__text { display: grid; gap: 0.45em; min-width: 0; }
+.csq-card__title { color: #fff; transition: transform 700ms cubic-bezier(0.16, 1, 0.3, 1); }
+.csq-card[data-focused] .csq-card__title { transform: translateY(-2px); }
+.csq-card__meta { overflow: hidden; color: rgb(255 255 255 / 0.65); text-overflow: ellipsis; white-space: nowrap; }
+
+/* Arrow orb: the accent rises in it as liquid on focus (OrbFill, RULES §1). */
+.csq-card__orb {
+  --ev-orb-rest: transparent;
+  --ev-orb-rest-ink: #fff;
+  --ev-orb-lit: var(--card-sequence-accent);
+  --ev-orb-lit-ink: var(--card-sequence-ink);
+  position: relative;
+  display: grid;
+  flex: 0 0 auto;
+  width: 2.5em;
+  height: 2.5em;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.25);
+  transition: transform 700ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 700ms ease;
+}
+.csq-card__orb svg { width: 1em; height: 1em; }
+.csq-card[data-focused] .csq-card__orb { transform: translateX(3px); box-shadow: inset 0 0 0 1px transparent; }
+
+/* The dwell: the card's one line of information. */
+.csq-card__progress {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 5;
+  height: 2px;
+  pointer-events: none;
+}
+.csq-card__fill {
+  display: block;
+  height: 100%;
+  background: var(--card-sequence-well-signal);
+  transform-origin: left center;
+  animation-name: csq-dwell;
+  animation-timing-function: linear;
+  animation-fill-mode: both;
+}
+.csq-card__fill[data-full] { animation: csq-dwell 700ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+@keyframes csq-dwell { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* ── Facts: text tiles on tone, no borders (RULES §3) ────────────────── */
+.csq-facts {
+  display: grid;
+  grid-auto-rows: 1fr;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.csq-fact {
+  display: grid;
+  align-content: center;
+  gap: 0.6em;
+  padding: 1.25em 1.5em;
+  border-radius: var(--ev-radius-surface);
+  background: var(--ev-surface-list);
+}
+.csq-fact__title { margin: 0; color: var(--ev-fg); }
+.csq-fact__body { color: var(--ev-fg-65); text-wrap: pretty; }
+
+/* ── Offer: price / action, 1.2 : .8 ─────────────────────────────────── */
+.csq-offer { display: grid; gap: 1.5em; margin-top: calc(2.25 * var(--ev-rem)); }
+@media (min-width: 768px) {
+  .csq-offer { grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr); align-items: center; margin-top: calc(3 * var(--ev-rem)); }
+  .csq-offer__action { justify-self: end; }
+}
+.csq-offer__price { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25em 0.75em; margin: 0; }
+.csq-offer__value {
+  font-family: var(--ev-font-display);
+  font-size: clamp(calc(2.75 * var(--ev-rem)), 5vw, calc(4.2 * var(--ev-rem)));
+  font-weight: 900;
+  line-height: 0.85;
+  letter-spacing: -0.035em;
+  color: var(--card-sequence-signal);
+  white-space: nowrap;
+}
+.csq-offer__unit { color: var(--ev-fg-65); }
+.csq-offer__note { margin-top: 0.75em; color: var(--ev-fg-55); }
+
+/* ── Phone: two up, secondary objects leave before legibility shrinks ── */
+@media (max-width: 767px) {
+  .csq-fact:nth-child(n + 3) { display: none; }
+  .csq-offer__action { width: 100%; }
+}
+@media (max-width: 599px) {
+  .csq-card__orb { display: none; }
+  .csq-card__foot { padding: 0.85em; }
+}

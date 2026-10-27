@@ -59,3 +59,102 @@ export type CardTrackConfig = {
   copy: CardTrackCopy;
   tracks: Record<string, CardTrackDefinition>;
 };
+
+/* ── CardSequence (card-sequence block) ─────────────────────────────── */
+
+/** board: a few clips beside facts, then an offer and one action (home teaser).
+    gallery: every clip in one row (the page's own section). */
+export type CardSequenceLayout = "board" | "gallery";
+
+export type CardSequenceClip = {
+  id: string;
+  title: string;
+  /** One line under the title (place, use, moment). No kicker above the title. */
+  meta?: string;
+  /** Poster image: the stable state, ideally the loop's first frame. */
+  poster: string;
+  /** Muted loop, played only while the card holds the focus. */
+  video?: string;
+  /** CSS object-position, e.g. "50% 30%". */
+  position?: string;
+  /** The client's destination for this card (page, profile). Never an Evoview referral. */
+  href?: string;
+  /** Opens `href` in a new tab (external profile). */
+  external?: boolean;
+};
+
+export type CardSequenceFact = { title: string; body: string };
+
+export type CardSequenceOffer = {
+  /** The scene's one accent display word, e.g. "240 €". */
+  value: string;
+  unit?: string;
+  note?: string;
+  action?: { label: string; href: string };
+};
+
+export type CardSequenceDefinition = {
+  title: string;
+  /** A word of `title` set in the accent. */
+  accent?: string;
+  lead?: string;
+  clips: CardSequenceClip[];
+  /** Board only: tiles beside the clips (three read best; phones keep two). */
+  facts?: CardSequenceFact[];
+  /** Board only: the row after the clips. */
+  offer?: CardSequenceOffer;
+  /** Dwell per card, ms. Default 2000 (approved). */
+  dwellMs?: number;
+  /** Card aspect ratio from the footage, CSS `w / h`. Default "9 / 16". */
+  ratio?: string;
+  /** Decorative Evoview watermark on each card (aria-hidden, .12). Default true. */
+  watermark?: boolean;
+};
+
+export type CardSequenceCopy = {
+  /** Appended to an external card's accessible name. */
+  newTab: string;
+  loading: string;
+  failed: string;
+  retry: string;
+};
+
+export type CardSequenceConfig = {
+  locale: Locale;
+  copy: CardSequenceCopy;
+  sequences: Record<string, CardSequenceDefinition>;
+};
+/* ── end CardSequence ───────────────────────────────────────────────── */
+
+/* ── CardDeck ─────────────────────────────────────────────────────────── */
+
+export type CardDeckCategory = {
+  id: string;
+  /** Switch label: one or two short words (four fit a phone). */
+  label: string;
+  /** The deck deals the first 3 (one row) or 6 (two rows), on the desktop grid and the phone strip alike. */
+  items: CardTrackItem[];
+};
+
+export type CardDeckDefinition = {
+  /** Accessible name of the card panel. */
+  label: string;
+  /** Accessible name of the category switch. */
+  switchLabel: string;
+  /** The first category opens the deck: a curated selection (one column per category) or the main one. */
+  categories: CardDeckCategory[];
+  /** The whole catalogue (menu, portfolio) beyond the dealt cards. */
+  more?: { label: string; href: string };
+};
+
+export type CardDeckCopy = CardTrackCopy & {
+  /** Live status after a switch, e.g. "Mobilier : 6 projets". */
+  showing: (category: string, count: number) => string;
+};
+
+export type CardDeckConfig = {
+  locale: Locale;
+  copy: CardDeckCopy;
+  deck: CardDeckDefinition;
+};
+/* ── /CardDeck ────────────────────────────────────────────────────────── */

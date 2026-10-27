@@ -1,6 +1,6 @@
 ---
 name: evoview-card
-description: Evoview card package. CardTrack — media cards (ribbon with information band, or portrait with scrim and identity) on a desktop scroll-scrubbed track that becomes a native snap strip on phones; accent-driven from the host --primary. Use when a client page needs services, offers, projects or a portfolio browsed one card at a time in the Evoview style. Triggers on "evoview card track", "services slider", "portfolio track", "scroll-scrubbed cards", "media card ribbon".
+description: Evoview card package (was card-track) — media cards (ribbon or portrait) in three compositions, accent-driven from the host --primary. CardTrack: desktop scroll-scrubbed track / phone snap strip, for services or a portfolio browsed one card at a time. CardDeck: category switch over a dealt hand of 3 or 6 cards, for a menu, collection or work by category. CardSequence: timed focus over video cards (one loop plays, hover/keyboard hold), for rooms, venues or experiences on video, as a gallery row or a board with facts and a price. Triggers on "evoview card", "card track", "services slider", "portfolio track", "menu cards", "card deck", "category tabs cards", "video cards", "clip board", "video gallery".
 ---
 
 # Evoview card
@@ -45,3 +45,47 @@ Read `README.md` ("What is Evoview", decisions, behaviour) and the library's
 - Never fork for a client: fixes go into the library (`VERSION`,
   `CHANGELOG.md`), clients re-run `install.sh`.
 - Respond in English even when the client interface is French.
+
+## CardDeck (catalogue by category, dealt as a deck)
+
+Use when the client's offer sorts into a few categories with a curated
+opening selection (restaurant menu, collections, work by discipline).
+README "CardDeck" holds the protected choreography and the API.
+
+1. Same install. In the client's `card.config.tsx` add / adapt
+   `buildCardDeckConfig(locale)`: categories (short labels, 3 or 6 items
+   each, the first one = the selection, one column per category), the
+   client's posters, `more` → their full catalogue page (menu, portfolio).
+2. Pick `variant` from the content (`portrait`: the image is the argument;
+   `ribbon`: each item needs its sentence, e.g. dish descriptions) and
+   `rows` (2 = six cards and the full deal; 1 = three).
+3. Mount `<CardDeck deck copy tone rhythm heading onOpen />` in the
+   section; `heading` takes the client's chapter heading. Wire `onOpen` to
+   the client's detail view; never to a booking CTA inside the card.
+4. Do not retime the deal or the switch sequence (founder-approved, zero
+   dead time) and do not add a counting readout, watermarks or a reduced
+   motion branch. Verify with the README CardDeck checklist at 1440, 1024,
+   390, including rapid category clicks.
+
+## CardSequence (video cards under a timed focus)
+
+Use when a client has a few short loops worth seeing one at a time (rooms,
+events, places, an experience). README "CardSequence" holds the protected
+timing and the API.
+
+1. Same install. In the client's `card.config.tsx` add / adapt
+   `buildCardSequenceConfig(locale)`: one `sequences` entry per placement.
+   Home teaser → `layout="board"`: 2 clips, 3 facts, the offer (price +
+   one action to the client's booking page). Own page section →
+   `layout="gallery"`: 3–5 clips. Posters = first frames; `ratio` from the
+   footage ("9 / 16" phone clips).
+2. Card `href`s are the client's destinations (detail pages, their social
+   profile with `external: true`). Never link a card to Evoview; the
+   watermark stays decorative (`watermark` on by default).
+3. One accent display word per scene: `accent` on a gallery title, none on
+   a board title whose offer shows the price.
+4. Mount `<CardSequence sequence copy layout tone />` in the section. Keep
+   the 2,000 ms dwell, the hold / remaining-dwell behaviour and the channel
+   switch; no CRT, noise or flicker layers, no kicker above the titles, no
+   reduced-motion branch. Verify with the README CardSequence checklist at
+   1440, 1024, 390.

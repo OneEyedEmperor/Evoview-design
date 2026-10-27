@@ -25,6 +25,8 @@ export type MediaCardProps = {
   play?: boolean;
   /** Roving tab stop. */
   tabbable?: boolean;
+  /** Portrait: the `01 / 05` position readout over the title. Default true; off for peers (CardDeck). */
+  showIndex?: boolean;
   onOpen?: () => void;
   onHover?: (hovering: boolean) => void;
   onFocusCard?: () => void;
@@ -45,6 +47,7 @@ export const MediaCard = memo(function MediaCard({
   near = true,
   play = false,
   tabbable = true,
+  showIndex = true,
   onOpen,
   onHover,
   onFocusCard,
@@ -99,12 +102,16 @@ export const MediaCard = memo(function MediaCard({
 
         {portrait ? (
           <div className="ctc__identity">
-            <div className="ctc__readout">
-              <Readout aria-hidden="true">
-                {pad(index + 1)} / {pad(total)}
-              </Readout>
-              {onOpen && <Affordance copy={copy} className="ctc__affordance--inline" />}
-            </div>
+            {(showIndex || onOpen) && (
+              <div className="ctc__readout">
+                {showIndex && (
+                  <Readout aria-hidden="true">
+                    {pad(index + 1)} / {pad(total)}
+                  </Readout>
+                )}
+                {onOpen && <Affordance copy={copy} className="ctc__affordance--inline" />}
+              </div>
+            )}
             <h3 className="ctc__title ctc__title--portrait">
               <span className="ctc__wipe">{item.title}</span>
             </h3>

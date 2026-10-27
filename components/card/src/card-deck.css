@@ -1,0 +1,122 @@
+/* Evoview card deck — a category switch over a dealt grid of media cards.
+   Scoped under .ev-card-deck; structure in em on the foundation scale; the
+   host accent arrives through --primary (foundation --ev-accent*). The cards
+   are MediaCard (.ctc); this sheet only places them. Motion is driven from
+   CardDeck.tsx (Web Animations); CSS holds the rest state and stacking. */
+
+.ev-card-deck {
+  --card-deck-accent: var(--ev-accent);
+  --card-deck-ink: var(--ev-accent-ink);
+  --card-deck-signal: var(--ev-accent-signal);
+  --card-deck-deep: var(--ev-accent-deep);
+  --cdk-col-gap: 1.75em;
+  --cdk-row-gap: 1.5em;
+  --cdk-ratio: 3 / 4;
+  --ctc-grade: saturate(0.78) contrast(1.06) brightness(0.88);
+
+  position: relative;
+  overflow-x: clip;
+}
+
+.cdk-head { margin-bottom: var(--ev-gap-heading); }
+
+.cdk-switch {
+  width: 100%;
+  max-width: calc(34em + 2 * var(--ev-gutter));
+  margin-inline: auto;
+  padding-inline: var(--ev-gutter);
+}
+.cdk-switch .evc-seg__option { padding-inline: 8px; }
+
+.cdk-panel { margin-top: 3em; }
+
+/* ── Cards (MediaCard placed in a deck, not on a track) ──────────────── */
+.ev-card-deck .ctc {
+  display: block;
+  grid-row: auto;
+  opacity: 1;
+  translate: none;
+  transition: none;
+}
+.cdk-card { position: relative; z-index: var(--cdk-z, 0); }
+/* Armed on the client until the deal starts; server HTML shows every card. */
+.ev-card-deck[data-armed]:not([data-dealt]) .cdk-card { opacity: 0; }
+
+.ev-card-deck .ctc__frame { display: flex; height: 100%; flex-direction: column; }
+.ev-card-deck .ctc--portrait .ctc__frame { height: auto; aspect-ratio: var(--cdk-ratio); }
+.ev-card-deck .ctc--ribbon .ctc__media { flex: none; aspect-ratio: 4 / 3; }
+.ev-card-deck .ctc--ribbon .ctc__ribbon { flex: 1 1 auto; padding: 1.5em; }
+
+.ev-card-deck .ctc__title--portrait { font-size: clamp(1.5em, 2vw, 2.25em); }
+
+/* Affordance answers the pointer (always shown on touch); the pointed card blooms. */
+.ev-card-deck .ctc__affordance { opacity: 0; transition: opacity var(--ev-dur-control) ease; }
+.ev-card-deck .ctc:is([data-released], :focus-within) .ctc__affordance { opacity: 1; }
+@media (hover: none) { .ev-card-deck .ctc__affordance { opacity: 1; } }
+.ev-card-deck .ctc[data-released] .ctc__frame {
+  box-shadow: 0 1.5em 3em -0.75em color-mix(in oklab, var(--card-deck-deep) 70%, transparent);
+}
+
+/* ── Desktop ≥ 1024: the deck ────────────────────────────────────────── */
+@media (min-width: 1024px) {
+  .cdk-viewport { padding-inline: var(--ev-gutter); }
+  .cdk-grid {
+    display: grid;
+    max-width: 80em;
+    margin-inline: auto;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--cdk-row-gap) var(--cdk-col-gap);
+  }
+  .cdk-dots { display: none; }
+}
+
+/* ── Below 1024: a native snap strip holding every card of the category ─ */
+@media (max-width: 1023.98px) {
+  .ev-card-deck { --cdk-w: min(42vw, 22em); --cdk-col-gap: 16px; }
+  .cdk-viewport {
+    container-type: inline-size;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: var(--ev-gutter);
+    scrollbar-width: none;
+    /* Room for the rise and the bloom inside the scroll container's clip. */
+    margin-block: -3em;
+    padding-block: 3em;
+    -webkit-overflow-scrolling: touch;
+  }
+  .cdk-viewport::-webkit-scrollbar { display: none; }
+  .cdk-grid {
+    display: grid;
+    width: max-content;
+    grid-auto-columns: var(--cdk-w);
+    grid-auto-flow: column;
+    column-gap: var(--cdk-col-gap);
+    padding-inline: var(--ev-gutter);
+  }
+  .cdk-card { scroll-snap-align: start; }
+  .cdk-dots { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 1.25em; }
+  .cdk-panel { margin-top: 2em; }
+}
+@media (max-width: 767px) {
+  .ev-card-deck { --cdk-w: min(82vw, 350px); --cdk-col-gap: 14px; }
+  .cdk-grid { padding-inline: calc((100cqw - var(--cdk-w)) / 2); }
+  .cdk-card { scroll-snap-align: center; }
+  .ev-card-deck .ctc__identity { right: 1.125em; bottom: 1.125em; left: 1.125em; }
+  .ev-card-deck .ctc__title--portrait { font-size: clamp(1.6em, 8vw, 2.125em); }
+}
+
+.cdk-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--ev-radius-round);
+  background: var(--ev-fg-12);
+  transition: width var(--ev-dur-control) var(--ev-ease), background-color var(--ev-dur-control) var(--ev-ease);
+}
+.cdk-dot[data-current] { width: 18px; background: var(--card-deck-signal); }
+
+.cdk-more { display: flex; justify-content: center; margin-top: 2.5em; padding-inline: var(--ev-gutter); }
+
+@media (forced-colors: active) {
+  .cdk-dot[data-current] { background: Highlight; }
+}
