@@ -589,6 +589,27 @@
       "value": "low",
       "signoff": false,
       "recommendation": "Approve the pitfall line; the code change only with a measured case."
+    },
+    {
+      "id": "channel-switch-seek-wait-up",
+      "capability": "channel-switch",
+      "direction": "up",
+      "class": "P",
+      "source": ["2448388"],
+      "incorporatedIn": null,
+      "status": "candidate",
+      "reason": "Site lane finding: a seek drops a buffered clip's readyState to 1 synchronously and loadeddata never fires again (only seeked / canplay), so ChannelSwitch's waitForMedia sits out its full mediaTimeout (600 ms) whenever a rewound clip is re-shown. The site works around it by marking rewinding clips data-seeking and excluding them through mediaSelector.",
+      "evidence": ["components/foundation/src/ChannelSwitch.tsx waitForMedia (loadeddata / error only)", "site src/components/ContactDossierScreen.tsx (data-seeking, mediaSelector \".is-live:not([data-seeking])\")", "tested in Chrome by the site lane (session 2ea7d6ed)"],
+      "date": "2026-10-29",
+      "layer": "Constraints",
+      "targets": ["components/foundation/src/ChannelSwitch.tsx"],
+      "adaptation": "waitForMedia also resolves a video on seeked / canplay (or re-checks readyState once a pending seek ends). Additive patch release; defaults otherwise unchanged.",
+      "risk": "low",
+      "verify": "Harness: re-show a rewound buffered clip, the open no longer waits the cap; showcase deck / title switches unchanged (animate() calls and timings vs master).",
+      "size": "xs",
+      "value": "medium",
+      "signoff": false,
+      "recommendation": "Approve at the next gate; once shipped, the site's data-seeking workaround can stay (harmless) or be dropped."
     }
   ]
 }
