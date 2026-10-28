@@ -169,7 +169,7 @@
       "direction": "up",
       "class": "P",
       "source": ["f72e48d"],
-      "incorporatedIn": "foundation@1.11.0",
+      "incorporatedIn": ["foundation@1.11.0", "foundation@1.11.1"],
       "status": "applied",
       "reason": "Site ahead on gating the real player: the mounted <video> is gated (not a detached probe), the full boomerang buffered as a blob with a held flag, playback from zero on reveal, two-frame reveal, loader kept through retry.",
       "evidence": [
@@ -178,7 +178,10 @@
         "Harness (Chrome, production build): the site hooks at ac34735 vs thin wrappers over element mode, same scenarios — cold, cached reopen, Fast 3G, offline → retry on Fast 3G, play gating (method): loader-on 353–358 ms in both, ready within ±22 ms, video plays from 0 at reveal, resume (not restart) when play returns",
         "Deliberate differences: retry keeps the loader up (the site's method hook hid it for 350 ms); a player held at metadata (iOS / data-saver behaviour simulated in Chrome: readyState capped at 1, data events withheld until play()) reveals at ~1.22 s where both site hooks failed at 20 s",
         "pnpm verify:ssr 833 checks (element gate: not ready, not slow, no src with 'full' on the server)",
-        "Unverified: real iOS Safari (no device; Linux WebKit GTK buffers paused players fully, Chrome never stops at metadata)"
+        "Unverified: real iOS Safari (no device; Linux WebKit GTK buffers paused players fully, Chrome never stops at metadata)",
+        "Fix in foundation 1.11.1 (library 90d766f), reviewer blocker on the site's Méthode switch: the gate acted on whatever element it was handed, so with ChannelSwitch holding the outgoing player through its fold while the step (src) changed, the new cycle paused / seeked the outgoing clip, accepted it on seeked and went ready before the incoming player existed; an incoming error was then masked (failed needs !ready). Rule now: only a player carrying the cycle's source is gated (src: the URL the gate returned; no src: re-pass on loadstart or retry); acceptance tied to the element",
+        "Harness /tmp/egate/methode (site wiring: ChannelSwitch + keyed player via useImperativeHandle + 200 ms step timer), 4x CPU, animations at 0.25x so the fold always ends after the step change: 1.11.0 seeked the outgoing clip and went ready on it ~500 ms before the incoming player mounted on 8 / 8 Next / Prev; source down (blob 404 at once, player 404 after 1.5 s): ready on the old picture, incoming error masked, no retry. 1.11.1: outgoing never touched, ready ~320 ms after the incoming mount on its own picture (8 / 8); source down: failed + retry shown, retry after recovery reveals a playing picture",
+        "Natural timing (slow frames 120 / 200 / 300 ms, 4x CPU, 24 clicks): 1.11.0 seeked the outgoing clip on 5 / 24, 1.11.1 on 0 / 24; lane 1 site-vs-wrapper scenarios unchanged on 1.11.1 (loader 353–358 ms, ready ±20 ms, stall fallback 1.22 s)"
       ],
       "date": "2026-10-29",
       "layer": "Constraints",
