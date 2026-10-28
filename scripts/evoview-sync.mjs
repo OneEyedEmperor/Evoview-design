@@ -1343,13 +1343,17 @@ function renderPlan(plan, opts) {
       if (r.newPatches.length) L.push(`         new patches (reason "TODO: reason", fill them in ${r.provenance}): ${r.newPatches.join(", ")}`);
       for (const [f, kind] of pend) L.push(`         CONFLICT ${f} (${kind})`);
     }
-    if (plan.results.some((r) => Object.keys(r.pending).length)) L.push(`next     resolve the conflicts, run \`sync.sh apply ${rel(plan.client)}\` again to record them, then \`sync.sh verify ${rel(plan.client)}\``);
+    if (plan.results.some((r) => Object.keys(r.pending).length)) {
+      L.push(`next     resolve the conflicts, run \`sync.sh apply ${rel(plan.client)}\` again to record them, then \`sync.sh verify ${rel(plan.client)}\``);
+      L.push("         (editing other files this apply wrote counts as uncommitted work: commit first, or --force if the edits are yours)");
+    }
     else L.push(`next     sync.sh verify ${rel(plan.client)}`);
     L.push(`result   applied${plan.exit ? " with conflicts (exit 2)" : " (exit 0)"}`);
     return L.join("\n");
   }
   if (plan.refused) L.push(`REFUSED  ${plan.refused}`);
-  L.push(`result   ${plan.status === "clean" ? "clean" : plan.status === "blocked" ? "blocked" : "needs review"} (exit ${plan.exit})`);
+  const verdict = plan.refused ? "refused, nothing written" : plan.status === "clean" ? "clean" : plan.status === "blocked" ? "blocked" : "needs review";
+  L.push(`result   ${verdict}${plan.refused ? `; plan ${plan.status}` : ""} (exit ${plan.exit})`);
   for (const b of plan.blockers) L.push(`  blocker  ${b}`);
   for (const r of plan.review) L.push(`  review   ${r}`);
   return L.join("\n");

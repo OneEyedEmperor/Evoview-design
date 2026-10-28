@@ -96,7 +96,9 @@ highlighted. Host: `hostDeps` + react ≥ 19 (missing react blocks), vite,
 
 Conflicts: resolve the files, run `apply` again (it records the resolutions
 as patches and clears `pending`), then `verify`. `apply` refuses while
-markers remain.
+markers remain. Editing other files the last apply wrote (e.g. dropping a
+flagged merge-clean patch) counts as uncommitted work: commit first, or
+`--force` when the edits are yours.
 
 ## Adoption
 
