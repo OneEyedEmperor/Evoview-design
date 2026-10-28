@@ -1,5 +1,9 @@
 # controls changelog
 
+## Unreleased
+
+- Docs: ownership sections (RULES §13).
+
 ## 1.5.0
 
 Requires `foundation` ≥ 1.9.0 (press jelly). No config changes, no API changes.

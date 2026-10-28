@@ -10,6 +10,15 @@ Package: `/root/.vibehub/projects/evoview-design-library/components/foundation/`
 Read `README.md` (tokens, hooks, attribution, motion policy) and the
 library's `STRATEGY.md` + `docs/RULES.md` first.
 
+## Ownership (RULES §13)
+
+- **Preserve** (README "Signature"): scale, radius roles, rhythm, motion
+  tokens, the liquid fill / press jelly / channel switch, tone values, accent
+  roles. A token change is a library-wide change.
+- **Select**: nothing; foundation has no variations.
+- **Invent** (README "Expression"): `--primary` / `--primary-foreground`,
+  `--font-*`, tone per section.
+
 ## Procedure
 
 - **Client**: installed automatically by every package's `install.sh`; run

@@ -35,3 +35,4 @@ export type {
   CardTrackVariant,
   Locale,
 } from "./types";
+export { CARD_TRACK_VARIANTS, CARD_DECK_ROWS, CARD_SEQUENCE_LAYOUTS, type CardDeckRows } from "./types";

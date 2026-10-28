@@ -8,9 +8,19 @@ description: Evoview portal modal (dossier) for client sites — header strip wi
 Package: `/root/.vibehub/projects/evoview-design-library/components/dossier/`
 Showcase: `https://evoview-library.said.bet/components/dossier`
 
-Read the package `README.md` ("What is Evoview", modal contract) and the
-library's `STRATEGY.md` first; the foundation README covers tokens and the
-pause model.
+Read the package `README.md` (Signature / Variations / Expression, modal
+contract) and the library's `STRATEGY.md` first; the foundation README covers
+tokens and the pause model.
+
+## Ownership (RULES §13)
+
+- **Preserve** (README "Signature"): header strip, board mosaic, chapter
+  strip, phone chrome, open chapters, media gate, modal contract, motion,
+  the header mark. Changes go into the library, never the client.
+- **Select** (README "Variations"): one or several universes; the chapter
+  kit, `DOSSIER_CHAPTER_VARIANTS`, `CHAPTER_ROWS_SURFACES`. Nothing else.
+- **Invent** (README "Expression"): brand, items, entries, copy, media,
+  accent (per item too).
 
 ## Procedure
 
@@ -58,9 +68,6 @@ pause model.
 
 ## Rules
 
-- The header strip, board mosaic, chapter strip, dock, media gate and modal
-  contract are the protected signature; only content, media, accent and copy
-  change per client.
 - Accent is signal only; the CTA stays a white plate at rest.
 - Never fork for a client: fixes go into the library (`VERSION`,
   `CHANGELOG.md`); clients re-run `install.sh`.

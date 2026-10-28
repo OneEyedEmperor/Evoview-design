@@ -14,18 +14,13 @@ Showcase: `https://evoview-library.said.bet/layouts/card` (one studio,
 Atelier Sorel: portfolio track, services track, deck, sequence; live accent
 palette, FR / EN).
 
-**Watermark rule (package-wide).** Only `CardSequence` carries the Evoview
-wordmark as a decorative watermark (unlinked, `aria-hidden`, ≤ .12, on by
-default, `watermark: false` removes it): its few large video cards are the
-inventoried source placement (`STRATEGY.md`). `CardTrack` and `CardDeck`
-cards carry none — a mark repeated across a grid of peers is noise. No
-card links to Evoview; the approved linked mark lives in a chassis strip or
-the site footer (`chapter`'s `ChapterFooter`).
+## Signature (preserve)
 
-## CardTrack — what is Evoview (protected)
+Read `STRATEGY.md`. Each composition is a client utility and a recognisable
+Evoview piece; changing these is a library change, never a client edit
+(RULES §13).
 
-Read `STRATEGY.md`. The track is a client utility (browse services or work
-one at a time) and a recognisable Evoview piece. Keep:
+### CardTrack
 
 - **Scrub, not carousel arrows.** Desktop: the stage pins with its content
   centred in the viewport, vertical scroll → horizontal translate, lerped
@@ -50,22 +45,103 @@ one at a time) and a recognisable Evoview piece. Keep:
 - **Positions are spoken, never counted on screen** (RULES §1): the hairline
   and the dots show where the reader is; "2 sur 5 : Title" is announced. No
   `01 / 04` readout on the rail or the cards (`showIndex` is ignored).
+- **Accent roles** (`--card-track-accent`, `-ink`, `-signal`, `-deep` map
+  the foundation tokens): progress fill, active dot, focus ring, tab fill
+  (with contrast ink) and the portrait bloom. Never a background, card
+  surface or body text.
 
-Client-adaptable: items, media, copy, accent, tone per chapter, variant,
-ribbon colour, track length, card count, portrait card ratio
-(`--card-track-portrait-ratio` on the host, width / height, default
-`2 / 3`: set it to the client footage's ratio so the whole frame shows).
+### CardDeck
 
-**Accent = the client's**, read from the host `--primary` /
-`--primary-foreground` (`--card-track-accent`, `-ink`, `-signal`, `-deep`
-map the foundation tokens). It drives the progress fill, active dot,
-focus ring, tab fill (with contrast ink) and the portrait bloom. Never a
-background, card surface or body text.
+- **The deck deal** (desktop ≥ 1024, founder-approved): centre column
+  first, side cards slide diagonally from under the opposite row's centre
+  card (one row: from under the centre card), top centre on top, bottom
+  centre under it. Initial deal: centre 950ms, sides 1200ms, delays
+  580 / 0 / 580 · 400 / 180 / 400, ease `(.16,1,.3,1)`.
+- **The switch sequence, zero dead time:** undeal 600ms (`(.7,0,.84,0)`,
+  opacity held to 65 %, bottom row 110 / 270 / 110 later) → the top centre
+  card turns edge-on (300ms) → content swaps → it turns back as the new
+  category's card (450ms) while the others re-deal (950ms, 650 / 0 / 650 ·
+  510 / 430 / 510). Any click reverses cards from the frame they are on
+  (back to the shown category: mirror; a third category: retargets the
+  flip). The new hand mounts in the same task that ends the flip-out, so
+  the flip-in starts on the next frame. Change timings in small steps only;
+  the founder tunes them.
+- **One hand:** 3 or 6 peer cards (no counting readout), the rest behind
+  `more`. Media decoded before the flip (posters preloaded on idle once the
+  deck is near), so no card turns over blank.
+- `MediaCard` anatomy, graded media released on hover / focus, accent bloom
+  on the pointed card, square-against-round, three voices.
 
-**Attribution: none.** The track has no header / chassis strip, so it carries
-no Evoview mark (`docs/RULES.md` §9). The approved linked mark lives in the
-chassis of what `onOpen` opens (dossier) or the site footer; never put it on a
-card or next to the affordance.
+### CardSequence
+
+- **The timed focus**: 2,000 ms dwell per card (approved), wraps, one card
+  plays, the others recede (black veil .46 at rest, .79 while the sequence
+  runs on dark, .64 on light and paper so each picture still reads, 0 on
+  the focused card, 700ms). Only enabled time counts
+  (`useSequenceClock`); the remaining dwell is carried across every pause.
+- **The hold**: a mouse (≥ 768) or keyboard focus takes the focus and holds
+  the clock; moving to a neighbour hands over without resuming (release
+  after 140ms, RULES §6); leaving returns to the sequence's own card with
+  its remaining dwell. Window blur releases.
+- **Tune-in**: each time a card goes live it changes by foundation
+  `ChannelSwitch` (poster folds to a line, opens on the decoded loop with
+  the sideways shudder and signal lines). No other signal effect.
+- **State as frame**: focused card = accent edge (1px) + bloom (deep accent
+  on dark; on light and paper a softer accent halo over a neutral ground
+  shadow every well carries), title lifts 2px, the arrow orb fills with the
+  accent as liquid (`OrbFill`), the 2px dwell line at the card's foot fills
+  with the clock (`sequenceFillStyle`), freezes with it, and wipes full
+  while a card is held (the scene's one line). Edge and bloom are layers
+  that fade (opacity only); the bloom's blur exists only while it shows.
+- Pointer tilt on mouse (±10° / ±12°, 1200px perspective, white glare),
+  reveal rise y 32 + fade, 600ms cinematic, 80ms stagger (cards → facts →
+  offer), three voices, surface radius on the wells.
+- **Accent roles** (`--card-sequence-accent`, `-ink`, `-signal`, `-deep`,
+  `-well-signal` for lines on the dark wells): focus edge, bloom, orb fill,
+  dwell line, the title's accent word or the price (one accent display word
+  per scene: set `accent` on gallery titles, leave it off when an offer
+  shows the price). Never a card surface or body text.
+
+### Attribution
+
+Only `CardSequence` carries the Evoview wordmark, as a decorative watermark:
+unlinked, centred, `aria-hidden`, opacity .12, no filter, on by default
+(`watermark: false` removes it; that is the founder's call). Its few large
+video cards are the inventoried source placement (`STRATEGY.md`).
+`CardTrack` and `CardDeck` cards carry none — a mark repeated across a grid
+of peers is noise (the Tchin deck repeated a watermark on every card;
+dropped). None of the three has a header / chassis strip, so none carries a
+linked mark (RULES §9): it lives in the chassis of what `onOpen` opens
+(dossier) or the site footer (`chapter`'s `ChapterFooter`). Never put it on
+a card or next to the affordance. Card links go to the client's own
+destinations (pages, the client's profile with `external`), never to an
+Evoview referral.
+
+## Variations (select)
+
+The composition first: `CardTrack`, `CardDeck` or `CardSequence` (table
+above). Then:
+
+| Component | Prop | Array (default first) | Choose |
+| --- | --- | --- | --- |
+| `CardTrack` (per track), `CardDeck` | `variant` | `CARD_TRACK_VARIANTS`: `portrait` · `ribbon` (required per track) | `portrait` when the image is the argument, `ribbon` when each card needs a sentence |
+| `CardDeck` | `rows` | `CARD_DECK_ROWS`: `2` (six cards) · `1` (three) | |
+| `CardSequence` | `layout` | `CARD_SEQUENCE_LAYOUTS`: `gallery` · `board` | `gallery`: all clips in one row (the page's own section) · `board`: clips + facts + offer (home teaser) |
+
+## Expression (adapt)
+
+- **CardTrack:** items, media, copy, accent, tone per chapter, ribbon
+  colour, track length, card count, portrait card ratio
+  (`--card-track-portrait-ratio` on the host, width / height, default
+  `2 / 3`: set it to the client footage's ratio so the whole frame shows).
+- **CardDeck:** categories, items, media, copy, `more` destination, accent,
+  tone, ribbon colour.
+- **CardSequence:** clips (poster, loop, title, meta, destination), `ratio`
+  from the footage, `dwellMs` (default and recommendation 2000), facts,
+  offer and action, `tone`, accent.
+
+Accent = the client's, read from the host `--primary` /
+`--primary-foreground`.
 
 ## Decisions vs the source
 
@@ -235,36 +311,6 @@ Extracted from the Tchin Tchin home menu ("Un Voyage Culinaire",
 evidence `docs/extraction/tchin-card-deck.md`). Showcase: the `CardDeck`
 scene on `/layouts/card` (Atelier Sorel, card anatomy and rows on the desk).
 
-### What is Evoview (protected)
-
-- **The deck deal** (desktop ≥ 1024, founder-approved): centre column
-  first, side cards slide diagonally from under the opposite row's centre
-  card (one row: from under the centre card), top centre on top, bottom
-  centre under it. Initial deal: centre 950ms, sides 1200ms, delays
-  580 / 0 / 580 · 400 / 180 / 400, ease `(.16,1,.3,1)`.
-- **The switch sequence, zero dead time:** undeal 600ms (`(.7,0,.84,0)`,
-  opacity held to 65 %, bottom row 110 / 270 / 110 later) → the top centre
-  card turns edge-on (300ms) → content swaps → it turns back as the new
-  category's card (450ms) while the others re-deal (950ms, 650 / 0 / 650 ·
-  510 / 430 / 510). Any click reverses cards from the frame they are on
-  (back to the shown category: mirror; a third category: retargets the
-  flip). The new hand mounts in the same task that ends the flip-out, so
-  the flip-in starts on the next frame. Change timings in small steps only;
-  the founder tunes them.
-- **One hand:** 3 or 6 peer cards (no counting readout), the rest behind
-  `more`. Media decoded before the flip (posters preloaded on idle once the
-  deck is near), so no card turns over blank.
-- `MediaCard` anatomy, graded media released on hover / focus, accent bloom
-  on the pointed card, square-against-round, three voices.
-
-Client-adaptable: categories, items, media, copy, `more` destination,
-accent, tone, `variant` (`portrait` when the image is the argument, `ribbon`
-when each card needs a sentence), `rows` (1 or 2).
-
-**Attribution: none.** The deck has no chassis strip; the approved mark
-lives in the site footer. Do not put marks on the cards (the Tchin source
-repeated a watermark on every card; dropped).
-
 ### API
 
 ```tsx
@@ -344,48 +390,6 @@ Tchin karaoke clip board (home) and "Vivez l'Expérience" gallery (karaoke
 page), evidence `docs/extraction/tchin-card-sequence.md`. Showcase: the
 `CardSequence` scene on `/layouts/card` (Atelier Sorel; Placement and Tone
 switches).
-
-### What is Evoview (protected)
-
-- **The timed focus**: 2,000 ms dwell per card (approved), wraps, one card
-  plays, the others recede (black veil .46 at rest, .79 while the sequence
-  runs on dark, .64 on light and paper so each picture still reads, 0 on
-  the focused card, 700ms). Only enabled time counts
-  (`useSequenceClock`); the remaining dwell is carried across every pause.
-- **The hold**: a mouse (≥ 768) or keyboard focus takes the focus and holds
-  the clock; moving to a neighbour hands over without resuming (release
-  after 140ms, RULES §6); leaving returns to the sequence's own card with
-  its remaining dwell. Window blur releases.
-- **Tune-in**: each time a card goes live it changes by foundation
-  `ChannelSwitch` (poster folds to a line, opens on the decoded loop with
-  the sideways shudder and signal lines). No other signal effect.
-- **State as frame**: focused card = accent edge (1px) + bloom (deep accent
-  on dark; on light and paper a softer accent halo over a neutral ground
-  shadow every well carries), title lifts 2px, the arrow orb fills with the
-  accent as liquid (`OrbFill`), the 2px dwell line at the card's foot fills
-  with the clock (`sequenceFillStyle`), freezes with it, and wipes full
-  while a card is held (the scene's one line). Edge and bloom are layers
-  that fade (opacity only); the bloom's blur exists only while it shows.
-- Pointer tilt on mouse (±10° / ±12°, 1200px perspective, white glare),
-  reveal rise y 32 + fade, 600ms cinematic, 80ms stagger (cards → facts →
-  offer), three voices, surface radius on the wells.
-
-Client-adaptable: clips (poster, loop, title, meta, destination), `ratio`
-from the footage, `dwellMs` (default and recommendation 2000), facts,
-offer and action, `layout`, `tone`, accent, `watermark`.
-
-**Accent = the client's** (`--card-sequence-accent`, `-ink`, `-signal`,
-`-deep`, `-well-signal` for lines on the dark wells): focus edge, bloom,
-orb fill, dwell line, the title's accent word or the price (one accent
-display word per scene: set `accent` on gallery titles, leave it off when an
-offer shows the price). Never a card surface or body text.
-
-**Attribution: decorative only.** No linked mark (the section has no
-chassis strip; the approved link is in the site footer). Each card carries
-the Evoview wordmark as an unlinked watermark, centred, `aria-hidden`,
-opacity .12, no filter (`watermark: false` removes it; that is the
-founder's call). Card links go to the client's own destinations (pages,
-the client's profile with `external`), never to an Evoview referral.
 
 ### API
 

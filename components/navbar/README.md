@@ -21,16 +21,67 @@ mobile    [ logo        (◉ MENU) ]  →tap→  [ logo        (◉ FERMER) ]
                                            [ SERVICES        VOIR → ]   ← tapped pill's tray, in the capsule: single-column rows
 ```
 
-What stays recognizably Evoview on every client (the signature, see
-`STRATEGY.md`): the glass capsule, the eye reticle, the unfold choreography,
-the mobile tiles, the pill typography, and the tray cards (monochrome cover at
-rest, the entry's accent grading it on hover). What a client changes: logo,
-accent, copy, destinations, icons, covers (config only).
+## Signature (preserve)
 
-Attribution: on a client site the navbar carries the client's logo and no
-Evoview mark or link; Evoview authorship is carried by the signature above.
-Do not add an Evoview mark, credit link or referral destination to the navbar
-without explicit approval and a supplied destination (`STRATEGY.md`).
+What stays recognizably Evoview on every client (`STRATEGY.md`); changing it
+is a library change, never a client edit (RULES §13):
+
+- The glass capsule, the eye reticle, the unfold choreography, the mobile
+  tiles, the pill typography, and the tray cards (monochrome cover at rest,
+  the entry's accent grading it on hover).
+- Tuning in `navbar.css` / `NavFinder.tsx`:
+  - Timings in `.nav-finder` (`460ms` open / `380ms` close, `35ms` stagger)
+    and `OPEN/CLOSE/TRAY_DELAY` in `NavFinder.tsx`. Keep the open
+    faster-out than the close eases-in-out.
+  - Gloss gradients (`--nav-gloss-*`): adjust lightness, keep the single
+    sweep.
+  - Mobile tile wash/hairline percentages (7 % / 26 % resting, 14 % / 70 %
+    pressed).
+  - Tray card treatment: `grayscale(1) brightness(.62)` at rest →
+    `grayscale(.6) brightness(.82)` + 4 % zoom + accent grade and 2px edge
+    on hover/focus; dark `#0c0c0d` plate on both tones.
+- Structural (breaking any of these needs a redesign):
+  - The 0fr⇄1fr grid-track morph and the mask feathering (desktop cells,
+    mobile body); the measured-width word morph; the measured tray height.
+  - The resting-width anchor on desktop, and the unfold shift that slides
+    the finder left by exactly the overflow when the open deck would cross
+    the 16px viewport gutter.
+  - The tray centres on its pill (from the settled unfold, not the mid-
+    transition position) and only yields to the 16px viewport gutters.
+  - Panels stay mounted, hidden with `visibility`/`inert`; never
+    conditionally render them.
+  - Mouse click never closes a hover-opened menu; hover never reopens a menu
+    a click just closed until the pointer leaves; `keepOpen` clicks hold off
+    the scroll-dismiss for 500 ms.
+  - Scroll lock + focus trap + Escape + focus restore on mobile; Escape/
+    blur/scroll/resize dismissal on desktop; arrow-key navigation in deck
+    and tray.
+  - Reduced motion resolves to the same end states with no slide or stagger.
+  - Tone detection by DOM probe, not by a list of section ids in the header.
+- **Attribution:** on a client site the navbar carries the client's logo and
+  no Evoview mark or link; Evoview authorship is carried by the signature
+  above. Do not add an Evoview mark, credit link or referral destination to
+  the navbar without explicit approval and a supplied destination
+  (`STRATEGY.md`).
+
+## Variations (select)
+
+- **Site shape:** one-page (`sections` + `section` per pill, optional
+  `sectionPill`; `examples/evoview.config.tsx`) or multi-page
+  (`sections: []` + `activeKey` via `withRoute`).
+- `reticle`: `NAV_RETICLES` — `eye` (default) · `hud`.
+- Per pill: a tray (`kind: "items"`, `layout` from `NAV_TRAY_LAYOUTS`:
+  `cards` · `rows`, default `cards` when any entry has a cover), a `cta`
+  block, or none (the pill navigates).
+
+## Expression (adapt)
+
+Config only: copy, language, routes/anchors, deck count (3–6) and order,
+which pill is the CTA, icons (lucide or custom nodes), `accent`, every
+`vars` token, logo, tray contents and covers (`--nav-tray-card-h`,
+`--nav-tray-w`). In `navbar.css`: the ink scale (`#151515`, the
+`rgba(21,21,21,…)` ramp) — a global replace if the client's ink is not
+near-black; keep the light/dark pairs symmetrical.
 
 ## Files
 
@@ -138,46 +189,6 @@ Tray entries route with `href`; `onSelect` is where a site opens its own
 modal or scrolls. The navbar never owns a modal. Desktop shows cover cards
 stacked in one column (or 2×2 rows); mobile always shows single-column rows
 (title only), plus the `sectionLink` to the pill's own `href`.
-
-## Adapting
-
-**Change freely** (config only):
-
-- Copy, language, routes/anchors, deck count and order, which pill is the
-  CTA, icons (lucide or custom nodes), `accent`, every `vars` token, logo,
-  `reticle`, tray contents and covers (`--nav-tray-card-h`, `--nav-tray-w`).
-
-**Change with care** (in `navbar.css`; these make it feel like this component):
-
-- Ink scale (`#151515`, the `rgba(21,21,21,…)` ramp) — a global replace if
-  the client's ink is not near-black. Keep the light/dark pairs symmetrical.
-- Timings in `.nav-finder` (`460ms` open / `380ms` close, `35ms` stagger)
-  and `OPEN/CLOSE/TRAY_DELAY` in `NavFinder.tsx`. Keep the open faster-out
-  than the close eases-in-out.
-- Gloss gradients (`--nav-gloss-*`): adjust lightness, keep the single sweep.
-- Mobile tile wash/hairline percentages (7 % / 26 % resting, 14 % / 70 % pressed).
-- Tray card treatment: `grayscale(1) brightness(.62)` at rest →
-  `grayscale(.6) brightness(.82)` + 4 % zoom + accent grade and 2px edge on
-  hover/focus; dark `#0c0c0d` plate on both tones.
-
-**Do not change** (structural; breaking any of these needs a redesign):
-
-- The 0fr⇄1fr grid-track morph and the mask feathering (desktop cells, mobile
-  body); the measured-width word morph; the measured tray height.
-- The resting-width anchor on desktop, and the unfold shift that slides the
-  finder left by exactly the overflow when the open deck would cross the
-  16px viewport gutter.
-- The tray centres on its pill (from the settled unfold, not the mid-
-  transition position) and only yields to the 16px viewport gutters.
-- Panels stay mounted, hidden with `visibility`/`inert`; never conditionally
-  render them.
-- Mouse click never closes a hover-opened menu; hover never reopens a menu a
-  click just closed until the pointer leaves; `keepOpen` clicks hold off the
-  scroll-dismiss for 500 ms.
-- Scroll lock + focus trap + Escape + focus restore on mobile; Escape/blur/
-  scroll/resize dismissal on desktop; arrow-key navigation in deck and tray.
-- Reduced motion resolves to the same end states with no slide or stagger.
-- Tone detection by DOM probe, not by a list of section ids in the header.
 
 ## Verification (do all of it before reporting done)
 

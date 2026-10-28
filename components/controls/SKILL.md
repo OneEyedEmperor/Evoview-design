@@ -8,8 +8,18 @@ description: Evoview control language as React components — primary plate with
 Package: `/root/.vibehub/projects/evoview-design-library/components/controls/`
 Showcase: `https://evoview-library.said.bet/components/controls`
 
-Read `README.md` ("What is Evoview", API) and the library's `STRATEGY.md`
-first; the foundation README covers tokens and the pause model.
+Read `README.md` (Signature / Variations / Expression, API) and the
+library's `STRATEGY.md` first; the foundation README covers tokens and the
+pause model.
+
+## Ownership (RULES §13)
+
+- **Preserve** (README "Signature"): two action weights, radius by role,
+  multi-signal selection, underline fields, segmented progress, glass for
+  chrome only, liquid orbs, press jelly. Changes go into the library.
+- **Select** (README "Variations"): which piece does the job and its size;
+  no option arrays.
+- **Invent** (README "Expression"): labels, accent, tone, content.
 
 ## Procedure
 
@@ -30,9 +40,7 @@ first; the foundation README covers tokens and the pause model.
 ## Rules
 
 - One primary plate per screen; secondary actions are `GhostAction`.
-- Keep the anatomy (marks, indices, orb, underline, equal segments); do not
-  swap in the client's UI-kit buttons or boxes around fields.
-- Selection must stay multi-signal; never ship a colour-only state.
+- Do not swap in the client's UI-kit buttons or boxes around fields.
 - Orbs (plate orb, check orb, chip mark, done step) change colour only
   through foundation `OrbFill`'s liquid rise; restyle them via the
   `--ev-orb-*` tokens, never with a `background` swap.

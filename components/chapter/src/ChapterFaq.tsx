@@ -6,7 +6,8 @@ import { Chapter, ChapterHeading, type ChapterRhythm, type ChapterTone } from ".
 import type { ChapterFaqConfig } from "./chapter.config";
 
 /** media: sticky portrait beside the list (heading above) · split: heading column beside the list · stacked: centred heading over one column. */
-export type ChapterFaqLayout = "media" | "split" | "stacked";
+export const CHAPTER_FAQ_LAYOUTS = ["media", "split", "stacked"] as const;
+export type ChapterFaqLayout = (typeof CHAPTER_FAQ_LAYOUTS)[number];
 
 export type ChapterFaqProps = {
   config: ChapterFaqConfig;

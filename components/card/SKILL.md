@@ -8,8 +8,20 @@ description: Evoview card package (was card-track) — media cards (ribbon or po
 Package: `/root/.vibehub/projects/evoview-design-library/components/card/`
 Showcase: `https://evoview-library.said.bet/layouts/card`
 
-Read `README.md` ("What is Evoview", decisions, behaviour) and the library's
-`STRATEGY.md` first; the foundation README covers tokens and the pause model.
+Read `README.md` (Signature / Variations / Expression, decisions, behaviour)
+and the library's `STRATEGY.md` first; the foundation README covers tokens
+and the pause model.
+
+## Ownership (RULES §13)
+
+- **Preserve** (README "Signature"): the track's scrub / snap mechanism,
+  card anatomy, spoken positions, graded media; the deck deal and switch
+  timings; the sequence's dwell, hold, tune-in and state as frame; the
+  watermark rule. Changes go into the library, never the client.
+- **Select** (README "Variations"): the composition, then
+  `CARD_TRACK_VARIANTS`, `CARD_DECK_ROWS`, `CARD_SEQUENCE_LAYOUTS`. Nothing
+  else.
+- **Invent** (README "Expression"): items, media, copy, accent, tone.
 
 ## Procedure
 
@@ -42,10 +54,8 @@ Read `README.md` ("What is Evoview", decisions, behaviour) and the library's
 
 ## Rules
 
-- Keep the mechanism (scrub on desktop, snap on phone), the card anatomy,
-  square tab / seam against round cards, spoken positions and the
-  graded-at-rest media. No counting readouts, no `prefers-reduced-motion`
-  branch (stable state + pause model).
+- No counting readouts, no `prefers-reduced-motion` branch (stable state +
+  pause model).
 - No Evoview mark on the track or its cards; attribution belongs to a
   chassis strip (dossier) or the footer, never next to a client CTA.
 - Track: no arrow buttons, autoplay timers or third-party slider libraries.
@@ -57,7 +67,7 @@ Read `README.md` ("What is Evoview", decisions, behaviour) and the library's
 
 Use when the client's offer sorts into a few categories with a curated
 opening selection (restaurant menu, collections, work by discipline).
-README "CardDeck" holds the protected choreography and the API.
+README "Signature" / "CardDeck" hold its choreography and the API.
 
 1. Same install. In the client's `card.config.tsx` add / adapt
    `buildCardDeckConfig(locale)`: categories (short labels, 3 or 6 items
@@ -78,8 +88,8 @@ README "CardDeck" holds the protected choreography and the API.
 ## CardSequence (video cards under a timed focus)
 
 Use when a client has a few short loops worth seeing one at a time (rooms,
-events, places, an experience). README "CardSequence" holds the protected
-timing and the API.
+events, places, an experience). README "Signature" / "CardSequence" hold
+its timing and the API.
 
 1. Same install. In the client's `card.config.tsx` add / adapt
    `buildCardSequenceConfig(locale)`: one `sequences` entry per placement.

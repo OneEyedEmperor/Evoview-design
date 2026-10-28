@@ -20,3 +20,4 @@ export type {
   StageVisual,
   Tone,
 } from "./types";
+export { COMPARE_TOGGLE_MODES, type CompareToggleMode } from "./CompareToggle";

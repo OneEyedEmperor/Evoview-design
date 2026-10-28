@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
 import { cn, preloadMedia, useInViewPause, useMediaQuery, useMediaReady } from "../foundation";
-import { Chapter, ChapterHeading, type ChapterRhythm, type ChapterTone } from "./Chapter";
+import { Chapter, ChapterHeading, type ChapterHeadingVariant, type ChapterRhythm, type ChapterTone } from "./Chapter";
 
 /* Story chapter: the client's story beside (around, above) lanes of its
    pictures that drift slowly and travel with the scroll. Lanes are vertical
@@ -28,9 +28,11 @@ export type ChapterStoryContent = {
 };
 
 /** Where the text sits against the media. */
-export type ChapterStoryLayout = "start" | "center" | "end" | "above";
+export const CHAPTER_STORY_LAYOUTS = ["start", "center", "end", "above"] as const;
+export type ChapterStoryLayout = (typeof CHAPTER_STORY_LAYOUTS)[number];
 /** ample: fewer, larger lanes · dense: one more lane per side, smaller pictures. */
-export type ChapterStoryDensity = "ample" | "dense";
+export const CHAPTER_STORY_DENSITIES = ["ample", "dense"] as const;
+export type ChapterStoryDensity = (typeof CHAPTER_STORY_DENSITIES)[number];
 
 export type ChapterStoryProps = {
   content: ChapterStoryContent;
@@ -40,7 +42,7 @@ export type ChapterStoryProps = {
   tone?: ChapterTone;
   rhythm?: ChapterRhythm;
   accent?: string;
-  headingVariant?: "standard" | "feature";
+  headingVariant?: ChapterHeadingVariant;
   level?: 2 | 3;
   className?: string;
   /** Frozen lanes: clips show their poster, nothing drifts or plays. For pages that stack many demos. */

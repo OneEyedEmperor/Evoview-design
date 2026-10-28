@@ -8,9 +8,19 @@ description: Evoview selector-stage chapter for client sites — joined selector
 Package: `/root/.vibehub/projects/evoview-design-library/components/selector-stage/`
 Showcase: `https://evoview-library.said.bet/components/selector-stage`
 
-Read `README.md` ("What is Evoview", API) and the library's `STRATEGY.md`
-first; `foundation` and `controls` READMEs cover tokens, the pause model and
-the control language.
+Read `README.md` (Signature / Variations / Expression, API) and the
+library's `STRATEGY.md` first; `foundation` and `controls` READMEs cover
+tokens, the pause model and the control language.
+
+## Ownership (RULES §13)
+
+- **Preserve** (README "Signature"): show then explain, the splits, joined
+  rows ↔ phone chips, the stage and its transitions, grade as state, media
+  gate, no mark. Changes go into the library, never the client.
+- **Select** (README "Variations"): the piece, `COMPARE_TOGGLE_MODES`,
+  `autoplay`.
+- **Invent** (README "Expression"): copy, media, specimens, option count,
+  accent, tone, dwell.
 
 ## Procedure
 
@@ -40,14 +50,8 @@ the control language.
 
 ## Rules
 
-- One display level per chapter; captions inside the media; selection stays
-  multi-signal. Do not box the heading or swap rows for the client's tabs.
-- No rules between rows, columns or captions: spacing separates; the only
-  line in a scene is information (autoplay progress). No `≠` or other
-  ornament on the pair seam.
-- Keep the splits (`.70/1.30`, `1.22/.78`) and the phone mechanism change.
-- No Evoview mark in this chapter; the one linked mark lives in the host's
-  chrome, never next to a client CTA.
+- Do not box the heading or swap rows for the client's tabs. No `≠` or
+  other ornament on the pair seam.
 - Never fork for a client: fixes go into the library (`VERSION`,
   `CHANGELOG.md`); clients re-run `install.sh`.
 - Respond in English even when the client interface is French.

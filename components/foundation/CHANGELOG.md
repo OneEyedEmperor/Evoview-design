@@ -1,5 +1,9 @@
 # foundation changelog
 
+## Unreleased
+
+- Docs: ownership sections (RULES §13).
+
 ## 1.9.0
 
 No config changes. New primitive: the press jelly (RULES §6, the norm for

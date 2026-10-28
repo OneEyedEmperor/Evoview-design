@@ -26,10 +26,11 @@ desktop ≥ 1024 (shell 92.5em × min(57.5em, 100vh − 2em), radius shell)
 phone: [glass capsule: CLIENT │ TITLE · EVOVIEW (×)] … body … [‹ | 01 / 04 ▬ | SUIVANT ›]
 ```
 
-## What is Evoview (protected)
+## Signature (preserve)
 
 Read `STRATEGY.md`. These make the dossier recognisably Evoview; do not
-restyle them to the client's UI kit:
+restyle them to the client's UI kit. Changing them is a library change
+(RULES §13).
 
 - **Header strip (chassis signature)**: client identity · kicker / title
   readout (Satoshi 700 uppercase, kicker accent-mixed) · item pager (glass
@@ -79,22 +80,14 @@ restyle them to the client's UI kit:
   fill backwards only: if an animation does not run, the content is visible.
   Not the CRT power-on, channel OSD or scan grid (Evoview's own art
   direction).
+- **Accent roles**: strip underline and tab chip, tile border / edge /
+  numeral / kicker, pager and dock bars, dock location tint, capsule / orb /
+  close glass tints, loader modules and bar, caption dot, row indices, payoff
+  accent line and bloom, toast hairline. Never backgrounds, body text or the
+  CTA at rest (white plate). Light accents (yellow, off-white) stay legible
+  through `--ev-accent-signal`.
 
-**Accent = the client's.** The dossier reads the host `--primary` /
-`--primary-foreground`; an item may set its own (`item.accent`), applied as
-`--primary` on the dossier while that item is shown. It drives: strip
-underline and tab chip, tile border / edge / numeral / kicker, pager and dock
-bars, dock location tint, capsule / orb / close glass tints, loader modules and
-bar, caption dot, row indices, payoff accent line and bloom, toast hairline.
-Never backgrounds, body text or the CTA at rest (white plate). Light accents
-(yellow, off-white) stay legible through `--ev-accent-signal`.
-
-**Client-adaptable** (config only): brand (logo node or name), kicker, items
-(label, accent), entries (title, short label, kicker, media, detail chapters),
-all copy, attribution label. Chapters are free composition inside
-`DossierChapter`.
-
-## Attribution (approved placement)
+### Attribution (approved placement)
 
 One linked `EvoviewMark` in the header strip, right side, before the close
 (`attribution.href` = `https://evoview.be/`, new tab, `rel="noopener"`,
@@ -102,6 +95,27 @@ accessible name in the page language naming Evoview and the new tab). Never
 inside or next to the client's CTA (the payoff plate lives in the body). On
 by default (`attribution.enabled`); turning it off is the founder's call. No
 other marks.
+
+## Variations (select)
+
+- **Universes:** one item (no pager; the last entry's next returns to the
+  overview) or several (pager in the header, dock steps through items);
+  each with exactly four entries (the board).
+- **Detail chapters**, composed from the chapter kit (`Chapters.tsx`):
+  `DossierChapter` `variant` from `DOSSIER_CHAPTER_VARIANTS` (`intro` ·
+  `standard` · `payoff`, default standard; intro opens the story, payoff
+  closes it), `ChapterHead`, `ChapterFigure`, `ChapterSplit`, `ChapterRows`
+  (`surface` from `CHAPTER_ROWS_SURFACES`: `rows` for info sheets and
+  programmes, default · `tiles` for peers; `numbered` only for a real
+  sequence), `ChapterSpecimen`, `ChapterPayoff`.
+
+## Expression (adapt)
+
+Config only: brand (logo node or name), kicker, items (label, accent),
+entries (title, short label, kicker, media, detail chapters' content), all
+copy, attribution label. Accent = the client's: the host `--primary` /
+`--primary-foreground`; an item may set its own (`item.accent`), applied as
+`--primary` on the dossier while that item is shown.
 
 ## Files
 

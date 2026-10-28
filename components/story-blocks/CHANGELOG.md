@@ -1,5 +1,13 @@
 # story-blocks changelog
 
+## Unreleased
+
+- Docs: ownership sections (RULES §13).
+- API (additive): exported variation arrays `STORY_INTRO_ALIGNS`,
+  `INDEXED_ROWS_SURFACES`, `PROOF_GRID_HEADING_POSITIONS` (new types
+  `StoryIntroAlign`, `IndexedRowsSurface`, `ProofGridHeadingAt`). No config
+  change.
+
 ## 2.4.0
 
 Requires `foundation` ≥ 1.9.0 (press jelly). No config changes, no CSS

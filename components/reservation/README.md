@@ -42,11 +42,14 @@ The side dossier of evoview.be's own flow (rail, monitor, journey list) is
 deliberately not part of this package: it is exclusive to Evoview's site and
 adds clutter on client sites.
 
-## What is Evoview (protected)
+## Signature (preserve)
 
 Read `STRATEGY.md`. These are the component, not decoration — never restyle
 the surfaces to the client's palette or swap them for client equivalents
-(only the accent is the client's, below):
+(only the accent is the client's). Changing them is a library change
+(RULES §13).
+
+### Reservation
 
 - **Chassis**: `#0c0c0d` panel, 1.5rem radius, grain, stage grading (silver
   spill top-left, plum floor, accent-tinted glow).
@@ -63,24 +66,45 @@ the surfaces to the client's palette or swap them for client equivalents
   or HUD corners).
 - **Choreography**: auto-advance 340 ms after a choice, blur-rise step
   entrance, emblem reveal.
+- **Accent roles**: step marks, selections, progress, kicker, ticket labels,
+  glows, CTA hover and the emblem's iris.
+- **Attribution**: the header wordmark links to `https://evoview.be/`
+  (`EVOVIEW_URL`, Evoview's verified site), new tab, `rel="noopener"`, no
+  tracking parameters. Its accessible name (`signatureAriaLabel`) must name
+  Evoview and say it opens a new tab. No other Evoview link inside the form.
 
-**Accent = the client's.** The chassis reads the host's `--primary` (and
-`--primary-foreground` for text on accent fills), so each site gets its own
-accent with no config: step marks, selections, progress, kicker, ticket
-labels, glows, CTA hover and the emblem's iris. Evoview indigo `#818cf8` is
-only the fallback when the host defines no `--primary`. `config.accent` /
-`accentInk` override it when the host token is unsuitable (e.g. a light-UI
-black primary).
+### ReservationFlow
 
-Client-adaptable (config only): venue, all copy, experiences (label, meta,
-icon(s) — reuse the client's navbar marks and colours, eye glyph by default —
-duration, note), opening windows and their labels, guests range, horizon,
-submit/toast wiring.
+- The controls voice (Satoshi captions, Overused question, plate + ghost
+  pair), one question per step.
+- **Attribution**: the linked Evoview wordmark above the progress (approved
+  placement, `https://evoview.be/`, new tab); `attribution: false` only with
+  Evoview's consent.
 
-**Attribution**: the header wordmark links to `https://evoview.be/`
-(`EVOVIEW_URL`, Evoview's verified site), new tab, `rel="noopener"`, no
-tracking parameters. Its accessible name (`signatureAriaLabel`) must name
-Evoview and say it opens a new tab. No other Evoview link inside the form.
+## Variations (select)
+
+- **Version:** the full `Reservation` when the booking needs experiences, a
+  calendar, opening windows or contact details; the short `ReservationFlow`
+  (below) for simple requests.
+- `Reservation` durations: `hours` (preferred) or `requiresEndTime` (see
+  Behaviour); `guests.overflow` adds "+max".
+- `ReservationFlow`: 3–5 chip steps then the contact step; `contact.sms`
+  opt-in.
+
+## Expression (adapt)
+
+- **Reservation** (config only): venue, all copy, experiences (label, meta,
+  icon(s) — reuse the client's navbar marks and colours, eye glyph by
+  default — duration, note), opening windows and their labels, guests range,
+  horizon, submit/toast wiring.
+- **ReservationFlow:** steps, options, copy, accent, `tone` (`"paper"`
+  default, `"light"`).
+- **Accent = the client's.** The chassis reads the host's `--primary` (and
+  `--primary-foreground` for text on accent fills), so each site gets its
+  own accent with no config. Evoview indigo `#818cf8` is only the fallback
+  when the host defines no `--primary`. `config.accent` / `accentInk`
+  override it when the host token is unsuitable (e.g. a light-UI black
+  primary).
 
 ## Files
 
@@ -122,12 +146,7 @@ import { buildReservationFlowConfig } from "@/components/reservation/reservation
   split). Accent from `--primary`; on paper it deepens for legibility, even
   in yellow. Requires `controls` (installed by `install.sh`, with
   `foundation`).
-- Recognizably Evoview: the controls voice (Satoshi captions, Overused
-  question, plate + ghost pair), one question per step. Adaptable: steps,
-  options, copy, accent, SMS opt-in.
-- Attribution: the linked Evoview wordmark above the progress (approved
-  placement, `https://evoview.be/`, new tab); `attribution: false` only with
-  Evoview's consent.
+- Signature, variations, expression: above.
 
 ## Install
 

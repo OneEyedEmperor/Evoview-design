@@ -18,10 +18,11 @@ Depends on `foundation` and `controls`. Evidence: `docs/extraction/service-dossi
 A4, A5, A7, §4.3, rules 4–6, 9–10, 13–14; `foundations.md` §5.4.
 Showcase: `https://evoview-library.said.bet/components/selector-stage`.
 
-## What is Evoview (protected)
+## Signature (preserve)
 
 Read `STRATEGY.md`. These make the chapter recognisably Evoview; do not
-restyle them to a client's UI kit:
+restyle them to a client's UI kit. Changing them is a library change
+(RULES §13).
 
 - **Show, then explain**: heading (two short display lines) → stage →
   one sentence (`aria-live`). Captions live inside the media: readout kicker
@@ -50,33 +51,46 @@ restyle them to a client's UI kit:
   than a delivered result, say so once in its `note` slot ("Rendus
   illustratifs"). Once per page, not under every chapter; real client
   results need none.
+- **Accent roles**: row tint / border / bar / step gauge (foundation
+  `StepGauge`, lit when selected), chip selection, segmented thumb, stage
+  border, caption kicker, autoplay progress, active thumb, the change drawn
+  in a specimen, one heading word (`<em>`), focus rings. Never backgrounds,
+  body text or the stage well. Strokes use `--ss-signal` (pulled to the tone
+  foreground) and marks over media use `--ss-on-media` (lifted to white), so
+  yellow, off-white and ink accents all stay visible.
+- **Motion**: the autoplay toggle takes foundation's press jelly (RULES §6);
+  rows and thumbs don't. Autoplay holds on mouse hover (rows, chips, stage) /
+  keyboard focus in the choices, resumes with the remaining dwell and stops
+  for good on a manual choice (the text toggle restarts it with a full
+  dwell; the toggle itself never holds it). Reveal: y 28 + fade 600ms,
+  stagger 80, once.
+- **Attribution**: none. This is a chapter without a header / chassis strip;
+  the approved linked `EvoviewMark` belongs to the host page's chrome
+  (navbar, footer, dossier header). Do not add a mark inside the stage or
+  next to a CTA.
 
-**Accent = the client's** (`--primary` → `--ss-accent`, `--primary-foreground`
-→ `--ss-accent-ink`). It drives: row tint / border / bar / step gauge
-(foundation `StepGauge`, lit when selected), chip
-selection, segmented thumb, stage border, caption kicker, autoplay progress,
-active thumb, the change drawn in a specimen, one heading word (`<em>`),
-focus rings. Never
-backgrounds, body text or the stage well. Strokes use `--ss-signal` (pulled to
-the tone foreground) and marks over media use `--ss-on-media` (lifted to
-white), so yellow, off-white and ink accents all stay visible.
+Constraints: one full-motion experience, no `prefers-reduced-motion`
+branch; every state is reachable by click / keys (complete stable state).
+Autoplay runs only while on-screen, the document is visible, no modal
+suspends the page and media is ready (`useInViewPause` +
+`useSequenceClock`).
 
-**Attribution**: none. This is a chapter without a header / chassis strip;
-the approved linked `EvoviewMark` belongs to the host page's chrome (navbar,
-footer, dossier header). Do not add a mark inside the stage or next to a CTA.
+## Variations (select)
 
-**Motion / pause model**: one full-motion experience, no
-`prefers-reduced-motion` branch. The autoplay toggle takes foundation's
-press jelly (RULES §6); rows and thumbs don't. Every state is reachable by click / keys
-(complete stable state). Autoplay (off by default) runs only while on-screen,
-the document is visible, no modal suspends the page, media is ready and no
-mouse hover (rows, chips, stage) / keyboard focus in the choices holds it
-(`useInViewPause` + `useSequenceClock`); it resumes with the remaining dwell
-and stops for good on a manual choice (the text toggle restarts it with a
-full dwell; the toggle itself never holds it). Reveal: y 28 + fade 600ms, stagger 80, once.
+- **The chapter:** `SelectorStage` (words choose, the stage shows the
+  consequence), `CompareToggle` (a transformation, or two alternatives),
+  `ProofAtlas` (the pictures are the choice).
+- `CompareToggle` `mode`: `COMPARE_TOGGLE_MODES` — `toggle` (default;
+  before / after) · `pair` (true peers). Before/after belongs on the
+  toggle, never the pair.
+- `SelectorStage` `autoplay`: off (default) · on (`true` or `{ dwellMs }`,
+  4200ms).
 
-Client-adaptable: all copy, media, specimens (`render` nodes), number of
-options (2–6 reads well; atlas 4), accent, tone per chapter, dwell.
+## Expression (adapt)
+
+All copy, media, specimens (`render` nodes), number of options (2–6 reads
+well; atlas 4), accent (`--primary` → `--ss-accent`, `--primary-foreground`
+→ `--ss-accent-ink`), tone per chapter, dwell.
 
 ## Files
 

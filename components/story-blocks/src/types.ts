@@ -24,8 +24,15 @@ export type StoryIntroProps = {
   /** Inside the media, on a dark scrim: optional readout kicker (place, moment), one caption line, accent status dot. */
   caption?: { kicker?: ReactNode; title: ReactNode };
   /** Copy bottom-aligned against the title (default) or top-aligned. */
-  align?: "end" | "start";
+  align?: StoryIntroAlign;
 };
+
+export const STORY_INTRO_ALIGNS = ["end", "start"] as const;
+export type StoryIntroAlign = (typeof STORY_INTRO_ALIGNS)[number];
+export const INDEXED_ROWS_SURFACES = ["tiles", "rows"] as const;
+export type IndexedRowsSurface = (typeof INDEXED_ROWS_SURFACES)[number];
+export const PROOF_GRID_HEADING_POSITIONS = ["start", "end"] as const;
+export type ProofGridHeadingAt = (typeof PROOF_GRID_HEADING_POSITIONS)[number];
 
 export type IndexedRow = {
   label: ReactNode;
@@ -45,7 +52,7 @@ export type IndexedRowsProps = {
   /** Tonal segmentation of the list (never rules): "tiles" = one surface per item with a
    *  small gap (steps) · "rows" = joined alternating rows in one rounded surface (schedules,
    *  timetables). Default: tiles beside media, rows without. */
-  surface?: "tiles" | "rows";
+  surface?: IndexedRowsSurface;
 };
 
 export type ProofItem = {
@@ -65,7 +72,7 @@ export type ProofGridProps = {
   body?: ReactNode;
   /** "start": heading split above the collage · "end": the images lead and the heading
    *  split follows them (show, then explain). Default "start". */
-  headingAt?: "start" | "end";
+  headingAt?: ProofGridHeadingAt;
   items: readonly ProofItem[];
 };
 

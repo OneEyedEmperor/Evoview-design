@@ -3,7 +3,8 @@ import type { ChapterConfig, ChapterFooterLink } from "./chapter.config";
 import type { ChapterTone } from "./Chapter";
 
 /** bar: one row (logo · legal + links · credit) · panel: brand + tagline · page tiles · socials, over contact · legal, credit centred. */
-export type ChapterFooterLayout = "bar" | "panel";
+export const CHAPTER_FOOTER_LAYOUTS = ["bar", "panel"] as const;
+export type ChapterFooterLayout = (typeof CHAPTER_FOOTER_LAYOUTS)[number];
 
 export type ChapterFooterProps = {
   config: ChapterConfig;

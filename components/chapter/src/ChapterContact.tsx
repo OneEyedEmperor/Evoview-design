@@ -57,9 +57,11 @@ export type ChapterContactConfig = {
 };
 
 /** columns: heading over channels | hours (the original) · split: heading + hours beside the picture and channels · band: one compact closing band. */
-export type ChapterContactLayout = "columns" | "split" | "band";
+export const CHAPTER_CONTACT_LAYOUTS = ["columns", "split", "band"] as const;
+export type ChapterContactLayout = (typeof CHAPTER_CONTACT_LAYOUTS)[number];
 /** today: today's slots + live state, the week folded · week: the whole week laid out. */
-export type ChapterContactHoursView = "today" | "week";
+export const CHAPTER_CONTACT_HOURS_VIEWS = ["today", "week"] as const;
+export type ChapterContactHoursView = (typeof CHAPTER_CONTACT_HOURS_VIEWS)[number];
 
 export type ChapterContactProps = {
   config: ChapterContactConfig;

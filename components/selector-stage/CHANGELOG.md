@@ -1,5 +1,11 @@
 # selector-stage changelog
 
+## Unreleased
+
+- Docs: ownership sections (RULES §13).
+- API (additive): exported variation array `COMPARE_TOGGLE_MODES` (new type
+  `CompareToggleMode`). No config change.
+
 ## 1.5.0
 
 Requires `foundation` ≥ 1.9.0 (press jelly). No config changes, no CSS

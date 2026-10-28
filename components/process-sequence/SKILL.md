@@ -8,10 +8,21 @@ description: Evoview process-sequence — a timed step board (split heading with
 Package: `/root/.vibehub/projects/evoview-design-library/components/process-sequence/`
 Showcase: `https://evoview-library.said.bet/layouts/process-sequence`
 
-Read `README.md` ("What is Evoview", attribution, behaviour) and the
+Read `README.md` (Signature / Variations / Expression, behaviour) and the
 library's `STRATEGY.md` first. The component serves the client (explain the
 process, lead to its CTA) and is an Evoview publicity asset (signature
 choreography + the approved mark in the dossier stage). Keep both.
+
+## Ownership (RULES §13)
+
+- **Preserve** (README "Signature"): split heading + locking captions, one
+  timed active step, Z stacks, state as frame (active = contrast), phone
+  index + monitor, the 5/12 : 7/12 dossier, motif replacements, the stage
+  mark. Changes go into the library, never the client.
+- **Select** (README "Variations"): `COMPLETION_MARKS`, `autoplay`,
+  built-in dossier or `onOpen`.
+- **Invent** (README "Expression"): steps (3–6), copy, media, marks,
+  durations, CTA, tone, accent.
 
 ## Procedure
 
@@ -48,15 +59,8 @@ choreography + the approved mark in the dossier stage). Keep both.
 
 ## Rules
 
-- Never re-add Evoview's own motifs (eye, CRT / TV power-on, scanlines,
-  grain, REC, Gaegu, `méthode` wordmark, red reset). Use the README's
-  replacement roles.
-- The active state stays contrast (paper / ink ribbon); the client accent
-  encodes completion, progress and focus only.
 - Do not convert to equal-height rows, a 50/50 modal, or four stacked cards on
   phone; do not let hover change the phase.
-- State is drawn by frame, ribbon and mark only: do not add status pills,
-  "step N of M" kickers, corner readouts, tilt, shines or separating rules.
 - One board per method. A shorter process is a different config, not a
   second board on the same page.
 - One linked Evoview mark, in the dossier stage strip; never next to the CTA,

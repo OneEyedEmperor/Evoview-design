@@ -1,6 +1,11 @@
 export type Locale = "fr" | "en";
 
-export type CardTrackVariant = "ribbon" | "portrait";
+export const CARD_TRACK_VARIANTS = ["portrait", "ribbon"] as const;
+export type CardTrackVariant = (typeof CARD_TRACK_VARIANTS)[number];
+
+/** CardDeck desktop rows of three: 2 (six cards, the deck deal) or 1 (three cards). */
+export const CARD_DECK_ROWS = [2, 1] as const;
+export type CardDeckRows = (typeof CARD_DECK_ROWS)[number];
 
 /** Card title level: one below the section heading the composition sits under. */
 export type CardHeadingLevel = 2 | 3 | 4;
@@ -67,7 +72,8 @@ export type CardTrackConfig = {
 
 /** board: a few clips beside facts, then an offer and one action (home teaser).
     gallery: every clip in one row (the page's own section). */
-export type CardSequenceLayout = "board" | "gallery";
+export const CARD_SEQUENCE_LAYOUTS = ["gallery", "board"] as const;
+export type CardSequenceLayout = (typeof CARD_SEQUENCE_LAYOUTS)[number];
 
 export type CardSequenceClip = {
   id: string;

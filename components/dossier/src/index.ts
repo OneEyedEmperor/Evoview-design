@@ -23,3 +23,4 @@ export {
 } from "./Chapters";
 export { buildDossierConfig, dossierCopy } from "./dossier.config";
 export type { DossierConfig, DossierItem, DossierEntry, DossierEntryContext, DossierMedia, DossierCopy, Locale } from "./types";
+export { DOSSIER_CHAPTER_VARIANTS, CHAPTER_ROWS_SURFACES, type DossierChapterVariant, type ChapterRowsSurface } from "./Chapters";

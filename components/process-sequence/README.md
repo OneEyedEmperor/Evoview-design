@@ -10,10 +10,10 @@ Showcase: `https://evoview-library.said.bet/layouts/process-sequence` (one
 dark chapter: four steps, client icons, dossier; live accent palette;
 `…/process-sequence/<step>/` opens that step's dossier).
 
-## What is Evoview (protected)
+## Signature (preserve)
 
 Read `STRATEGY.md`. These make the board recognisably Evoview and must not be
-restyled away:
+restyled away; changing them is a library change (RULES §13).
 
 - **Split heading** title ≈ .37 / instrument ≈ .63; the instrument is the
   controls `SegmentedProgress` (lg) with captions that *lock onto* completed
@@ -52,11 +52,11 @@ icon, check or numeral) · centre-line clip reveal · 180 / 360 ms crossfade ·
 neutral drain · muted index + "À venir" · Overused 900 numeral clipped up ·
 neutral field + one accent floor bloom.
 
-**Accent = the client's** (`--primary` / `--primary-foreground`), driving:
-completed segment fills (ramp .4 / .6 / .8 / 1, oldest dimmest), complete
-frame, mark ring, mobile complete tint, ribbon progress, focus rings,
-indices, dossier item tints and chips, close radial, backdrop and
-floor bloom. Never the active state, body text, surfaces or the resting plate.
+**Accent roles**: completed segment fills (ramp .4 / .6 / .8 / 1, oldest
+dimmest), complete frame, mark ring, mobile complete tint, ribbon progress,
+focus rings, indices, dossier item tints and chips, close radial, backdrop
+and floor bloom. Never the active state, body text, surfaces or the resting
+plate.
 
 **Attribution** (approved placement): one linked `EvoviewMark` in the
 dossier's **stage strip** (top-left of the media, phone: top-left of the
@@ -66,10 +66,21 @@ no mark (it has no chassis strip). `attribution.enabled` is on by default;
 turning it off is the founder's call. If the host uses `onOpen` instead of the
 built-in dossier, the package shows no mark.
 
-Client-adaptable: steps (3–6), copy, media, marks, durations, CTA, tone,
-accent, fonts via the foundation host tokens. `tone="light"` is for a client
-whose method chapter sits on a near-white page: the ribbon inverts to ink,
-complete frames and marks keep the accent; everything else is identical.
+## Variations (select)
+
+- `completionMark`: `COMPLETION_MARKS` — `check` · `numeral` · `icon`
+  (`step.mark`, falls back to check).
+- `autoplay`: timed board (default) or `false`, a click-driven still board.
+- Step detail: the built-in step dossier (default, steps with `detail`) or
+  `onOpen` (host's own view; no mark then).
+
+## Expression (adapt)
+
+Steps (3–6), copy, media, marks, durations, CTA, tone, accent
+(`--primary` / `--primary-foreground`), fonts via the foundation host
+tokens. `tone="light"` is for a client whose method chapter sits on a
+near-white page: the ribbon inverts to ink, complete frames and marks keep
+the accent; everything else is identical.
 
 ## Files
 

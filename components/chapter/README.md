@@ -19,10 +19,12 @@ switch right under it).
 Evidence: `docs/extraction/foundations.md` §2–5, A2 / A3 / A9 / A10;
 `docs/extraction/tchin-chapter-{story,contact,faq-footer}.md`.
 
-## What is Evoview (protected)
+## Signature (preserve)
 
-Read `STRATEGY.md`. These choices make a client page recognisably Evoview;
-do not restyle them to the client's template:
+Read `STRATEGY.md`. These make a client page recognisably Evoview; changing
+them is a library change, never a client edit (RULES §13).
+
+### Chapter, heading, footer bar
 
 - **Tone as separation.** Chapters alternate near-white (`light` #EFEFEF,
   `paper` #FFF) and near-black (`dark` #0E0E0E) with a **hard cut**: no rule,
@@ -43,19 +45,67 @@ do not restyle them to the client's template:
   right, Evoview credit at the end. No rule above it or between its groups
   (RULES §3 overrides the site's measured hairline): the tone cut or the
   chapter rhythm above separates it, spacing separates the credit.
+- **Accent roles:** the marker, ticker dot, the accent word, focus rings and
+  whatever the chapter's children use as signal. Never backgrounds or body
+  text. Light accents (yellow, off-white) read through `--chapter-signal`
+  (pulled toward the tone foreground); state is never carried by colour alone.
 
-**Client-adaptable:** content, tone order (within the alternation rule),
-rhythm per chapter, rail per chapter, accent (`--primary`, or `accent` per
-chapter), fonts via `--font-heading/-body/-readout`, brand mark / logo,
-legal line and links (`chapter.config.tsx`).
+### ChapterFaq
 
-**Accent** = the client's, from host `--primary` / `--primary-foreground`;
-drives the marker, ticker dot, the accent word, focus rings and whatever the
-chapter's children use as signal. Never backgrounds or body text. Light
-accents (yellow, off-white) read through `--chapter-signal` (pulled toward
-the tone foreground); state is never carried by colour alone.
+Questions on alternating tonal tiles with a small gap, no rules, no counting
+index; single-open accordion; the toggle orb (+ at rest, the accent rises as
+liquid with − on it, `OrbFill`); open row = ≤ 10 % accent wash, the answer
+under the question (Montserrat ≥ 13px, fg/.65); pointed row one tonal step up
+(no sibling dimming); sticky column (media or heading) holding still while
+answers open; phones = media first, then `phoneVisible` questions and one
+"show more" row (mechanism change, RULES §7). Layout proportions: media
+`.62 / 1` (list larger), split heading `.72 / 1.28`, stacked centred column
+≤ 46em on the reading rail. The "another question" link is a text link,
+never a CTA plate.
 
-## Attribution (approved placement)
+### Footer panel
+
+Brand + tagline · page links as alternating tonal tiles (current page =
+surface step + full accent bar; pointed = the bar wipes in from the left,
+ink via `TextFill`) · 44px social orbs (accent fill via `OrbFill`), over
+contact (`<address>`: maps link, `tel:`, `mailto:`) · legal line + links;
+the Evoview credit centred last, set off by the group gap. No rules, no
+gradient, no decorative icons. One row from 1024; 768–1023 brand + socials
+over the tiles; phones: brand + socials, tiles two by two, meta centred,
+tagline dropped.
+
+### ChapterContact
+
+One primary action (`PrimaryPlate`, no Evoview mark beside it); details and
+hours as tonal tiles / alternating rows, no rules, no decorative icons (↗
+stays: it means "leaves the site"); today computed live in the business's
+zone with an open / closed line (accent dot + halo when open; text carries
+the state); today's row marked by a wash, a dot, weight and screen-reader
+text, never colour alone; the week folded but in the DOM; opening it is one
+sequence (the fold grows while the picture fades and yields its height, the
+channel tiles release their stretch); phones read where → when → how (place,
+hours, channels), `split` puts the picture first, `columns` drops it, `band`
+turns the details into one-line label | value rows. Whole tile = hit area,
+value + ↗ take the accent by `TextFill`.
+
+### ChapterStory
+
+The drift is a Web Animation per lane (two-copy track, 0 → −50 %, 0.014
+px/ms, linear) nudged by the scroll (520 px of travel per full pass × lane
+speed 1 / .65 / 1.3 / .85, directions alternate, phases 0 / 160 / 70 / 230)
+— never a CSS marquee, never scroll-jacking; **one clip plays at a time**
+(the one most in view, derived from the track offset), the others hold their
+poster / last frame; lanes rise only once their stills and posters are
+decoded (media-gated reveal, `useMediaReady`); copy rises once in view
+(y 28 + fade, 600 ms, stagger 80: emblem, title, story, quote; lanes from
+120 ms); media true to colour on `--ev-well` wells (surface radius), soft
+fades at the lane ends, no rules, glows, tints or scrims; columns fade out
+over the chapter's block padding (12 % of the window, capped at the compact
+rhythm), so the copy centres against the opaque part and the foot is clear
+before the next tone cut; phones change the mechanism (rows) and put media
+first (except `above`); the quote drops on phones.
+
+### Attribution (approved placement)
 
 The footer bar is the page's natural chassis: `ChapterFooter` renders the one
 linked `EvoviewMark` (foundation) after a `SITE` readout, set off the legal
@@ -64,10 +114,40 @@ accessible name in the page language. Never inside or next to a client CTA
 (keep CTAs in chapters, not in the footer). On by default
 (`attribution.enabled`); turning it off is the founder's call. If the site
 already shows the mark elsewhere (e.g. a navbar package strip), keep exactly
-one linked mark per page and say so in the handoff. Chapters themselves carry
-no mark. Both footer layouts render the same credit: `bar` at the end of the
-row, `panel` centred under the meta row (it replaces the Tchin footer's
-unlinked logo image with the linked mark).
+one linked mark per page and say so in the handoff. Chapters themselves
+(story, FAQ and contact included) carry no mark. Both footer layouts render
+the same credit: `bar` at the end of the row, `panel` centred under the meta
+row (it replaces the Tchin footer's unlinked logo image with the linked
+mark).
+
+## Variations (select)
+
+| Component | Prop | Array (default first unless noted) | Choose |
+| --- | --- | --- | --- |
+| `ChapterHeading` | `layout` | `CHAPTER_HEADING_LAYOUTS`: `centered` · `split` | split when an instrument / control stands beside the title |
+| `ChapterHeading` | `variant` | `CHAPTER_HEADING_VARIANTS`: `standard` · `feature` | feature: one per page region (`ChapterStory` `headingVariant`, default feature) |
+| `ChapterStory` | `layout` | `CHAPTER_STORY_LAYOUTS`: `start` · `center` · `end` · `above` | [ChapterStory](#chapterstory) |
+| `ChapterStory` | `density` | `CHAPTER_STORY_DENSITIES`: `ample` · `dense` (default dense) | [ChapterStory](#chapterstory) |
+| `ChapterFaq` | `layout` | `CHAPTER_FAQ_LAYOUTS`: `media` · `split` · `stacked` (default media if `config.media`, else split) | |
+| `ChapterContact` | `layout` | `CHAPTER_CONTACT_LAYOUTS`: `columns` · `split` · `band` | **columns** when the place has a photo and the hours matter as much as the details, **split** for a place worth showing large, **band** for a compact end-of-page block |
+| `ChapterContact` | `hours` | `CHAPTER_CONTACT_HOURS_VIEWS`: `today` · `week` | **week** when hours vary from day to day |
+| `ChapterFooter` | `layout` | `CHAPTER_FOOTER_LAYOUTS`: `bar` · `panel` | **bar** for a one-page site, **panel** for a multi-page site |
+
+## Expression (adapt)
+
+- **Chapter:** content, tone order (within the alternation rule), accent
+  (`--primary`, or `accent` per chapter), fonts via
+  `--font-heading/-body/-readout`, brand mark / logo, legal line and links
+  (`chapter.config.tsx`).
+- **ChapterFaq:** questions / answers / follow-up links, title and accent
+  word, the "another question" link, the portrait, `phoneVisible`, tone,
+  `--chapter-faq-sticky-top` (host navbar clearance, default 6rem).
+- **Footer panel:** logo, tagline, pages, networks + glyphs, contact, legal,
+  tone. Mark the shown page with `current: true` per route.
+- **ChapterContact:** all copy and destinations, services (lunch / dinner,
+  morning / afternoon…), hours, time zone, note, picture, tone.
+- **ChapterStory:** all copy, emblem / inline mark, media and ratios, tone,
+  accent.
 
 ## Files
 
@@ -153,19 +233,6 @@ Source: Tchin Tchin karaoke "Tout ce que vous devez savoir"
 <ChapterFaq config={buildChapterFaqConfig(locale)} layout="media" tone="dark" />
 ```
 
-- **Protected (Evoview):** questions on alternating tonal tiles with a small
-  gap, no rules, no counting index; single-open accordion; the toggle orb
-  (+ at rest, the accent rises as liquid with − on it, `OrbFill`); open row
-  = ≤ 10 % accent wash, the answer under the question (Montserrat ≥ 13px,
-  fg/.65); pointed row one tonal step up (no sibling dimming); sticky column
-  (media or heading) holding still while answers open; phones = media first,
-  then `phoneVisible` questions and one "show more" row (mechanism change,
-  RULES §7). Layout proportions: media `.62 / 1` (list larger), split
-  heading `.72 / 1.28`, stacked centred column ≤ 46em on the reading rail.
-- **Client-adaptable:** questions/answers/follow-up links, title and accent
-  word, the "another question" link (a text link, never a CTA plate), the
-  portrait, `phoneVisible`, layout, tone, `--chapter-faq-sticky-top` (host
-  navbar clearance, default 6rem).
 - **Crawlable:** every answer is rendered (server too, never `hidden` in
   server HTML) and collapsed by height (`grid-template-rows`, control
   280ms); closed panels are out of the tab order and the accessibility tree.
@@ -179,25 +246,12 @@ Source: Tchin Tchin karaoke "Tout ce que vous devez savoir"
   `aria-expanded` / `aria-controls`, answers `role="region"`; Enter / Space
   toggle, ↑ / ↓ / Home / End move between questions; focus ring in the
   accent signal.
-- **Attribution:** none (the page's one linked mark lives in the footer).
 
 ## Footer panel
 
 `<ChapterFooter config layout="panel" />` (source: the Tchin site footer).
 Reads `footer.tagline`, `nav`, `socials`, `contact` (plus `legal`, `links`);
-the bar ignores them.
-
-- **Protected:** brand + tagline · page links as alternating tonal tiles
-  (current page = surface step + full accent bar; pointed = the bar wipes in
-  from the left, ink via `TextFill`) · 44px social orbs (accent fill via
-  `OrbFill`), over contact (`<address>`: maps link, `tel:`, `mailto:`) ·
-  legal line + links; the Evoview credit centred last, set off by the group
-  gap. No rules, no gradient, no decorative icons. One row from 1024; 768–1023
-  brand + socials over the tiles; phones: brand + socials, tiles two by two,
-  meta centred, tagline dropped.
-- **Client-adaptable:** logo, tagline, pages, networks + glyphs, contact,
-  legal, tone. Mark the shown page with `current: true` per route.
-- Choose **bar** for a one-page site, **panel** for a multi-page site.
+the bar ignores them. Signature and expression: above.
 
 ## ChapterContact
 
@@ -226,21 +280,6 @@ never a slogan), `hours { title, timeZone (IANA), services[], week[7][services]
 layout: `columns` `50vw`, `split` `(min-width: 1024px) 50vw, 100vw`; set it
 only to override), `newTab`.
 
-- **Protected (Evoview):** one primary action (`PrimaryPlate`, no Evoview
-  mark beside it); details and hours as tonal tiles / alternating rows, no
-  rules, no decorative icons (↗ stays: it means "leaves the site"); today
-  computed live in the business's zone with an open / closed line (accent dot
-  + halo when open; text carries the state); today's row marked by a wash, a
-  dot, weight and screen-reader text, never colour alone; the week folded but
-  in the DOM; opening it is one sequence (the fold grows while the picture
-  fades and yields its height, the channel tiles release their stretch);
-  phones read where → when → how (place, hours, channels), `split` puts the
-  picture first, `columns` drops it, `band` turns the details into one-line
-  label | value rows. Whole tile = hit area, value + ↗ take the accent by
-  `TextFill`.
-- **Client-adaptable:** all copy and destinations, services (lunch / dinner,
-  morning / afternoon…), hours, time zone, note, picture, layout, hours view,
-  tone.
 - **Crawlable / SSR:** everything renders on the server; "today" and the state
   resolve after hydration (`useSyncExternalStore` server snapshot `null`; a
   reserved line and dashes meanwhile), so a prerender built on another day
@@ -252,10 +291,6 @@ only to override), `newTab`.
   turns, only while the chapter is on screen and the tab visible
   (`useInViewPause`); off-screen or hidden it is cleared, and it re-reads at
   once when the chapter returns. No other motion loop.
-- **Attribution:** none (the page's one linked mark lives in the footer).
-- Choose **columns** when the place has a photo and the hours matter as much
-  as the details, **split** for a place worth showing large, **band** for a
-  compact end-of-page block; **week** when hours vary from day to day.
 
 ## ChapterStory
 
@@ -295,23 +330,6 @@ e.g. `ffmpeg -i clip.mp4 -frames:v 1`): any other still jumps when the clip
 starts. Clips: short **forward** seamless loops, ≤ ~300 KB, about the poster's
 larger width.
 
-- **Protected (Evoview):** the drift is a Web Animation per lane (two-copy
-  track, 0 → −50 %, 0.014 px/ms, linear) nudged by the scroll (520 px of
-  travel per full pass × lane speed 1 / .65 / 1.3 / .85, directions
-  alternate, phases 0 / 160 / 70 / 230) — never a CSS marquee, never
-  scroll-jacking; **one clip plays at a time** (the one most in view, derived
-  from the track offset), the others hold their poster / last frame; lanes
-  rise only once their stills and posters are decoded (media-gated reveal,
-  `useMediaReady`); copy rises once in view (y 28 + fade, 600 ms, stagger
-  80: emblem, title, story, quote; lanes from 120 ms); media true to colour
-  on `--ev-well` wells (surface radius), soft fades at the lane ends, no
-  rules, glows, tints or scrims; columns fade out over the chapter's block
-  padding (12 % of the window, capped at the compact rhythm), so the copy
-  centres against the opaque part and the foot is clear before the next
-  tone cut; phones change the mechanism (rows) and put media first (except
-  `above`); the quote drops on phones.
-- **Client-adaptable:** all copy, emblem / inline mark, media and ratios,
-  layout, density, tone, accent.
 - **Pause model:** drift, scroll link and clip playback run only while the
   chapter is on screen, the tab visible and no modal suspends the page
   (`useInViewPause`); paused they keep their offset and resume from it. The
@@ -327,7 +345,6 @@ larger width.
   real text rendered on the server; the lanes are decorative
   (`aria-hidden`, `alt=""`) — put information pictures elsewhere. Nothing
   focusable inside the lanes.
-- **Attribution:** none (the page's one linked mark lives in the footer).
 
 ## Navbar package
 

@@ -1,5 +1,15 @@
 # chapter changelog
 
+## Unreleased
+
+- Docs: ownership sections (RULES §13).
+- API (additive): exported variation arrays `CHAPTER_HEADING_LAYOUTS`,
+  `CHAPTER_HEADING_VARIANTS` (new types `ChapterHeadingLayout`,
+  `ChapterHeadingVariant`), `CHAPTER_STORY_LAYOUTS`, `CHAPTER_STORY_DENSITIES`,
+  `CHAPTER_FAQ_LAYOUTS`, `CHAPTER_CONTACT_LAYOUTS`,
+  `CHAPTER_CONTACT_HOURS_VIEWS`, `CHAPTER_FOOTER_LAYOUTS`; existing types now
+  derive from them (unchanged). No config change.
+
 ## 1.4.0
 
 No config changes.

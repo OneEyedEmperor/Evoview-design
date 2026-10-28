@@ -40,7 +40,8 @@ export type ProcessStep = {
 };
 
 /** Centred mark drawn on a completed card: a check, the step numeral or the client's icon (`step.mark`). Never an eye. */
-export type CompletionMark = "check" | "numeral" | "icon";
+export const COMPLETION_MARKS = ["check", "numeral", "icon"] as const;
+export type CompletionMark = (typeof COMPLETION_MARKS)[number];
 
 export type ProcessSequenceCopy = {
   title: ReactNode;

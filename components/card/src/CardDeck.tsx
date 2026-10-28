@@ -15,7 +15,7 @@ import { GhostAction, SegmentedControl } from "../controls";
 import { ArrowRight, cn, preloadMedia, useHydrated, useInViewPause, useMediaQuery } from "../foundation";
 import { MediaCard } from "./MediaCard";
 import { nearestToCentre } from "./strip";
-import type { CardDeckCategory, CardDeckCopy, CardDeckDefinition, CardHeadingLevel, CardTrackItem, CardTrackVariant } from "./types";
+import type { CardDeckCategory, CardDeckCopy, CardDeckDefinition, CardDeckRows, CardHeadingLevel, CardTrackItem, CardTrackVariant } from "./types";
 
 export type CardDeckProps = {
   deck: CardDeckDefinition;
@@ -25,7 +25,7 @@ export type CardDeckProps = {
   /** Ribbon colour (ribbon variant). Default "light". */
   ribbon?: "light" | "dark";
   /** Desktop grid rows of three: 2 (six cards, the deck deal) or 1 (three cards). Default 2. */
-  rows?: 1 | 2;
+  rows?: CardDeckRows;
   /** Paints the chapter. Omit to inherit the host's tone. */
   tone?: "dark" | "light" | "paper";
   /** Block padding (foundation chapter rhythm). Default "standard". */
@@ -77,7 +77,7 @@ const FINE_QUERY = "(hover: hover) and (pointer: fine)";
 
 const offsetTransform = ({ x, y, scale }: Offset) => `translate(${x}, ${y}) scale(${scale})`;
 
-function geometry(rows: 1 | 2, colGap: number, rowGap: number): Geometry {
+function geometry(rows: CardDeckRows,colGap: number, rowGap: number): Geometry {
   const side = `calc(100% + ${colGap}px)`;
   const nside = `calc(-100% - ${colGap}px)`;
   if (rows === 1) {

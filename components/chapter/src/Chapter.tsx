@@ -15,6 +15,10 @@ import { cn, inkFor, SectionMarker, useInViewPause } from "../foundation";
 export type ChapterTone = "light" | "paper" | "dark";
 export type ChapterRhythm = "standard" | "compact" | "cinematic";
 export type ChapterRail = "reading" | "wide" | "none";
+export const CHAPTER_HEADING_LAYOUTS = ["centered", "split"] as const;
+export type ChapterHeadingLayout = (typeof CHAPTER_HEADING_LAYOUTS)[number];
+export const CHAPTER_HEADING_VARIANTS = ["standard", "feature"] as const;
+export type ChapterHeadingVariant = (typeof CHAPTER_HEADING_VARIANTS)[number];
 
 type HeadingSlot = { id: string; register: () => () => void };
 const HeadingContext = createContext<HeadingSlot | null>(null);
@@ -95,9 +99,9 @@ export type ChapterHeadingProps = {
   support?: ReactNode;
   /** Split: the instrument / controls on the right (under the heading on phones). Centered: below. */
   side?: ReactNode;
-  layout?: "centered" | "split";
+  layout?: ChapterHeadingLayout;
   /** feature = one size up (28 → 34.4); one feature heading per page region. */
-  variant?: "standard" | "feature";
+  variant?: ChapterHeadingVariant;
   level?: 2 | 3;
   /** The 20px accent marker. Default true. */
   marker?: boolean;

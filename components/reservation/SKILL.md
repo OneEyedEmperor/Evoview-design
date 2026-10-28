@@ -8,8 +8,18 @@ description: Install and adapt the Evoview booking application (one-question-per
 Package: `/root/.vibehub/projects/evoview-design-library/components/reservation/`
 Showcase: `https://evoview-library.said.bet/reservation`
 
-Read `README.md` (the contract, especially "What is Evoview") and the
-library's `STRATEGY.md` first.
+Read `README.md` (the contract, especially Signature / Variations /
+Expression) and the library's `STRATEGY.md` first.
+
+## Ownership (RULES §13)
+
+- **Preserve** (README "Signature"): the chassis, header strip, type
+  system, marks, choreography, the header wordmark link; the flow's controls
+  voice. Changes go into the library, never the client.
+- **Select** (README "Variations"): `Reservation` or `ReservationFlow`;
+  durations as `hours` or `requiresEndTime`; "+max" guests; SMS opt-in.
+- **Invent** (README "Expression"): venue, copy, experiences, windows,
+  guests, horizon, submit wiring, accent.
 
 ## Procedure
 
@@ -34,15 +44,11 @@ library's `STRATEGY.md` first.
 
 - Orbs (choice check, pill number marks, compact guest orbs) change colour
   only through foundation `OrbFill`'s liquid rise (RULES §1).
-- The chassis is the Evoview signature: do not re-theme its surfaces, swap
-  fonts or marks. The client shows up through its accent, venue, copy and
-  choices.
 - Do not add the evoview.be side dossier (rail/monitor/journey): it is
   exclusive to Evoview's site.
-- Two versions: `Reservation` (full application, dark chassis) and
-  `ReservationFlow` (short form on paper: chip questions then an e-mail; see
-  README "ReservationFlow"). Pick the flow when the booking needs no
-  calendar, opening windows or contact details beyond an e-mail.
+- Pick `ReservationFlow` (short form on paper: chip questions then an
+  e-mail; README "ReservationFlow") when the booking needs no calendar,
+  opening windows or contact details beyond an e-mail.
 - The header wordmark is the only Evoview link (`https://evoview.be/`, new
   tab, no tracking). Do not add or move attribution.
 - Never fork the component for a client. Generic fixes go into the library:

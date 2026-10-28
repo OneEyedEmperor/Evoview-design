@@ -4,12 +4,15 @@ import { cn, pad } from "../foundation";
 import { Heading, Note, StageFrame, defaultCopy, layersOf, toneClass, useOnce, useStageGate } from "./stage";
 import type { CompareContent, SelectorStageCopy, Tone } from "./types";
 
+/**
+ * "toggle": a transformation (before / after) wiped on one frame.
+ * "pair": two alternatives read side by side as peers (phone: toggle).
+ */
+export const COMPARE_TOGGLE_MODES = ["toggle", "pair"] as const;
+export type CompareToggleMode = (typeof COMPARE_TOGGLE_MODES)[number];
+
 export type CompareToggleProps = CompareContent & {
-  /**
-   * "toggle": a transformation (before / after) wiped on one frame.
-   * "pair": two alternatives read side by side as peers (phone: toggle).
-   */
-  mode?: "toggle" | "pair";
+  mode?: CompareToggleMode;
   copy?: SelectorStageCopy;
   tone?: Tone;
   chapter?: boolean;

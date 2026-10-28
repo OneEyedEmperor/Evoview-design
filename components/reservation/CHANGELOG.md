@@ -1,5 +1,9 @@
 # reservation changelog
 
+## Unreleased
+
+- Docs: ownership sections (RULES §13).
+
 ## 2.11.0
 
 Requires `foundation` ≥ 1.9.0 (press jelly; the paper flow through

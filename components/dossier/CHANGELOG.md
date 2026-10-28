@@ -1,5 +1,12 @@
 # dossier changelog
 
+## Unreleased
+
+- Docs: ownership sections (RULES §13).
+- API (additive): exported variation arrays `DOSSIER_CHAPTER_VARIANTS`,
+  `CHAPTER_ROWS_SURFACES` (new types `DossierChapterVariant`,
+  `ChapterRowsSurface`). No config change.
+
 ## 1.5.0
 
 Requires `foundation` ≥ 1.9.0 and `controls` ≥ 1.5.0 (press jelly). No

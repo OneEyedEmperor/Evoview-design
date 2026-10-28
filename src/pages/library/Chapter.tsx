@@ -5,6 +5,8 @@ import {
   ChapterMark,
   ChapterTicker,
   buildChapterConfig,
+  type ChapterHeadingLayout,
+  type ChapterHeadingVariant,
   type ChapterTone,
 } from "../../../components/chapter/src";
 import { SegmentedControl, Switch, rovingKeyDown } from "../../../components/controls/src";
@@ -37,7 +39,8 @@ export default function Chapter() {
   );
 }
 
-type Heading = "centered" | "split" | "feature";
+/* One setting for both heading props: a feature heading is shown centred. */
+type Heading = ChapterHeadingLayout | Exclude<ChapterHeadingVariant, "standard">;
 type View = "plan" | "section" | "elevation";
 type Instrument = "phases" | "ticker" | "steps";
 
@@ -47,9 +50,9 @@ const T = {
       name: "Chapitre",
       when: "La coque de chaque section du site : le ton, le titre et l'instrument se choisissent chapitre par chapitre.",
       controls: {
-        tone: { label: "Ton", options: { light: "Clair", paper: "Papier", dark: "Sombre" } },
+        tone: { label: "Ton", options: { light: "Clair", paper: "Papier", dark: "Sombre" } satisfies Record<ChapterTone, string> },
         instrument: { label: "Instrument", options: { phases: "Phases", ticker: "Fil", steps: "Étapes" } },
-        heading: { label: "Titre", options: { centered: "Centré", split: "Scindé", feature: "Vedette" } },
+        heading: { label: "Titre", options: { centered: "Centré", split: "Scindé", feature: "Vedette" } satisfies Record<Heading, string> },
         logo: { label: "Logo", switch: "Logo du client" },
       },
     },
@@ -73,9 +76,9 @@ const T = {
       name: "Chapter",
       when: "The shell of every section on the site: tone, heading and instrument are chosen chapter by chapter.",
       controls: {
-        tone: { label: "Tone", options: { light: "Light", paper: "Paper", dark: "Dark" } },
+        tone: { label: "Tone", options: { light: "Light", paper: "Paper", dark: "Dark" } satisfies Record<ChapterTone, string> },
         instrument: { label: "Instrument", options: { phases: "Phases", ticker: "Ticker", steps: "Steps" } },
-        heading: { label: "Heading", options: { centered: "Centered", split: "Split", feature: "Feature" } },
+        heading: { label: "Heading", options: { centered: "Centered", split: "Split", feature: "Feature" } satisfies Record<Heading, string> },
         logo: { label: "Logo", switch: "Client logo" },
       },
     },

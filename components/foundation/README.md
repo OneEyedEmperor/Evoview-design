@@ -244,13 +244,23 @@ names Evoview and the new tab. Never inside or next to a client CTA. Further
 marks are decorative (`<EvoviewLogo alt="">`, `aria-hidden`, ≤ .12 opacity).
 On by default in every package config; turning it off is the founder's call.
 
-## Client adaptation
+## Signature (preserve)
 
-Free: `--primary` / `--primary-foreground` (accent), `--font-heading` /
+Scale, radius roles, rhythm, motion tokens and the shared interaction
+primitives (liquid fill, press jelly, channel switch), tone values, accent
+roles (signal only — never backgrounds, body text or a resting primary
+plate), the attribution placement (above). Changing them is a library change
+(RULES §13). Constraints: floors, the motion policy and pause model (above).
+
+## Variations (select)
+
+None: foundation exposes tokens and primitives, not compositions.
+
+## Expression (adapt)
+
+`--primary` / `--primary-foreground` (accent), `--font-heading` /
 `--font-body` / `--font-readout` if the client's typography replaces the
-Evoview voices, tone choice per section. Protected: scale, radius roles,
-rhythm, motion tokens, floors, tone values, accent roles (signal only — never
-backgrounds, body text or a resting primary plate).
+Evoview voices, tone choice per section.
 
 ## Host contract
 

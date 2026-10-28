@@ -25,3 +25,8 @@ export {
   type ChapterContactHoursView,
 } from "./ChapterContact";
 export { buildChapterContactConfig } from "./chapter.config";
+export { CHAPTER_HEADING_LAYOUTS, CHAPTER_HEADING_VARIANTS, type ChapterHeadingLayout, type ChapterHeadingVariant } from "./Chapter";
+export { CHAPTER_STORY_LAYOUTS, CHAPTER_STORY_DENSITIES } from "./ChapterStory";
+export { CHAPTER_FAQ_LAYOUTS } from "./ChapterFaq";
+export { CHAPTER_CONTACT_LAYOUTS, CHAPTER_CONTACT_HOURS_VIEWS } from "./ChapterContact";
+export { CHAPTER_FOOTER_LAYOUTS } from "./ChapterFooter";

@@ -1,5 +1,15 @@
 # navbar changelog
 
+## Unreleased
+
+- Docs: ownership sections (RULES §13). "Adapting" is split into Signature /
+  Variations / Expression: of the former "change with care" items only the
+  ink scale stays client-adaptable; timings, gloss, mobile tile wash and tray
+  card treatment are Signature (library changes).
+- API (additive): exported variation arrays `NAV_RETICLES`,
+  `NAV_TRAY_LAYOUTS` (new types `NavReticle`, `NavTrayLayout`). No config
+  change.
+
 ## 2.8.0
 
 Requires `foundation` ≥ 1.9.0 (press jelly). No config changes.

@@ -19,3 +19,4 @@ export type {
   StepMedia,
   StepState,
 } from "./types";
+export { COMPLETION_MARKS } from "./types";

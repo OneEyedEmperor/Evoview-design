@@ -61,6 +61,14 @@ export type NavTrayItem = {
   onSelect?: (event: MouseEvent<HTMLElement>) => void;
 };
 
+export const NAV_TRAY_LAYOUTS = ["cards", "rows"] as const;
+export type NavTrayLayout = (typeof NAV_TRAY_LAYOUTS)[number];
+
+/** Reticle style on the finder pill: `eye` = one solid accent almond with a
+    pupil (default); `hud` = outlined eyelids that blink on hover. */
+export const NAV_RETICLES = ["eye", "hud"] as const;
+export type NavReticle = (typeof NAV_RETICLES)[number];
+
 export type NavTray =
   | {
       kind: "items";
@@ -74,7 +82,7 @@ export type NavTray =
           any entry has a `cover`, else `rows`. Set it explicitly on a
           loader tray so the loading skeleton has the right shape. Mobile
           always shows single-column rows. */
-      layout?: "cards" | "rows";
+      layout?: NavTrayLayout;
     }
   | {
       kind: "cta";
@@ -118,9 +126,7 @@ export type NavbarConfig = {
   accent?: string;
   /** Token overrides, e.g. `{ "--nav-logo-h-desktop": "2.1em" }`. */
   vars?: NavbarVars;
-  /** Reticle style on the finder pill: `eye` = one solid accent almond with a
-      pupil (default); `hud` = outlined eyelids that blink on hover. */
-  reticle?: "eye" | "hud";
+  reticle?: NavReticle;
   /** One-page sites: sections in document order (ids must exist in the page).
       Multi-page sites: `[]`. Must be a module-level constant: the scroll
       store is cached by reference. */

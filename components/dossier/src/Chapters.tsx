@@ -13,11 +13,14 @@ import { isVideo } from "./hooks";
 export type ChapterReveal = (el: HTMLElement, reveal: () => void) => () => void;
 export const ChapterRevealContext = createContext<ChapterReveal | null>(null);
 
+export const DOSSIER_CHAPTER_VARIANTS = ["intro", "standard", "payoff"] as const;
+export type DossierChapterVariant = (typeof DOSSIER_CHAPTER_VARIANTS)[number];
+
 export type DossierChapterProps = {
   /** "a" #0c0c0d, "b" #101011 (alternate them), "paper" light chapter inside the dark shell. */
   tone?: "a" | "b" | "paper";
   /** "intro" opens the story (tighter top, enters with the detail), "payoff" closes it (bloom). */
-  variant?: "intro" | "standard" | "payoff";
+  variant?: DossierChapterVariant;
   className?: string;
   children: ReactNode;
 };
@@ -115,9 +118,12 @@ export type ChapterRowsProps = {
   /** Accent index column, only when the rows are a sequence. */
   numbered?: boolean;
   /** Tonal surfaces (RULES §3): "rows" one panel, rows alternating a step (info sheets, programmes); "tiles" one surface per item (peers). */
-  surface?: "rows" | "tiles";
+  surface?: ChapterRowsSurface;
   className?: string;
 };
+
+export const CHAPTER_ROWS_SURFACES = ["rows", "tiles"] as const;
+export type ChapterRowsSurface = (typeof CHAPTER_ROWS_SURFACES)[number];
 
 /** A text list on tonal surfaces: label · detail, no rules. */
 export function ChapterRows({ rows, numbered = false, surface = "rows", className }: ChapterRowsProps) {

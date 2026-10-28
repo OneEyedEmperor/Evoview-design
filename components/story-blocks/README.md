@@ -15,10 +15,11 @@ Evidence: `docs/extraction/service-dossiers.md` A3, A6, A8, A10, §4.3,
 rules 5–8, 13, 16; `docs/RULES.md` §3 (spacing is the separator; text
 lists segmented by tone).
 
-## What is Evoview (protected)
+## Signature (preserve)
 
 Read `STRATEGY.md`. These blocks are client content in an Evoview voice; the
-following make them recognisably Evoview and must not be restyled:
+following make them recognisably Evoview and must not be restyled. Changing
+them is a library change (RULES §13).
 
 - **Spacing is the separator**: one chapter band between chapters
   (96 / 144 authored, 124 rendered at 1440), heading → content 48 / 64,
@@ -55,25 +56,40 @@ following make them recognisably Evoview and must not be restyled:
   something the label doesn't say (in a dossier: "Quitte le dossier").
 - **Reveal**: once, y24 / 600ms for text, y45 / 900ms for media, 80ms
   stagger, cinematic easing.
+- **Accent roles**: row indices, caption dot + glow, the optional accent
+  line of the payoff statement, the payoff bloom (20 %), plate hover and
+  focus rings. Never backgrounds, body copy, frames or a resting plate.
+  Accent text goes through `--ev-accent-signal`, so yellow and off-white
+  still read on paper.
+- **Attribution**: none. These are content blocks without a header or
+  chassis strip, so they carry no Evoview mark (RULES §9: the one linked
+  mark lives in a component's header strip). Never add a mark next to the
+  payoff CTA.
 
-**Accent = the client's** (`--primary`, `--primary-foreground`): row indices,
-caption dot + glow, the optional accent line of the payoff statement, the
-payoff bloom (20 %), plate hover and focus rings. Never backgrounds, body
-copy, frames or a resting plate. Accent text goes through
-`--ev-accent-signal`, so yellow and off-white still read on paper.
+Constraints: **illustrative ≠ result** — on a client site, a story that
+demonstrates rather than documents (mock-ups, generated media) must say so
+visibly near it. Payoff results must be true.
 
-**Client-adaptable**: all copy, media, ratios (per artefact) and spans, the
-CTA destination (and an optional consequence), tone per story (`dark` / `light` /
-`paper`), rhythm (`page` / `dossier`), which blocks and in what order,
-fonts via `--font-heading` / `--font-body` / `--font-readout`.
+## Variations (select)
 
-**Attribution**: none. These are content blocks without a header or chassis
-strip, so they carry no Evoview mark (RULES §9: the one linked mark lives in
-a component's header strip). Never add a mark next to the payoff CTA.
+- **Which blocks and in what order:** `StoryIntro`, `IndexedRows`,
+  `ProofGrid`, `PayoffBand` (`chapters` kinds `intro` · `rows` · `proof` ·
+  `payoff`); a tone cut = a new `<Story>`.
+- `StoryIntro` `align`: `STORY_INTRO_ALIGNS` — `end` (default; copy
+  bottom-aligned against the title) · `start`.
+- `IndexedRows` `surface`: `INDEXED_ROWS_SURFACES` — `tiles` (steps) ·
+  `rows` (schedules, timetables); default tiles beside media, rows without.
+  With or without `media`.
+- `ProofGrid` `headingAt`: `PROOF_GRID_HEADING_POSITIONS` — `start`
+  (default) · `end` (the images lead, the claim follows).
+- `PayoffBand`: with or without `results`, `bloom`.
 
-**Illustrative ≠ result**: on a client site, a story that demonstrates
-rather than documents (mock-ups, generated media) must say so visibly near
-it. Payoff results must be true.
+## Expression (adapt)
+
+All copy, media, ratios (per artefact) and spans, the CTA destination (and
+an optional consequence), tone per story (`dark` / `light` / `paper`),
+accent (`--primary`, `--primary-foreground`), fonts via `--font-heading` /
+`--font-body` / `--font-readout`.
 
 ## Files
 

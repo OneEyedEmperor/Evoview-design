@@ -8,8 +8,20 @@ description: Evoview editorial story blocks for client pages and dossiers — ti
 Package: `/root/.vibehub/projects/evoview-design-library/components/story-blocks/`
 Showcase: `https://evoview-library.said.bet/layouts/story-blocks`
 
-Read `README.md` ("What is Evoview", API, verification) and the library's
-`STRATEGY.md` first; the foundation README covers tokens and the pause model.
+Read `README.md` (Signature / Variations / Expression, API, verification)
+and the library's `STRATEGY.md` first; the foundation README covers tokens
+and the pause model.
+
+## Ownership (RULES §13)
+
+- **Preserve** (README "Signature"): spacing as separator, text lists on
+  tone, the proportions, one subject per chapter, display ladder, one exit,
+  reveal timings, no mark. Changes go into the library, never the client.
+- **Select** (README "Variations"): which blocks in what order,
+  `STORY_INTRO_ALIGNS`, `INDEXED_ROWS_SURFACES`,
+  `PROOF_GRID_HEADING_POSITIONS`.
+- **Invent** (README "Expression"): copy, media, ratios, spans, CTA
+  destination, accent, tone.
 
 ## Procedure
 
@@ -51,8 +63,6 @@ Read `README.md` ("What is Evoview", API, verification) and the library's
   (leaves a dossier, opens another site); never restate the label.
 - No Evoview mark in these blocks (no chassis); never beside the CTA.
 - Payoff results must be true; client demonstrations say so visibly.
-- Keep the protected proportions, open chapters, media-first phone order
-  and reveal timings; adapt content, media, spans, accent, tone, rhythm.
 - Never fork for a client: fixes go into the library (`VERSION`,
   `CHANGELOG.md`), clients re-run `install.sh`.
 - Respond in English even when the client interface is French.

@@ -20,3 +20,4 @@ export type {
   StoryIntroProps,
   StoryMedia,
 } from "./types";
+export { STORY_INTRO_ALIGNS, INDEXED_ROWS_SURFACES, PROOF_GRID_HEADING_POSITIONS, type StoryIntroAlign, type IndexedRowsSurface, type ProofGridHeadingAt } from "./types";

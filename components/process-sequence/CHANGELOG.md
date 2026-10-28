@@ -1,5 +1,11 @@
 # process-sequence changelog
 
+## Unreleased
+
+- Docs: ownership sections (RULES §13).
+- API (additive): exported variation array `COMPLETION_MARKS`;
+  `CompletionMark` now derives from it (unchanged). No config change.
+
 ## 1.5.0
 
 Requires `foundation` ≥ 1.9.0 and `controls` ≥ 1.5.0 (press jelly). No

@@ -16,6 +16,16 @@ The library combines client utility with recognizable Evoview authorship and
 approved referral opportunities. Preserve existing signatures; this strategy
 alone does not authorize adding attribution or changing client link destinations.
 
+## Ownership (RULES §13)
+
+- **Preserve** (README "Signature"): capsule, eye, unfold, tiles, pill
+  typography, tray cards, their tuning and the structural behaviour; no
+  Evoview mark. Changes go into the library, never the client.
+- **Select** (README "Variations"): one-page or multi-page shape,
+  `NAV_RETICLES`, per-pill tray (`NAV_TRAY_LAYOUTS`) / CTA block / none.
+- **Invent** (README "Expression"): logo, accent, copy, destinations, deck,
+  icons, covers, `vars`, the ink scale.
+
 ## Procedure
 
 1. **Look at the reference first.** Open the showcase at 1440 and 390 wide
@@ -39,8 +49,8 @@ alone does not authorize adding attribution or changing client link destinations
    screen → `initialTone: "dark"` + `data-nav-tone="dark"` on the wrapper;
    make fonts resolve.
 6. **Never edit `navbar.css` for brand values** — everything brand-level is a
-   `vars` token. Only the README's "change with care" items justify a CSS
-   edit, and they go in the client copy, noted in the handoff.
+   `vars` token. Only the ink scale (README "Expression") justifies a CSS
+   edit, and it goes in the client copy, noted in the handoff.
 7. **Verify** with the README checklist — all eight points, both viewports,
    keyboard, reduced motion. Fix, re-verify.
 8. **Log** an activity record (`surface: code`, `type: feature`, subject =
@@ -60,10 +70,7 @@ alone does not authorize adding attribution or changing client link destinations
   flow back into the library as generic behaviour; client branding never
   does — the reference stays Evoview-branded.
 - Do not reintroduce a conventional full-width navbar, extra header accents,
-  or labels revealed by resizing the capsule. The capsule, the eye, the
-  unfold, the tiles and the monochrome→accent tray cards are the component.
-- Attribution: the navbar shows the client's logo and carries no Evoview
-  mark or link; authorship is the signature behaviour. Adding an Evoview
-  credit or referral link here needs explicit approval and a supplied
-  destination.
+  or labels revealed by resizing the capsule.
+- Adding an Evoview credit or referral link here needs explicit approval and
+  a supplied destination.
 - Respond in English even when the client interface is French.

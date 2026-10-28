@@ -11,10 +11,11 @@ restaurant client: commands over a portal image, choices, a request form, a
 timed sequence under the pause model, a booking flow on paper; live accent
 palette). `StepMark` and `Badge` are not on the page; see the API table.
 
-## What is Evoview (protected)
+## Signature (preserve)
 
-Read `STRATEGY.md`. These choices make the controls recognisably Evoview and
-must not be restyled to a client's UI kit:
+Read `STRATEGY.md`. These make the controls recognisably Evoview; never
+restyle them to a client's UI kit. Changing them is a library change
+(RULES §13).
 
 - **Two action weights only**: the primary plate (white on dark / ink on
   light, Montserrat 700 14px sentence case, round orb with an arrow, hover
@@ -33,25 +34,34 @@ must not be restyled to a client's UI kit:
 - **Segmented progress**: equal cells, the current one charges in the
   foreground colour, completed ones take the accent, `aria-current="step"`.
 - **Glass belongs to chrome**: close and pager only.
+- **Accent roles**: fills, selection and progress (above); signal strokes
+  are derived per tone (`--controls-signal`), blooms from
+  `--controls-accent-deep`.
+- **Press**: plates, ghosts, glass close / pager, chips, segmented options
+  and the switch track squash and spring back when pressed (foundation's
+  press jelly, RULES §6); rows keep a plain `:active` scale. Hosts must not
+  add an `:active` scale or a `scale` transition to these.
+- **Attribution**: controls carry no Evoview mark. The approved mark lives in
+  each host component's header strip (`EvoviewMark` from `foundation`);
+  never put it inside or next to a client CTA built with these controls.
 
-**Accent = the client's**, read from the host `--primary` (fill) and
-`--primary-foreground` (ink on fills); Evoview indigo `#818cf8` is only the
-fallback. Signal strokes are derived per tone (`--controls-signal`), blooms
-from `--controls-accent-deep`. Override per subtree by setting `--primary`.
-
-**Attribution**: controls carry no Evoview mark. The approved mark lives in
-each host component's header strip (`EvoviewMark` from `foundation`); never
-put it inside or next to a client CTA built with these controls.
-
-**Motion**: one full-motion experience, no reduced-motion branch. Every
+Constraints: one full-motion experience, no reduced-motion branch; every
 control has a complete stable state; a progress `clock` comes from
-`useSequenceClock` and pauses with the pause model. Plates, ghosts, glass
-close / pager, chips, segmented options and the switch track squash and
-spring back when pressed (foundation's press jelly, RULES §6); rows keep a
-plain `:active` scale. Hosts must not add an `:active` scale or a `scale`
-transition to these.
+`useSequenceClock` and pauses with the pause model.
 
-Client-adaptable: labels (`controls.config.tsx`), accent, tone, content.
+## Variations (select)
+
+No option arrays: the variation is which piece does the job (API below) —
+primary plate vs text action, chips vs rows, switch vs segmented control,
+progress `fill` vs `clock`, `captions` mode — and the size props
+(`PrimaryPlate` md 54 / lg 64, `OptionChip` md 48 / lg 58, `StepMark` sm /
+md, `SegmentedProgress` sm / lg).
+
+## Expression (adapt)
+
+Labels (`controls.config.tsx`), accent (host `--primary` fill,
+`--primary-foreground` ink on fills; Evoview indigo `#818cf8` is only the
+fallback; override per subtree by setting `--primary`), tone, content.
 
 ## Files
 

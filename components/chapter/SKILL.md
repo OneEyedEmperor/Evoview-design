@@ -8,8 +8,19 @@ description: Evoview page-section shell as React components — Chapter (tone li
 Package: `/root/.vibehub/projects/evoview-design-library/components/chapter/`
 Showcase: `https://evoview-library.said.bet/layouts/chapter`
 
-Read `README.md` ("What is Evoview", attribution, API) and the library's
+Read `README.md` (Signature / Variations / Expression, API) and the library's
 `STRATEGY.md` first; the foundation README covers tokens and the pause model.
+
+## Ownership (RULES §13)
+
+- **Preserve** (README "Signature"): tone cuts, rhythm, rails, heading
+  anatomy, FAQ / footer panel / contact / story signatures, the footer
+  credit. Changes go into the library, never the client.
+- **Select** (README "Variations"): `CHAPTER_HEADING_LAYOUTS`,
+  `CHAPTER_HEADING_VARIANTS`, `CHAPTER_STORY_LAYOUTS`,
+  `CHAPTER_STORY_DENSITIES`, `CHAPTER_FAQ_LAYOUTS`, `CHAPTER_CONTACT_LAYOUTS`,
+  `CHAPTER_CONTACT_HOURS_VIEWS`, `CHAPTER_FOOTER_LAYOUTS`. Nothing else.
+- **Invent** (README "Expression"): copy, media, accent, tone order, marks.
 
 ## Procedure
 
@@ -77,11 +88,6 @@ Read `README.md` ("What is Evoview", attribution, API) and the library's
 - The inline title mark is the client's; the Evoview wordmark appears once,
   linked, in the footer credit. Never place it next to a client CTA; keep
   CTAs inside chapters.
-- Client copy, media and accent change freely; marker, heading anatomy,
-  rhythm, rails and tone values do not. FAQ and footer panel: tonal tiles,
-  the liquid orbs / ink, single-open accordion and the centred credit are the
-  protected signature (README "ChapterFaq", "Footer panel"); no `01`
-  indices, no dividers, no decorative icons.
 - Never fork for a client: fixes go into the library (`VERSION`,
   `CHANGELOG.md`), clients re-run `install.sh`.
 - Respond in English even when the client interface is French.

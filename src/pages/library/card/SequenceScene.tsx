@@ -16,13 +16,13 @@ const T = {
   fr: {
     name: "Séquence",
     when: "Quand les images bougent et qu'il faut toutes les montrer : une carte prend la main à tour de rôle, elle seule joue sa vidéo.",
-    layout: { label: "Place", options: { gallery: "Page", board: "Accueil" } },
+    layout: { label: "Place", options: { gallery: "Page", board: "Accueil" } satisfies Record<CardSequenceLayout, string> },
     tone: { label: "Ton", options: { dark: "Nuit", paper: "Papier" } },
   },
   en: {
     name: "Sequence",
     when: "When the pictures move and all of them deserve a look: one card takes its turn in focus, and only it plays its video.",
-    layout: { label: "Placement", options: { gallery: "Page", board: "Home" } },
+    layout: { label: "Placement", options: { gallery: "Page", board: "Home" } satisfies Record<CardSequenceLayout, string> },
     tone: { label: "Tone", options: { dark: "Night", paper: "Paper" } },
   },
 };

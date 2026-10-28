@@ -31,6 +31,7 @@ src/pages/       showcase pages, one per component, importing from ../../compone
 ## Components
 
 Binding design rules: `docs/RULES.md` (evidence: `docs/extraction/*`).
+Ownership (Signature preserve / Variations select / Expression adapt): RULES §13.
 Showcase contract (routes, `ShowcasePage`, registry): `docs/SHOWCASE-CONTRACT.md`.
 Packages with a modal: `docs/CRAWLABLE-MODALS.md` (binding: view URLs,
 server-renderable copy, history), checked by `pnpm verify:ssr`.

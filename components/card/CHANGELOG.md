@@ -1,5 +1,12 @@
 # card changelog
 
+## Unreleased
+
+- Docs: ownership sections (RULES §13).
+- API (additive): exported variation arrays `CARD_TRACK_VARIANTS`,
+  `CARD_DECK_ROWS` (new type `CardDeckRows`), `CARD_SEQUENCE_LAYOUTS`;
+  existing types now derive from them (unchanged). No config change.
+
 ## 2.2.0 — showcase follow-up (no package change, no version bump)
 
 - Showcase only (`/layouts/card`, not installed): the deck and sequence
