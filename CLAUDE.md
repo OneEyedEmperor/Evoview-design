@@ -36,19 +36,22 @@ Packages with a modal: `docs/CRAWLABLE-MODALS.md` (binding: view URLs,
 server-renderable copy, history), checked by `pnpm verify:ssr`.
 New packages build on `foundation` (tokens, `--ev-scale`, pause-model hooks)
 and `controls`; follow `docs/BUILD-BRIEF.md`.
+Reusable animations (engine / binding / shells, performance rules, the
+liquid fill as reference): `animations/SKILL.md` (skill
+`evoview-reusable-animation`).
 
 | Component | Status | Skill |
 | --- | --- | --- |
-| `foundation` — tokens, scale, tones, type voices, pause-model hooks, attribution mark, step gauge, orb + text liquid fill, channel switch (hover-preview screens, RULES §6), SSR + crawlable-modal routing | 1.8.0 | `evoview-foundation` |
-| `controls` — plate, ghost, glass close/pager, chips, rows, fields, switch, segmented control/progress, view links (`/components/controls`) | 1.3.0 | `evoview-controls` |
-| `chapter` — section shell, headings, tone cuts; story, FAQ and contact chapters; footer bar / panel with attribution (`/layouts/chapter`) | 1.2.0 | `evoview-chapter` |
+| `foundation` — tokens, scale, tones, type voices, pause-model hooks, attribution mark, step gauge, orb + text liquid fill, channel switch (hover-preview screens, RULES §6), press jelly (pills / buttons, RULES §6), SSR + crawlable-modal routing | 1.9.0 | `evoview-foundation` |
+| `controls` — plate, ghost, glass close/pager, chips, rows, fields, switch, segmented control/progress, view links (`/components/controls`) | 1.5.0 | `evoview-controls` |
+| `chapter` — section shell, headings, tone cuts; story, FAQ and contact chapters; footer bar / panel with attribution (`/layouts/chapter`) | 1.3.0 | `evoview-chapter` |
 | `card` — media card in three compositions: scroll-scrubbed track, dealt category deck, timed video sequence (`/layouts/card`; was `card-track`) | 2.2.0 | `evoview-card` |
-| `process-sequence` — timed step board + step dossier, crawlable step views (`/layouts/process-sequence`) | 1.4.0 | `evoview-process-sequence` |
-| `story-blocks` — intro split, indexed sequence, proof collage, payoff (`/layouts/story-blocks`) | 2.3.0 | `evoview-story-blocks` |
-| `dossier` — portal modal, selection board, chapter strip, mobile dock, crawlable views (`/components/dossier`) | 1.4.0 | `evoview-dossier` |
-| `selector-stage` — selector ↔ stage, before/after, atlas (`/components/selector-stage`) | 1.4.0 | `evoview-selector-stage` |
-| `navbar` — finder capsule, desktop + mobile, cover-card trays (`/navbar`) | 2.7.0 | `evoview-navbar` |
-| `reservation` — Evoview booking application + short paper flow, client accent (`/components/reservation`) | 2.10.0 | `evoview-reservation` |
+| `process-sequence` — timed step board + step dossier, crawlable step views (`/layouts/process-sequence`) | 1.5.0 | `evoview-process-sequence` |
+| `story-blocks` — intro split, indexed sequence, proof collage, payoff (`/layouts/story-blocks`) | 2.4.0 | `evoview-story-blocks` |
+| `dossier` — portal modal, selection board, chapter strip, mobile dock, crawlable views (`/components/dossier`) | 1.5.0 | `evoview-dossier` |
+| `selector-stage` — selector ↔ stage, before/after, atlas (`/components/selector-stage`) | 1.5.0 | `evoview-selector-stage` |
+| `navbar` — finder capsule, desktop + mobile, cover-card trays (`/navbar`) | 2.8.0 | `evoview-navbar` |
+| `reservation` — Evoview booking application + short paper flow, client accent (`/components/reservation`) | 2.11.0 | `evoview-reservation` |
 
 ## Rules for changing a component here
 
@@ -78,7 +81,8 @@ Facts learned about this codebase, maintained by Vibehub. Everything from this h
 - docs/RULES.md is binding for every package (evidence in docs/extraction/*); the evoview site's EVOVIEW-VISUAL-GRAMMAR.md is outdated — authority is rendered site (measured) > working-tree source > grammar doc. <!--vh:b3d83440-->
 - Concurrent agent edits make the vhdev showcase full-reload/remount pages (fake blank views, stuck reveals); confirm intermittent bugs on a production preview (pnpm build && pnpm preview on a spare port, stop only that PID). <!--vh:a8750c48-->
 - Showcase navbar: home (`/`) runs one-page with `sectionPill` via HOME_SECTIONS (ids `library-top` on <main>, `layouts`, `components`, `navbar` in Home.tsx — renaming them breaks the pill); library.css intentionally pins the menu eye to the page accent, not the live dot. <!--vh:72f01e84-->
-- Showcase specimen switches (Félix's bar): every option must visibly change the layout in every combination with the other switches — a state that only nudges size/padding (e.g. chapter rhythm) is cut; keep demo content true to the section's role (no CTA in the presentation/intro specimen). <!--vh:5e8b1ce7-->
-- Showcase hero (`LibraryHero`) opens every library page and its lockup must sit at the exact coordinates it has on `/` across page changes (non-index pages keep invisible bars + palette slots; `.lib-hero__palette` min-height 42px = compact capsule height); accent palette: in the hero on `/` only, on showcase pages only the always-visible bottom-right `FloatingPalette` (none in the title band, no breadcrumb); LIBRARY takes the accent on `/` only, white elsewhere; the eye iris follows the accent everywhere. <!--vh:570793a5-->
-- Showcase title strip (`.lib-deck`, SHOWCASE-CONTRACT): one module centred on the sections' rail, inset each side and max 980px wide (Félix found it stretched wider). ONE shell (player part: layout photos in src/library/art.tsx, glyphs otherwise + always-open page list, equal halves, told apart by tone) under ONE glass pill centred on the seam (title/category/bars + Layouts|Composants switch). No step keys. Hover/focus on a row previews it on the player via foundation ChannelSwitch (RULES §6). Page changes play the navbar's PageCurtain. <!--vh:b7834828-->
+- Showcase specimen switches (Félix's bar): every option must visibly change the layout in every combination with the other switches — a state that only nudges size/padding (e.g. chapter rhythm) is cut; keep demo content true to the section's role (no CTA in the presentation/intro specimen); scene desks (`src/pages/library/scene/Scene.tsx`) show pills + labels only, no sentence explaining the switch (Félix had them removed). <!--vh:5e8b1ce7-->
+- Showcase hero (`LibraryHero`) opens every library page with the reel at the exact coordinates it has on `/` (stage geometry identical: on showcase pages the lockup is rendered invisible, `data-ghost`); the EVOVIEW LIBRARY lockup is visible on `/` only (Félix preferred showcase pages without it). Accent palette: in the hero on `/` only, on showcase pages only the bottom-right `FloatingPalette`; LIBRARY takes the accent on `/`; the eye iris follows the accent everywhere. <!--vh:570793a5-->
+- Showcase page navigation (`.lib-deck`: one shell = player + page list, one glass pill on the seam) lives in the hero as its `deck` prop, pulled by `useDeckPull` to 44px (phones) / 56px (≥768) above the hidden lockup row (Félix-tuned); PageCurtain covers from the deck's top. Player media (src/library/art.tsx): boomerang loops (art/<id>-720|1280.mp4 + poster; bump VIDEO_REV on replace; EntryVideo keyed by id), else photos/glyphs, under one flat dark veil (no complex filters). Row hover previews via ChannelSwitch. <!--vh:b7834828-->
+- `pnpm verify:ssr` only covers modal packages (dossier, process-sequence) — `verify:ssr chapter` checks nothing; for chapter changes run `pnpm verify:chapter` (venue clock + FAQ/contact/footer server HTML). <!--vh:452538cf-->
 <!-- vibehub:knowledge:end -->
