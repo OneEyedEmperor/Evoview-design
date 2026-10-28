@@ -1,0 +1,453 @@
+{
+  "schema": 1,
+  "about": "Capability map library <-> downstream sites. Procedure: downstream/SKILL.md. Check: node scripts/lineage-check.mjs.",
+  "capabilities": [
+    {
+      "id": "tokens-scale",
+      "title": "Tokens: --ev-scale, tones, type voices, radius roles, rails, rhythm, motion tokens",
+      "class": "X",
+      "source": "split-by-design",
+      "library": { "package": "foundation", "files": ["components/foundation/src/foundation.css", "components/foundation/src/tokens.ts"] },
+      "downstream": {
+        "evoview": {
+          "relation": "origin",
+          "origin": { "ref": "f72e48d", "files": ["src/index.css", "src/lib/motion.ts", "src/data/sectionAccents.ts"] },
+          "files": ["src/index.css", "src/lib/motion.ts", "src/data/sectionAccents.ts"],
+          "note": "The site's root-scale model, radii and accents are its Expression (RULES §13); never aligned either way."
+        }
+      }
+    },
+    {
+      "id": "pause-model",
+      "title": "Pause model: in-view / visible / unsuspended clocks and loops",
+      "class": "P",
+      "source": "split-by-design",
+      "library": { "package": "foundation", "files": ["components/foundation/src/useInViewPause.ts", "components/foundation/src/useSequenceClock.ts"] },
+      "downstream": {
+        "evoview": {
+          "relation": "counterpart",
+          "origin": { "ref": "f72e48d", "files": ["src/hooks/useSectionActive.ts", "src/components/useProcessPlayback.ts", "src/components/IntroSection.tsx", "src/components/FeaturesSection.tsx"] },
+          "files": ["src/hooks/useSectionActive.ts", "src/components/useProcessPlayback.ts", "src/components/IntroSection.tsx", "src/components/FeaturesSection.tsx"],
+          "note": "Site clocks are inline per section (user-approved choreography); only the semantics are shared."
+        }
+      }
+    },
+    {
+      "id": "background-suspension",
+      "title": "Page suspension while a modal is open",
+      "class": "P",
+      "source": "split-by-design",
+      "library": { "package": "foundation", "files": ["components/foundation/src/suspension.ts"] },
+      "downstream": {
+        "evoview": {
+          "relation": "counterpart",
+          "origin": { "ref": "f72e48d", "files": ["src/context/BackgroundSuspensionContext.tsx"] },
+          "files": ["src/context/BackgroundSuspensionContext.tsx"],
+          "note": "Site ahead on timing: pre-paint flag, transition-priority consumers, body[data-background-suspended]."
+        }
+      }
+    },
+    {
+      "id": "media-gate",
+      "title": "Media-ready gate: decode before reveal, loader grace / minimum / retry",
+      "class": "P",
+      "source": "split-by-design",
+      "library": { "package": "foundation", "files": ["components/foundation/src/useMediaReady.ts"] },
+      "downstream": {
+        "evoview": {
+          "relation": "counterpart",
+          "origin": { "ref": "f72e48d", "files": ["src/hooks/useContactMediaReady.ts", "src/hooks/useMethodModalMedia.ts", "src/lib/methodModalMedia.ts", "src/lib/dossierMedia.ts"] },
+          "files": ["src/hooks/useContactMediaReady.ts", "src/hooks/useMethodModalMedia.ts", "src/lib/methodModalMedia.ts", "src/lib/dossierMedia.ts", "src/components/SmartVideo.tsx"],
+          "note": "Site gates the real player element (full boomerang, blob URLs); library gates detached probes with session memory and WebKit fallbacks."
+        }
+      }
+    },
+    {
+      "id": "crawlable-routing",
+      "title": "Crawlable modals: view URLs, history model, route links, held copy",
+      "class": "P",
+      "source": "split-by-design",
+      "library": { "package": "foundation", "files": ["components/foundation/src/routing.ts", "components/foundation/src/RouteLink.tsx", "components/foundation/src/HeldCopy.tsx"] },
+      "downstream": {
+        "evoview": {
+          "relation": "counterpart",
+          "origin": { "ref": "9263f5a", "files": ["src/lib/routeHistory.ts", "src/data/routes.ts", "src/islands/RouteDossier.tsx", "src/entry-server.tsx", "scripts/prerender.mjs", "scripts/verify-crawlability.mjs"] },
+          "files": ["src/lib/routeHistory.ts", "src/data/routes.ts", "src/islands/RouteDossier.tsx", "src/islands/boot.ts", "src/islands/HomeCopy.tsx", "src/entry-server.tsx", "scripts/prerender.mjs", "scripts/verify-crawlability.mjs"],
+          "note": "Contract taken from the site (docs/CRAWLABLE-MODALS.md); the site keeps its own route model and islands."
+        }
+      }
+    },
+    {
+      "id": "use-hydrated",
+      "title": "useHydrated: hydration-only attributes and copies",
+      "class": "V",
+      "source": "library",
+      "library": { "package": "foundation", "files": ["components/foundation/src/hydration.ts"] },
+      "downstream": {
+        "evoview": {
+          "relation": "installed",
+          "origin": { "ref": "b2d2567", "files": ["src/lib/routeHistory.ts"] },
+          "files": ["src/components/foundation/hydration.ts"]
+        }
+      }
+    },
+    {
+      "id": "media-query",
+      "title": "SSR-safe media query hook",
+      "class": "C",
+      "source": "library",
+      "library": { "package": "foundation", "files": ["components/foundation/src/useMediaQuery.ts"] },
+      "downstream": {
+        "evoview": {
+          "relation": "counterpart",
+          "files": ["src/hooks/useIsMobile.ts"],
+          "note": "Site's useIsMobile predates it; the installed useMediaQuery is unused there."
+        }
+      }
+    },
+    {
+      "id": "scroll-lock",
+      "title": "Shared page scroll lock (ref-counted, pre-paint, scrollbar gap)",
+      "class": "V",
+      "source": "library",
+      "library": { "package": "foundation", "files": ["components/foundation/src/scrollLock.ts"] },
+      "downstream": {
+        "evoview": {
+          "relation": "installed",
+          "origin": { "ref": "ab01614", "files": ["src/lib/scrollLock.ts"] },
+          "files": ["src/components/foundation/scrollLock.ts", "src/components/ServiceModal.tsx", "src/components/MethodStepModal.tsx", "src/components/PartnerWorkModal.tsx", "src/components/ContactQualificationSection.tsx", "src/components/nav/NavFinderMobile.tsx", "src/components/SiteHeader.tsx"],
+          "note": "files = the package file plus every site lock consumer."
+        }
+      }
+    },
+    {
+      "id": "liquid-fill",
+      "title": "Liquid fill: orb, text and button-surface colour switch (engine + shells)",
+      "class": "V",
+      "source": "library",
+      "library": { "package": "foundation", "files": ["components/foundation/src/liquid.ts", "components/foundation/src/OrbFill.tsx", "components/foundation/src/TextFill.tsx", "components/foundation/src/SurfaceFill.tsx"] },
+      "downstream": {
+        "evoview": {
+          "relation": "installed",
+          "files": ["src/components/foundation/liquid.ts", "src/components/foundation/OrbFill.tsx", "src/components/foundation/TextFill.tsx", "src/components/foundation/SurfaceFill.tsx", "src/components/detailFill.tsx", "src/components/dossierChromeFill.tsx"]
+        }
+      }
+    },
+    {
+      "id": "channel-switch",
+      "title": "Channel switch for hover-preview screens (fold, shudder, signal lines)",
+      "class": "P",
+      "source": "split-by-design",
+      "library": { "package": "foundation", "files": ["components/foundation/src/ChannelSwitch.tsx"] },
+      "downstream": {
+        "evoview": {
+          "relation": "counterpart",
+          "origin": { "ref": "f72e48d", "files": ["src/components/ContactDossierScreen.tsx", "src/components/IntroSection.tsx"] },
+          "files": ["src/components/ContactDossierScreen.tsx", "src/components/MethodStepModal.tsx"],
+          "note": "Site framer versions are the origin (TV-channel switch, user-approved); foundation's is the Web Animations generalisation, installed but unused on the site."
+        }
+      }
+    },
+    {
+      "id": "press-jelly",
+      "title": "Press jelly on pills and buttons",
+      "class": "X",
+      "source": "library",
+      "library": { "package": "foundation", "files": ["components/foundation/src/jelly.ts", "components/foundation/src/usePressJelly.ts"] },
+      "downstream": {
+        "evoview": { "relation": "none", "files": [], "note": "Library-only (step-2 decision). A site rollout would be an explicit founder port, like the liquid fill." }
+      }
+    },
+    {
+      "id": "library-primitives",
+      "title": "Library-only primitives: step gauge, accent ink (inkFor), readouts",
+      "class": "X",
+      "source": "library",
+      "library": { "package": "foundation", "files": ["components/foundation/src/primitives.tsx", "components/foundation/src/utils.ts"] },
+      "downstream": {
+        "evoview": { "relation": "none", "files": [], "note": "Library neutral rules (RULES §1, §3); the site keeps its own (Gaegu numerals, counting lists)." }
+      }
+    },
+    {
+      "id": "attribution",
+      "title": "Evoview attribution mark and wordmark",
+      "class": "X",
+      "source": "library",
+      "library": { "package": "foundation", "files": ["components/foundation/src/brand/EvoviewLogo.tsx", "components/foundation/src/primitives.tsx"] },
+      "downstream": {
+        "evoview": {
+          "relation": "origin",
+          "origin": { "ref": "f72e48d", "files": ["src/components/EvoviewLogo.tsx"] },
+          "files": ["src/components/EvoviewLogo.tsx"],
+          "note": "The site is Evoview: no attribution placement; only the wordmark artwork came from it."
+        }
+      }
+    },
+    {
+      "id": "controls",
+      "title": "Controls: plate, ghost, glass close / pager, chips, rows, fields, switch, segmented control / progress",
+      "class": "X",
+      "source": "library",
+      "library": { "package": "controls", "files": ["components/controls/src/Commands.tsx", "components/controls/src/Choices.tsx", "components/controls/src/Fields.tsx", "components/controls/src/Progress.tsx", "components/controls/src/controls.css"] },
+      "downstream": {
+        "evoview": {
+          "relation": "origin",
+          "origin": { "ref": "f72e48d", "files": ["src/components/ContactApplication.tsx", "src/components/ContactJourney.tsx", "src/components/ServiceModal.tsx"] },
+          "files": ["src/components/ContactApplication.tsx", "src/components/ContactJourney.tsx"]
+        }
+      }
+    },
+    {
+      "id": "chapter-shell",
+      "title": "Chapter shell: tones with hard cuts, rhythm, rails, centred / split headings",
+      "class": "X",
+      "source": "library",
+      "library": { "package": "chapter", "files": ["components/chapter/src/Chapter.tsx", "components/chapter/src/chapter.css"] },
+      "downstream": {
+        "evoview": {
+          "relation": "origin",
+          "origin": { "ref": "f72e48d", "files": ["src/components/SectionHeading.tsx", "src/components/BelowFoldSection.tsx", "src/pages/Home.tsx"] },
+          "files": ["src/components/SectionHeading.tsx", "src/components/BelowFoldSection.tsx", "src/pages/Home.tsx"]
+        }
+      }
+    },
+    {
+      "id": "chapter-footer",
+      "title": "Footer bar / panel with the Evoview credit",
+      "class": "C",
+      "source": "library",
+      "library": { "package": "chapter", "files": ["components/chapter/src/ChapterFooter.tsx", "components/chapter/src/chapter-footer-panel.css"] },
+      "downstream": {
+        "evoview": {
+          "relation": "origin",
+          "class": "X",
+          "origin": { "ref": "f72e48d", "files": ["src/components/SiteFooter.tsx"] },
+          "files": ["src/components/SiteFooter.tsx", "src/components/SiteFooter.css"],
+          "note": "Since ce089b0 the site footer is its server-rendered site directory."
+        },
+        "tchin": {
+          "relation": "origin",
+          "origin": { "ref": "3eac948", "files": ["src/components/layout/Footer.tsx", "src/components/layout/Footer.css"] },
+          "files": ["src/components/layout/Footer.tsx", "src/components/layout/Footer.css"]
+        }
+      }
+    },
+    {
+      "id": "chapter-story",
+      "title": "ChapterStory: story copy beside drifting picture lanes",
+      "class": "C",
+      "source": "library",
+      "library": { "package": "chapter", "files": ["components/chapter/src/ChapterStory.tsx", "components/chapter/src/ChapterStory.css"] },
+      "downstream": {
+        "tchin": {
+          "relation": "origin",
+          "origin": { "ref": "3eac948", "files": ["src/components/sections/AboutSection.tsx", "src/components/sections/AboutSection.css", "src/components/sections/story-mosaic.ts"] },
+          "files": ["src/components/sections/AboutSection.tsx", "src/components/sections/AboutSection.css", "src/components/sections/story-mosaic.ts"]
+        }
+      }
+    },
+    {
+      "id": "chapter-faq",
+      "title": "ChapterFaq: single-open accordion on tonal tiles, FAQPage JSON-LD",
+      "class": "C",
+      "source": "library",
+      "library": { "package": "chapter", "files": ["components/chapter/src/ChapterFaq.tsx", "components/chapter/src/chapter-faq.css"] },
+      "downstream": {
+        "tchin": {
+          "relation": "origin",
+          "origin": { "ref": "3eac948", "files": ["src/components/karaoke/FaqSection.tsx", "src/components/karaoke/KaraokePoster.css", "src/data/karaoke-data.ts", "src/components/seo/JsonLd.tsx"] },
+          "files": ["src/components/karaoke/FaqSection.tsx", "src/components/karaoke/KaraokePoster.css", "src/components/seo/JsonLd.tsx"]
+        }
+      }
+    },
+    {
+      "id": "chapter-contact",
+      "title": "ChapterContact: booking action, place, channels, live opening hours",
+      "class": "C",
+      "source": "library",
+      "library": { "package": "chapter", "files": ["components/chapter/src/ChapterContact.tsx", "components/chapter/src/chapter-contact.css"] },
+      "downstream": {
+        "tchin": {
+          "relation": "origin",
+          "origin": { "ref": "3eac948", "files": ["src/components/sections/ContactSection.tsx", "src/components/sections/ContactSection.css", "src/data/restaurant-info.ts"] },
+          "files": ["src/components/sections/ContactSection.tsx", "src/components/sections/ContactSection.css", "src/data/restaurant-info.ts"]
+        }
+      }
+    },
+    {
+      "id": "card-track",
+      "title": "Media card on a scroll-scrubbed track (desktop scrub, phone snap)",
+      "class": "P",
+      "source": "split-by-design",
+      "library": { "package": "card", "files": ["components/card/src/CardTrack.tsx", "components/card/src/MediaCard.tsx", "components/card/src/card-track.css", "components/card/src/strip.ts"] },
+      "downstream": {
+        "evoview": {
+          "relation": "counterpart",
+          "origin": { "ref": "f72e48d", "files": ["src/components/VideoCardSlider.tsx", "src/components/PartnersSection.tsx", "src/components/PartnerCarousel.tsx", "src/components/PartnerCarousel.css"] },
+          "files": ["src/components/VideoCardSlider.tsx", "src/components/PartnersSection.tsx", "src/components/PartnersSection.css", "src/components/PartnerCarousel.tsx", "src/components/PartnerCarousel.css"]
+        }
+      }
+    },
+    {
+      "id": "card-deck",
+      "title": "CardDeck: category switch over a dealt hand of cards",
+      "class": "C",
+      "source": "library",
+      "library": { "package": "card", "files": ["components/card/src/CardDeck.tsx", "components/card/src/card-deck.css"] },
+      "downstream": {
+        "tchin": {
+          "relation": "origin",
+          "origin": { "ref": "3eac948", "files": ["src/components/sections/MenuSection.tsx", "src/components/sections/MenuSection.css", "src/components/menu/SignatureCard.tsx", "src/components/menu/CategoryTabs.tsx", "src/components/menu/LogoCursor.tsx"] },
+          "files": ["src/components/sections/MenuSection.tsx", "src/components/sections/MenuSection.css", "src/components/menu/SignatureCard.tsx", "src/components/menu/CategoryTabs.tsx", "src/components/menu/LogoCursor.tsx"]
+        }
+      }
+    },
+    {
+      "id": "card-sequence",
+      "title": "CardSequence: timed focus over video cards, hold with neighbour handoff",
+      "class": "C",
+      "source": "library",
+      "library": { "package": "card", "files": ["components/card/src/CardSequence.tsx", "components/card/src/card-sequence.css"] },
+      "downstream": {
+        "tchin": {
+          "relation": "origin",
+          "origin": { "ref": "3eac948", "files": ["src/components/sections/KaraokeSection.tsx", "src/components/sections/KaraokeSection.css", "src/components/karaoke/VideoGallery.tsx", "src/components/karaoke/VideoGallery.css", "src/components/media/MediaWatermark.tsx", "src/components/media/MediaWatermark.css", "src/data/karaoke-data.ts"] },
+          "files": ["src/components/sections/KaraokeSection.tsx", "src/components/sections/KaraokeSection.css", "src/components/karaoke/VideoGallery.tsx", "src/components/karaoke/VideoGallery.css", "src/components/media/MediaWatermark.tsx", "src/components/media/MediaWatermark.css", "src/data/karaoke-data.ts"]
+        }
+      }
+    },
+    {
+      "id": "process-board",
+      "title": "Timed step board: segmented instrument, three-state step cards, phone index + monitor",
+      "class": "P",
+      "source": "split-by-design",
+      "library": { "package": "process-sequence", "files": ["components/process-sequence/src/ProcessSequence.tsx", "components/process-sequence/src/StepCard.tsx", "components/process-sequence/src/process-sequence.css"] },
+      "downstream": {
+        "evoview": {
+          "relation": "counterpart",
+          "origin": { "ref": "f72e48d", "files": ["src/components/IntroSection.tsx", "src/components/IntroSection.css", "src/components/MethodEye.tsx", "src/data/methodSteps.ts"] },
+          "files": ["src/components/IntroSection.tsx", "src/components/IntroSection.css", "src/components/MethodEye.tsx", "src/data/methodSteps.ts"],
+          "note": "La méthode artwork and choreography are user-protected (site Project knowledge)."
+        }
+      }
+    },
+    {
+      "id": "step-dossier",
+      "title": "Step dossier: split modal per step, media gate, history, focus",
+      "class": "P",
+      "source": "split-by-design",
+      "library": { "package": "process-sequence", "files": ["components/process-sequence/src/StepDossier.tsx", "components/process-sequence/src/media.ts", "components/process-sequence/src/routes.ts"] },
+      "downstream": {
+        "evoview": {
+          "relation": "counterpart",
+          "origin": { "ref": "f72e48d", "files": ["src/components/IntroSection.tsx", "src/hooks/useMethodModalMedia.ts"] },
+          "files": ["src/components/MethodStepModal.tsx", "src/hooks/useMethodModalMedia.ts"],
+          "note": "Moved out of IntroSection.tsx into MethodStepModal.tsx in b2d2567."
+        }
+      }
+    },
+    {
+      "id": "story-blocks",
+      "title": "Story blocks: intro split, indexed rows, proof grid, payoff band",
+      "class": "X",
+      "source": "library",
+      "library": { "package": "story-blocks", "files": ["components/story-blocks/src/Story.tsx", "components/story-blocks/src/blocks.tsx", "components/story-blocks/src/parts.tsx", "components/story-blocks/src/story-blocks.css"] },
+      "downstream": {
+        "evoview": {
+          "relation": "origin",
+          "origin": { "ref": "f72e48d", "files": ["src/components/DeliverableDetail.tsx", "src/components/PhotoCampaign.tsx", "src/components/PhotoCampaign.css"] },
+          "files": ["src/components/DeliverableDetail.tsx", "src/components/PhotoCampaign.tsx", "src/components/PhotoCampaign.css"]
+        }
+      }
+    },
+    {
+      "id": "dossier-modal",
+      "title": "Dossier portal modal: selection board, chapter strip, mobile dock, loader, views",
+      "class": "P",
+      "source": "split-by-design",
+      "library": { "package": "dossier", "files": ["components/dossier/src/Dossier.tsx", "components/dossier/src/Board.tsx", "components/dossier/src/Loader.tsx", "components/dossier/src/hooks.ts", "components/dossier/src/routes.ts", "components/dossier/src/dossier.css"] },
+      "downstream": {
+        "evoview": {
+          "relation": "counterpart",
+          "origin": { "ref": "f72e48d", "files": ["src/components/ServiceModal.tsx", "src/components/PartnerWorkModal.tsx", "src/components/PartnerWorkModal.css", "src/data/serviceModals.ts"] },
+          "files": ["src/components/ServiceModal.tsx", "src/components/PartnerWorkModal.tsx", "src/components/PartnerWorkModal.css", "src/components/dossierChromeFill.tsx"],
+          "note": "Shell CSS (service-modal-*, service-dossier-shell) lives in src/index.css."
+        }
+      }
+    },
+    {
+      "id": "dossier-chapters",
+      "title": "Dossier detail chapter kit: head, figure, split, rows, specimen, payoff",
+      "class": "X",
+      "source": "library",
+      "library": { "package": "dossier", "files": ["components/dossier/src/Chapters.tsx"] },
+      "downstream": {
+        "evoview": {
+          "relation": "origin",
+          "origin": { "ref": "f72e48d", "files": ["src/components/DeliverableDetail.tsx", "src/components/VisualSystemDossier.tsx", "src/components/BrandAuditDetail.tsx"] },
+          "files": ["src/components/VisualSystemDossier.tsx", "src/components/BrandAuditDetail.tsx"],
+          "note": "Per-service art direction stays the site's (extraction/service-dossiers.md)."
+        }
+      }
+    },
+    {
+      "id": "selector-stage",
+      "title": "Selector <-> stage, before / after compare, proof atlas",
+      "class": "X",
+      "source": "library",
+      "library": { "package": "selector-stage", "files": ["components/selector-stage/src/SelectorStage.tsx", "components/selector-stage/src/CompareToggle.tsx", "components/selector-stage/src/ProofAtlas.tsx", "components/selector-stage/src/stage.tsx", "components/selector-stage/src/selector-stage.css"] },
+      "downstream": {
+        "evoview": {
+          "relation": "origin",
+          "origin": { "ref": "f72e48d", "files": ["src/components/CreativeTerritoryDetail.tsx", "src/components/ContentStrategyDetail.tsx", "src/components/MarketingFunnelDetail.tsx", "src/components/VisualSystemDossier.tsx", "src/components/LogoBrandSignatureDetail.tsx", "src/components/BrandAuditDetail.tsx"] },
+          "files": ["src/components/CreativeTerritoryDetail.tsx", "src/components/ContentStrategyDetail.tsx", "src/components/MarketingFunnelDetail.tsx", "src/components/LogoBrandSignatureDetail.tsx"],
+          "note": "Site selector chapters are per-detail implementations, no shared stage."
+        }
+      }
+    },
+    {
+      "id": "navbar",
+      "title": "Finder navbar: capsule, deck, trays, desktop + mobile",
+      "class": "V",
+      "source": "split-by-design",
+      "library": { "package": "navbar", "files": ["components/navbar/src/NavFinder.tsx", "components/navbar/src/NavFinderMobile.tsx", "components/navbar/src/finderShared.tsx", "components/navbar/src/NavIcons.tsx", "components/navbar/src/useNavState.ts", "components/navbar/src/useNavTrays.ts", "components/navbar/src/useNavbarLinks.ts", "components/navbar/src/navbar.css"] },
+      "downstream": {
+        "evoview": {
+          "relation": "counterpart",
+          "class": "P",
+          "origin": { "ref": "f72e48d", "files": ["src/components/nav/NavFinder.tsx", "src/components/nav/NavFinderMobile.tsx", "src/components/nav/finderShared.tsx", "src/components/nav/NavIcons.tsx", "src/components/nav/useNavState.ts", "src/components/SiteHeader.tsx", "src/data/navigation.ts"] },
+          "files": ["src/components/nav/NavFinder.tsx", "src/components/nav/NavFinderMobile.tsx", "src/components/nav/finderShared.tsx", "src/components/nav/NavIcons.tsx", "src/components/nav/useNavState.ts", "src/components/nav/useNavTone.ts", "src/components/nav/useNavAccent.ts", "src/components/nav/useNavManifest.ts", "src/components/SiteHeader.tsx", "src/data/navigation.ts"],
+          "note": "1.0.0 and 2.3.0 came from the site; the finder CSS is the 'NAVIGATION — FINDER' block of src/index.css."
+        },
+        "tchin": {
+          "relation": "installed",
+          "version": "2.1.0",
+          "files": ["src/components/navbar/NavFinder.tsx", "src/components/navbar/NavFinderMobile.tsx", "src/components/navbar/finderShared.tsx", "src/components/navbar/navbar.css", "src/components/navbar/navbar.config.tsx", "src/components/navbar/.navbar-version"],
+          "note": "Legacy install (stamp, no provenance). 2.0.0 took Tchin's refinements as the baseline."
+        }
+      }
+    },
+    {
+      "id": "reservation",
+      "title": "Reservation: guided booking application + short paper flow",
+      "class": "V",
+      "source": "library",
+      "library": { "package": "reservation", "files": ["components/reservation/src/Reservation.tsx", "components/reservation/src/ReservationFlow.tsx", "components/reservation/src/reservation.css", "components/reservation/src/reservation-flow.css"] },
+      "downstream": {
+        "evoview": {
+          "relation": "origin",
+          "class": "X",
+          "origin": { "ref": "f72e48d", "files": ["src/components/ContactApplication.tsx", "src/components/ContactJourney.tsx", "src/components/ContactDossierScreen.tsx"] },
+          "files": ["src/components/ContactApplication.tsx", "src/components/ContactJourney.tsx", "src/components/ContactDossierScreen.tsx"],
+          "note": "2.0.0 rebuilt on the site's application chassis; the site's candidature flow stays its own."
+        },
+        "tchin": {
+          "relation": "installed",
+          "version": "2.8.0",
+          "files": ["src/components/reservation/Reservation.tsx", "src/components/reservation/reservation.css", "src/components/reservation/reservation.config.tsx", "src/components/reservation/.reservation-version"],
+          "note": "Legacy install (stamp, no provenance); 1.0.0 was extracted from Tchin's booking form."
+        }
+      }
+    }
+  ]
+}

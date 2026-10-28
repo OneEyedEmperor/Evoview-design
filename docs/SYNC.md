@@ -140,3 +140,12 @@ unknown ref or package, git failure).
 
 This tool implements V (package files, patch record) and C (client-owned
 files, never overwritten). P and X stay manual.
+
+## Downstream loop
+
+What moves where between the library and its sites, in both directions:
+`downstream/SKILL.md` (skill `evoview-downstream`). Map: `lineage.json`
+(capability → library files, per site relation + files). Record:
+`downstream/<site>.json` (reviewed commits, triaged items). Worklist:
+`node scripts/triage.mjs <site>`; checks: `node scripts/lineage-check.mjs`,
+`node scripts/triage-test.mjs`.

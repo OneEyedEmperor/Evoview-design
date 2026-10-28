@@ -69,6 +69,9 @@ liquid fill as reference): `animations/SKILL.md` (skill
 3. Clients upgrade with `sync.sh plan → apply → verify` (`install.sh` applies
    clean plans only); client-owned files are never written, local patches are
    merged and recorded (`docs/SYNC.md`).
+4. What moves between the library and its sites, in both directions, is
+   triaged and recorded per `downstream/SKILL.md` (`lineage.json`,
+   `downstream/<site>.json`, `node scripts/triage.mjs <site>`).
 
 ## Adding a component
 
