@@ -935,9 +935,9 @@ a.lib-hero__lockup:focus-visible { outline: 2px solid var(--lib-signal); outline
 .lib-showcase__tail { height: var(--lib-chapter); }
 .lib-showcase__lead { position: relative; height: 0; pointer-events: none; }
 .lib-showcase__lead > span { position: absolute; inset-inline: 0; }
-/* One heading band between the hero (and its page navigation) and the
+/* A band and a half between the hero (and its page navigation) and the
    first demo. */
-.lib-showcase > .lib-hero { padding-bottom: var(--lib-lead); }
+.lib-showcase > .lib-hero { padding-bottom: calc(var(--lib-lead) * 1.5); }
 /* Showcase pages: the page navigation takes the lockup's place, over the
    reel (LibraryHero useDeckPull). */
 .lib-hero__lockup[data-ghost] { visibility: hidden; }
