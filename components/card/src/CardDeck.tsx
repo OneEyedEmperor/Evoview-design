@@ -77,7 +77,7 @@ const FINE_QUERY = "(hover: hover) and (pointer: fine)";
 
 const offsetTransform = ({ x, y, scale }: Offset) => `translate(${x}, ${y}) scale(${scale})`;
 
-function geometry(rows: CardDeckRows,colGap: number, rowGap: number): Geometry {
+function geometry(rows: CardDeckRows, colGap: number, rowGap: number): Geometry {
   const side = `calc(100% + ${colGap}px)`;
   const nside = `calc(-100% - ${colGap}px)`;
   if (rows === 1) {
