@@ -105,6 +105,9 @@ One-page site: export a constant `navbarConfig` with `sections` filled and
   finder and fade in once decoded; a missing cover leaves the dark card.
 - Desktop/mobile swap at `768px`, defined twice: `navbar.css` (`@media`) and
   `DESKTOP_QUERY` in `NavFinderMobile.tsx`. Change both or neither.
+- Press feedback: the Menu pill, deck pills and tray CTA take foundation's
+  press jelly (RULES §6, `data-ev-jelly`); don't add an `:active` scale or
+  a `scale` transition to them in host CSS.
 - Deck of 3–6 entries; the reference has six (four destinations, language
   switch, CTA). The CTA spans the last mobile row when the count is odd.
 

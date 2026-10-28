@@ -619,9 +619,9 @@
   .nav-reticle-lid,
   .nav-reticle-dot { animation: none !important; }
 }
-/* The dot is the REC mark: it blinks in the accent of the section under the bar. */
+/* The dot is the REC mark: it blinks in the accent of the section under the
+   bar. The resting blink is a Web Animation (ReticleMark): no CSS loop. */
 .nav-reticle-dot {
-  animation: nav-rec-blink 1.6s ease-in-out infinite;
   transition: fill 220ms var(--nav-ease-standard);
 }
 
@@ -632,13 +632,9 @@
    one closed almond replaces the two halves, whose anti-aliased edges would
    otherwise leave a hairline on the centre line. */
 .ev-navbar[data-reticle="eye"] .nav-reticle-lids {
-  /* Animate the SVG box on its own compositor layer, never its paths. */
+  /* The pulse (a Web Animation, ReticleMark) moves the SVG box on its own
+     compositor layer, never its paths. */
   will-change: opacity;
-  animation: nav-eye-pulse 3.2s ease-in-out infinite;
-}
-@keyframes nav-eye-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: .72; }
 }
 .ev-navbar[data-reticle="eye"] .nav-reticle-lid {
   fill: var(--nav-section-accent, var(--nav-accent));
@@ -669,6 +665,15 @@
   gap: 0.25em;
   width: max-content;
   padding: 0 2px;
+}
+/* Once folded away (useFolded) the deck is out of sight: re-toning and label
+   swaps apply at once instead of transitioning unseen on every scroll.
+   Opening lifts this in the same frame, so the unfold runs as authored.
+   Transitions only: lifting an `animation: none` would restart animations. */
+.nav-deck[data-folded] *,
+.nav-deck[data-folded] *::before,
+.nav-deck[data-folded] *::after {
+  transition: none !important;
 }
 .nav-deck-pill {
   position: relative;
@@ -796,17 +801,11 @@
   border-radius: 50%;
   background: var(--nav-rec-dot);
   box-shadow: 0 0 0.6em color-mix(in srgb, var(--nav-rec-dot) 80%, transparent);
-  animation: nav-rec-blink 1s ease-in-out infinite;
 }
 .nav-deck-rec {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-}
-.nav-page-pill-dot--still { animation: none; }
-.reduced-motion .nav-page-pill-dot { animation: none; }
-@media (prefers-reduced-motion: reduce) {
-  .nav-page-pill-dot { animation: none; }
 }
 .nav-page-pill-label {
   min-width: 0;
@@ -1059,9 +1058,7 @@
   color: #fff;
   box-shadow: 0 14px 30px -20px var(--nav-cta-glow);
   --ev-surface-lit: #2a2a2e;
-  transition: transform 180ms var(--nav-ease-standard);
 }
-.nav-tray-cta:active { transform: scale(0.99); }
 .nav-tray-cta-arrow {
   background: #fff;
   color: #151515;
@@ -1101,13 +1098,13 @@
   opacity: 1;
   translate: none;
   pointer-events: auto;
-  transition-property: color, scale;
-  transition-duration: 160ms, 140ms;
+  /* `scale` belongs to the press jelly (foundation): never transitioned here. */
+  transition-property: color;
+  transition-duration: 160ms;
   transition-timing-function: ease;
   transition-delay: 0s;
 }
 .nav-finder--mobile[data-open="true"] .nav-finder-trigger { color: var(--nav-pill-ink-strong); }
-.nav-finder--mobile .nav-finder-trigger:active { scale: 0.97; }
 /* Mobile page pill: right of the finder, truncated (folded while open via
    the slot's `hidden`). */
 .nav-finder--mobile .nav-page-pill { height: 2.5em; max-width: 10.5em; padding: 0 0.875em 0 0.75em; }
@@ -1257,20 +1254,19 @@
 .nav-finder--mobile .nav-deck-pill { translate: -1.25em 0; }
 .nav-finder--mobile .nav-deck-pill:nth-child(even) { translate: 1.25em 0; }
 .nav-finder--mobile .nav-deck-pill--cta:last-child:nth-child(odd) { translate: 0 -0.375em; }
-/* Touch has no hover: the press is the feedback, and the expanded pill's eye
-   blinks the way a hovered one does on desktop. */
-.nav-finder--mobile .nav-deck-pill:active { scale: 0.97; }
-/* Longhands only: the base rules' per-index delays and easings stay. */
+/* Touch has no hover: the press (foundation's press jelly) is the feedback,
+   and the expanded pill's eye blinks the way a hovered one does on desktop.
+   Longhands only: the base rules' per-index delays and easings stay. */
 .nav-finder--mobile .nav-deck-pill {
-  transition-property: color, opacity, translate, scale;
-  transition-duration: 160ms, 220ms, var(--nav-finder-duration-close), 140ms;
+  transition-property: color, opacity, translate;
+  transition-duration: 160ms, 220ms, var(--nav-finder-duration-close);
 }
 .nav-finder--mobile[data-open="true"] .nav-deck-pill.nav-deck-pill {
   translate: 0 0;
-  transition-property: color, opacity, translate, scale;
-  transition-duration: 160ms, 180ms, 300ms, 140ms;
-  transition-timing-function: ease, ease-out, var(--nav-ease-cinematic), ease;
-  transition-delay: 0s, var(--nav-row-delay), var(--nav-row-delay), 0s;
+  transition-property: color, opacity, translate;
+  transition-duration: 160ms, 180ms, 300ms;
+  transition-timing-function: ease, ease-out, var(--nav-ease-cinematic);
+  transition-delay: 0s, var(--nav-row-delay), var(--nav-row-delay);
 }
 .nav-finder--mobile .nav-deck-pill { --nav-row-delay: 40ms; }
 .nav-finder--mobile .nav-deck-pill:nth-child(n + 3) { --nav-row-delay: 85ms; }
@@ -1346,7 +1342,6 @@
   background: color-mix(in srgb, var(--nav-orb-accent) 20%, #19191c);
   border-color: color-mix(in srgb, var(--nav-orb-accent) 52%, rgba(255, 255, 255, 0.14));
 }
-.nav-finder--mobile .nav-tray-cta:active { transform: scale(0.99); }
 
 /* Tray head: the section's name as a title (the open pill may be showing a
    page instead); on touch, the section link sits at its end. */

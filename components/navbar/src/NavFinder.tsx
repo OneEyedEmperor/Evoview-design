@@ -9,9 +9,10 @@ import {
   type MouseEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
+import { usePressJelly } from "../foundation/usePressJelly";
 import type { NavDeckEntry, NavbarConfig } from "./types";
 import { ensureTray, getTrayItems, preloadTrays, trayLayout, useTrayVersion, warmTrayCovers } from "./useNavTrays";
-import { CurrentPageSlot, DeckLabel, DeckMark, deckLabel, marksLive, ReticleMark, TrayContent, useCurrentPage, useNavActions } from "./finderShared";
+import { CurrentPageSlot, DeckLabel, DeckMark, deckLabel, marksLive, ReticleMark, TrayContent, useCurrentPage, useFolded, useNavActions } from "./finderShared";
 
 /* Desktop navigation — the finder.
 
@@ -121,6 +122,8 @@ function useFinderState() {
   // drift over the page.
   useEffect(() => {
     const onScroll = () => {
+      const { open: openTimer, tray: trayTimer } = timers.current;
+      if (!openRef.current && trayRef.current === null && !openTimer && !trayTimer) return;
       if (performance.now() > scrollHoldUntil.current) close();
     };
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -148,6 +151,7 @@ export default function NavFinder({ config, activeKey, current, accent }: { conf
   // Escape hands focus back to a pill without that focus reopening its tray.
   const silentPillFocusRef = useRef(false);
   const baseId = useId();
+  usePressJelly();
   const deckId = `${baseId}-deck`;
   const trayId = `${baseId}-tray`;
 
@@ -159,6 +163,7 @@ export default function NavFinder({ config, activeKey, current, accent }: { conf
   }, [config]);
   const actions = useNavActions(config, closeFromAction, "navbar");
   const page = useCurrentPage(config, activeKey, current);
+  const folded = useFolded(open);
   // The open tray's pill previews the hovered/focused entry's title, only
   // while an entry is hovered or focused.
   const [preview, setPreview] = useState<{ key: string; title: string } | null>(null);
@@ -401,21 +406,22 @@ export default function NavFinder({ config, activeKey, current, accent }: { conf
                 aria-controls={deckId}
                 aria-label={open ? labels.closeAria : labels.openAria}
                 className="nav-finder-trigger nav-control-focus"
+                data-ev-jelly=""
                 onPointerEnter={(event) => { if (event.pointerType !== "touch") { preload(); hoverOpen(); } }}
                 onFocus={preload}
                 onClick={handleTriggerClick}
                 tabIndex={open ? -1 : 0}
               >
-                <ReticleMark />
+                <ReticleMark hud={config.reticle === "hud"} covered={open} />
                 <span className="nav-finder-word">{labels.menu}</span>
               </button>
-              <CurrentPageSlot page={page} labels={labels} />
+              <CurrentPageSlot page={page} labels={labels} covered={open} />
             </div>
           </div>
 
           <div ref={deckCellRef} className="nav-finder-cell nav-finder-cell--deck">
             <div className="nav-finder-cell-inner">
-              <div id={deckId} ref={deckRef} className="nav-deck" inert={!open} aria-hidden={!open}>
+              <div id={deckId} ref={deckRef} className="nav-deck" data-folded={folded || undefined} inert={!open} aria-hidden={!open}>
                 {deck.map((entry, index) => {
                   const hasTray = Boolean(trays[entry.key]);
                   const shared = {
@@ -427,6 +433,7 @@ export default function NavFinder({ config, activeKey, current, accent }: { conf
                     "aria-controls": hasTray ? trayId : undefined,
                     "aria-label": entry.content ? entry.label : deckLabel(entry, page).aria,
                     className: `nav-deck-pill nav-control-focus${entry.cta ? " nav-deck-pill--cta" : ""}`,
+                    "data-ev-jelly": "",
                     style: { "--nav-orb-accent": entry.accent, "--nav-entry-index": index } as CSSProperties,
                     onPointerEnter: (event: ReactPointerEvent) => { if (event.pointerType !== "touch") revealTray(entry); },
                     onFocus: () => {
@@ -437,8 +444,8 @@ export default function NavFinder({ config, activeKey, current, accent }: { conf
                   };
                   const content = entry.content ?? (
                     <>
-                      <DeckMark entry={entry} live={marksLive(config, current) && activeKey === entry.key} />
-                      <DeckLabel text={preview?.key === entry.key ? preview.title : deckLabel(entry, page).text} />
+                      <DeckMark entry={entry} live={marksLive(config, current) && activeKey === entry.key} open={open} />
+                      <DeckLabel text={preview?.key === entry.key ? preview.title : deckLabel(entry, page).text} folded={folded} />
                     </>
                   );
                   return entry.href ? (

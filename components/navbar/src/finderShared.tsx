@@ -4,14 +4,83 @@ import { SurfaceFill } from "../foundation/SurfaceFill";
 import { DeckIcon } from "./NavIcons";
 import type { NavDeckEntry, NavTray, NavTrayItem, NavbarConfig, NavbarLabels } from "./types";
 import { ensureTray, getTrayItems, trayLayout, useTrayVersion } from "./useNavTrays";
+import { usePrefersReducedMotion } from "./usePrefersReducedMotion";
 
 /* Pieces shared by the desktop finder and its mobile counterpart: the
    reticle mark, the tray rows and the action handlers. */
 
-export function ReticleMark() {
+type Loop = { keyframes: Keyframe[]; duration: number };
+/** Opacity 1 → `low` → 1, each half eased in and out. */
+const pulse = (low: number, duration: number): Loop => ({
+  keyframes: [{ opacity: 1, easing: "ease-in-out" }, { opacity: low, easing: "ease-in-out" }, { opacity: 1 }],
+  duration,
+});
+const REC_BLINK = pulse(0.15, 1000);
+const RETICLE_BLINK = pulse(0.15, 1600);
+const EYE_PULSE = pulse(0.72, 3200);
+const CSS_ANIMATION_EVENTS = ["animationstart", "animationend", "animationcancel"] as const;
+
+/** The bar's resting loops run as Web Animations, not CSS animations: React
+    listens for `animationiteration`, so a CSS loop wakes the main thread at
+    every iteration, where a script animation stays on the compositor.
+    The loop holds where it is while `running` is false or the mark has no
+    box (the other finder is `display: none`, and unlike a CSS animation a
+    script one keeps running there): a mark that isn't painted has no
+    compositor layer, so its loop would tick on the main thread. A CSS
+    animation starting on the element itself (the hud's hover blink) replaces
+    the loop, which restarts from its lit frame when that one stops. */
+function useLoop(ref: RefObject<Element | null>, loop: Loop | null, running: boolean) {
+  const reduced = usePrefersReducedMotion();
+  const runningRef = useRef(running);
+  const applyRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    const element = ref.current;
+    if (!element || !loop || reduced || typeof element.animate !== "function") return;
+    const animation = element.animate(loop.keyframes, { duration: loop.duration, iterations: Infinity });
+    let replaced = false;
+    let boxed = false;
+    const apply = () => {
+      if (replaced) animation.cancel();
+      else if (runningRef.current && boxed) animation.play();
+      else animation.pause();
+    };
+    const onCss = (event: Event) => {
+      if (event.target !== element) return;
+      replaced = event.type === "animationstart";
+      apply();
+    };
+    const box = new ResizeObserver(([entry]) => {
+      boxed = entry.contentRect.width > 0 || entry.contentRect.height > 0;
+      apply();
+    });
+    CSS_ANIMATION_EVENTS.forEach((type) => element.addEventListener(type, onCss));
+    box.observe(element);
+    applyRef.current = apply;
+    apply();
+    return () => {
+      CSS_ANIMATION_EVENTS.forEach((type) => element.removeEventListener(type, onCss));
+      box.disconnect();
+      applyRef.current = null;
+      animation.cancel();
+    };
+  }, [ref, loop, reduced]);
+
+  useEffect(() => {
+    runningRef.current = running;
+    applyRef.current?.();
+  }, [running]);
+}
+
+/** `covered`: the open desktop deck hides the finder pill. */
+export function ReticleMark({ hud = false, covered = false }: { hud?: boolean; covered?: boolean }) {
+  const lidsRef = useRef<SVGSVGElement>(null);
+  const dotRef = useRef<SVGCircleElement>(null);
+  useLoop(lidsRef, hud ? null : EYE_PULSE, !covered);
+  useLoop(dotRef, hud ? RETICLE_BLINK : null, !covered);
   return (
     <span aria-hidden="true" className="nav-reticle">
-      <svg className="nav-reticle-lids" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <svg ref={lidsRef} className="nav-reticle-lids" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <path className="nav-reticle-lid nav-reticle-lid--top" d="M5 12Q12 4.6 19 12" />
         <path className="nav-reticle-lid nav-reticle-lid--bottom" d="M5 12Q12 19.4 19 12" />
       </svg>
@@ -20,11 +89,18 @@ export function ReticleMark() {
           <path d="M8.5 4H4v4.5M15.5 4H20v4.5M4 15.5V20h4.5M20 15.5V20h-4.5" />
         </g>
         <g className="nav-reticle-eye">
-          <circle className="nav-reticle-dot" cx="12" cy="12" r="2.1" fill="var(--nav-section-accent, currentColor)" stroke="none" />
+          <circle ref={dotRef} className="nav-reticle-dot" cx="12" cy="12" r="2.1" fill="var(--nav-section-accent, currentColor)" stroke="none" />
         </g>
       </svg>
     </span>
   );
+}
+
+/** The blinking REC dot (live deck pill, current-page pill). */
+function RecDot({ running, color }: { running: boolean; color?: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  useLoop(ref, REC_BLINK, running);
+  return <span ref={ref} aria-hidden="true" className="nav-page-pill-dot" style={color ? ({ "--nav-rec-dot": color } as CSSProperties) : undefined} />;
 }
 
 export function ArrowIcon() {
@@ -207,40 +283,59 @@ export function deckLabel(entry: NavDeckEntry, page: CurrentPage | null): { text
 }
 
 /** A deck pill's label; a change of text glides the pill's width and brings
-    the new words in. */
-export function DeckLabel({ text }: { text: string }) {
+    the new words in, except in a `folded` deck, which nobody sees. */
+export function DeckLabel({ text, folded = false }: { text: string; folded?: boolean }) {
   const ref = useRef<HTMLSpanElement>(null);
-  useWidthGlide(ref, text);
+  useWidthGlide(ref, text, folded);
   return (
     <span ref={ref} className="nav-deck-label" onTransitionEnd={releaseWidth}>
-      <span key={text} className="nav-deck-label-text">{text}</span>
+      <LabelText key={text} text={text} folded={folded} />
     </span>
   );
 }
 
+/** Words swapped in while the deck is folded finish their rise-in at once:
+    the end state of one that ran unseen, without ticking it. */
+function LabelText({ text, folded }: { text: string; folded: boolean }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [foldedAtMount] = useState(folded);
+  useLayoutEffect(() => {
+    if (foldedAtMount) ref.current?.getAnimations().forEach((animation) => animation.finish());
+  }, [foldedAtMount]);
+  return <span ref={ref} className="nav-deck-label-text">{text}</span>;
+}
+
 /** Deck pill mark: an entry with a `dot` colour shows its dot instead of the
     icon. Where `marksLive`, the live pill's dot blinks (a live entry without
-    `dot` gets the default blinking dot); the others hold still. */
-export function DeckMark({ entry, live }: { entry: NavDeckEntry; live: boolean }) {
+    `dot` gets the default blinking dot) while the deck is `open`; the others
+    hold still. */
+export function DeckMark({ entry, live, open }: { entry: NavDeckEntry; live: boolean; open: boolean }) {
   if (!live && !entry.dot) return <DeckIcon icon={entry.icon} />;
   return (
     <span aria-hidden="true" className="nav-deck-icon nav-deck-rec">
-      <span
-        className={`nav-page-pill-dot${live ? "" : " nav-page-pill-dot--still"}`}
-        style={entry.dot ? ({ "--nav-rec-dot": entry.dot } as CSSProperties) : undefined}
-      />
+      {live ? (
+        <RecDot running={open} color={entry.dot} />
+      ) : (
+        <span className="nav-page-pill-dot" style={entry.dot ? ({ "--nav-rec-dot": entry.dot } as CSSProperties) : undefined} />
+      )}
     </span>
   );
 }
 
 /** Width FLIP for an element whose content changes with `key`: from its last
     measured width to the new natural one (the element transitions `width`;
-    pair with `releaseWidth` on transitionend). */
-export function useWidthGlide(ref: RefObject<HTMLElement | null>, key: string) {
+    pair with `releaseWidth` on transitionend). `still`: no glide and no
+    measuring; the next change after it clears only seeds the width. */
+export function useWidthGlide(ref: RefObject<HTMLElement | null>, key: string, still = false) {
   const widthRef = useRef<number | null>(null);
   useLayoutEffect(() => {
     const element = ref.current;
     if (!element) return;
+    if (still) {
+      element.style.width = "";
+      widthRef.current = null;
+      return;
+    }
     const previous = widthRef.current;
     element.style.width = "";
     const next = element.offsetWidth;
@@ -249,7 +344,26 @@ export function useWidthGlide(ref: RefObject<HTMLElement | null>, key: string) {
     element.style.width = `${previous}px`;
     void element.offsetWidth;
     element.style.width = `${next}px`;
-  }, [ref, key]);
+  }, [ref, key, still]);
+}
+
+/** Longest deck fold (pill translate + its stagger), with margin. */
+const FOLD_MS = 700;
+
+/** True once the deck has finished folding away; false from the moment it
+    opens. A folded deck is invisible, so it skips its transitions and label
+    motion (re-toning, width glides, rise-ins) instead of running them unseen. */
+export function useFolded(open: boolean) {
+  const [settled, setSettled] = useState(!open);
+  useEffect(() => {
+    if (open) {
+      setSettled(false);
+      return;
+    }
+    const id = window.setTimeout(() => setSettled(true), FOLD_MS);
+    return () => window.clearTimeout(id);
+  }, [open]);
+  return !open && settled;
 }
 
 /** Back to natural width once a glide settles, so later reflows (fonts) apply. */
@@ -260,8 +374,9 @@ export const releaseWidth = (event: TransitionEvent<HTMLElement>) => {
 /** The current-page pill in its slot. The slot unfolds from zero width when
     a page appears and folds away (keeping its last contents) when none
     applies; a change of page glides the pill's width and brings the new dot
-    and name in. `hidden` folds it regardless (mobile, menu open). */
-export function CurrentPageSlot({ page, labels, hidden = false }: { page: CurrentPage | null; labels: NavbarLabels; hidden?: boolean }) {
+    and name in. `hidden` folds it regardless (mobile, menu open); `covered`
+    holds its dot while the open desktop deck hides the pill. */
+export function CurrentPageSlot({ page, labels, hidden = false, covered = false }: { page: CurrentPage | null; labels: NavbarLabels; hidden?: boolean; covered?: boolean }) {
   const [shown, setShown] = useState(page);
   useEffect(() => { if (page) setShown(page); }, [page]);
   const present = page !== null && !hidden;
@@ -279,11 +394,7 @@ export function CurrentPageSlot({ page, labels, hidden = false }: { page: Curren
             onTransitionEnd={releaseWidth}
           >
             <span key={key} className="nav-page-pill-body">
-              <span
-                aria-hidden="true"
-                className="nav-page-pill-dot"
-                style={shown.entry.dot ? ({ "--nav-rec-dot": shown.entry.dot } as CSSProperties) : undefined}
-              />
+              <RecDot running={present && !covered} color={shown.entry.dot} />
               <span className="sr-only">{labels.currentItem ?? "Active page"}: </span>
               <span className="nav-page-pill-label">{shown.title}</span>
             </span>
@@ -368,6 +479,7 @@ export function TrayContent({
         <button
           type="button"
           data-tray-item
+          data-ev-jelly=""
           onClick={() => actions.cta(entry, tray.label, tray.onSelect)}
           className="nav-tray-cta nav-control-focus relative mt-[0.75em] flex min-h-[3em] w-full items-center justify-between gap-[1.5em] rounded-[var(--nav-radius-md)] px-[1em] text-left nav-font-body text-[0.78em] font-semibold"
         >

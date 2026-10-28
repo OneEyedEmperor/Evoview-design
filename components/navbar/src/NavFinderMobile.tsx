@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent } from "react";
+import { usePressJelly } from "../foundation/usePressJelly";
 import type { NavDeckEntry, NavbarConfig } from "./types";
 import { ensureTray, preloadTrays } from "./useNavTrays";
-import { CurrentPageSlot, DeckLabel, DeckMark, deckLabel, marksLive, ReticleMark, TrayContent, useCurrentPage, useNavActions } from "./finderShared";
+import { CurrentPageSlot, DeckLabel, DeckMark, deckLabel, marksLive, ReticleMark, TrayContent, useCurrentPage, useFolded, useNavActions } from "./finderShared";
 
 /* Mobile finder. Same capsule and vocabulary as the desktop finder, unfolding
    downward instead of sideways: a tap on the finder pill grows the capsule
@@ -29,6 +30,7 @@ export default function NavFinderMobile({ config, activeKey, current, accent }: 
   const wordsRef = useRef<HTMLSpanElement>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
   const baseId = useId();
+  usePressJelly();
   const bodyId = `${baseId}-body`;
   const trayId = `${baseId}-tray`;
 
@@ -40,6 +42,7 @@ export default function NavFinderMobile({ config, activeKey, current, accent }: 
   }, []);
   const actions = useNavActions(config, close, "mobile_menu");
   const page = useCurrentPage(config, activeKey, current);
+  const folded = useFolded(open);
 
   useEffect(() => {
     if (open) preloadTrays(config);
@@ -206,9 +209,10 @@ export default function NavFinderMobile({ config, activeKey, current, accent }: 
             aria-controls={bodyId}
             aria-label={open ? labels.closeAria : labels.openAria}
             className="nav-finder-trigger nav-control-focus"
+            data-ev-jelly=""
             onClick={toggle}
           >
-            <ReticleMark />
+            <ReticleMark hud={config.reticle === "hud"} />
             <span ref={wordsRef} className="nav-finder-words" aria-hidden="true">
               <span className="nav-finder-word-cell nav-finder-word-cell--open">
                 <span className="nav-finder-word">{labels.menu}</span>
@@ -224,7 +228,7 @@ export default function NavFinderMobile({ config, activeKey, current, accent }: 
         <div id={bodyId} className="nav-finder-m-body" inert={!open} aria-hidden={!open}>
           <div className="nav-finder-m-body-inner">
             <div className="nav-finder-m-body-pad">
-              <div className="nav-deck nav-deck--mobile">
+              <div className="nav-deck nav-deck--mobile" data-folded={folded || undefined}>
                 {deck.map((entry, index) => {
                   const hasTray = Boolean(trays[entry.key]);
                   const isCurrent = activeKey === entry.key;
@@ -237,14 +241,15 @@ export default function NavFinderMobile({ config, activeKey, current, accent }: 
                     "aria-controls": hasTray ? trayId : undefined,
                     "aria-label": entry.content ? entry.label : deckLabel(entry, page).aria,
                     className: `nav-deck-pill nav-control-focus${entry.cta ? " nav-deck-pill--cta" : ""}`,
+                    "data-ev-jelly": "",
                     style: { "--nav-orb-accent": entry.accent, "--nav-entry-index": index } as CSSProperties,
                   };
                   const content = (
                     <>
                       {entry.content ?? (
                         <>
-                          <DeckMark entry={entry} live={marksLive(config, current) && isCurrent} />
-                          <DeckLabel text={deckLabel(entry, page).text} />
+                          <DeckMark entry={entry} live={marksLive(config, current) && isCurrent} open={open} />
+                          <DeckLabel text={deckLabel(entry, page).text} folded={folded} />
                         </>
                       )}
                       {isCurrent && <span aria-hidden="true" className="nav-deck-current" />}

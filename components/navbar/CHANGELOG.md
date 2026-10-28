@@ -1,5 +1,47 @@
 # navbar changelog
 
+## Unreleased
+
+Performance; no visual change. No config changes.
+
+- Fix: the live deck pill's REC dot blinked inside the folded deck
+  (`opacity: 0` pill). An opacity loop with no visible box can't run on the
+  compositor, so Blink ticked it on the main thread and re-layerized the
+  whole page every frame (≈4.5 ms/frame at 4× CPU on multi-page routes).
+- The resting loops (eye pulse, hud reticle blink, REC dots of the current
+  page pill and the live deck pill) are Web Animations (`useLoop` in
+  `finderShared.tsx`) instead of CSS `@keyframes`: React listens for
+  `animationiteration`, so CSS loops woke the main thread at every
+  iteration. Same keyframes, per-half `ease-in-out` and durations
+  (1 s / 1.6 s / 3.2 s). Each loop holds while its mark is hidden (folded
+  deck, folded page slot, desktop finder covered by the open deck, the
+  `display: none` finder of the other breakpoint) and resumes in place.
+  The hud dot yields to its CSS hover/expanded blink and restarts from its
+  lit frame, as before. Loops start at hydration (static before it) and
+  follow `prefers-reduced-motion` as before.
+- CSS: removed `nav-eye-pulse` and the `animation` of `.nav-reticle-dot`,
+  `.nav-reticle-lids` and `.nav-page-pill-dot`, plus
+  `.nav-page-pill-dot--still` (the class is gone). Host CSS that set
+  `animation` on these no longer affects the blink; the timings live in
+  `REC_BLINK` / `RETICLE_BLINK` / `EYE_PULSE`.
+- A fully folded deck (`data-folded`, ~700 ms after closing) skips its
+  transitions; label swaps there finish their rise-in at once. Scrolling a
+  one-page site no longer re-tones and re-labels the hidden deck frame by
+  frame. Opening clears it in the same frame.
+- The desktop finder's scroll dismissal returns early when there is nothing
+  to close.
+
+## 2.8.0
+
+Requires `foundation` ≥ 1.9.0 (press jelly). No config changes.
+
+- Behaviour: the finder trigger (Menu pill), deck pills (desktop and mobile)
+  and the tray CTA take the press jelly (RULES §6). Tray rows and cover
+  cards keep their own press feedback.
+- CSS: removed the `:active` scales of the mobile trigger, mobile deck
+  pills and `.nav-tray-cta`, `scale` from the mobile pills'
+  `transition-property`, and the tray CTA's `transform` transition.
+
 ## 2.7.0
 
 - Now depends on `foundation` (≥ 1.5.0): `install.sh` installs it first,
