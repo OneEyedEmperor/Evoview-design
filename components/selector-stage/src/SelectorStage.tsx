@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState, type FocusEvent, type PointerEvent } from "react";
 import { OptionChip } from "../controls";
-import { cn, pad, sequenceFillStyle, StepGauge, TextFill, useInViewPause, useSequenceClock } from "../foundation";
+import { cn, pad, sequenceFillStyle, StepGauge, TextFill, useInViewPause, usePressJelly, useSequenceClock } from "../foundation";
 import { Heading, Note, StageFrame, defaultCopy, layersOf, radioKeys, toneClass, useOnce, useStageGate } from "./stage";
 import type { SelectorStageContent, SelectorStageCopy, Tone } from "./types";
 
@@ -42,6 +42,7 @@ export function SelectorStage({
   id,
 }: SelectorStageProps) {
   const uid = useId();
+  usePressJelly();
   const headingId = `${id ?? uid}-heading`;
   const rootRef = useRef<HTMLElement>(null);
   const stripRef = useRef<HTMLDivElement>(null);
@@ -157,7 +158,7 @@ export function SelectorStage({
                 ))}
               </div>
               {autoplay && (
-                <button type="button" className="ss-auto" onClick={toggleAuto}>
+                <button type="button" className="ss-auto" data-ev-jelly="" onClick={toggleAuto}>
                   <TextFill hoverWithin=".ss-auto" hoverInk="var(--ev-fg)" withFocus={false}>
                     <span className="ss-auto__icon" data-paused={!auto || undefined} aria-hidden="true" />
                   </TextFill>

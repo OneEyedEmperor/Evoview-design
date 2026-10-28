@@ -70,6 +70,14 @@
   the title's cap line (0.7em, white 30 % / ink 22 %, decorative). No package,
   config or API change.
 
+## 1.3.0
+
+Requires `foundation` ≥ 1.9.0 (press jelly). No config changes, no CSS
+changes.
+
+- Behaviour: footer social orbs and the mobile FAQ "more" button take the
+  press jelly (RULES §6). FAQ question headers and text links are unchanged.
+
 ## 1.2.0
 
 - Depends on `controls` (install.sh installs controls + foundation first).

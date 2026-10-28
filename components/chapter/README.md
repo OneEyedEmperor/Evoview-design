@@ -348,6 +348,9 @@ footer links, brand and the mark.
 
 ## Motion and pause model
 
+Footer social orbs and the mobile FAQ "more" button take foundation's press
+jelly (RULES §6); FAQ question headers and text links don't.
+
 No `prefers-reduced-motion` branch (architecture skill): one full-motion
 experience. Chapters and headings are static (no reveal, per the source). The
 only loop is the optional `live` marker pulse: it runs only while the chapter

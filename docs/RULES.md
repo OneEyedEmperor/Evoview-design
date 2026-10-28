@@ -82,7 +82,7 @@ ordered set of cards; choose it before inventing another card. Reference:
   the label go in their own `TextFill` with the same trigger. Not covered:
   running text (never state-coloured), text whose content is replaced
   rather than recoloured, text riding a surface that itself changes under
-  it (plate hover, segmented thumb, selected calendar day: it follows that
+  it (plate hover, selected calendar day: it follows that
   surface), and fixed states that never switch at runtime (disabled,
   outside-month days).
 - **Buttons too.** A button whose surface changes colour on hover / press
@@ -92,6 +92,10 @@ ordered set of cards; choose it before inventing another card. Reference:
   the button, colours `--ev-surface-lit` / `--ev-surface-lit-ink`), never a
   CSS `background` swap. Faint tonal hover tints of rows and tiles are not
   colour switches and keep their transition.
+- **Toggles too.** A toggle that switches colour (segmented control option,
+  switch track and knob) fills its new state as the same liquid and drains
+  the old one; a sliding knob may keep sliding, a sliding highlight is
+  replaced by per-option pills (controls `SegmentedControl`, `Switch`).
 - Ribbon: optional status/version top-right, card title, one-line meta.
 - Peers in an equal grid (2-up from 768), rows stretched to one height.
 - Phone (< 768): one tonal row tile per card, thumbnail `.8` : caption `1.2`,
@@ -201,6 +205,18 @@ neighbours never flashes it; incoming media is decoded before the screen
 opens. The pointed option answers on its own side (tonal step, accent orb
 fill). Reference: evoview contact application, question 1; the showcase
 title strip (`src/library/ShowcasePage.tsx`).
+**Pressed pills and buttons: the press jelly (norm).** Every clickable pill
+or button (plates, chips, glass close / pager orbs, ghost actions, segmented
+options, switch tracks, tab / dock / finder pills, small orb buttons) squashes
+vertically and widens slightly while pressed (pointer of any kind, Enter /
+Space), then springs back with one small elastic overshoot on release:
+foundation's press jelly (`data-ev-jelly` on the host, `usePressJelly()` in
+the component; `data-ev-jelly="<selector>"` deforms a descendant, e.g. a
+switch's track). Never a CSS `:active` scale on those hosts, never on layout
+properties. Not covered: cards, tiles, list rows and accordion headers
+(large surfaces keep their own subtle `:active` scale), text links in
+running text, invisible hit areas, controls whose press starts a drag
+(scrubbers, sliders), and disabled / busy / locked hosts.
 **Pause model (mandatory):** loops and clocks run only while the component is
 on-screen, the document is visible and no modal suspends the page; resume with
 remaining time; never advance because time passed while unavailable. Media is

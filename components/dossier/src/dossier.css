@@ -323,7 +323,6 @@
     position: relative;
     /* Hover pours the lighter plate in (foundation SurfaceFill, RULES §1). */
     --ev-surface-lit: #f3f3f2;
-    transition: transform 140ms ease;
   }
   .evd-toast small {
     display: block;
@@ -337,7 +336,6 @@
   }
   .evd-toast strong { display: block; font-family: var(--ev-font-body); font-size: 13px; font-weight: 600; }
   .evd-toast svg { width: 16px; height: 16px; color: color-mix(in oklab, var(--dossier-accent) 60%, #151515); }
-  .evd-toast .evd-toast__action:active { transform: translateY(1px); }
   .evd-toast .evd-toast__action:focus-visible { outline: 2px solid var(--dossier-signal); outline-offset: 3px; }
 }
 @keyframes evd-toast-in { from { opacity: 0; transform: translateY(-6px); } }
@@ -687,7 +685,7 @@ a.evd-tile { -webkit-user-drag: none; -webkit-touch-callout: none; }
   overflow: hidden;
   border-radius: 14px;
   color: rgb(255 255 255 / 0.62);
-  transition: color 220ms ease, background-color 260ms ease, transform 420ms cubic-bezier(0.22, 1.55, 0.36, 1);
+  transition: color 220ms ease, background-color 260ms ease;
 }
 .evd-dock__item::after {
   content: "";
@@ -707,7 +705,8 @@ a.evd-tile { -webkit-user-drag: none; -webkit-touch-callout: none; }
 .evd-dock__item[data-tap="b"]::after { animation: evd-bloom-b 520ms cubic-bezier(0.16, 1, 0.3, 1) both; }
 @keyframes evd-bloom-a { 0% { opacity: 1; transform: translate3d(-50%, -50%, 0) scale(0.3); } 100% { opacity: 0; transform: translate3d(-50%, -50%, 0) scale(1.35); } }
 @keyframes evd-bloom-b { 0% { opacity: 1; transform: translate3d(-50%, -50%, 0) scale(0.3); } 100% { opacity: 0; transform: translate3d(-50%, -50%, 0) scale(1.35); } }
-.evd-dock__item:active { background: rgb(255 255 255 / 0.055); transform: translate3d(0, 1px, 0) scale(0.965); transition-duration: 70ms; }
+/* The press shape is foundation's press jelly; only the tint is CSS. */
+.evd-dock__item:active { background: rgb(255 255 255 / 0.055); transition-duration: 70ms; }
 .evd-dock__item:focus-visible { outline: 2px solid var(--dossier-signal); outline-offset: -3px; }
 .evd-dock__icon { display: flex; width: 20px; height: 20px; flex: 0 0 auto; align-items: center; justify-content: center; transition: transform 460ms cubic-bezier(0.22, 1.7, 0.36, 1); }
 .evd-dock__icon svg { width: 18px; height: 18px; }

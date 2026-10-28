@@ -28,6 +28,7 @@ import {
   useMediaQuery,
   useMediaReady,
   useRouteHistory,
+  usePressJelly,
   useSuspendBackground,
   type RouteViewProps,
 } from "../foundation";
@@ -81,6 +82,7 @@ function canonicalView(config: DossierConfig, itemId?: string, entryId?: string)
 export function Dossier(props: DossierProps) {
   const { config, preload = true, className, history } = props;
   const controlled = props.view !== undefined;
+  usePressJelly();
 
   /* Legacy API: an internal view, seeded from initialItemId / initialEntryId on every open. */
   const legacyOpen = !controlled && !!props.open;
@@ -535,7 +537,7 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, closing, o
                   data-anchor={entryIndex < entries.length - 1 ? "next" : "end"}
                   style={entryIndex < entries.length - 1 ? { left: `calc(var(--evd-strip-overview) + (100% - var(--evd-strip-overview)) * ${(entryIndex + 1) / entries.length} + 16px)` } : undefined}
                 >
-                  <RouteLink className="evd-toast__action" href={href(nextView)} onFollow={goNextEntry} aria-label={nextAria}>
+                  <RouteLink className="evd-toast__action" data-ev-jelly="" href={href(nextView)} onFollow={goNextEntry} aria-label={nextAria}>
                     <span>
                       <small>{entryIndex < entries.length - 1 ? copy.toastNext : itemCount > 1 ? copy.toastEnd : copy.toastBack}</small>
                       <strong>{nextEntryLabel}</strong>
@@ -762,6 +764,7 @@ function DockButton({ side, label, aria, icon, href, onClick }: { side: "start" 
   return (
     <RouteLink
       className="evd-dock__item"
+      data-ev-jelly=""
       href={href}
       data-side={side}
       data-tap={tap % 2 === 1 ? "a" : tap > 0 ? "b" : undefined}

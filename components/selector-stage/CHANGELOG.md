@@ -1,5 +1,13 @@
 # selector-stage changelog
 
+## 1.5.0
+
+Requires `foundation` ≥ 1.9.0 (press jelly). No config changes, no CSS
+changes.
+
+- Behaviour: the autoplay toggle takes the press jelly (RULES §6). Rows and
+  atlas thumbs are unchanged.
+
 ## 1.4.0
 
 Requires `foundation` ≥ 1.5.0 (`TextFill`) and `controls` ≥ 1.2.0. No config

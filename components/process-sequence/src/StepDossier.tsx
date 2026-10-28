@@ -12,6 +12,7 @@ import {
   useHydrated,
   useMediaQuery,
   useMediaReady,
+  usePressJelly,
   useSuspendBackground,
 } from "../foundation";
 import { isVideo } from "./media";
@@ -58,6 +59,7 @@ type KeyLike = Pick<KeyboardEvent, "key" | "shiftKey" | "altKey" | "ctrlKey" | "
 export function StepDossier({ steps, index, onIndexChange, onClose, copy, cta, attribution, tone = "dark", hrefFor, canOpen, onUp, closing: closingProp }: StepDossierProps) {
   const n = steps.length;
   const titleId = useId();
+  usePressJelly();
   const rootRef = useRef<HTMLDivElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -366,7 +368,7 @@ export function StepDossier({ steps, index, onIndexChange, onClose, copy, cta, a
             <span className="psd__spinner" aria-hidden="true" data-failed={media.failed || undefined} />
             <span className="ev-t-readout">{media.failed ? copy.dossier.failed : copy.dossier.loading}</span>
             {media.failed && (
-              <button type="button" className="ev-t-readout psd__retry" onClick={media.retry}>
+              <button type="button" className="ev-t-readout psd__retry" data-ev-jelly="" onClick={media.retry}>
                 {copy.dossier.retry}
               </button>
             )}

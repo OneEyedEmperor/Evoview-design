@@ -49,6 +49,10 @@ library's `STRATEGY.md` + `docs/RULES.md` first.
   `<ChannelSwitch channel={id}>` (RULES §6), never a cut, crossfade or
   slide. Copy belonging to the screen (title, category) switches in its own
   `<ChannelSwitch signal={false}>`; debounce the return to rest (~140 ms).
+- Every clickable pill or button takes the press jelly (RULES §6):
+  `data-ev-jelly` on the host + `usePressJelly()` in the component, never a
+  CSS `:active` scale or a `scale` transition on it. Not on cards, tiles,
+  list rows, accordion headers, text links, invisible hit areas.
 - Accent is signal only (selection, progress, focus, indices, blooms,
   primary hover). Light accents (yellow, near-white) must still read: use
   `--ev-accent-signal` for strokes and accent text, never colour alone.

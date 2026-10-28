@@ -6,6 +6,7 @@ import ringEyeSvg from "./brand/eye-4-ring.svg?raw";
 import { OrbFill } from "../foundation/OrbFill";
 import { SurfaceFill } from "../foundation/SurfaceFill";
 import { TextFill } from "../foundation/TextFill";
+import { usePressJelly } from "../foundation/usePressJelly";
 import { ArrowLeft, ArrowRight, Check, Chevron, EyeGlyph } from "./marks";
 import type { ReservationConfig, ReservationRequest, ReservationWindow } from "./types";
 import "./reservation.css";
@@ -76,7 +77,7 @@ function DayButton({ day: _day, modifiers, children, ...props }: DayButtonProps)
   }, [modifiers.focused]);
   const still = modifiers.selected || modifiers.disabled || modifiers.outside;
   return (
-    <button ref={ref} {...props}>
+    <button ref={ref} data-ev-jelly="" {...props}>
       <TextFill hoverWithin={still ? undefined : ".evo-cal__daybtn"} hoverInk="#fff" withFocus={false}>
         {children}
       </TextFill>
@@ -99,7 +100,7 @@ function Pills<T extends string | number>({ items, selected, onSelect, render, l
   return (
     <div className={`evo-resa-pills${className ? ` ${className}` : ""}`} role="group" aria-label={label}>
       {items.map((item) => (
-        <button key={item} type="button" className="evo-resa-pill" aria-pressed={selected === item} onClick={() => onSelect(item)}>
+        <button key={item} type="button" className="evo-resa-pill" data-ev-jelly="" aria-pressed={selected === item} onClick={() => onSelect(item)}>
           {render ? render(item, selected === item) : <PillInk on={selected === item}>{item}</PillInk>}
         </button>
       ))}
@@ -109,6 +110,7 @@ function Pills<T extends string | number>({ items, selected, onSelect, render, l
 
 export function Reservation({ config }: { config: ReservationConfig }) {
   const { copy: c, experiences, windows, guests: guestRange, submit, venue } = config;
+  usePressJelly();
   const slot = config.slotMinutes ?? 30;
 
   const onMount = config.onMount;
@@ -573,7 +575,7 @@ export function Reservation({ config }: { config: ReservationConfig }) {
                 <h3 ref={headingRef} tabIndex={-1} className="evo-resa-done__title">{heading(c.confirmationTitle)}</h3>
                 <p className="evo-resa-done__text">{nbsp(c.confirmationMessage)}</p>
                 <div className="evo-resa-inline-ticket">{ticket}</div>
-                <button type="button" className="evo-resa-ghost evo-resa-readout" onClick={resetForm}>
+                <button type="button" className="evo-resa-ghost evo-resa-readout" data-ev-jelly="" onClick={resetForm}>
                   <GhostInk><ArrowLeft className="evo-resa-ghost__icon" /></GhostInk>
                   <GhostInk>{c.submitAnother}</GhostInk>
                 </button>
@@ -591,12 +593,12 @@ export function Reservation({ config }: { config: ReservationConfig }) {
                   {body}
                 </div>
                 <div className={`evo-resa-bar${last ? "" : " evo-resa-bar--auto"}`}>
-                  <button type="button" className="evo-resa-ghost evo-resa-readout" onClick={() => goTo(step - 1)} disabled={step === 0}>
+                  <button type="button" className="evo-resa-ghost evo-resa-readout" data-ev-jelly="" onClick={() => goTo(step - 1)} disabled={step === 0}>
                     <GhostInk><ArrowLeft className="evo-resa-ghost__icon" /></GhostInk>
                     <GhostInk>{c.back}</GhostInk>
                   </button>
                   {(blocked || formError) && <p className="evo-resa-bar__error" role="alert">{formError || c.chooseToContinue}</p>}
-                  <button type="submit" className="evo-resa-primary" disabled={submitting} aria-busy={submitting || undefined}>
+                  <button type="submit" className="evo-resa-primary" data-ev-jelly="" disabled={submitting} aria-busy={submitting || undefined}>
                     {last ? (submitting ? c.submitting : c.submit) : c.next}
                     <span className="evo-resa-primary__orb"><ArrowRight /></span>
                     <SurfaceFill hoverWithin=".evo-resa-primary">

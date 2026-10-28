@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes, HTMLAttributes, KeyboardEvent, ReactNode, Ref } from "react";
-import { Check, cn, OrbFill, pad, TextFill } from "../foundation";
+import { Check, cn, OrbFill, pad, TextFill, usePressJelly } from "../foundation";
 import { useControlsCopy } from "./copy";
 
 const indexText = (index: number | string | undefined) => (typeof index === "number" ? pad(index) : index);
@@ -48,10 +48,12 @@ export type OptionChipProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 /** Pill token for a choice. Toggle semantics (aria-pressed) unless given role="radio". */
 export function OptionChip({ selected = false, index, size = "md", className, children, ...rest }: OptionChipProps) {
   const radio = rest.role === "radio";
+  usePressJelly();
   return (
     <button
       type="button"
       className={cn("ev-controls evc-chip", size === "lg" && "evc-chip--lg", className)}
+      data-ev-jelly=""
       data-selected={selected || undefined}
       aria-pressed={radio ? undefined : selected}
       aria-checked={radio ? selected : undefined}

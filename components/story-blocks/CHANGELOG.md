@@ -1,5 +1,12 @@
 # story-blocks changelog
 
+## 2.4.0
+
+Requires `foundation` ≥ 1.9.0 (press jelly). No config changes, no CSS
+changes.
+
+- Behaviour: the media retry button takes the press jelly (RULES §6).
+
 ## 2.3.0
 
 Requires `foundation` 1.7.0 (`--ev-accent-wash`, with a local fallback).

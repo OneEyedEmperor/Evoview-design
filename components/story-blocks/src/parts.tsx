@@ -1,5 +1,5 @@
 import { Fragment, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { cn, useInViewPause, useMediaReady } from "../foundation";
+import { cn, useInViewPause, useMediaReady, usePressJelly } from "../foundation";
 import { useStoryCopy } from "./copy";
 import type { Lines, StoryMedia } from "./types";
 
@@ -66,6 +66,7 @@ type FigureProps = {
 export function StoryFigure({ media, className, eager = false, scrim = false, children }: FigureProps) {
   const copy = useStoryCopy();
   const ref = useRef<HTMLElement>(null);
+  usePressJelly();
   const { active } = useInViewPause(ref, { rootMargin: "600px 0px", enabled: !eager, ignoreSuspension: true, once: true });
   const near = eager || active;
   const gate = useMediaReady(near, [media.src]);
@@ -89,7 +90,7 @@ export function StoryFigure({ media, className, eager = false, scrim = false, ch
       {state === "failed" && (
         <span className="evsb-figure__status" role="status">
           <span className="ev-t-readout">{copy.mediaFailed}</span>
-          <button type="button" className="evsb-retry ev-t-readout" onClick={gate.retry}>
+          <button type="button" className="evsb-retry ev-t-readout" data-ev-jelly="" onClick={gate.retry}>
             {copy.retry}
           </button>
         </span>

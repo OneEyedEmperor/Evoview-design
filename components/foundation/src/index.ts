@@ -32,4 +32,6 @@ export { TextFill, type TextFillProps } from "./TextFill";
 export { SurfaceFill, type SurfaceFillProps } from "./SurfaceFill";
 export { ChannelSwitch, type ChannelSwitchProps } from "./ChannelSwitch";
 export type { LiquidController } from "./liquid";
+export { createJelly, bindPressJelly, retainPressJelly, JELLY_ATTR, type JellyController } from "./jelly";
+export { usePressJelly } from "./usePressJelly";
 export { ArrowRight, ArrowLeft, ArrowUpRight, Check, Close, Chevron } from "./icons";

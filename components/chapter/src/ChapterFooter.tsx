@@ -1,4 +1,4 @@
-import { cn, EvoviewMark, OrbFill, Readout, TextFill } from "../foundation";
+import { cn, EvoviewMark, OrbFill, Readout, TextFill, usePressJelly } from "../foundation";
 import type { ChapterConfig, ChapterFooterLink } from "./chapter.config";
 import type { ChapterTone } from "./Chapter";
 
@@ -16,6 +16,7 @@ export type ChapterFooterProps = {
 
 /** Site footer on the wide rail, ending on the Evoview attribution. */
 export function ChapterFooter({ config, tone = "light", layout = "bar", className }: ChapterFooterProps) {
+  usePressJelly();
   return (
     <footer
       className={cn("ev-root ev-chapter ev-chapter--footer", layout === "panel" && "ev-chapter--panel", `ev-tone-${tone}`, className)}
@@ -144,7 +145,7 @@ function Panel({ config }: { config: ChapterConfig }) {
           <ul className="ev-chapter__socials" aria-label={footer.socialsLabel}>
             {socials.map((social) => (
               <li key={social.href}>
-                <a className="ev-chapter__social" href={social.href} target="_blank" rel="noopener" aria-label={social.label}>
+                <a className="ev-chapter__social" data-ev-jelly="" href={social.href} target="_blank" rel="noopener" aria-label={social.label}>
                   <span className="ev-chapter__social-orb">
                     <OrbFill hoverWithin=".ev-chapter__social">{social.icon}</OrbFill>
                   </span>

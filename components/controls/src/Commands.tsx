@@ -1,5 +1,5 @@
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, MouseEvent, MouseEventHandler, ReactNode, Ref } from "react";
-import { ArrowRight, Chevron, Close, cn, SurfaceFill, TextFill } from "../foundation";
+import { ArrowRight, Chevron, Close, cn, SurfaceFill, TextFill, usePressJelly } from "../foundation";
 import { useControlsCopy } from "./copy";
 
 type ButtonLike = ButtonHTMLAttributes<HTMLButtonElement> & { href?: undefined; ref?: Ref<HTMLButtonElement> };
@@ -7,6 +7,7 @@ type AnchorLike = AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; ref?
 
 /** Renders an <a> when `href` is set, a <button type="button"> otherwise. Busy keeps focus but ignores clicks. */
 function Pressable({ className, children, busy, onClick, ...rest }: (ButtonLike | AnchorLike) & { busy?: boolean }) {
+  usePressJelly();
   const handle = onClick as MouseEventHandler<HTMLElement> | undefined;
   const guarded = (e: MouseEvent<HTMLElement>) => {
     if (busy) e.preventDefault();
@@ -14,14 +15,14 @@ function Pressable({ className, children, busy, onClick, ...rest }: (ButtonLike 
   };
   if (typeof rest.href === "string") {
     return (
-      <a className={className} aria-busy={busy || undefined} onClick={guarded} {...(rest as AnchorHTMLAttributes<HTMLAnchorElement>)}>
+      <a className={className} aria-busy={busy || undefined} data-ev-jelly="" onClick={guarded} {...(rest as AnchorHTMLAttributes<HTMLAnchorElement>)}>
         {children}
       </a>
     );
   }
   const { type = "button", ...button } = rest as ButtonHTMLAttributes<HTMLButtonElement>;
   return (
-    <button type={type} className={className} aria-busy={busy || undefined} onClick={guarded} {...button}>
+    <button type={type} className={className} aria-busy={busy || undefined} data-ev-jelly="" onClick={guarded} {...button}>
       {children}
     </button>
   );
@@ -98,9 +99,10 @@ export type GlassCloseProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 /** Glass chrome close (portals, sheets). */
 export function GlassClose({ label, showLabel = false, className, ...rest }: GlassCloseProps) {
   const copy = useControlsCopy();
+  usePressJelly();
   const name = label ?? copy.close;
   return (
-    <button type="button" className={cn("ev-controls evc-glass evc-close", showLabel && "evc-close--label", className)} aria-label={showLabel ? undefined : name} {...rest}>
+    <button type="button" className={cn("ev-controls evc-glass evc-close", showLabel && "evc-close--label", className)} aria-label={showLabel ? undefined : name} data-ev-jelly="" {...rest}>
       <Close className="evc-close__icon" />
       {showLabel && <span className="ev-t-label">{name}</span>}
     </button>

@@ -1,5 +1,13 @@
 # process-sequence changelog
 
+## 1.5.0
+
+Requires `foundation` ≥ 1.9.0 and `controls` ≥ 1.5.0 (press jelly). No
+config changes, no CSS changes.
+
+- Behaviour: the step dossier's media retry button and its controls take
+  the press jelly (RULES §6). Index rows and cards are unchanged.
+
 ## 1.4.0
 
 Config change: `copy.kicker` is removed (delete it from client configs).

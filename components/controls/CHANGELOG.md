@@ -1,5 +1,34 @@
 # controls changelog
 
+## 1.5.0
+
+Requires `foundation` ≥ 1.9.0 (press jelly). No config changes, no API changes.
+
+- Behaviour: `PrimaryPlate`, `GhostAction`, `GlassClose`, `PagerOrb`,
+  `OptionChip`, `SegmentedControl` options and the `Switch` track take the
+  press jelly (RULES §6). `OptionRow` keeps its `:active` scale (row).
+- CSS: the `:active` `transform: scale()` rules of `.evc-plate`,
+  `.evc-glass` and `.evc-chip` are gone. Host overrides must not add an
+  `:active` scale or transition `scale` on these.
+
+## 1.4.0
+
+Requires `foundation` ≥ 1.5.0 (`OrbFill`). No config changes, no API changes.
+
+- Behaviour: `SegmentedControl` no longer slides one accent thumb: each
+  option carries its own pill, the picked one fills with the accent and the
+  checked ink as liquid, the previous one drains (RULES §1). Hover ink on the
+  other options unchanged.
+- Behaviour: `Switch` track and knob take their checked colours as liquid
+  (track → accent, knob → accent ink with the check rising in); the knob
+  still slides.
+- CSS: `.evc-seg__thumb` is gone (and the `--evc-seg-n` / `--evc-seg-i`
+  inline vars); new `.evc-seg__pill` (inset 3px, accent and ring as
+  `--ev-orb-lit(-ink)` + box-shadow), `.evc-seg__option` is
+  `position: relative`. `.evc-switch__track` / `__thumb` set `--ev-orb-*`
+  instead of `background`; the track ring moved to `::before`. Host
+  overrides of those backgrounds must move to the tokens.
+
 ## 1.3.0
 
 View links for crawlable modals (`docs/CRAWLABLE-MODALS.md` §4). Requires

@@ -264,6 +264,10 @@ Client steps (§7):
 
 ## Motion and pause model
 
+Dock items, the toast action and the controls (close, pager, plates) squash
+and spring back when pressed (foundation's press jelly, RULES §6); board
+tiles and strip cells don't.
+
 One full-motion experience, no `prefers-reduced-motion` branch (architecture
 skill). Every state is complete without motion: board tiles are reachable by
 Tab / tap, every chapter is readable once revealed (reveal is once, on entry).

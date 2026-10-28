@@ -270,7 +270,6 @@
 }
 .evo-resa-pill:has(.evo-resa-pill__mark) { padding-left: 10px; }
 @media (hover: hover) { .evo-resa-pill:hover { border-color: rgba(255, 255, 255, 0.34); } }
-.evo-resa-pill:active { transform: scale(0.97); }
 .evo-resa-pill:focus-visible { outline: 2px solid var(--resa-accent); outline-offset: 3px; }
 .evo-resa-pill[aria-pressed="true"] { border-color: var(--resa-accent); background: color-mix(in srgb, var(--resa-accent) 14%, transparent); }
 .evo-resa-pill__mark {
@@ -433,7 +432,6 @@
   --ev-surface-lit-ink: var(--resa-accent-ink);
   transition: transform 140ms ease, opacity 200ms ease;
 }
-.evo-resa-primary:active { transform: scale(0.985); }
 .evo-resa-primary:focus-visible { outline: 2px solid var(--resa-accent); outline-offset: 4px; }
 .evo-resa-primary[aria-busy="true"] { cursor: wait; opacity: 0.75; }
 .evo-resa-primary__orb {

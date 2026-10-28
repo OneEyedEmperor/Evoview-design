@@ -53,6 +53,10 @@
   --ev-stagger: 80ms;
   --ev-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ev-ease-cinematic: cubic-bezier(0.23, 1, 0.32, 1);
+  /* Press jelly depth (jelly.ts): height lost / width gained at full press,
+     capped at 11 % / 7 % of the box. */
+  --ev-jelly-squash: 7px;
+  --ev-jelly-stretch: 10px;
 
   /* Legibility floors (never scaled below). */
   --ev-floor-body: 13px;

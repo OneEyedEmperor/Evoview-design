@@ -1,5 +1,15 @@
 # reservation changelog
 
+## 2.11.0
+
+Requires `foundation` ≥ 1.9.0 (press jelly; the paper flow through
+`controls` ≥ 1.5.0). No config changes.
+
+- Behaviour: pills, the primary plate, the ghost actions and calendar days
+  take the press jelly (RULES §6). Experience choices (tiles) keep their
+  `:active` scale.
+- CSS: `.evo-resa-pill:active` and `.evo-resa-primary:active` scales removed.
+
 ## 2.10.0
 
 Requires `foundation` ≥ 1.5.0 (installed via `controls`). No config changes.

@@ -66,7 +66,8 @@ the approved linked `EvoviewMark` belongs to the host page's chrome (navbar,
 footer, dossier header). Do not add a mark inside the stage or next to a CTA.
 
 **Motion / pause model**: one full-motion experience, no
-`prefers-reduced-motion` branch. Every state is reachable by click / keys
+`prefers-reduced-motion` branch. The autoplay toggle takes foundation's
+press jelly (RULES §6); rows and thumbs don't. Every state is reachable by click / keys
 (complete stable state). Autoplay (off by default) runs only while on-screen,
 the document is visible, no modal suspends the page, media is ready and no
 mouse hover (rows, chips, stage) / keyboard focus in the choices holds it

@@ -162,6 +162,9 @@ heading and background.
 
 ## Behaviour
 
+- Pills, the primary plate, ghost actions and calendar days squash and
+  spring back when pressed (foundation's press jelly, RULES §6); experience
+  tiles keep their `:active` scale.
 - Guests: pills on wide layouts, a grid of number orbs on narrow ones.
   `guests.overflow` adds "+max", submitted as `guests: max` +
   `guestsOverflow: true`; map it in `submit` (e.g. a notes prefix) if the API

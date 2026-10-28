@@ -1,7 +1,7 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 import { flushSync } from "react-dom";
 import { GhostAction } from "../controls";
-import { ArrowRight, Chevron, cn, OrbFill } from "../foundation";
+import { ArrowRight, Chevron, cn, OrbFill, usePressJelly } from "../foundation";
 import { Chapter, ChapterHeading, type ChapterRhythm, type ChapterTone } from "./Chapter";
 import type { ChapterFaqConfig } from "./chapter.config";
 
@@ -55,6 +55,7 @@ export function ChapterFaq({ config, layout, id = "faq", tone = "dark", rhythm =
   const mode: ChapterFaqLayout = layout ?? (config.media ? "media" : "split");
   const [open, setOpen] = useState<number | null>(defaultOpen);
   const [expanded, setExpanded] = useState(false);
+  usePressJelly();
   const listRef = useRef<HTMLDivElement>(null);
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   const listId = `${id}-${uid}-list`;
@@ -159,6 +160,7 @@ export function ChapterFaq({ config, layout, id = "faq", tone = "dark", rhythm =
         <button
           type="button"
           className="ev-chapter-faq__more"
+          data-ev-jelly=""
           aria-expanded={expanded}
           aria-controls={listId}
           onClick={() => {

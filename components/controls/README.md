@@ -45,7 +45,11 @@ put it inside or next to a client CTA built with these controls.
 
 **Motion**: one full-motion experience, no reduced-motion branch. Every
 control has a complete stable state; a progress `clock` comes from
-`useSequenceClock` and pauses with the pause model.
+`useSequenceClock` and pauses with the pause model. Plates, ghosts, glass
+close / pager, chips, segmented options and the switch track squash and
+spring back when pressed (foundation's press jelly, RULES §6); rows keep a
+plain `:active` scale. Hosts must not add an `:active` scale or a `scale`
+transition to these.
 
 Client-adaptable: labels (`controls.config.tsx`), accent, tone, content.
 
@@ -102,8 +106,8 @@ Every control root carries `ev-controls`; pass `className` to extend.
 | `Badge` | `tone?: "accent" \| "neutral"` |
 | `UnderlineField` | `label`, `optional?`, `required?` (`*` + spoken), `error?`, `hint?`, `wide?`, `multiline?` (textarea), `ref`, input / textarea attributes |
 | `FieldGrid` | one column, two from a 560px-wide container; `wide` fields span |
-| `Switch` | `checked`, `onCheckedChange`, `label`, `description?`, `disabled?`, `id?`, `ref` — the whole row is the switch |
-| `SegmentedControl` | `options: { value, label }[]`, `value`, `onChange`, `label`, `block?`. Thumb = accent pulled a quarter toward the signal, plus a signal ring: reads on paper with near-white / yellow accents. |
+| `Switch` | `checked`, `onCheckedChange`, `label`, `description?`, `disabled?`, `id?`, `ref` — the whole row is the switch; track and knob take their checked colours as a liquid fill (`OrbFill`) while the knob slides |
+| `SegmentedControl` | `options: { value, label }[]`, `value`, `onChange`, `label`, `block?`. Each option has its own pill: picking one pours the accent (pulled a quarter toward the signal, plus a signal ring, so it reads on paper with near-white / yellow accents) and the checked ink into it, the previous one drains (`OrbFill`, RULES §1). |
 | `SegmentedProgress` | `count`, `current` (0-based), `label`, `labels?`, `isComplete?(i)`, `size?: "sm" 3px \| "lg" 6px shell`, `fill?` 0–1 (default 1: current cell full) or `clock?` (from `useSequenceClock`), `onSelect?(i)` + `canSelect?(i)` (buttons, 44px hit), `hrefFor?(i)` (selectable cells with a URL render `<a href>`, plain click → `onSelect`, modified click native; `docs/CRAWLABLE-MODALS.md` §4), `captions?` (hidden < 520px): `true` / `"all"` every label · `"complete"` a caption locks on when its cell completes · `(i, state) => ReactNode \| null` (`null` = empty slot, height kept) |
 | `rovingKeyDown(e, select(index, item), itemSelector = "[data-evc-item]")` | Roving-tabindex radiogroup keys for a custom group's `onKeyDown`: arrows (wrap) / Home / End move focus over enabled items and select; `index` counts all matched items. |
 | `ControlsProvider`, `useControlsCopy`, `buildControlsConfig(locale)` | labels |

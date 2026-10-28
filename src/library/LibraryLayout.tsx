@@ -1,5 +1,6 @@
-import { Suspense, useCallback, useMemo } from "react";
+import { Suspense, useCallback, useEffect, useMemo } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { bindPressJelly } from "../../components/foundation/src/jelly";
 import { Navbar, useNavbarLinks } from "../../components/navbar/src";
 import EvoviewLogo from "../../components/navbar/src/brand/EvoviewLogo";
 import { withRoute } from "../../components/navbar/src/navbar.config";
@@ -11,11 +12,17 @@ import "./trial-grade.css";
 
 export const EVOVIEW_URL = "https://evoview.be/";
 
+/* The showcase chrome's own pills take the press jelly (RULES §6); package
+   controls carry `data-ev-jelly` themselves. The category switch deforms as
+   one capsule. */
+const SHOWCASE_JELLY = ".lib-command, .lib-palette__row > button, .lib-float__toggle, .lib-screen__switch";
+
 export default function LibraryLayout() {
   const { locale, setLocale } = useLibraryLocale();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   useNavbarLinks(useCallback((to: string) => navigate(to), [navigate]));
+  useEffect(() => bindPressJelly(document, SHOWCASE_JELLY), []);
 
   const config = useMemo(() => {
     // A modal view's URL (`/components/dossier/table/`) is its page for the navbar.

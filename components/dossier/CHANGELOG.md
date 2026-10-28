@@ -1,5 +1,17 @@
 # dossier changelog
 
+## 1.5.0
+
+Requires `foundation` ≥ 1.9.0 and `controls` ≥ 1.5.0 (press jelly). No
+config changes.
+
+- Behaviour: mobile dock items and the toast action take the press jelly
+  (RULES §6); close / pager / plates through controls. Board tiles and the
+  strip's flat cells are unchanged.
+- CSS: `.evd-dock__item:active` keeps only its tint (the
+  `translate3d(0, 1px, 0) scale(.965)` and the springy `transform`
+  transition are gone); `.evd-toast__action` lost its `:active` translate.
+
 ## 1.4.0
 
 Crawlable views (`docs/CRAWLABLE-MODALS.md`): every view has a URL and its

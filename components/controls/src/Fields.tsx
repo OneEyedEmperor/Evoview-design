@@ -1,5 +1,5 @@
 import { useId, type InputHTMLAttributes, type KeyboardEvent, type ReactNode, type Ref, type TextareaHTMLAttributes } from "react";
-import { Check, cn, TextFill } from "../foundation";
+import { Check, cn, OrbFill, TextFill, usePressJelly } from "../foundation";
 import { rovingKeyDown } from "./Choices";
 import { useControlsCopy } from "./copy";
 
@@ -78,6 +78,7 @@ export type SwitchProps = {
 export function Switch({ checked, onCheckedChange, label, description, disabled, id, className, ref }: SwitchProps) {
   const autoId = useId();
   const base = id ?? `evc-switch-${autoId}`;
+  usePressJelly();
   return (
     <button
       ref={ref}
@@ -89,14 +90,19 @@ export function Switch({ checked, onCheckedChange, label, description, disabled,
       aria-describedby={description ? `${base}-desc` : undefined}
       disabled={disabled}
       className={cn("ev-controls evc-switch", className)}
+      data-ev-jelly=".evc-switch__track"
       onClick={() => onCheckedChange(!checked)}
     >
       <span className="evc-switch__text">
         <span id={`${base}-label`} className="evc-switch__label">{label}</span>
         {description && <span id={`${base}-desc`} className="evc-switch__desc">{description}</span>}
       </span>
+      {/* Track and knob take their checked colours as liquid (RULES §1); the knob still slides. */}
       <span className="evc-switch__track" aria-hidden="true">
-        <span className="evc-switch__thumb"><Check /></span>
+        <OrbFill on={checked} />
+        <span className="evc-switch__thumb">
+          <OrbFill on={checked} lit={<Check />} />
+        </span>
       </span>
     </button>
   );
@@ -115,19 +121,18 @@ export type SegmentedControlProps = {
   className?: string;
 };
 
-/** Segmented switch between states of one frame (Avant / Après): sliding accent thumb, arrow keys. */
+/** Segmented switch between states of one frame (Avant / Après): the picked option's pill fills with the accent, the previous one drains (RULES §1); arrow keys. */
 export function SegmentedControl({ options, value, onChange, label, block = false, className }: SegmentedControlProps) {
   const active = Math.max(0, options.findIndex((o) => o.value === value));
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => rovingKeyDown(e, (i) => onChange(options[i].value), "[role=radio]");
+  usePressJelly();
   return (
     <div
       role="radiogroup"
       aria-label={label}
       className={cn("ev-controls evc-seg", block && "evc-seg--block", className)}
-      style={{ ["--evc-seg-n" as string]: options.length, ["--evc-seg-i" as string]: active }}
       onKeyDown={onKeyDown}
     >
-      <span className="evc-seg__thumb" aria-hidden="true" />
       {options.map((o, i) => (
         <button
           key={o.value}
@@ -136,12 +141,17 @@ export function SegmentedControl({ options, value, onChange, label, block = fals
           aria-checked={i === active}
           tabIndex={i === active ? 0 : -1}
           className="ev-t-label evc-seg__option"
+          data-ev-jelly=""
           onClick={() => onChange(o.value)}
         >
-          {/* Hover ink rises in (RULES §1); the checked ink follows the thumb. */}
+          {/* Rest label (hover ink rises in); the pill pours the accent and the
+              checked ink over it when picked (RULES §1). */}
           <TextFill hoverWithin={i === active ? undefined : ".evc-seg__option"} hoverInk="var(--ev-fg)" withFocus={false}>
             {o.label}
           </TextFill>
+          <span className="evc-seg__pill" aria-hidden="true">
+            <OrbFill on={i === active} lit={o.label} />
+          </span>
         </button>
       ))}
     </div>

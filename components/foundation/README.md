@@ -41,7 +41,7 @@ length: tokens built on it are nesting-proof. `.ev-root` sets
 | Rails | `--ev-rail-reading` 70, `--ev-rail-wide` 85, `--ev-gutter` 20px / 2 / 3 / 4 at 640 / 1024 / 1280 |
 | Spacing bands | `--ev-gap-internal` .5 · `-neighbour` 1.25 · `-group` 2 · `-heading` 3 → 4 (≥ 768) |
 | Chapter rhythm | `--ev-chapter-standard` 5 → 7.5 · `-compact` 4 → 6 · `-cinematic-top` 6 → 9 · `-cinematic-bottom` 5 → 7.5 |
-| Motion | `--ev-dur-fast` 180 · `-control` 280 · `-reveal` 600 · `-cinematic` 900 ms · `--ev-stagger` 80ms · `--ev-ease` `(.2,.8,.2,1)` · `--ev-ease-cinematic` `(.23,1,.32,1)` (JS: `motion`) |
+| Motion | `--ev-dur-fast` 180 · `-control` 280 · `-reveal` 600 · `-cinematic` 900 ms · `--ev-stagger` 80ms · `--ev-ease` `(.2,.8,.2,1)` · `--ev-ease-cinematic` `(.23,1,.32,1)` (JS: `motion`) · press jelly `--ev-jelly-squash` 7px · `--ev-jelly-stretch` 10px |
 | Floors | `--ev-floor-body` 13px · `-label` 11px · `-readout` 9px |
 | Families (host-mapped) | `--ev-font-display` ← `--font-heading` (Overused Grotesk) · `--ev-font-body` ← `--font-body` (Montserrat) · `--ev-font-readout` ← `--font-readout` (Satoshi). Fonts ship in `fonts/` as "Evoview Grotesk / Montserrat / Satoshi". |
 | Accent (host-mapped) | `--ev-accent` ← `--primary` (#818cf8 fallback) · `--ev-accent-ink` ← `--primary-foreground` · `--ev-accent-deep` (62 % toward black on dark tones, translucent on light) · `--ev-accent-signal` (pulled toward the tone foreground: 88 % on dark, 62 % on light — strokes, thin fills, focus, accent text) |
@@ -69,6 +69,12 @@ cn(...classes): string
 pad(n, width = 2), formatIndex(current1Based, total) // "01 / 04"
 inkFor(color): "#101011" | "#fafafa"                 // contrast ink for --primary-foreground
 motion, breakpoints, mediaGate, EVOVIEW_URL
+
+// Press jelly (RULES §6)
+usePressJelly()                          // in any component rendering [data-ev-jelly] hosts
+bindPressJelly(root = document, selector = "[data-ev-jelly]"): () => void
+retainPressJelly(): () => void           // ref-counted document binding (what the hook uses)
+createJelly(el) → { to(0…1), snap, level, destroy }
 
 // Pause model
 suspendBackground(): () => void          // ref-counted; sets <html data-ev-suspended>
@@ -200,6 +206,20 @@ and other attributes; position it and give it the screen's box, the inner
 layer fills it. Web Animations, no CSS; renders statically on the server.
 Debounce the return to rest in the caller (~140 ms) so travel between two
 options never flashes it.
+Press jelly (`jelly.ts`, RULES §6) — every clickable pill / button squashes
+while pressed and springs back with one small overshoot. Mark the host
+`data-ev-jelly` (a selector value deforms that descendant instead, e.g.
+`data-ev-jelly=".evc-switch__track"`) and call `usePressJelly()` in the
+component (ref-counted: all callers share one delegated listener set on
+`document`). Pointer of any type (primary button) or Enter / Space;
+disabled / `aria-disabled` / `aria-busy` / `data-locked` hosts don't move;
+a tap is held ≥ 100 ms. Writes only the CSS `scale` property (composes with
+the host's `transform`), per frame while moving, cleared at rest. Host: no
+`:active` scale and no `scale` in its `transition`; not `display: inline`.
+Depth: `--ev-jelly-squash` (7px) / `--ev-jelly-stretch` (10px), capped at
+11 % / 7 % of the box; release rings ~7 %, 4 %, 3 %, 2 %, 1 % over ~1.5s. `bindPressJelly(root?, selector?)` binds a host site's
+own buttons by selector; `createJelly(el)` returns the controller
+(`to / snap / level / destroy`) to drive it from anything else.
 Icons: `ArrowRight`, `ArrowLeft`, `ArrowUpRight`, `Check`, `Close`,
 `Chevron dir`.
 

@@ -156,6 +156,8 @@ column; two consecutive portrait items (`ratio < 1`) share a row.
 
 ## Motion and pause model
 
+The media retry button takes foundation's press jelly (RULES §6).
+
 One full-motion experience, no `prefers-reduced-motion` branch. Every block
 has a complete stable state: content is only hidden after mount when
 `IntersectionObserver` exists, and each part reveals once when ≥ 12 % is

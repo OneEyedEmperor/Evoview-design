@@ -1,5 +1,17 @@
 # foundation changelog
 
+## 1.9.0
+
+No config changes. New primitive: the press jelly (RULES §6, the norm for
+every clickable pill / button). `jelly.ts` (engine `createJelly`, delegated
+binding `bindPressJelly(root?, selector?)`, ref-counted
+`retainPressJelly`) and the hook `usePressJelly()`; hosts opt in with
+`data-ev-jelly` (selector value: deform that descendant). Spring on the CSS
+`scale` property: press ω 30 ζ .6, release ω 15 ζ .14 (rings: ~7 %, 4 %,
+3 %, 2 %, 1 % over ~1.5s), depth capped at 11 % / 7 % of the box, tap held ≥ 100 ms, Enter /
+Space too, blocked on disabled / busy / locked. New tokens
+`--ev-jelly-squash` (7px) / `--ev-jelly-stretch` (10px).
+
 ## 1.8.0
 
 No config changes. New primitive `ChannelSwitch` (RULES §6, the norm for

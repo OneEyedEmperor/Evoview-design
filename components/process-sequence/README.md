@@ -204,7 +204,8 @@ whose server HTML carries the step's full copy.
 - **Motion policy**: no `prefers-reduced-motion` branch (architecture skill).
   Stable states instead: every step reachable by click (instrument, index,
   dossier), the dossier is static once revealed, `autoplay={false}` gives a
-  still board.
+  still board. Dossier buttons (controls, media retry) take foundation's
+  press jelly (RULES §6); index rows and cards don't.
 
 ## Verification
 
