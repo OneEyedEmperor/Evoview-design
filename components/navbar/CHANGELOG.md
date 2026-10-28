@@ -1,8 +1,10 @@
 # navbar changelog
 
-## Unreleased
+## 2.8.0
 
-Performance; no visual change. No config changes.
+Requires `foundation` ≥ 1.9.0 (press jelly). No config changes.
+
+Performance (shipped in the 2.8.0 commit; no visual change):
 
 - Fix: the live deck pill's REC dot blinked inside the folded deck
   (`opacity: 0` pill). An opacity loop with no visible box can't run on the
@@ -31,9 +33,7 @@ Performance; no visual change. No config changes.
 - The desktop finder's scroll dismissal returns early when there is nothing
   to close.
 
-## 2.8.0
-
-Requires `foundation` ≥ 1.9.0 (press jelly). No config changes.
+Press jelly:
 
 - Behaviour: the finder trigger (Menu pill), deck pills (desktop and mobile)
   and the tray CTA take the press jelly (RULES §6). Tray rows and cover

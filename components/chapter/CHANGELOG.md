@@ -1,6 +1,20 @@
 # chapter changelog
 
-## Unreleased
+## 1.4.0
+
+No config changes.
+
+- **API (additive):** `ChapterStory` takes `still?: boolean` (default false):
+  clips render as their posters and the lanes hold their starting phase (no
+  drift, no scroll coupling, no video). The showcase story scene passes it
+  to keep the library page cheap; client sites keep the default.
+
+## 1.3.0
+
+Requires `foundation` ≥ 1.9.0 (press jelly). Config change for
+`ChapterStory` media that set `sizes` (see below); otherwise none. The
+Tchin refine pass (phase 3) and showcase notes below were committed before
+the press-jelly bump and shipped in the 1.3.0 tree.
 
 - Showcase only (`/layouts/chapter`, not installed): every scene is caption →
   desk → component on the component's own ground (shared `Scene` /
@@ -69,12 +83,6 @@
   carries the dummy client's eye (`EveilMark`) at the rail's right edge, on
   the title's cap line (0.7em, white 30 % / ink 22 %, decorative). No package,
   config or API change.
-
-## 1.3.0
-
-Requires `foundation` ≥ 1.9.0 (press jelly). No config changes, no CSS
-changes.
-
 - Behaviour: footer social orbs and the mobile FAQ "more" button take the
   press jelly (RULES §6). FAQ question headers and text links are unchanged.
 

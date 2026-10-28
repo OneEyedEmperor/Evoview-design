@@ -43,6 +43,8 @@ export type ChapterStoryProps = {
   headingVariant?: "standard" | "feature";
   level?: 2 | 3;
   className?: string;
+  /** Frozen lanes: clips show their poster, nothing drifts or plays. For pages that stack many demos. */
+  still?: boolean;
 };
 
 type Axis = "x" | "y";
@@ -127,12 +129,20 @@ export function ChapterStory({
   headingVariant = "feature",
   level = 2,
   className,
+  still = false,
 }: ChapterStoryProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const columns = useMediaQuery("(min-width: 1024px)", true);
   const { axis, groups } = plan(layout, density, columns);
   const laneCount = groups.reduce((n, g) => n + g.lanes.length, 0);
-  const lanes = useMemo(() => deal(content.media, laneCount), [content.media, laneCount]);
+  const media = useMemo(
+    () =>
+      still
+        ? content.media.map((m): ChapterStoryMedia => (m.kind === "video" ? { kind: "image", src: m.poster, srcSet: m.posterSrcSet, ratio: m.ratio } : m))
+        : content.media,
+    [content.media, still],
+  );
+  const lanes = useMemo(() => deal(media, laneCount), [media, laneCount]);
 
   const { active: revealed } = useInViewPause(rootRef, { once: true, threshold: 0.15 });
   /* Stills and posters are fetched only once the chapter comes within 400px. */
@@ -142,8 +152,8 @@ export function ChapterStory({
   const [box, setBox] = useState({ x: 0, y: 0 });
   const onBox = useCallback((dim: Axis, px: number) => setBox((b) => (px > b[dim] ? { ...b, [dim]: px } : b)), []);
   const [latched, setLatched] = useState(false);
-  const picks = usePicks(content.media, axis, box[axis], latched);
-  const stills = useMemo(() => (picks ? content.media.map((m) => picks.get(m)) : []), [content.media, picks]);
+  const picks = usePicks(media, axis, box[axis], latched);
+  const stills = useMemo(() => (picks ? media.map((m) => picks.get(m)) : []), [media, picks]);
   const gate = useMediaReady(near && !!picks, stills);
   const ready = revealed && (gate.ready || gate.failed);
   useEffect(() => {
@@ -219,6 +229,7 @@ export function ChapterStory({
           shown={shown}
           clipUrls={clipUrls}
           frameRef={rootRef}
+          still={still}
           onBox={onBox}
           onWant={onWant}
         />
@@ -273,10 +284,12 @@ function Mosaic({
   shown,
   clipUrls,
   frameRef,
+  still,
   onBox,
   onWant,
 }: {
   axis: Axis;
+  still: boolean;
   groups: Group[];
   lanes: LanePool[];
   /** File per picture, once the chapter is near (null: no fetch yet). */
@@ -304,9 +317,10 @@ function Mosaic({
     };
   }, [axis, count, frameRef, onBox, onWant]);
 
+  // Still: the lanes keep their paused animation at its starting phase, a frozen frame with no per-frame cost.
   useEffect(() => {
-    controller.current?.setActive(active && shown);
-  }, [active, shown]);
+    controller.current?.setActive(active && shown && !still);
+  }, [active, shown, still]);
 
   // A new src resets the element to paused: re-pick the playing clip.
   useEffect(() => controller.current?.sync(), [clipUrls]);

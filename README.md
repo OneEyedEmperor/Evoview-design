@@ -14,16 +14,16 @@ installs `foundation` (and `controls` where used) first.
 
 | Pill | Package | Version |
 | --- | --- | --- |
-| Layouts | [chapter](components/chapter/README.md) | 1.2.0 |
+| Layouts | [chapter](components/chapter/README.md) | 1.4.0 |
 | Layouts | [card](components/card/README.md) | 2.2.0 |
-| Layouts | [process-sequence](components/process-sequence/README.md) | 1.3.1 |
-| Layouts | [story-blocks](components/story-blocks/README.md) | 2.2.0 |
-| Components | [reservation](components/reservation/README.md) | 2.10.0 |
-| Components | [dossier](components/dossier/README.md) | 1.4.0 |
-| Components | [selector-stage](components/selector-stage/README.md) | 1.4.0 |
-| Components | [controls](components/controls/README.md) | 1.3.0 |
-| Navbar | [navbar](components/navbar/README.md) | 2.7.0 |
-| — | [foundation](components/foundation/README.md) (base, not showcased) | 1.8.0 |
+| Layouts | [process-sequence](components/process-sequence/README.md) | 1.5.0 |
+| Layouts | [story-blocks](components/story-blocks/README.md) | 2.4.0 |
+| Components | [reservation](components/reservation/README.md) | 2.11.0 |
+| Components | [dossier](components/dossier/README.md) | 1.5.0 |
+| Components | [selector-stage](components/selector-stage/README.md) | 1.5.0 |
+| Components | [controls](components/controls/README.md) | 1.5.0 |
+| Navbar | [navbar](components/navbar/README.md) | 2.8.0 |
+| — | [foundation](components/foundation/README.md) (base, not showcased) | 1.9.0 |
 
 Design rules: [docs/RULES.md](docs/RULES.md).
 

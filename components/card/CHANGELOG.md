@@ -1,6 +1,6 @@
 # card changelog
 
-## Unreleased
+## 2.2.0 — showcase follow-up (no package change, no version bump)
 
 - Showcase only (`/layouts/card`, not installed): the deck and sequence
   desks drop their sentence (hint, per-option lines, the "Ouvert : …"

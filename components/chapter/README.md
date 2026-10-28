@@ -126,7 +126,7 @@ const config = buildChapterConfig(locale);
 | `ChapterFaq` | `config: ChapterFaqConfig`, `layout?: "media" \| "split" \| "stacked"` (media if `config.media`, else split), `id?` ("faq"), `tone?` (dark), `rhythm?`, `defaultOpen?: number \| null` (null), `level?: 2 \| 3` |
 | `chapterFaqJsonLd(config)` | FAQPage object from `config.items` (for a `<head>` script when `structuredData` is off) |
 | `ChapterContact` | `config: ChapterContactConfig`, `layout?: "columns" \| "split" \| "band"` (columns), `hours?: "today" \| "week"` (today), `id?`, `tone?` (dark), `rhythm?`, `level?: 2 \| 3` (2), `className?` — see [ChapterContact](#chaptercontact) |
-| `ChapterStory` | `content: ChapterStoryContent`, `layout?: "start" \| "center" \| "end" \| "above"` (start), `density?: "ample" \| "dense"` (dense), `id?`, `tone?` (dark), `rhythm?`, `accent?`, `headingVariant?` (feature), `level?`, `className?` — see [ChapterStory](#chapterstory) |
+| `ChapterStory` | `content: ChapterStoryContent`, `layout?: "start" \| "center" \| "end" \| "above"` (start), `density?: "ample" \| "dense"` (dense), `id?`, `tone?` (dark), `rhythm?`, `accent?`, `headingVariant?` (feature), `level?`, `className?`, `still?` (false: frozen lanes, posters instead of clips) — see [ChapterStory](#chapterstory) |
 | `chapterNavSections(chapters, accent)` | `[{ id, accent? }]` → navbar `sections` `[{ id, color }]` |
 
 Rules: one `ChapterHeading` per `Chapter` (it becomes the section's

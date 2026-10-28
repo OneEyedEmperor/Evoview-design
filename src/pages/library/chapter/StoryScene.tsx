@@ -68,8 +68,9 @@ export default function StoryScene() {
         </SceneDesk>
       }
     >
-      {/* The scene caption is the h2: the story heading nests under it. */}
-      <ChapterStory id="chs-story" content={content} layout={layout} density={density} tone="dark" rhythm="compact" level={3} />
+      {/* The scene caption is the h2: the story heading nests under it.
+          `still`: the library page stacks many demos, so the lanes stay frozen here. */}
+      <ChapterStory id="chs-story" content={content} layout={layout} density={density} tone="dark" rhythm="compact" level={3} still />
     </Scene>
   );
 }
