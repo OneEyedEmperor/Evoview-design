@@ -19,6 +19,7 @@ import {
   followRouteLink,
   HeldCopy,
   inkFor,
+  lockScroll,
   pad,
   preloadMedia,
   RouteLink,
@@ -234,15 +235,10 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, closing, o
       }
       node = node.parentElement;
     }
-    const html = document.documentElement;
-    const scrollbar = window.innerWidth - html.clientWidth;
-    const previous = { overflow: html.style.overflow, padding: document.body.style.paddingRight };
-    html.style.overflow = "hidden";
-    if (scrollbar > 0) document.body.style.paddingRight = `${scrollbar}px`;
+    const unlock = lockScroll();
     return () => {
       for (const [el, inert] of touched) el.inert = inert;
-      html.style.overflow = previous.overflow;
-      document.body.style.paddingRight = previous.padding;
+      unlock();
       // After the commit: React restores the focus it saw before the commit (the close button) once mutations are done.
       if (launcher) queueMicrotask(() => launcher.isConnected && launcher.focus({ preventScroll: true }));
     };

@@ -69,7 +69,7 @@ export type ProcessSequenceProps = Partial<RouteViewProps<ProcessSequenceView>> 
    server (`useMediaQuery("(min-width: 1024px)", true)`); a phone swaps
    right after hydration, while the view is still entering.
 3. **Hydration-only markup.** `inert`, `aria-hidden` on content, loaders,
-   scroll lock, the page inert walk, focus moves: only once `useHydrated()`
+   scroll lock (foundation `useScrollLock`), the page inert walk, focus moves: only once `useHydrated()`
    is true or in effects. Server HTML carries none of them.
 4. **Copy mounted, media gated.** The open view's copy renders from the
    first render and stays mounted; only media wait (`useMediaReady` is never

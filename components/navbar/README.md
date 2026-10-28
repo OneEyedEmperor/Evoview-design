@@ -53,7 +53,9 @@ is a library change, never a client edit (RULES §13):
   - Mouse click never closes a hover-opened menu; hover never reopens a menu
     a click just closed until the pointer leaves; `keepOpen` clicks hold off
     the scroll-dismiss for 500 ms.
-  - Scroll lock + focus trap + Escape + focus restore on mobile; Escape/
+  - Scroll lock (foundation `useScrollLock`, shared with the modals' locks)
+    + focus trap + Escape + focus restore on mobile; the fixed bar's `right`
+    follows `--ev-scroll-lock-gap` under any lock; Escape/
     blur/scroll/resize dismissal on desktop; arrow-key navigation in deck
     and tray.
   - Reduced motion resolves to the same end states with no slide or stagger.

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent } from "react";
 import { usePressJelly } from "../foundation/usePressJelly";
+import { useScrollLock } from "../foundation/scrollLock";
 import type { NavDeckEntry, NavbarConfig } from "./types";
 import { ensureTray, preloadTrays } from "./useNavTrays";
 import { CurrentPageSlot, DeckLabel, DeckMark, deckLabel, marksLive, ReticleMark, TrayContent, useCurrentPage, useFolded, useNavActions } from "./finderShared";
@@ -109,20 +110,10 @@ export default function NavFinderMobile({ config, activeKey, current, accent }: 
   }, [close, open]);
 
   // Scroll lock, focus trap, Escape, focus restore: the dialog contract.
+  useScrollLock(open);
   useEffect(() => {
     if (!open) return;
     restoreFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-
-    const scrollY = window.scrollY;
-    const previousBodyStyle = document.body.getAttribute("style");
-    Object.assign(document.body.style, {
-      position: "fixed",
-      top: `-${scrollY}px`,
-      left: "0",
-      right: "0",
-      width: "100%",
-      overflow: "hidden",
-    });
 
     const frame = window.requestAnimationFrame(() => {
       navRef.current?.querySelector<HTMLElement>("[data-deck-pill]")?.focus({ preventScroll: true });
@@ -153,10 +144,6 @@ export default function NavFinderMobile({ config, activeKey, current, accent }: 
     return () => {
       window.cancelAnimationFrame(frame);
       document.removeEventListener("keydown", handleKeyDown);
-      if (previousBodyStyle === null) document.body.removeAttribute("style");
-      else document.body.setAttribute("style", previousBodyStyle);
-      // "auto" would defer to a page-level `scroll-behavior: smooth`.
-      window.scrollTo({ top: scrollY, behavior: "instant" });
       restoreFocusRef.current?.focus({ preventScroll: true });
       restoreFocusRef.current = null;
     };

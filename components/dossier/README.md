@@ -207,9 +207,13 @@ to cover this and the `process-sequence` step dossier.
 ## Modal contract
 
 - Renders in place as a fixed layer (inherits the host `--primary`); every
-  sibling up the ancestor chain is `inert` while open, page scroll locked,
-  `useSuspendBackground` pauses the page's loops and clocks; the dialog carries
-  `data-ev-modal` so its own loops keep running.
+  sibling up the ancestor chain is `inert` while open, page scroll locked
+  (foundation `lockScroll`, shared with every other lock; released when the
+  exit starts), `useSuspendBackground` pauses the page's loops and clocks; the
+  dialog carries `data-ev-modal` so its own loops keep running. Fixed host
+  chrome anchored right adds `var(--ev-scroll-lock-gap, 0px)` to its `right`
+  so a classic scrollbar's removal doesn't move it; host modals lock through
+  foundation too, never their own `overflow` write.
 - **Exemption**: elements carrying `data-ev-keep-interactive` are skipped by
   the inert walk (stay clickable; stack them above `--dossier-z`). They are
   outside the Tab trap, so pointer only while open. For host dev/showcase

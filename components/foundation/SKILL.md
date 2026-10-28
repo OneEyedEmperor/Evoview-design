@@ -1,6 +1,6 @@
 ---
 name: evoview-foundation
-description: Evoview library foundation — tokens (--ev-scale, type voices, radius roles, rails, rhythm, motion, tones, accent mapping), pause-model hooks (useInViewPause, useSequenceClock, useMediaReady, suspendBackground), crawlable-modal routing (useRouteHistory, RouteLink, HeldCopy, useHydrated), the channel switch for hover-preview screens (ChannelSwitch) and the approved Evoview attribution mark. Use when building or adapting any Evoview library package, installing one into a client, server-rendering / prerendering one, building a screen that previews the hovered option, or when asked about Evoview tokens, scale, tones or the pause model. Triggers on "evoview foundation", "ev-scale", "evoview tokens", "pause model", "useSequenceClock", "useMediaReady", "crawlable modal", "useRouteHistory", "channel switch", "hover preview glitch".
+description: Evoview library foundation — tokens (--ev-scale, type voices, radius roles, rails, rhythm, motion, tones, accent mapping), pause-model hooks (useInViewPause, useSequenceClock, useMediaReady, suspendBackground), the shared page scroll lock (lockScroll, useScrollLock), crawlable-modal routing (useRouteHistory, RouteLink, HeldCopy, useHydrated), the channel switch for hover-preview screens (ChannelSwitch) and the approved Evoview attribution mark. Use when building or adapting any Evoview library package, installing one into a client, server-rendering / prerendering one, building a screen that previews the hovered option, or when asked about Evoview tokens, scale, tones or the pause model. Triggers on "evoview foundation", "ev-scale", "evoview tokens", "pause model", "useSequenceClock", "useMediaReady", "crawlable modal", "useRouteHistory", "scroll lock", "channel switch", "hover preview glitch".
 ---
 
 # Evoview foundation
@@ -40,7 +40,10 @@ library's `STRATEGY.md` + `docs/RULES.md` first.
   `<name>Routes: ModalRoutes`, take `RouteViewProps` (`view`, `onNavigate`,
   `hrefFor`, `history`), keep history with `useRouteHistory`, navigate with
   `RouteLink`, mount copy at once inside `<HeldCopy live={gate.ready}>`,
-  gate `inert` / `aria-hidden` / loaders on `useHydrated()`; then add it to
+  gate `inert` / `aria-hidden` / loaders on `useHydrated()`, lock page
+  scroll with `useScrollLock` / `lockScroll` (never an own `overflow`
+  write; fixed chrome anchored right adds `var(--ev-scroll-lock-gap, 0px)`
+  to its `right`); then add it to
   `PACKAGES` in `scripts/verify-ssr.mjs` and keep `pnpm verify:ssr` green.
 
 ## Rules

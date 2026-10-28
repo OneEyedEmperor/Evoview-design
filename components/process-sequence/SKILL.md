@@ -69,6 +69,9 @@ choreography + the approved mark in the dossier stage). Keep both.
 - Never mount the dossier's copy behind its media gate or re-add `inert`,
   loaders or video sources to server HTML; the dossier heading stays the
   view's only h1.
+- The dossier locks page scroll through foundation's shared lock: fixed host
+  chrome anchored right adds `var(--ev-scroll-lock-gap, 0px)` to its
+  `right`, host modals lock with `useScrollLock`, never their own `overflow`.
 - Never fork for a client: fixes go into the library (`VERSION`,
   `CHANGELOG.md`), clients upgrade through `sync.sh`; a client-side edit is
   a recorded patch (`.evoview/patches/`), a candidate for the library.

@@ -52,7 +52,9 @@ tokens and the pause model.
    routeHrefs(base, dossierRoutes.key)`; launchers are `<a href={hrefFor(v)}>`
    with `followRouteLink`. It preloads the board media on idle (`preload`,
    default on). If the host pins chrome bottom-right, set
-   `--dossier-reserve-bottom`.
+   `--dossier-reserve-bottom`. Fixed host chrome anchored right adds
+   `var(--ev-scroll-lock-gap, 0px)` to its `right`; a host modal locks scroll
+   with foundation `useScrollLock`, never its own `overflow` write.
 6. Crawlable views (README "Crawlable views", contract
    `docs/CRAWLABLE-MODALS.md` §7): a splat route per page and locale so every
    view URL renders the same page; the page title becomes h2 while a view is

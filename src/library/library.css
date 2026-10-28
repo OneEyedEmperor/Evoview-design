@@ -1189,7 +1189,7 @@ a.lib-hero__lockup:focus-visible { outline: 2px solid var(--lib-signal); outline
   --lib-float-edge: max(16px, env(safe-area-inset-bottom));
   position: fixed;
   z-index: 1100;
-  right: max(16px, env(safe-area-inset-right));
+  right: calc(max(16px, env(safe-area-inset-right)) + var(--ev-scroll-lock-gap, 0px));
   bottom: var(--lib-float-edge);
   display: flex;
   align-items: flex-end;
@@ -1230,7 +1230,7 @@ a.lib-hero__lockup:focus-visible { outline: 2px solid var(--lib-signal); outline
 }
 .lib-float__toggle:focus-visible { outline: 2px solid var(--lib-ring); outline-offset: -2px; }
 @media (min-width: 768px) {
-  .lib-float { right: max(24px, env(safe-area-inset-right)); bottom: max(24px, env(safe-area-inset-bottom)); border-radius: 999px; }
+  .lib-float { right: calc(max(24px, env(safe-area-inset-right)) + var(--ev-scroll-lock-gap, 0px)); bottom: max(24px, env(safe-area-inset-bottom)); border-radius: 999px; }
   .lib-float__panel, .lib-float[data-open] .lib-float__panel { display: block; }
   .lib-float__toggle { display: none; }
   .lib-float .lib-palette__swatch { width: 36px; height: 36px; }

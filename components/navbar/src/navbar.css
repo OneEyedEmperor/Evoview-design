@@ -63,6 +63,9 @@
   .ev-navbar { --nav-max-width: calc(100% - 1.5rem); }
 }
 
+/* Keeps the bar's centre while a page scroll lock hides a classic scrollbar (foundation `scrollLock`). */
+.ev-navbar { right: var(--ev-scroll-lock-gap, 0px); }
+
 .nav-rail { max-width: var(--nav-max-width); }
 
 /* Breakpoint between the two finders. Must match DESKTOP_QUERY in

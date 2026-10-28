@@ -1,5 +1,17 @@
 # process-sequence changelog
 
+## 1.7.0
+
+Requires `foundation` ≥ 1.10.0 (`useScrollLock`). No config changes, no CSS
+changes.
+
+- Fix: the step dossier's page scroll lock is applied before paint (was a
+  post-paint effect) and keeps a classic scrollbar's width, so the page no
+  longer reflows on open (centred content shifted right; near the page bottom
+  the reflow also moved the page vertically). Through foundation's shared lock: ref-counted
+  with every other foundation lock, `--ev-scroll-lock-gap` set while locked.
+  Still released on unmount, after the exit. Suspension and focus unchanged.
+
 ## 1.6.0
 
 - Sync (`docs/SYNC.md`): `evoview.json` (`requires` foundation `>=1.9.0 <2`,

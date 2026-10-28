@@ -1,5 +1,26 @@
 # foundation changelog
 
+## 1.10.0
+
+No config changes. Additive API: the page scroll lock (from the evoview
+site's `src/lib/scrollLock.ts`).
+
+- `lockScroll()`: ref-counted, returns an idempotent release; nested modals
+  release in any order, the page stays locked until the last release.
+  Hides the overflow of the element that reaches the viewport (body, or
+  `<html>` when the host gives it an overflow, so sticky elements keep their
+  scroller), keeps a classic scrollbar's width as body padding added to the
+  host's own (none under `scrollbar-gutter: stable`) and sets
+  `--ev-scroll-lock-gap` (`SCROLL_LOCK_GAP`) on `<html>` while locked, for
+  fixed chrome anchored right. The release keeps the scroll offset: Chrome
+  first lays the page out without the returning scrollbar, which clamped the
+  offset near the bottom of a page that is shorter at full width (a jump of
+  that difference on close; the site's lock had it too).
+- `useScrollLock(active)`: the lock in a layout effect (before paint;
+  nothing on the server).
+- Exported from the index and importable alone as `../foundation/scrollLock`
+  (no CSS).
+
 ## 1.9.1
 
 - Sync (`docs/SYNC.md`): `evoview.json` (no `requires`, no client-owned

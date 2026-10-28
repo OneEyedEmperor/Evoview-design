@@ -13,6 +13,7 @@ import {
   useMediaQuery,
   useMediaReady,
   usePressJelly,
+  useScrollLock,
   useSuspendBackground,
 } from "../foundation";
 import { isVideo } from "./media";
@@ -54,7 +55,7 @@ type KeyLike = Pick<KeyboardEvent, "key" | "shiftKey" | "altKey" | "ctrlKey" | "
  * prev / next). Phone: full sheet with sticky header and footer. The step's
  * copy is mounted from the first render (server HTML included) and held until
  * its media is decoded, then its entrance plays. ←/→ / Esc, focus contained,
- * page suspended while open.
+ * page suspended and scroll-locked while open.
  */
 export function StepDossier({ steps, index, onIndexChange, onClose, copy, cta, attribution, tone = "dark", hrefFor, canOpen, onUp, closing: closingProp }: StepDossierProps) {
   const n = steps.length;
@@ -66,6 +67,7 @@ export function StepDossier({ steps, index, onIndexChange, onClose, copy, cta, a
   const wide = useMediaQuery(mq, true);
   const hydrated = useHydrated();
   useSuspendBackground(true);
+  useScrollLock(true);
 
   const target = steps[index];
   const media = useMediaReady(true, [isVideo(target.media) ? { src: target.media.src, type: "video" } : target.media.src]);
@@ -91,16 +93,6 @@ export function StepDossier({ steps, index, onIndexChange, onClose, copy, cta, a
 
   // The outgoing copy stays live through its out-motion; the incoming copy waits for its media.
   const live = shown !== index || media.ready;
-
-  // Scroll lock.
-  useEffect(() => {
-    const html = document.documentElement;
-    const prev = html.style.overflow;
-    html.style.overflow = "hidden";
-    return () => {
-      html.style.overflow = prev;
-    };
-  }, []);
 
   // Close button focus once the sheet is up, retried over its first frames; never steals focus
   // already in the dialog. A step swap that drops focus with the outgoing controls lands here too.

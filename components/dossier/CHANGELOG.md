@@ -1,5 +1,21 @@
 # dossier changelog
 
+## 1.7.0
+
+Requires `foundation` ≥ 1.10.0 (`lockScroll`). No config changes, no CSS
+changes.
+
+- Behaviour: the page scroll lock goes through foundation's shared
+  `lockScroll()`, same timing (before paint, released when the exit
+  starts). Changes: ref-counted with every other foundation lock (a modal or
+  the mobile navbar closing out of order no longer unlocks the page under
+  another one); the overflow moves from `<html>` to the element that reaches
+  the viewport (body unless the host styles `<html>` overflow); the
+  scrollbar compensation adds to the host's body padding instead of
+  replacing it; `--ev-scroll-lock-gap` is set while locked; closing near the
+  bottom of a page no longer jumps it by a few pixels (Chrome clamp).
+  Inert walk, suspension and focus unchanged.
+
 ## 1.6.0
 
 - Sync (`docs/SYNC.md`): `evoview.json` (`requires` foundation `>=1.9.0 <2`,

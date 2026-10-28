@@ -16,8 +16,10 @@ Reference code (read before writing anything):
   another animation through the controller)
 - Uses: `components/controls/src/{Commands,Choices,Progress,Fields}.tsx`,
   `components/reservation/src/Reservation.tsx`, `components/dossier/src/*`
-- Site copy: `/root/.vibehub/projects/evoview/src/components/liquid/`
-  (verbatim port; keep in step with foundation)
+- Site: `/root/.vibehub/projects/evoview` installs foundation with
+  `sync.sh` (`src/components/foundation/`, never edited in place) and
+  imports it per module (`…/foundation/OrbFill`), not through `index.ts`, so
+  `foundation.css` never ships there
 - Tools: `animations/tools/scrollbench.js`, `animations/tools/hover-mq.js`
 
 Read `components/foundation/README.md` (motion policy, pause model) and
@@ -164,9 +166,9 @@ on 58 site routes) and hydration matches.
    each behaviour and CSS change, update README + SKILL rules.
 7. Verify: production preview at 1440 and 390, freeze mid-animation,
    reversal, disabled / busy states, SSR output, scrollbench vs baseline.
-8. Port to the site as a verbatim copy (`src/components/<name>/`), then
-   delegate the rollout by file area with a written brief (see the liquid
-   rollout brief in `~/.vibehub/documents/briefs/`).
+8. Ship it to the site by upgrading its foundation with `sync.sh` (never a
+   copy), then delegate the rollout by file area with a written brief (see
+   the liquid rollout brief in `~/.vibehub/documents/briefs/`).
 
 ## 6. Built after the liquid fill
 

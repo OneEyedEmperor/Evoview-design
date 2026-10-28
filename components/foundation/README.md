@@ -92,6 +92,11 @@ useInViewPause(ref, { rootMargin?, threshold?, ignoreSuspension?, enabled?, once
 useMediaQuery(query, serverValue = false): boolean  // live matchMedia; serverValue on the server and while hydrating
 useHydrated(): boolean                   // false on the server and while hydrating
 
+// Page scroll lock (modals)
+lockScroll(): () => void                 // ref-counted: nested locks release in any order
+useScrollLock(active: boolean)           // for modals; layout effect (before paint), nothing on the server
+SCROLL_LOCK_GAP                          // "--ev-scroll-lock-gap"
+
 // Timed sequences: only enabled time counts, remainder carried, new key = 0
 useSequenceClock(key, enabled, durationMs, onElapsed)
   → { key, duration, running, elapsed, done, progress(): 0–1, reset() }
@@ -117,6 +122,17 @@ whose sources were preloaded is `ready` on its first render — no grace gap,
 no loader. Call it on idle or on intent (hover / focus of a launcher) for
 views the visitor is likely to open; it cannot be cancelled, so do not feed
 it large videos speculatively.
+
+Scroll lock: every modal / sheet that locks the page goes through
+`lockScroll` / `useScrollLock`, never its own `overflow` write (a second
+mechanism breaks the ref count). It hides the overflow of the element that
+reaches the viewport (body, or `<html>` when the host gives it an overflow),
+keeps a classic scrollbar's width as body padding added to the host's own
+(none under `scrollbar-gutter: stable`) and sets `--ev-scroll-lock-gap` on
+`<html>` while locked: fixed chrome anchored right adds it
+(`right: var(--ev-scroll-lock-gap, 0px)`). The release keeps the scroll
+offset (no clamp near the page bottom). Imports no CSS, so
+`../foundation/scrollLock` can be used without `foundation.css`.
 
 ## Server rendering and crawlable modals
 

@@ -1,5 +1,21 @@
 # navbar changelog
 
+## 2.10.0
+
+Requires `foundation` ≥ 1.10.0 (`useScrollLock`). No config changes.
+
+- Behaviour: the mobile finder locks page scroll through foundation's shared
+  `useScrollLock` (before paint, ref-counted) instead of pinning `<body>`
+  with `position: fixed` and scrolling back on close. The page keeps its
+  offset natively (no `scrollTo` on close), a classic scrollbar's width is
+  kept (narrow desktop windows), and a lock taken while the finder is open
+  (a modal opened from a tray link) survives its close; the old cleanup
+  restored the whole body `style` attribute. Focus trap, Escape and focus
+  restore unchanged.
+- CSS: `.ev-navbar { right: var(--ev-scroll-lock-gap, 0px) }`: the fixed bar
+  keeps its centre while any foundation lock (dossier, step dossier, mobile
+  finder) hides a classic scrollbar. Unlocked: unchanged.
+
 ## 2.9.0
 
 - Sync (`docs/SYNC.md`): `evoview.json` (`requires` foundation `>=1.9.0 <2`;

@@ -206,7 +206,9 @@ whose server HTML carries the step's full copy.
   wipe, cells, intro, items (+40 ms each), footer stagger; step change = 180 ms
   out, hold until the next media is decoded, replay. ←/→, Esc (one level up =
   close), Tab contained, focus on close once the sheet is up, returns to the
-  launching card, page scroll locked, background suspended
+  launching card, page scroll locked before paint (foundation
+  `useScrollLock`: shared, scrollbar width kept, fixed host chrome reads
+  `--ev-scroll-lock-gap`), background suspended
   (`useSuspendBackground`); Back closes, Forward reopens. It sets no `inert` on the page, so host
   chrome marked `data-ev-keep-interactive` (see `dossier` README) stays
   clickable when stacked above its z-index 1000; it is outside the Tab trap
