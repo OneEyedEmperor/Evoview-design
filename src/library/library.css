@@ -941,6 +941,8 @@ a.lib-hero__lockup:focus-visible { outline: 2px solid var(--lib-signal); outline
 /* Showcase pages: the page navigation takes the lockup's place, over the
    reel (LibraryHero useDeckPull). */
 .lib-hero__lockup[data-ghost] { visibility: hidden; }
+/* Reel and deck sit 30px lower than the index's reel (Félix-tuned). */
+.lib-showcase > .lib-hero .lib-hero__stage { margin-top: 30px; }
 .lib-hero__deck { --lib-hero-deck-lift: 44px; position: relative; z-index: 1; margin-top: calc(-1 * var(--lib-hero-pull, 0px) - var(--lib-hero-deck-lift)); }
 @media (min-width: 768px) { .lib-hero__deck { --lib-hero-deck-lift: 56px; } }
 /* A first demo on the frame tone starts one heading band under the hero. */

@@ -83,7 +83,8 @@ Every library page opens on the index hero (`LibraryHero`, `src/library/LibraryH
 the method reel. The index renders it with the Evoview lockup (its h1; LIBRARY
 takes the picked accent, Evoview indigo while on the page default), bars and
 palette. `ShowcasePage` passes its page navigation as `deck`: the lockup is
-held invisible (stage and reel keep the index's exact geometry) and the deck
+held invisible (stage and reel keep the index's geometry, offset 30 px
+lower) and the deck
 is pulled up over the stage to open 44 px (phones) / 56 px (≥ 768) above the
 lockup row's top (`useDeckPull`); one heading band separates the hero from
 the first demo.
