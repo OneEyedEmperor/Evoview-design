@@ -248,13 +248,20 @@ async function verifyFoundation() {
     const desktop = f.useMediaQuery("(min-width: 1024px)", true);
     const phone = f.useMediaQuery("(max-width: 767px)");
     const gate = f.useMediaReady(true, ["/probe.webp", "/probe.mp4"]);
+    const element = f.useMediaReady(true, ["/probe-still.webp"], { element: { video: null, src: "/probe-loop.mp4", buffer: "full" } });
     const pause = f.useInViewPause(ref);
     const suspended = f.useBackgroundSuspended();
+    const deferred = f.useBackgroundSuspendedDeferred();
     const clock = f.useSequenceClock("k", pause.active, 1000, noop);
     f.useSuspendBackground(true);
     return h(
       "div",
-      { ref, "data-probe": [hydrated, desktop, phone, gate.ready, gate.slow, pause.active, suspended, clock.running].map(Number).join("") },
+      {
+        ref,
+        "data-probe": [hydrated, desktop, phone, gate.ready, gate.slow, pause.active, suspended, clock.running].map(Number).join(""),
+        "data-element": [element.ready, element.slow, element.failed, element.wasSlow, element.src !== undefined, element.total === 2, deferred].map(Number).join(""),
+      },
+      h("video", { "data-gated": "", src: element.src }),
       h(f.HeldCopy, { live: gate.ready }, h(HeldVideo), h("p", null, "held copy")),
       h(f.RouteLink, { href: "/x/a/", onFollow: noop }, "link"),
       h(f.RouteLink, { onFollow: noop }, "button"),
@@ -276,7 +283,11 @@ async function verifyFoundation() {
   const probe = first.html.match(/data-probe="(\d+)"/)?.[1];
   // hydrated, desktop(serverValue true), phone(false), ready, slow, active, suspended, running
   check(probe === "01000000", pkg, "server-snapshot", "probe", `server values ${probe} ≠ 01000000 (hydrated, desktop, phone, ready, slow, inView, suspended, clock)`);
+  const element = first.html.match(/data-element="(\d+)"/)?.[1];
+  // ready, slow, failed, wasSlow, src, total(2), deferred suspension
+  check(element === "0000010", pkg, "server-snapshot", "element gate", `server values ${element} ≠ 0000010 (ready, slow, failed, wasSlow, src, total 2, deferred suspended)`);
   const { tags } = read(first.html);
+  check(tags.some((t) => t.name === "video" && "data-gated" in t.attrs && !("src" in t.attrs)), pkg, "held", "element gate", "a full-buffer player must render no src on the server");
   check(tags.some((t) => t.name === "div" && "data-ev-held" in t.attrs), pkg, "held", "HeldCopy", "server HTML must carry the held copy (data-ev-held)");
   check(tags.some((t) => t.name === "video" && !("src" in t.attrs) && t.attrs.poster), pkg, "held", "useHeldSrc", "held video must render a poster and no src");
   check(tags.some((t) => t.name === "a" && t.attrs.href === "/x/a/") && tags.some((t) => t.name === "button" && t.attrs.type === "button"), pkg, "links", "RouteLink", "RouteLink must render <a href> with an href, <button> without");

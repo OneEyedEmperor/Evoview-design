@@ -46,7 +46,7 @@ liquid fill as reference): `animations/SKILL.md` (skill
 
 | Component | Status | Skill |
 | --- | --- | --- |
-| `foundation` — tokens, scale, tones, type voices, pause-model hooks, attribution mark, step gauge, orb + text liquid fill, channel switch (hover-preview screens, RULES §6), press jelly (pills / buttons, RULES §6), shared page scroll lock, SSR + crawlable-modal routing | 1.10.0 | `evoview-foundation` |
+| `foundation` — tokens, scale, tones, type voices, pause-model hooks, attribution mark, step gauge, orb + text liquid fill, channel switch (hover-preview screens, RULES §6), press jelly (pills / buttons, RULES §6), shared page scroll lock, media gate (probe or mounted player), SSR + crawlable-modal routing | 1.11.0 | `evoview-foundation` |
 | `controls` — plate, ghost, glass close/pager, chips, rows, fields, switch, segmented control/progress, view links (`/components/controls`) | 1.6.0 | `evoview-controls` |
 | `chapter` — section shell, headings, tone cuts; story, FAQ and contact chapters; footer bar / panel with attribution (`/layouts/chapter`) | 1.5.0 | `evoview-chapter` |
 | `card` — media card in three compositions: scroll-scrubbed track, dealt category deck, timed video sequence (`/layouts/card`; was `card-track`) | 2.3.0 | `evoview-card` |

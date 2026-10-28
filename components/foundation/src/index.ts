@@ -7,6 +7,7 @@ export {
   isBackgroundSuspended,
   subscribeSuspension,
   useBackgroundSuspended,
+  useBackgroundSuspendedDeferred,
   useSuspendBackground,
 } from "./suspension";
 export { lockScroll, useScrollLock, SCROLL_LOCK_GAP } from "./scrollLock";
@@ -14,7 +15,17 @@ export { useInViewPause, type InViewPause, type InViewPauseOptions } from "./use
 export { useMediaQuery } from "./useMediaQuery";
 export { useHydrated } from "./hydration";
 export { useSequenceClock, sequenceFillStyle, type SequenceClock } from "./useSequenceClock";
-export { useMediaReady, preloadMedia, type MediaReady, type MediaReadyOptions, type MediaSource } from "./useMediaReady";
+export {
+  useMediaReady,
+  preloadMedia,
+  bufferMedia,
+  bufferedMedia,
+  type MediaReady,
+  type MediaReadyOptions,
+  type MediaSource,
+  type MediaElementGate,
+  type MediaElementReady,
+} from "./useMediaReady";
 export {
   useRouteHistory,
   routeHrefs,

@@ -33,7 +33,8 @@ library's `STRATEGY.md` + `docs/RULES.md` first.
   `../foundation`, author structure on `--ev-rem` tokens / `em` inside the
   root, use the type classes, gate every loop and clock with
   `useInViewPause` + `useSequenceClock`, gate media with `useMediaReady`
-  (warm likely views with `preloadMedia` on idle / intent), put
+  (warm likely views with `preloadMedia` on idle / intent; a player that
+  must reveal from frame zero is gated itself with `element`), put
   the one `<EvoviewMark>` in the header strip. Declare the floor in
   `evoview.json` `requires` (`"foundation": ">=x.y.z <2"`).
 - **Package with a modal**: follow `docs/CRAWLABLE-MODALS.md` — export

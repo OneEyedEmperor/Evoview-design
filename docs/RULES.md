@@ -202,7 +202,8 @@ stepped). Copy belonging to the screen (its title, category) switches with
 it, without the lines. Fast travel coalesces to the last option; pointing
 away returns the screen to its rest content after ~140 ms, so moving between
 neighbours never flashes it; incoming media is decoded before the screen
-opens. The pointed option answers on its own side (tonal step, accent orb
+opens (a host media gate holds it folded through `ready`, so a reveal never
+starts behind a loader). The pointed option answers on its own side (tonal step, accent orb
 fill). Reference: evoview contact application, question 1; the showcase
 title strip (`src/library/ShowcasePage.tsx`).
 **Pressed pills and buttons: the press jelly (norm).** Every clickable pill

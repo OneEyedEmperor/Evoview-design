@@ -13,7 +13,8 @@ import { useLayoutEffect, useRef, useState, type CSSProperties, type HTMLAttribu
    newer channel replaces the pending one, so a sweep across five options
    plays one switch to the last. Coming back to the picture on screen while
    it folds opens it again from where it is. Incoming media is awaited
-   (decoded, capped) before the screen opens on it. */
+   (decoded, capped) before the screen opens on it; a host gate (`ready`)
+   can hold the folded screen longer. */
 
 const OUT_MS = 180;
 const IN_MS = 360;
@@ -70,34 +71,39 @@ export type ChannelSwitchProps = Omit<HTMLAttributes<HTMLElement>, "children"> &
   signal?: boolean;
   /** Longest the folded screen waits for incoming media to decode. */
   mediaTimeout?: number;
+  /** Which elements of the incoming content are awaited (`img` / `video` among them). Default "img, video". */
+  mediaSelector?: string;
+  /** The open waits for it (never the fold): false holds the new channel
+      folded, mounted, until true. Default true. */
+  ready?: boolean;
 };
 
-function waitForMedia(root: HTMLElement, timeout: number): Promise<void> {
+function waitForMedia(root: HTMLElement, timeout: number, selector: string): Promise<void> {
   const pending: Promise<unknown>[] = [];
-  for (const img of Array.from(root.querySelectorAll("img"))) {
-    pending.push(
-      img.complete
-        ? img.decode().catch(() => {})
-        : new Promise((resolve) => {
-            img.addEventListener("load", resolve, { once: true });
-            img.addEventListener("error", resolve, { once: true });
-          }),
-    );
-  }
-  for (const video of Array.from(root.querySelectorAll("video"))) {
-    if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) continue;
-    pending.push(
-      new Promise((resolve) => {
-        video.addEventListener("loadeddata", resolve, { once: true });
-        video.addEventListener("error", resolve, { once: true });
-      }),
-    );
+  for (const el of Array.from(root.querySelectorAll(selector))) {
+    if (el instanceof HTMLImageElement) {
+      pending.push(
+        el.complete
+          ? el.decode().catch(() => {})
+          : new Promise((resolve) => {
+              el.addEventListener("load", resolve, { once: true });
+              el.addEventListener("error", resolve, { once: true });
+            }),
+      );
+    } else if (el instanceof HTMLVideoElement && el.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
+      pending.push(
+        new Promise((resolve) => {
+          el.addEventListener("loadeddata", resolve, { once: true });
+          el.addEventListener("error", resolve, { once: true });
+        }),
+      );
+    }
   }
   if (!pending.length) return Promise.resolve();
   return Promise.race([Promise.all(pending).then(() => {}), new Promise<void>((resolve) => window.setTimeout(resolve, timeout))]);
 }
 
-type Options = { signal: boolean; mediaTimeout: number };
+type Options = { signal: boolean; mediaTimeout: number; mediaSelector: string; ready: boolean };
 
 function createSwitch(feed: HTMLElement, signalEl: () => HTMLElement | null, opts: { current: Options }, show: (c: Channel) => void, initial: Channel) {
   let phase: Phase = "idle";
@@ -105,6 +111,8 @@ function createSwitch(feed: HTMLElement, signalEl: () => HTMLElement | null, opt
   let token = 0;
   let shown = initial;
   let wanted = initial;
+  // The shown channel's content is not committed to the DOM yet.
+  let mounting = false;
   const animated = typeof feed.animate === "function";
 
   // From where the layer is now when interrupting, so a turn never jumps.
@@ -136,17 +144,19 @@ function createSwitch(feed: HTMLElement, signalEl: () => HTMLElement | null, opt
 
   const reveal = () => {
     const t = ++token;
-    void waitForMedia(feed, opts.current.mediaTimeout).then(() => {
-      if (t === token && phase === "folded") open(false);
+    if (!opts.current.ready) return;
+    void waitForMedia(feed, opts.current.mediaTimeout, opts.current.mediaSelector).then(() => {
+      if (t === token && phase === "folded" && opts.current.ready) open(false);
     });
   };
 
-  // Folded: put the wanted channel on; it opens once committed and decoded.
+  // Folded: put the wanted channel on; it opens once committed, ready and decoded.
   const tune = () => {
     ++token;
     if (wanted === shown) reveal();
     else {
       shown = wanted;
+      mounting = true;
       show(wanted);
     }
   };
@@ -182,7 +192,11 @@ function createSwitch(feed: HTMLElement, signalEl: () => HTMLElement | null, opt
       else fold();
     },
     committed(next: Channel) {
+      if (next === shown) mounting = false;
       if (next === shown && phase === "folded") reveal();
+    },
+    released() {
+      if (phase === "folded" && !mounting) reveal();
     },
     dispose() {
       token += 1;
@@ -191,19 +205,19 @@ function createSwitch(feed: HTMLElement, signalEl: () => HTMLElement | null, opt
   };
 }
 
-export function ChannelSwitch({ channel, children, as: Tag = "div", feedClassName, signal = true, mediaTimeout = 600, style, ...host }: ChannelSwitchProps) {
+export function ChannelSwitch({ channel, children, as: Tag = "div", feedClassName, signal = true, mediaTimeout = 600, mediaSelector = "img, video", ready = true, style, ...host }: ChannelSwitchProps) {
   const feedRef = useRef<HTMLElement | null>(null);
   const signalRef = useRef<HTMLElement | null>(null);
   const [shown, setShown] = useState<Channel>(channel);
   const held = useRef<ReactNode>(children);
   // Idempotent: the content of the channel on screen, held while another folds in.
   if (channel === shown) held.current = children;
-  const opts = useRef<Options>({ signal, mediaTimeout });
+  const opts = useRef<Options>({ signal, mediaTimeout, mediaSelector, ready });
   const engine = useRef<ReturnType<typeof createSwitch> | null>(null);
 
   useLayoutEffect(() => {
-    opts.current = { signal, mediaTimeout };
-  }, [signal, mediaTimeout]);
+    opts.current = { signal, mediaTimeout, mediaSelector, ready };
+  }, [signal, mediaTimeout, mediaSelector, ready]);
 
   useLayoutEffect(() => {
     const feed = feedRef.current;
@@ -219,6 +233,9 @@ export function ChannelSwitch({ channel, children, as: Tag = "div", feedClassNam
 
   useLayoutEffect(() => engine.current?.request(channel), [channel]);
   useLayoutEffect(() => engine.current?.committed(shown), [shown]);
+  useLayoutEffect(() => {
+    if (ready) engine.current?.released();
+  }, [ready]);
 
   return (
     <Tag {...host} style={{ position: "relative", ...style }}>

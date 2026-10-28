@@ -1,5 +1,35 @@
 # foundation changelog
 
+## 1.11.0
+
+No config changes. Additive API; two behaviour changes in existing hooks
+(suspension timing), from the evoview site.
+
+- `useSuspendBackground` registers in a layout effect (was a post-paint
+  effect): `<html data-ev-suspended>` and its restyle land in the modal's
+  mount commit for any update priority (a view URL loaded directly, a
+  non-discrete open), never inside the opening animation.
+- New `useBackgroundSuspendedDeferred()`: the suspension flag at transition
+  priority (state + subscribe + `startTransition`; `useSyncExternalStore`
+  cannot defer). `useInViewPause` now reads it, so loops, clocks and media
+  pause in a transition after the opening frame instead of re-rendering
+  inside it. `useBackgroundSuspended` is unchanged (same-commit).
+- `useMediaReady` element mode (`element: { video, src, buffer, play }`,
+  from the site's contact and Méthode gates): gates the mounted `<video>`
+  instead of a detached probe; `buffer: "full"` fetches the file into a
+  session blob URL (returned as `src`, held until then, network fallback)
+  and reveals once buffered end to end; playback from zero on reveal, while
+  `play`; reveal two frames after the loader's minimum time; `retry()` keeps
+  the loader up; a late arrival after a failure still reveals; metadata
+  stall fallback (1.2s without data) for the mounted player. Returns
+  `src` and `wasSlow` in addition. The source mode is unchanged.
+- New `bufferMedia(src)` / `bufferedMedia(src)`: the session blob store.
+- `ChannelSwitch`: `ready` (default true) holds the open, never the fold,
+  until the host's media gate is ready; turning false cancels an open still
+  in its decode wait, an open already playing completes. `mediaSelector`
+  (default `"img, video"`) scopes which incoming media are awaited. Defaults
+  keep the previous behaviour.
+
 ## 1.10.0
 
 No config changes. Additive API: the page scroll lock (from the evoview

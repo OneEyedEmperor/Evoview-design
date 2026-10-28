@@ -82,8 +82,9 @@ createJelly(el) → { to(0…1), snap, level, destroy }
 
 // Pause model
 suspendBackground(): () => void          // ref-counted; sets <html data-ev-suspended>
-useSuspendBackground(active: boolean)    // for modals
-useBackgroundSuspended(): boolean
+useSuspendBackground(active: boolean)    // for modals; layout effect (before paint)
+useBackgroundSuspended(): boolean        // re-renders in the commit that suspends
+useBackgroundSuspendedDeferred(): boolean // same flag at transition priority (what useInViewPause reads)
 isBackgroundSuspended(), subscribeSuspension(cb)
 useInViewPause(ref, { rootMargin?, threshold?, ignoreSuspension?, enabled?, once? })
   → { active, inView, documentVisible, suspended }
@@ -104,10 +105,20 @@ sequenceFillStyle(clock): CSSProperties  // CSS fill that pauses with the clock;
                                          // clock.key so it mounts when the key starts (reset() needs a remount)
 
 // Media gate
-useMediaReady(open, sources, { graceMs = 350, minVisibleMs = 500, timeoutMs = 20000, video = "loadeddata" })
-  → { ready, slow, failed, retry, loaded, total }
+useMediaReady(open, sources, { graceMs = 350, minVisibleMs = 500, timeoutMs = 20000, video = "loadeddata", element? })
+  → { ready, slow, failed, retry, loaded, total }   // + { src, wasSlow } with `element`
+element: { video?: HTMLVideoElement | null, src?, buffer?: "frame" | "full" = "frame", play? = true }
 preloadMedia(sources, video = "loadeddata"): Promise<void>   // decode ahead of a gate (idle / intent)
+bufferMedia(src): Promise<string>, bufferedMedia(src)         // whole file → session blob URL ("full")
 ```
+
+Suspension timing: `useSuspendBackground` registers in a layout effect, so
+`<html data-ev-suspended>` and its restyle land in the modal's mount commit,
+before its first paint, whatever priority opened it. `useInViewPause` reads
+the deferred flag: consumers that only pause (loops, clocks, media)
+re-render in a transition, outside the opening frame. Use
+`useBackgroundSuspended` where the flag must change in the same commit
+(chrome that hides with the modal).
 
 `useMediaReady` sources: URLs or `{ src, type }` (type guessed from the
 extension). Decoded sources are remembered for the session, so a cached
@@ -122,6 +133,26 @@ whose sources were preloaded is `ready` on its first render — no grace gap,
 no loader. Call it on idle or on intent (hover / focus of a launcher) for
 views the visitor is likely to open; it cannot be cancelled, so do not feed
 it large videos speculatively.
+
+Element mode (`element`): the gate owns the mounted player instead of
+probing a detached copy; `sources` are still decoded as above. `video` is
+the `<video>` (callback-ref state): `null` waits for it, omitted = images
+only. `buffer: "frame"` reveals on its first decoded frame (the caller sets
+the player's `src`); `"full"` fetches `src` whole into a session blob URL
+(`bufferMedia`) and returns it as `src`, undefined while held (the player
+starts no download), the network URL if the fetch fails; it reveals once
+buffered end to end. Short loops only: blob URLs are never revoked. A player
+held at metadata with no data arriving for 1.2s counts as ready (mobile
+WebKit, data saver). The player is paused until ready, seeks to 0 on reveal
+and plays while `play` (turning `play` off and on resumes it). Reveal: when
+everything is in, after the loader's minimum time, two frames later (the
+held view commits before its entrance). An error or `timeoutMs` sets
+`failed` but loading goes on: a late arrival still reveals. `retry()` keeps
+the loader up (no new grace; its minimum time restarts) and reloads a failed
+player / refetches the blob. `wasSlow`: the loader showed in this cycle; it
+stays true after `ready` until `open`, the sources or `src` change. Nothing
+to gate (no sources, no player): `ready` = `open`, server included.
+Otherwise, on the server: not ready, not slow, no `src` with `"full"`.
 
 Scroll lock: every modal / sheet that locks the page goes through
 `lockScroll` / `useScrollLock`, never its own `overflow` write (a second
@@ -138,7 +169,7 @@ offset (no clamp near the page bottom). Imports no CSS, so
 
 Every hook and primitive renders on the server (`pnpm verify:ssr`):
 environment reads go through `useSyncExternalStore` server snapshots
-(visibility visible, not suspended, not in view, `useMediaQuery` →
+(visibility visible, not suspended (both flags), not in view, `useMediaQuery` →
 `serverValue`), `useMediaReady` is not ready and never slow on the server
 and while hydrating, `inkFor` gives the same ink on both sides for hex /
 `rgb()` / `hsl()`. The suspension store is module-level, so a modal
@@ -211,7 +242,7 @@ The copy lies over the button (inset 0, display / padding / gap / alignment
 / radius inherited) on `--ev-surface-lit`, ink `--ev-surface-lit-ink`; the
 original stays in flow for layout and the accessible name. Host:
 `position: relative`, no CSS hover background swap.
-`<ChannelSwitch channel as? feedClassName? signal? mediaTimeout?>` — the
+`<ChannelSwitch channel as? feedClassName? signal? mediaTimeout? mediaSelector? ready?>` — the
 only way a hover-preview screen changes (RULES §6): a new `channel` folds
 the picture to a horizontal line (180 ms), opens the new content from it
 with a sideways shudder (360 ms) and flashes signal lines over the host
@@ -221,7 +252,13 @@ while it folds. A newer channel during the fold replaces the pending one
 (a sweep plays one switch); the channel on screen coming back mid-fold
 reopens from where it is. `<img>` / `<video>` in the incoming content are
 awaited (decoded, capped at `mediaTimeout`, default 600 ms) before it
-opens. The host (`div`, or `span` with `as`) takes `className`, `style`
+opens; `mediaSelector` (default `"img, video"`) scopes which. `ready`
+(default true) holds the open, never the fold: a new `channel` folds at
+once and its content mounts folded (the host gates its media); the open
+starts once `ready` is true, after the decode wait. `ready` turning false
+cancels an open still in its decode wait; an open already playing
+completes. Turn-back and coalescing are unchanged; the first channel shows
+at mount whatever `ready` is. The host (`div`, or `span` with `as`) takes `className`, `style`
 and other attributes; position it and give it the screen's box, the inner
 layer fills it. Web Animations, no CSS; renders statically on the server.
 Debounce the return to rest in the caller (~140 ms) so travel between two

@@ -1,5 +1,5 @@
 import { useEffect, useState, useSyncExternalStore, type RefObject } from "react";
-import { useBackgroundSuspended } from "./suspension";
+import { useBackgroundSuspendedDeferred } from "./suspension";
 
 export type InViewPauseOptions = {
   /** IntersectionObserver rootMargin. Default "0px" (strictly on-screen). */
@@ -34,7 +34,7 @@ export function useInViewPause(ref: RefObject<Element | null>, options: InViewPa
   const [inView, setInView] = useState(false);
   const [latched, setLatched] = useState(false);
   const documentVisible = useSyncExternalStore(subscribeVisibility, getVisible, () => true);
-  const suspendedGlobal = useBackgroundSuspended();
+  const suspendedGlobal = useBackgroundSuspendedDeferred();
   const suspended = !ignoreSuspension && suspendedGlobal;
   const live = enabled && inView && documentVisible && !suspended;
   const done = once && latched;

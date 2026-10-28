@@ -1,4 +1,5 @@
-import { useEffect, useSyncExternalStore } from "react";
+import { startTransition, useEffect, useLayoutEffect, useState, useSyncExternalStore } from "react";
+import { useHydrated } from "./hydration";
 
 /* Page suspension: while a modal (dossier, consent, lightbox…) is open the
    page behind it stops its loops and clocks. Ref-counted, reflected as
@@ -40,12 +41,30 @@ export function subscribeSuspension(listener: () => void): () => void {
   };
 }
 
-/** True while any modal suspends the page. */
+/** True while any modal suspends the page; re-renders in the commit that suspends. */
 export function useBackgroundSuspended(): boolean {
   return useSyncExternalStore(subscribeSuspension, isBackgroundSuspended, () => false);
 }
 
+/**
+ * The same flag at transition priority, for consumers that only pause (loops,
+ * clocks, media): their re-render stays out of the modal's opening frame.
+ */
+export function useBackgroundSuspendedDeferred(): boolean {
+  const hydrated = useHydrated();
+  const [suspended, setSuspended] = useState(isBackgroundSuspended);
+  useEffect(() => {
+    // useSyncExternalStore updates are always synchronous; a transition is the only way to defer them.
+    const update = () => startTransition(() => setSuspended(isBackgroundSuspended()));
+    update();
+    return subscribeSuspension(update);
+  }, []);
+  return hydrated && suspended;
+}
+
 /** For modals: suspend the page while `active`. */
 export function useSuspendBackground(active: boolean): void {
-  useEffect(() => (active ? suspendBackground() : undefined), [active]);
+  // Registered in the modal's mount commit, so the page-wide restyle of the
+  // html attribute lands before its first paint, not inside its opening animation.
+  useLayoutEffect(() => (active ? suspendBackground() : undefined), [active]);
 }
