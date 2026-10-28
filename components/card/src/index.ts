@@ -25,6 +25,7 @@ export type {
   CardSequenceOffer,
 } from "./types";
 // /CardSequence
+import "./card.theme.css";
 export type {
   CardHeadingLevel,
   CardTrackConfig,

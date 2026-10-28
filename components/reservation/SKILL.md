@@ -24,7 +24,9 @@ Expression) and the library's `STRATEGY.md` first.
 ## Procedure
 
 1. Open the showcase at 1440 and 390, walk a full request to confirmation.
-2. `components/reservation/install.sh /root/.vibehub/projects/<client>`
+2. Install: `sync.sh plan /root/.vibehub/projects/<client> reservation`,
+   then `apply`, then `verify` (library root, `docs/SYNC.md`); resolve
+   conflicts, fill patch reasons.
 3. Gather: venue name/city, experiences (which need an end time / a price
    note), opening windows per weekday and their labels, closed days, guests
    range, horizon, locales, booking endpoint and its field errors, captcha,
@@ -52,5 +54,6 @@ Expression) and the library's `STRATEGY.md` first.
 - The header wordmark is the only Evoview link (`https://evoview.be/`, new
   tab, no tracking). Do not add or move attribution.
 - Never fork the component for a client. Generic fixes go into the library:
-  bump `VERSION`, add to `CHANGELOG.md`, re-run `install.sh`.
+  bump `VERSION`, add to `CHANGELOG.md`, upgrade the client through
+  `sync.sh`; a client-side edit is a recorded patch (`.evoview/patches/`).
 - Respond in English even when the client interface is French.

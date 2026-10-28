@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- Sync (`docs/SYNC.md`): `evoview.json` (`requires` foundation `>=1.9.0 <2`,
+  controls `>=1.5.0 <2`; `hostDeps` react-day-picker ≥ 9, date-fns ≥ 4,
+  lucide-react); `install.sh` wraps `sync.sh` (clean plans only; local edits
+  merged and recorded as patches, files removed upstream deleted). `brand/`
+  stays package-owned (the Evoview signature).
+- Config changes: new client-owned `src/reservation.theme.css`
+  (`--resa-accent`, `--resa-accent-ink`), imported by `index.ts` after the
+  modules that load `reservation.css` / `reservation-flow.css`; created by
+  the next sync, never overwritten. Existing config untouched; built CSS
+  unchanged.
 - Docs: ownership sections (RULES §13).
 
 ## 2.11.0

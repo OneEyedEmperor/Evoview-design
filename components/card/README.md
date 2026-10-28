@@ -163,7 +163,7 @@ Accent = the client's, read from the host `--primary` /
 
 | File | Role | Edit per site? |
 | --- | --- | --- |
-| `src/card.config.tsx` | `buildCardTrackConfig(locale)`: copy FR / EN and the site's tracks (items, media). | **yes — the only one** |
+| `src/card.config.tsx` | `buildCardTrackConfig(locale)`: copy FR / EN and the site's tracks (items, media). | **yes** (client-owned, like the theme file) |
 | `src/CardTrack.tsx` | Track: mechanism, geometry, progress, dots, keyboard, pause model | no |
 | `src/MediaCard.tsx` | Card (both variants), media gate, video, affordance, tap slop | no |
 | `src/types.ts` | Types | no |
@@ -179,11 +179,16 @@ Accent = the client's, read from the host `--primary` /
 ## Install
 
 ```bash
-/root/.vibehub/projects/evoview-design-library/components/card/install.sh /root/.vibehub/projects/<client>
+L=/root/.vibehub/projects/evoview-design-library
+$L/sync.sh plan /root/.vibehub/projects/<client> card   # read-only: files, deps, compat, changelog
+$L/sync.sh apply /root/.vibehub/projects/<client> card  # then resolve conflicts, fill patch reasons
+$L/sync.sh verify /root/.vibehub/projects/<client>
 ```
 
-Installs / upgrades `controls` and `foundation` first, then copies `src/` to
-`<client>/src/components/card/`; re-runs keep `card.config.tsx`.
+Writes `src/` to `<client>/src/components/card/`, plus `controls` / `foundation`
+when absent or too old; `card.config.tsx` and `card.theme.css` (tokens) are
+client-owned, never overwritten. `install.sh <client>` applies clean plans
+only. Contract: `docs/SYNC.md`.
 
 ## Host requirements
 

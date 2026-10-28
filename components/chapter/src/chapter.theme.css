@@ -1,0 +1,22 @@
+/* chapter theme: client-owned. Sync creates it once and never overwrites it.
+   Loaded after the chapter sheets (through index.ts), so a token set here wins
+   at equal specificity. Uncomment only what the client needs; defaults shown.
+   The accent normally comes from the host --primary (or `accent` per chapter). */
+
+.ev-chapter {
+  /* --chapter-accent: var(--ev-accent); */
+  /* --chapter-accent-ink: var(--ev-accent-ink); */
+  /* --chapter-accent-deep: var(--ev-accent-deep); */
+  /* --chapter-signal: var(--ev-accent-signal); */
+}
+
+.ev-chapter-faq {
+  /* Host navbar clearance for the sticky column. */
+  /* --chapter-faq-sticky-top: calc(6 * var(--ev-rem)); */
+  /* --chapter-faq-row-open: color-mix(in oklab, var(--chapter-accent) 9%, var(--chapter-faq-row)); */
+}
+
+.ev-chapter-contact {
+  /* --chapter-contact-signal: var(--chapter-signal, var(--ev-accent-signal)); */
+  /* --chapter-contact-accent: var(--chapter-accent, var(--ev-accent)); */
+}

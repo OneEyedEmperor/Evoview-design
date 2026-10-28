@@ -1,46 +1,24 @@
 #!/usr/bin/env bash
-# Copies the reservation package into a client project.
+# Installs / upgrades the Evoview reservation package (and the controls + foundation it needs) into a client project.
 #
-#   components/reservation/install.sh <client-project-dir>
+#   components/reservation/install.sh <client-project-dir> [sync flags]
 #
-# First run: copies everything, including the reference reservation.config.tsx.
-# Later runs: replaces the component source (brand/ included: it is the
-# Evoview signature, not client branding); reservation.config.tsx is kept.
+# Thin wrapper over sync.sh (docs/SYNC.md): plans, applies only a clean plan,
+# else prints the plan and exits non-zero; then review and run
+# sync.sh plan / apply / verify by hand. Never overwrites client-owned files.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TARGET="${1:?usage: install.sh <client-project-dir>}"
-TARGET="$(cd "$TARGET" && pwd)"
+TARGET="${1:?usage: install.sh <client-project-dir> [sync flags]}"
+shift
 DEST="$TARGET/src/components/reservation"
-VERSION="$(cat "$HERE/VERSION")"
-
-[ -f "$TARGET/package.json" ] || { echo "no package.json in $TARGET"; exit 1; }
-grep -q '"react"' "$TARGET/package.json" || { echo "$TARGET is not a React project"; exit 1; }
-for dep in react-day-picker date-fns lucide-react; do
-  grep -q "\"$dep\"" "$TARGET/package.json" || echo "warning: $dep missing from $TARGET/package.json"
-done
-
-# ReservationFlow (the short form) is built on controls, which installs foundation first.
-"$HERE/../controls/install.sh" "$TARGET"
-
-mkdir -p "$DEST"
 fresh=1
-[ -f "$DEST/reservation.config.tsx" ] && fresh=0
-# Drop package files removed upstream; the client config survives.
-find "$DEST" -mindepth 1 -maxdepth 1 ! -name reservation.config.tsx -exec rm -rf {} +
+[ -e "$DEST" ] && fresh=0
 
-for file in "$HERE"/src/*; do
-  name="$(basename "$file")"
-  case "$name" in
-    reservation.config.tsx) [ "$fresh" = 1 ] && cp "$file" "$DEST/" ;;
-    *) cp -r "$file" "$DEST/" ;;
-  esac
-done
-echo "$VERSION" > "$DEST/.reservation-version"
+"$HERE/../../sync.sh" apply "$TARGET" reservation --if-clean "$@"
 
-echo "reservation $VERSION → $DEST"
-if [ "$fresh" = 1 ]; then
-  cat <<EOF
+[ "$fresh" = 1 ] || exit 0
+cat <<EOF
 
 Next:
   1. Edit $DEST/reservation.config.tsx (copy, experiences, windows, guests, accent, submit).
@@ -49,6 +27,3 @@ Next:
   3. Keep the signature copy; translate it if needed.
 See $HERE/README.md for the contract and the verification checklist.
 EOF
-else
-  echo "config preserved (upgrade). Check $HERE/CHANGELOG.md for breaking changes."
-fi

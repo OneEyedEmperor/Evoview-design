@@ -30,8 +30,9 @@ alone does not authorize adding attribution or changing client link destinations
 
 1. **Look at the reference first.** Open the showcase at 1440 and 390 wide
    and use the menu, so you know what "correct" looks like before adapting.
-2. **Install** into the client project:
-   `components/navbar/install.sh /root/.vibehub/projects/<client>`
+2. **Install** into the client project: `sync.sh plan
+   /root/.vibehub/projects/<client> navbar`, then `apply`, then `verify`
+   (library root, `docs/SYNC.md`); resolve conflicts, fill patch reasons.
 3. **Gather the client's facts** before editing the config: one-page or
    multi-page; routes (or section ids and which sections are dark); 3–5
    destinations and which is the CTA; locales; brand accent; logo asset
@@ -49,8 +50,10 @@ alone does not authorize adding attribution or changing client link destinations
    screen → `initialTone: "dark"` + `data-nav-tone="dark"` on the wrapper;
    make fonts resolve.
 6. **Never edit `navbar.css` for brand values** — everything brand-level is a
-   `vars` token. Only the ink scale (README "Expression") justifies a CSS
-   edit, and it goes in the client copy, noted in the handoff.
+   `vars` token or an override in the client-owned `navbar.theme.css` (every
+   `--nav-*` token, commented with its default; sync never overwrites it).
+   Only the ink scale (README "Expression") justifies a CSS edit: sync
+   records it as a local patch (give it a reason), noted in the handoff.
 7. **Verify** with the README checklist — all eight points, both viewports,
    keyboard, reduced motion. Fix, re-verify.
 8. **Log** an activity record (`surface: code`, `type: feature`, subject =
@@ -61,12 +64,12 @@ alone does not authorize adding attribution or changing client link destinations
 
 - The menu number orbs change colour only through foundation `OrbFill`'s
   liquid rise (RULES §1); restyle them via `--ev-orb-*`, never a
-  `background` swap. `install.sh` installs `foundation` first.
+  `background` swap. Sync installs `foundation` when it is absent or too old.
 - Never copy files from `/root/.vibehub/projects/evoview/src/components/nav`
   or from another client; the package is the portable version.
 - Never fork the component to fix a client issue. If the package is wrong or
   a refinement is generic, fix it in the library, bump `VERSION`, note it in
-  `CHANGELOG.md`, re-run `install.sh` in the client. Client refinements
+  `CHANGELOG.md`, upgrade the client through `sync.sh`. Client refinements
   flow back into the library as generic behaviour; client branding never
   does — the reference stays Evoview-branded.
 - Do not reintroduce a conventional full-width navbar, extra header accents,

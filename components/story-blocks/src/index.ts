@@ -1,6 +1,7 @@
 import "../foundation";
 import "../controls";
 import "./story-blocks.css";
+import "./story-blocks.theme.css";
 
 export { Story, renderChapter, type StoryProps } from "./Story";
 export { StoryIntro, IndexedRows, ProofGrid, PayoffBand } from "./blocks";

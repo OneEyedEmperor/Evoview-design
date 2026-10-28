@@ -2,6 +2,7 @@
 import "../foundation";
 import "../controls";
 import "./selector-stage.css";
+import "./selector-stage.theme.css";
 
 export { SelectorStage, type SelectorStageProps } from "./SelectorStage";
 export { CompareToggle, type CompareToggleProps } from "./CompareToggle";

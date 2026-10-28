@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Sync (`docs/SYNC.md`): `evoview.json` (`requires` foundation `>=1.9.0 <2`,
+  controls `>=1.3.0 <2`); `install.sh` wraps `sync.sh` (clean plans only;
+  local edits merged and recorded as patches, files removed upstream deleted).
+- Config changes: new client-owned `src/chapter.theme.css` (chapter accent
+  tokens, `--chapter-faq-sticky-top`, FAQ / contact tokens), imported by
+  `index.ts` after the chapter sheets; created by the next sync, never
+  overwritten. Existing config untouched; built CSS unchanged.
 - Docs: ownership sections (RULES §13).
 - API (additive): exported variation arrays `CHAPTER_HEADING_LAYOUTS`,
   `CHAPTER_HEADING_VARIANTS` (new types `ChapterHeadingLayout`,

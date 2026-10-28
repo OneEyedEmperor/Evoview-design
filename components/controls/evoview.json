@@ -1,0 +1,5 @@
+{
+  "requires": { "foundation": ">=1.9.0 <2" },
+  "clientOwned": ["controls.config.tsx", "controls.theme.css"],
+  "hostDeps": { "react": ">=19" }
+}

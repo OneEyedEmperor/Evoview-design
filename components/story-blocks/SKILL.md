@@ -33,8 +33,9 @@ and the pause model.
    order: intro → sequence → proof → payoff. Vary the shapes (sequence with
    its image, collage with the claim after it); do not stack the same
    composition twice. Drop blocks the content cannot fill; do not pad.
-3. `components/story-blocks/install.sh /root/.vibehub/projects/<client>`
-   (installs / upgrades `foundation` and `controls` first).
+3. Install: `sync.sh plan /root/.vibehub/projects/<client> story-blocks`,
+   then `apply`, then `verify` (library root, `docs/SYNC.md`); resolve
+   conflicts, fill patch reasons. Client tokens go in `story-blocks.theme.css`.
 4. Edit only `src/components/story-blocks/story-blocks.config.tsx`: media
    labels in the site languages and the client's stories (or pass props
    from the page). Real media in `public/`, ratios chosen per artefact,
@@ -64,5 +65,6 @@ and the pause model.
 - No Evoview mark in these blocks (no chassis); never beside the CTA.
 - Payoff results must be true; client demonstrations say so visibly.
 - Never fork for a client: fixes go into the library (`VERSION`,
-  `CHANGELOG.md`), clients re-run `install.sh`.
+  `CHANGELOG.md`), clients upgrade through `sync.sh`; a client-side edit is
+  a recorded patch (`.evoview/patches/`), a candidate for the library.
 - Respond in English even when the client interface is French.

@@ -1,0 +1,5 @@
+{
+  "requires": { "foundation": ">=1.9.0 <2", "controls": ">=1.1.0 <2" },
+  "clientOwned": ["story-blocks.config.tsx", "story-blocks.theme.css"],
+  "hostDeps": { "react": ">=19" }
+}

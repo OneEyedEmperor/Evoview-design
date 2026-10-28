@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Sync (`docs/SYNC.md`): `evoview.json` (`requires` foundation `>=1.9.0 <2`,
+  controls `>=1.5.0 <2`); `install.sh` wraps `sync.sh` (clean plans only;
+  local edits merged and recorded as patches, files removed upstream deleted).
+- Config changes: new client-owned `src/process-sequence.theme.css` (accent
+  tokens, `--ev-modal-reserve-bottom`), imported by `index.ts` after
+  `process-sequence.css`; created by the next sync, never overwritten.
+  Existing config untouched; built CSS unchanged.
 - Docs: ownership sections (RULES §13).
 - API (additive): exported variation array `COMPLETION_MARKS`;
   `CompletionMark` now derives from it (unchanged). No config change.

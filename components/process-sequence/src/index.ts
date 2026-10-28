@@ -1,6 +1,7 @@
 import "../foundation";
 import "../controls";
 import "./process-sequence.css";
+import "./process-sequence.theme.css";
 
 export { ProcessSequence, type ProcessSequenceProps } from "./ProcessSequence";
 export { processSequenceRoutes } from "./routes";

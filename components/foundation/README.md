@@ -14,8 +14,12 @@ per-site file. Rules it encodes: `docs/RULES.md` (§0, §1–6, §9, §10).
   `components/<name>/foundation -> ../foundation/src`, so the same
   `../foundation` import resolves in the library and in clients. Create it
   with `ln -sfn ../foundation/src components/<name>/foundation`.
-- A package's `install.sh` calls `components/foundation/install.sh <client>`
-  first (idempotent, replaces the folder, prints version changes).
+- `sync.sh plan / apply <client> <package>` installs or upgrades it only
+  when the package's `evoview.json` `requires` does not accept the installed
+  version, then checks every installed package against the new one
+  (`docs/SYNC.md`). Additive within a major: a breaking change is a major bump.
+  No client-owned file and no theme template: the adaptable inputs are host
+  tokens (`--primary`, `--font-*`, below).
 - Cascade rule: a package's `index.ts` imports `../foundation` (and
   `../controls` if used) **before** its own CSS, so package rules win over
   foundation classes at equal specificity (e.g. `.ev-t-body { margin: 0 }`).

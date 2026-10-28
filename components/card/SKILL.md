@@ -31,8 +31,9 @@ and the pause model.
    sentence (services, offers), `portrait` when the image is the argument
    (projects, rooms, dishes). One variant per track. No counters: the
    hairline and dots are the position (`showIndex` is ignored, RULES §1).
-3. `components/card/install.sh /root/.vibehub/projects/<client>`
-   (installs / upgrades controls and foundation first).
+3. Install: `sync.sh plan /root/.vibehub/projects/<client> card`, then
+   `apply`, then `verify` (library root, `docs/SYNC.md`); resolve conflicts,
+   fill patch reasons. Client tokens go in `card.theme.css`.
 4. Edit only `src/components/card/card.config.tsx`: the client's
    tracks, items, copy FR / EN (reuse the client's wording). Replace every
    reference media path with the client's own stills (webp, ~2× card
@@ -60,7 +61,8 @@ and the pause model.
   chassis strip (dossier) or the footer, never next to a client CTA.
 - Track: no arrow buttons, autoplay timers or third-party slider libraries.
 - Never fork for a client: fixes go into the library (`VERSION`,
-  `CHANGELOG.md`), clients re-run `install.sh`.
+  `CHANGELOG.md`), clients upgrade through `sync.sh`; a client-side edit is
+  a recorded patch (`.evoview/patches/`), a candidate for the library.
 - Respond in English even when the client interface is French.
 
 ## CardDeck (catalogue by category, dealt as a deck)

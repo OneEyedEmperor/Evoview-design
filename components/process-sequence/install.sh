@@ -1,45 +1,28 @@
 #!/usr/bin/env bash
-# Installs / upgrades the Evoview process-sequence (controls + foundation first) into a client project.
+# Installs / upgrades the Evoview process-sequence (and the controls + foundation it needs) into a client project.
 #
-#   components/process-sequence/install.sh <client-project-dir>
+#   components/process-sequence/install.sh <client-project-dir> [sync flags]
 #
-# First run: copies src/ including the reference process-sequence.config.tsx.
-# Later runs: replaces the source; process-sequence.config.tsx is kept.
+# Thin wrapper over sync.sh (docs/SYNC.md): plans, applies only a clean plan,
+# else prints the plan and exits non-zero; then review and run
+# sync.sh plan / apply / verify by hand. Never overwrites client-owned files.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TARGET="${1:?usage: install.sh <client-project-dir>}"
-TARGET="$(cd "$TARGET" && pwd)"
+TARGET="${1:?usage: install.sh <client-project-dir> [sync flags]}"
+shift
 DEST="$TARGET/src/components/process-sequence"
-CONFIG="process-sequence.config.tsx"
-VERSION="$(cat "$HERE/VERSION")"
-
-"$HERE/../controls/install.sh" "$TARGET"
-
-mkdir -p "$DEST"
 fresh=1
-[ -f "$DEST/$CONFIG" ] && fresh=0
-find "$DEST" -mindepth 1 -maxdepth 1 ! -name "$CONFIG" -exec rm -rf {} +
+[ -e "$DEST" ] && fresh=0
 
-for file in "$HERE"/src/*; do
-  name="$(basename "$file")"
-  case "$name" in
-    "$CONFIG") [ "$fresh" = 1 ] && cp "$file" "$DEST/" ;;
-    *) cp -r "$file" "$DEST/" ;;
-  esac
-done
-echo "$VERSION" > "$DEST/.process-sequence-version"
+"$HERE/../../sync.sh" apply "$TARGET" process-sequence --if-clean "$@"
 
-echo "process-sequence $VERSION → $DEST"
-if [ "$fresh" = 1 ]; then
-  cat <<EOF
+[ "$fresh" = 1 ] || exit 0
+cat <<EOF
 
 Next:
-  1. Edit $DEST/$CONFIG: real steps, media (pass files via { media }), marks, CTA, FR/EN copy.
+  1. Edit $DEST/process-sequence.config.tsx: real steps, media (pass files via { media }), marks, CTA, FR/EN copy.
   2. import { ProcessSequence, buildProcessSequenceConfig } from "@/components/process-sequence";
      <ProcessSequence config={buildProcessSequenceConfig(locale, { media })} tone="dark" />
 See $HERE/README.md for the contract and the verification checklist.
 EOF
-else
-  echo "config preserved (upgrade). Check $HERE/CHANGELOG.md for breaking changes."
-fi

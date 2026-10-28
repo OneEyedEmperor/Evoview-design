@@ -9,8 +9,11 @@ also serve as subtle Evoview publicity and referral assets across client sites.
 
 Showcase: `https://evoview-library.said.bet`
 
-Install any package with `components/<name>/install.sh <client-dir>`; it
-installs `foundation` (and `controls` where used) first.
+Install or upgrade with `./sync.sh plan <client-dir> <name>`, then `apply`,
+then `verify` ([docs/SYNC.md](docs/SYNC.md)): dependencies (`foundation`,
+`controls`) only when needed, client-owned files never written, local
+patches merged and recorded. `components/<name>/install.sh <client-dir>`
+does the same when the plan is clean.
 
 | Pill | Package | Version |
 | --- | --- | --- |

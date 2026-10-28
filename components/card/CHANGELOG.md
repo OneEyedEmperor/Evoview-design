@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Sync (`docs/SYNC.md`): `evoview.json` (`requires` foundation `>=1.8.0 <2`,
+  controls `>=1.1.0 <2`); `install.sh` wraps `sync.sh` (clean plans only;
+  local edits merged and recorded as patches, files removed upstream deleted).
+- Config changes: new client-owned `src/card.theme.css` (track / deck /
+  sequence accent tokens, `--card-track-portrait-ratio`), imported by
+  `index.ts` after the card sheets; created by the next sync, never
+  overwritten. Existing config untouched; built CSS unchanged.
 - Docs: ownership sections (RULES §13).
 - API (additive): exported variation arrays `CARD_TRACK_VARIANTS`,
   `CARD_DECK_ROWS` (new type `CardDeckRows`), `CARD_SEQUENCE_LAYOUTS`;

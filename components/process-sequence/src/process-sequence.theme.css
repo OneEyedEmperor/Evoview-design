@@ -1,0 +1,16 @@
+/* process-sequence theme: client-owned. Sync creates it once and never overwrites it.
+   Loaded after process-sequence.css (through index.ts), so a token set here wins
+   at equal specificity. Uncomment only what the client needs; defaults shown.
+   The accent normally comes from the host --primary (foundation --ev-accent*).
+   The --ps-* card and ribbon values are Signature (RULES §13). */
+
+.ev-process {
+  /* --process-accent: var(--ev-accent); */
+  /* --process-signal: var(--ev-accent-signal); */
+  /* --process-deep: var(--ev-accent-deep); */
+  /* --process-on-media: color-mix(in oklab, var(--process-accent) 86%, #fff); */
+}
+
+/* Host knob shared with the dossier: space kept free under the step dossier for
+   host chrome pinned bottom-right (default 0). Set it on :root. */
+/* :root { --ev-modal-reserve-bottom: 0px; } */

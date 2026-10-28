@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Sync (`docs/SYNC.md`): `evoview.json` (`requires` foundation `>=1.9.0 <2`,
+  controls `>=1.5.0 <2`); `install.sh` wraps `sync.sh` (clean plans only;
+  local edits merged and recorded as patches, files removed upstream deleted).
+- Config changes: new client-owned `src/dossier.theme.css` (accent tokens,
+  `--dossier-z`, `--dossier-reserve-bottom`), imported by `index.ts` after
+  `dossier.css`; created by the next sync, never overwritten. Existing config
+  untouched; built CSS unchanged.
 - Docs: ownership sections (RULES §13).
 - API (additive): exported variation arrays `DOSSIER_CHAPTER_VARIANTS`,
   `CHAPTER_ROWS_SURFACES` (new types `DossierChapterVariant`,

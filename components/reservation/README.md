@@ -110,7 +110,7 @@ the surfaces to the client's palette or swap them for client equivalents
 
 | File | Role | Edit per site? |
 | --- | --- | --- |
-| `src/reservation.config.tsx` | Venue, copy, experiences, windows, guests, `submit`. | **yes — the only one** |
+| `src/reservation.config.tsx` | Venue, copy, experiences, windows, guests, `submit`. | **yes** (client-owned, like the theme file) |
 | `src/types.ts` | `ReservationConfig` contract (fields commented). | no |
 | `src/Reservation.tsx` | Chassis, steps, recap ticket, validation, confirmation; `EVOVIEW_URL`. | no |
 | `src/marks.tsx` | Evoview eye glyphs, arrows, check, HUD. | no |
@@ -144,18 +144,24 @@ import { buildReservationFlowConfig } from "@/components/reservation/reservation
   `buildReservationFlowConfig` (and its imports) from the reference file.
 - Host: a light section, a column ≈ 48em (or the 1.28 side of a .72 / 1.28
   split). Accent from `--primary`; on paper it deepens for legibility, even
-  in yellow. Requires `controls` (installed by `install.sh`, with
-  `foundation`).
+  in yellow. Requires `controls` (sync installs it with `foundation` when
+  absent or too old).
 - Signature, variations, expression: above.
 
 ## Install
 
 ```bash
-/root/.vibehub/projects/evoview-design-library/components/reservation/install.sh /root/.vibehub/projects/<client>
+L=/root/.vibehub/projects/evoview-design-library
+$L/sync.sh plan /root/.vibehub/projects/<client> reservation   # read-only: files, deps, compat, changelog
+$L/sync.sh apply /root/.vibehub/projects/<client> reservation  # then resolve conflicts, fill patch reasons
+$L/sync.sh verify /root/.vibehub/projects/<client>
 ```
 
-Copies `src/` to `<client>/src/components/reservation/`; re-runs replace
-everything but `reservation.config.tsx`.
+Writes `src/` (`brand/` included: the Evoview signature) to
+`<client>/src/components/reservation/`, plus `controls` / `foundation` when
+absent or too old; `reservation.config.tsx` and `reservation.theme.css`
+(accent tokens) are client-owned, never overwritten. `install.sh <client>`
+applies clean plans only. Contract: `docs/SYNC.md`.
 
 ```tsx
 import { Reservation } from "@/components/reservation";

@@ -1,0 +1,40 @@
+/* navbar theme: client-owned. Sync creates it once and never overwrites it.
+   Loaded after navbar.css (through index.ts), so a token set here wins at equal
+   specificity. Uncomment only what the client needs; defaults shown.
+   config.accent and config.vars are inline styles and win over this file.
+   Literal colours (the ink scale) are not tokens: editing navbar.css for them
+   is a local patch that sync records (.evoview/patches/navbar.diff). */
+
+.ev-navbar {
+  /* --nav-ease-standard: var(--ease-standard, cubic-bezier(0.2, 0.8, 0.2, 1)); */
+  /* --nav-ease-cinematic: var(--ease-cinematic, cubic-bezier(0.23, 1, 0.32, 1)); */
+  /* --nav-duration-control: var(--duration-control, 280ms); */
+  /* --nav-radius-sm: var(--vs-radius-sm, 0.5rem); */
+  /* --nav-radius-md: var(--vs-radius-md, 0.75rem); */
+  /* --nav-radius-lg: var(--vs-radius-lg, 1rem); */
+  /* --nav-radius-round: var(--vs-radius-round, 62.4375rem); */
+  /* --nav-font-heading: var(--font-heading, "Overused Grotesk", "Inter", sans-serif); */
+  /* --nav-font-body: var(--font-body, "Inter", sans-serif); */
+  /* --nav-font-technical: var(--font-technical, var(--nav-font-body)); */
+  /* --nav-max-width: var(--container-nav, 62.5rem); */
+  /* --nav-font-cap: 13.754px; */
+  /* --nav-logo-h-desktop: 1.375em; */
+  /* --nav-logo-w-desktop: 7.5em; */
+  /* --nav-logo-h-mobile: 1.125em; */
+  /* --nav-logo-w-mobile: 6.5em; */
+  /* --nav-logo-dark-filter: invert(1); */
+  /* --nav-tray-w: 34em; */
+  /* --nav-tray-card-h: 6em; */
+  /* --nav-accent: #3f51b5; */
+  /* --nav-accent-ink: #151515; */
+  /* --nav-focus-ring: var(--nav-accent); */
+  /* --nav-cta-glow: color-mix(in srgb, var(--nav-accent) 60%, transparent); */
+  /* --nav-cta-hover-dark: var(--nav-accent); */
+  /* --nav-mobile-pill-accent: var(--nav-accent); */
+  /* --nav-eye-pupil: var(--nav-section-accent, var(--nav-accent)); */
+  /* --nav-eye-iris: #fff; */
+  /* --nav-rec-dot: #ef3b2d; */
+  /* --nav-current-item: #fbf8f6; */
+  /* --nav-current-item-ink: color-mix(in srgb, var(--nav-rec-dot) 80%, #000); */
+  /* --nav-current-dot: var(--nav-rec-dot); */
+}

@@ -1,39 +1,24 @@
 #!/usr/bin/env bash
-# Installs / upgrades the Evoview card package (and controls + foundation first) into a client project.
+# Installs / upgrades the Evoview card package (and the controls + foundation it needs) into a client project.
 #
-#   components/card/install.sh <client-project-dir>
+#   components/card/install.sh <client-project-dir> [sync flags]
 #
-# First run: copies src/ including the reference card.config.tsx.
-# Later runs: replaces the source; card.config.tsx is kept.
+# Thin wrapper over sync.sh (docs/SYNC.md): plans, applies only a clean plan,
+# else prints the plan and exits non-zero; then review and run
+# sync.sh plan / apply / verify by hand. Never overwrites client-owned files.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TARGET="${1:?usage: install.sh <client-project-dir>}"
-TARGET="$(cd "$TARGET" && pwd)"
+TARGET="${1:?usage: install.sh <client-project-dir> [sync flags]}"
+shift
 DEST="$TARGET/src/components/card"
-VERSION="$(cat "$HERE/VERSION")"
-
-# controls installs foundation first.
-"$HERE/../controls/install.sh" "$TARGET" >/dev/null
-echo "controls $(cat "$HERE/../controls/VERSION") + foundation $(cat "$HERE/../foundation/VERSION") installed"
-
-mkdir -p "$DEST"
 fresh=1
-[ -f "$DEST/card.config.tsx" ] && fresh=0
-find "$DEST" -mindepth 1 -maxdepth 1 ! -name card.config.tsx -exec rm -rf {} +
+[ -e "$DEST" ] && fresh=0
 
-for file in "$HERE"/src/*; do
-  name="$(basename "$file")"
-  case "$name" in
-    card.config.tsx) [ "$fresh" = 1 ] && cp "$file" "$DEST/" ;;
-    *) cp -r "$file" "$DEST/" ;;
-  esac
-done
-echo "$VERSION" > "$DEST/.card-version"
+"$HERE/../../sync.sh" apply "$TARGET" card --if-clean "$@"
 
-echo "card $VERSION → $DEST"
-if [ "$fresh" = 1 ]; then
-  cat <<EOF
+[ "$fresh" = 1 ] || exit 0
+cat <<EOF
 
 Next:
   1. Edit $DEST/card.config.tsx: the client's tracks (items, media), copy FR/EN.
@@ -42,6 +27,3 @@ Next:
   3. Replace the reference media paths with the client's own posters (and optional loops).
 See $HERE/README.md for the contract and the verification checklist.
 EOF
-else
-  echo "config preserved (upgrade). Check $HERE/CHANGELOG.md for breaking changes."
-fi

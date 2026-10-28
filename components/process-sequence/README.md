@@ -86,7 +86,7 @@ the accent; everything else is identical.
 
 | File | Role | Edit per site? |
 | --- | --- | --- |
-| `src/process-sequence.config.tsx` | Steps (title, summary, media, mark, detail), durations, mark kind, copy FR / EN, CTA, attribution. `buildProcessSequenceConfig(locale, { media?, steps? })`. Media defaults to inline placeholders. | **yes — the only one** |
+| `src/process-sequence.config.tsx` | Steps (title, summary, media, mark, detail), durations, mark kind, copy FR / EN, CTA, attribution. `buildProcessSequenceConfig(locale, { media?, steps? })`. Media defaults to inline placeholders. | **yes** (client-owned, like the theme file) |
 | `src/ProcessSequence.tsx` | Board: clock, heading + instrument, Z stacks, phone index + monitor | no |
 | `src/StepCard.tsx` | Three-state card + completion mark | no |
 | `src/StepDossier.tsx` | Split modal (also usable on its own) | no |
@@ -99,11 +99,16 @@ the accent; everything else is identical.
 ## Install
 
 ```bash
-/root/.vibehub/projects/evoview-design-library/components/process-sequence/install.sh /root/.vibehub/projects/<client>
+L=/root/.vibehub/projects/evoview-design-library
+$L/sync.sh plan /root/.vibehub/projects/<client> process-sequence   # read-only: files, deps, compat, changelog
+$L/sync.sh apply /root/.vibehub/projects/<client> process-sequence  # then resolve conflicts, fill patch reasons
+$L/sync.sh verify /root/.vibehub/projects/<client>
 ```
 
-Installs / upgrades `foundation` and `controls` first, then copies `src/` to
-`<client>/src/components/process-sequence/`; re-runs keep the config.
+Writes `src/` to `<client>/src/components/process-sequence/`, plus `controls`
+/ `foundation` when absent or too old; `process-sequence.config.tsx` and
+`process-sequence.theme.css` (tokens) are client-owned, never overwritten.
+`install.sh <client>` applies clean plans only. Contract: `docs/SYNC.md`.
 
 ```tsx
 import { ProcessSequence, buildProcessSequenceConfig } from "@/components/process-sequence";

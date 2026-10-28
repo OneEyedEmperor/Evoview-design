@@ -32,8 +32,9 @@ tokens and the pause model.
    items (pager); one offer → one item. The board is for choosing between
    exactly four destinations; if an item has fewer, do not pad it — ask, or
    use another component.
-3. `components/dossier/install.sh /root/.vibehub/projects/<client>`
-   (installs / upgrades `controls` and `foundation` first).
+3. Install: `sync.sh plan /root/.vibehub/projects/<client> dossier`, then
+   `apply`, then `verify` (library root, `docs/SYNC.md`); resolve conflicts,
+   fill patch reasons. Client tokens go in `dossier.theme.css`.
 4. Edit only `src/components/dossier/dossier.config.tsx`: brand (client logo
    node), kicker, items (labels, optional per-item accent), entries (title,
    short label, kicker, the client's own media), detail chapters built from
@@ -70,5 +71,6 @@ tokens and the pause model.
 
 - Accent is signal only; the CTA stays a white plate at rest.
 - Never fork for a client: fixes go into the library (`VERSION`,
-  `CHANGELOG.md`); clients re-run `install.sh`.
+  `CHANGELOG.md`); clients upgrade through `sync.sh`; a client-side edit is
+  a recorded patch (`.evoview/patches/`), a candidate for the library.
 - Respond in English even when the client interface is French.

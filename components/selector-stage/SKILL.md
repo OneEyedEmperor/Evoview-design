@@ -31,8 +31,9 @@ tokens, the pause model and the control language.
    proposals, two logos, two offers) → `mode="pair"` — not for before/after;
    several frames of one world, where the pictures are the choice →
    `ProofAtlas`.
-2. `components/selector-stage/install.sh /root/.vibehub/projects/<client>`
-   (installs / upgrades `controls` and `foundation` first).
+2. Install: `sync.sh plan /root/.vibehub/projects/<client> selector-stage`,
+   then `apply`, then `verify` (library root, `docs/SYNC.md`); resolve
+   conflicts, fill patch reasons. Client tokens go in `selector-stage.theme.css`.
 3. Edit only `src/components/selector-stage/selector-stage.config.tsx`:
    the client's chapters in FR / EN (heading = two short lines, body ≤ 2
    sentences, one `detail` sentence per option), its media in `media/`
@@ -53,5 +54,6 @@ tokens, the pause model and the control language.
 - Do not box the heading or swap rows for the client's tabs. No `≠` or
   other ornament on the pair seam.
 - Never fork for a client: fixes go into the library (`VERSION`,
-  `CHANGELOG.md`); clients re-run `install.sh`.
+  `CHANGELOG.md`); clients upgrade through `sync.sh`; a client-side edit is
+  a recorded patch (`.evoview/patches/`), a candidate for the library.
 - Respond in English even when the client interface is French.

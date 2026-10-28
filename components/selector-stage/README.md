@@ -96,7 +96,7 @@ well; atlas 4), accent (`--primary` → `--ss-accent`, `--primary-foreground`
 
 | File | Role | Edit per site? |
 | --- | --- | --- |
-| `src/selector-stage.config.tsx` | Labels FR / EN + the site's chapters (`buildSelectorStageConfig(locale)`). Reference: fictional renovation studio. | **yes — the only one** |
+| `src/selector-stage.config.tsx` | Labels FR / EN + the site's chapters (`buildSelectorStageConfig(locale)`). Reference: fictional renovation studio. | **yes** (client-owned, like the theme file) |
 | `src/media/` | Reference photographs (≤ 62 KB webp, generated placeholders). Replace with client media. | yes (content) |
 | `src/SelectorStage.tsx`, `CompareToggle.tsx`, `ProofAtlas.tsx` | Components | no |
 | `src/stage.tsx` | Stage frame, media gate, radio keys, heading | no |
@@ -106,11 +106,17 @@ well; atlas 4), accent (`--primary` → `--ss-accent`, `--primary-foreground`
 ## Install
 
 ```bash
-/root/.vibehub/projects/evoview-design-library/components/selector-stage/install.sh /root/.vibehub/projects/<client>
+L=/root/.vibehub/projects/evoview-design-library
+$L/sync.sh plan /root/.vibehub/projects/<client> selector-stage   # read-only: files, deps, compat, changelog
+$L/sync.sh apply /root/.vibehub/projects/<client> selector-stage  # then resolve conflicts, fill patch reasons
+$L/sync.sh verify /root/.vibehub/projects/<client>
 ```
 
-Installs / upgrades `controls` and `foundation` first, then copies `src/` to
-`<client>/src/components/selector-stage/`; re-runs keep the config and `media/`.
+Writes `src/` to `<client>/src/components/selector-stage/`, plus `controls` /
+`foundation` when absent or too old; `selector-stage.config.tsx`,
+`selector-stage.theme.css` (tokens) and `media/` are client-owned, never
+overwritten (`media/` is copied on the first install only).
+`install.sh <client>` applies clean plans only. Contract: `docs/SYNC.md`.
 
 ```tsx
 import { SelectorStage, CompareToggle, ProofAtlas, buildSelectorStageConfig } from "@/components/selector-stage";

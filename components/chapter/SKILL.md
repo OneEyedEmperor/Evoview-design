@@ -32,8 +32,9 @@ Read `README.md` (Signature / Variations / Expression, API) and the library's
    tone (alternate near-white / near-black; same-tone neighbour → `compact`),
    rhythm (`cinematic` for a dark entry), rail, heading layout. One
    `feature` heading per region, one accent word at most.
-3. `components/chapter/install.sh /root/.vibehub/projects/<client>`
-   (installs / upgrades `foundation` first).
+3. Install: `sync.sh plan /root/.vibehub/projects/<client> chapter`, then
+   `apply`, then `verify` (library root, `docs/SYNC.md`); resolve conflicts,
+   fill patch reasons. Client tokens go in `chapter.theme.css`.
 4. Edit only `src/components/chapter/chapter.config.tsx`: client name, inline
    mark (currentColor SVG), footer logo, legal line, links (FR / EN). Leave
    `attribution` as delivered (on, `https://evoview.be/`).
@@ -89,5 +90,6 @@ Read `README.md` (Signature / Variations / Expression, API) and the library's
   linked, in the footer credit. Never place it next to a client CTA; keep
   CTAs inside chapters.
 - Never fork for a client: fixes go into the library (`VERSION`,
-  `CHANGELOG.md`), clients re-run `install.sh`.
+  `CHANGELOG.md`), clients upgrade through `sync.sh`; a client-side edit is
+  a recorded patch (`.evoview/patches/`), a candidate for the library.
 - Respond in English even when the client interface is French.

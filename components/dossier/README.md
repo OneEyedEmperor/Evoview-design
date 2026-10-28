@@ -121,7 +121,7 @@ copy, attribution label. Accent = the client's: the host `--primary` /
 
 | File | Role | Edit per site? |
 | --- | --- | --- |
-| `src/dossier.config.tsx` | Brand, kicker, items, entries + detail chapters, copy FR/EN, attribution | **yes — the only one** |
+| `src/dossier.config.tsx` | Brand, kicker, items, entries + detail chapters, copy FR/EN, attribution | **yes** (client-owned, like the theme file) |
 | `src/Dossier.tsx` | Modal, header strip, pager, chapter strip, toast, dock, history, focus, gate | no |
 | `src/routes.ts` | `dossierRoutes` (views, keys, parents, head data), `DossierView` | no |
 | `src/Board.tsx` | `SelectionBoard` (mosaic, grade, touch cycle) | no |
@@ -135,11 +135,17 @@ copy, attribution label. Accent = the client's: the host `--primary` /
 ## Install
 
 ```bash
-/root/.vibehub/projects/evoview-design-library/components/dossier/install.sh /root/.vibehub/projects/<client>
+L=/root/.vibehub/projects/evoview-design-library
+$L/sync.sh plan /root/.vibehub/projects/<client> dossier   # read-only: files, deps, compat, changelog
+$L/sync.sh apply /root/.vibehub/projects/<client> dossier  # then resolve conflicts, fill patch reasons
+$L/sync.sh verify /root/.vibehub/projects/<client>
 ```
 
-Installs / upgrades `controls` and `foundation` first, then copies `src/` to
-`<client>/src/components/dossier/`; re-runs keep `dossier.config.tsx`.
+Writes `src/` to `<client>/src/components/dossier/`, plus `controls` /
+`foundation` when absent or too old; `dossier.config.tsx` and
+`dossier.theme.css` (tokens, `--dossier-z`, `--dossier-reserve-bottom`) are
+client-owned, never overwritten. `install.sh <client>` applies clean plans
+only. Contract: `docs/SYNC.md`.
 
 ```tsx
 import { Dossier, buildDossierConfig, dossierRoutes, type DossierView } from "@/components/dossier";

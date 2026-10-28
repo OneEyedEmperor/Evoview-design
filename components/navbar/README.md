@@ -79,15 +79,16 @@ is a library change, never a client edit (RULES §13):
 Config only: copy, language, routes/anchors, deck count (3–6) and order,
 which pill is the CTA, icons (lucide or custom nodes), `accent`, every
 `vars` token, logo, tray contents and covers (`--nav-tray-card-h`,
-`--nav-tray-w`). In `navbar.css`: the ink scale (`#151515`, the
-`rgba(21,21,21,…)` ramp) — a global replace if the client's ink is not
-near-black; keep the light/dark pairs symmetrical.
+`--nav-tray-w`); tokens can also live in the client-owned `navbar.theme.css`.
+In `navbar.css`: the ink scale (`#151515`, the `rgba(21,21,21,…)` ramp) — a
+global replace if the client's ink is not near-black; keep the light/dark
+pairs symmetrical (sync records it as a local patch).
 
 ## Files
 
 | File | Role | Edit per site? |
 | --- | --- | --- |
-| `src/navbar.config.tsx` | Every label, destination, colour, token and action. | **yes — the only one** |
+| `src/navbar.config.tsx` | Every label, destination, colour, token and action. | **yes** (client-owned, like the theme file) |
 | `src/brand/` | Evoview wordmark (reference). Replace with the client's. | yes |
 | `src/types.ts` | `NavbarConfig` contract (every field commented). | no |
 | `src/Navbar.tsx` | Root: tone/section probe, `accent`/`vars` → CSS, mounts both finders. | no |
@@ -99,19 +100,24 @@ near-black; keep the light/dark pairs symmetrical.
 | `src/useNavbarLinks.ts` | Hands internal deck clicks to a client-side router. | no |
 | `src/useNavState.ts` | Scroll probe → `{ tone, section, color }`. | no |
 | `src/useNavTrays.ts` | Idle loader + cache for lazy tray contents. | no |
-| `src/navbar.css` | All styles, scoped under `.ev-navbar`. Tokens block at the top. | tokens only (prefer `config.vars`) |
+| `src/navbar.theme.css` | Client-owned: every `--nav-*` token, commented with its default; loaded after `navbar.css`. Never overwritten by sync. | yes (or `config.vars`, which wins) |
+| `src/navbar.css` | All styles, scoped under `.ev-navbar`. Tokens block at the top (defaults). | no: tokens go in `navbar.theme.css`; an ink-scale edit here is a recorded local patch |
 | `examples/evoview.config.tsx` | One-page config with sections and cover-card trays (`examples/evoview-brand/`). Not installed. | — |
 
 ## Install
 
 ```bash
-/root/.vibehub/projects/evoview-design-library/components/navbar/install.sh /root/.vibehub/projects/<client>
+L=/root/.vibehub/projects/evoview-design-library
+$L/sync.sh plan /root/.vibehub/projects/<client> navbar   # read-only: files, deps, compat, changelog
+$L/sync.sh apply /root/.vibehub/projects/<client> navbar  # then resolve conflicts, fill patch reasons
+$L/sync.sh verify /root/.vibehub/projects/<client>
 ```
 
-Installs / upgrades `foundation` first (the menu number orbs fill through
-its `OrbFill`), then copies `src/` to `<client>/src/components/navbar/`.
-Re-running upgrades the components and preserves `navbar.config.tsx` +
-`brand/`.
+Writes `src/` to `<client>/src/components/navbar/`, plus `foundation` (the
+menu number orbs fill through its `OrbFill`) when absent or too old;
+`navbar.config.tsx`, `navbar.theme.css` (tokens) and `brand/` (first
+install only) are client-owned, never overwritten. `install.sh <client>`
+applies clean plans only. Contract: `docs/SYNC.md`.
 
 Mount once in the page shell, before `<main>`.
 
@@ -227,6 +233,7 @@ In the browser (agent-browser or browser-bridge), at the client dev URL:
 
 ## Upgrading a client
 
-Re-run `install.sh`. Read `CHANGELOG.md` for the versions between
-`<client>/src/components/navbar/.navbar-version` and `VERSION`; apply any
-config changes it lists; run the verification.
+`sync.sh plan <client> navbar` lists the changelog between the installed and
+target version and the config template diff; apply the config changes by
+hand, `sync.sh apply`, resolve conflicts / fill patch reasons, `sync.sh
+verify`, then the verification above.

@@ -25,8 +25,9 @@ pause model.
 
 1. Open the showcase at 1440 and 390; switch the palette to the client's
    accent and to a yellow / off-white to see the light-accent behaviour.
-2. `components/controls/install.sh /root/.vibehub/projects/<client>`
-   (installs / upgrades `foundation` first).
+2. Install: `sync.sh plan /root/.vibehub/projects/<client> controls`, then
+   `apply`, then `verify` (library root, `docs/SYNC.md`); resolve conflicts,
+   fill patch reasons. Client tokens go in `controls.theme.css`.
 3. Edit only `src/components/controls/controls.config.tsx` (labels; reuse the
    client's i18n wording). Mount `ControlsProvider` once if the site is
    multilingual.
@@ -47,5 +48,6 @@ pause model.
 - No Evoview mark inside controls or next to a client CTA; the one linked
   mark belongs to the host component's header strip.
 - Never fork for a client: fixes go into the library (`VERSION`,
-  `CHANGELOG.md`), clients re-run `install.sh`.
+  `CHANGELOG.md`), clients upgrade through `sync.sh`; a client-side edit is
+  a recorded patch (`.evoview/patches/`), a candidate for the library.
 - Respond in English even when the client interface is French.

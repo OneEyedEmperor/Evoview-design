@@ -153,7 +153,7 @@ mark).
 
 | File | Role | Edit per site? |
 | --- | --- | --- |
-| `src/chapter.config.tsx` | Brand (name, inline mark, footer logo, home href), legal line, footer links, attribution, FR / EN via `buildChapterConfig(locale)` | **yes — the only one** |
+| `src/chapter.config.tsx` | Brand (name, inline mark, footer logo, home href), legal line, footer links, attribution, FR / EN via `buildChapterConfig(locale)` | **yes** (client-owned, like the theme file) |
 | `src/Chapter.tsx` | `Chapter`, `ChapterHeading`, `ChapterMark`, `ChapterTicker`, `chapterNavSections` | no |
 | `src/ChapterFooter.tsx` | `ChapterFooter` (bar / panel) | no |
 | `src/chapter.css` | `.ev-chapter` token block + heading / ticker / footer bar | no |
@@ -168,11 +168,16 @@ mark).
 ## Install
 
 ```bash
-/root/.vibehub/projects/evoview-design-library/components/chapter/install.sh /root/.vibehub/projects/<client>
+L=/root/.vibehub/projects/evoview-design-library
+$L/sync.sh plan /root/.vibehub/projects/<client> chapter   # read-only: files, deps, compat, changelog
+$L/sync.sh apply /root/.vibehub/projects/<client> chapter  # then resolve conflicts, fill patch reasons
+$L/sync.sh verify /root/.vibehub/projects/<client>
 ```
 
-Installs / upgrades `foundation` first, then copies `src/` to
-`<client>/src/components/chapter/`; re-runs keep `chapter.config.tsx`.
+Writes `src/` to `<client>/src/components/chapter/`, plus `controls` /
+`foundation` when absent or too old; `chapter.config.tsx` and
+`chapter.theme.css` (tokens) are client-owned, never overwritten.
+`install.sh <client>` applies clean plans only. Contract: `docs/SYNC.md`.
 Host: React 19, Vite, TypeScript strict (foundation's contract).
 
 ## API

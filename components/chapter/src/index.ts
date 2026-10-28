@@ -5,6 +5,7 @@ import "./chapter-faq.css";
 import "./chapter-footer-panel.css";
 import "./ChapterStory.css";
 import "./chapter-contact.css";
+import "./chapter.theme.css";
 
 export { Chapter, ChapterHeading, ChapterMark, ChapterTicker, chapterNavSections } from "./Chapter";
 export type { ChapterProps, ChapterHeadingProps, ChapterTickerProps, ChapterTone, ChapterRhythm, ChapterRail } from "./Chapter";

@@ -95,7 +95,7 @@ accent (`--primary`, `--primary-foreground`), fonts via `--font-heading` /
 
 | File | Role | Edit per site? |
 | --- | --- | --- |
-| `src/story-blocks.config.tsx` | Media status labels FR / EN; reference stories (`harvest`, `visit`). | **yes — the only one** |
+| `src/story-blocks.config.tsx` | Media status labels FR / EN; reference stories (`harvest`, `visit`). | **yes** (client-owned, like the theme file) |
 | `src/Story.tsx` | `Story` root (tone, rhythm, copy, `chapters`), `renderChapter` | no |
 | `src/blocks.tsx` | `StoryIntro`, `IndexedRows`, `ProofGrid`, `PayoffBand` | no |
 | `src/parts.tsx` | `StoryFigure` (media gate), `Reveal`, `renderLines` | no |
@@ -105,11 +105,16 @@ accent (`--primary`, `--primary-foreground`), fonts via `--font-heading` /
 ## Install
 
 ```bash
-/root/.vibehub/projects/evoview-design-library/components/story-blocks/install.sh /root/.vibehub/projects/<client>
+L=/root/.vibehub/projects/evoview-design-library
+$L/sync.sh plan /root/.vibehub/projects/<client> story-blocks   # read-only: files, deps, compat, changelog
+$L/sync.sh apply /root/.vibehub/projects/<client> story-blocks  # then resolve conflicts, fill patch reasons
+$L/sync.sh verify /root/.vibehub/projects/<client>
 ```
 
-Installs / upgrades `foundation` and `controls` first, then copies `src/` to
-`<client>/src/components/story-blocks/`; re-runs keep the config.
+Writes `src/` to `<client>/src/components/story-blocks/`, plus `controls` /
+`foundation` when absent or too old; `story-blocks.config.tsx` and
+`story-blocks.theme.css` (tokens) are client-owned, never overwritten.
+`install.sh <client>` applies clean plans only. Contract: `docs/SYNC.md`.
 
 ## Config and API
 

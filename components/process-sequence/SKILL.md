@@ -28,8 +28,9 @@ choreography + the approved mark in the dossier stage). Keep both.
 
 1. Open the showcase at 1440 and 390; switch the palette to the client's
    accent, then yellow / off-white, to see light-accent behaviour.
-2. `components/process-sequence/install.sh /root/.vibehub/projects/<client>`
-   (installs / upgrades `foundation` and `controls` first).
+2. Install: `sync.sh plan /root/.vibehub/projects/<client> process-sequence`,
+   then `apply`, then `verify` (library root, `docs/SYNC.md`); resolve
+   conflicts, fill patch reasons. Client tokens go in `process-sequence.theme.css`.
 3. Edit only `src/components/process-sequence/process-sequence.config.tsx`:
    the client's 3–6 real steps (titles ≈ 20 chars, one-to-two-sentence
    summaries, dossier items ≤ 42 chars), real media per step (webp ≤ 150 KB
@@ -69,5 +70,6 @@ choreography + the approved mark in the dossier stage). Keep both.
   loaders or video sources to server HTML; the dossier heading stays the
   view's only h1.
 - Never fork for a client: fixes go into the library (`VERSION`,
-  `CHANGELOG.md`), clients re-run `install.sh`.
+  `CHANGELOG.md`), clients upgrade through `sync.sh`; a client-side edit is
+  a recorded patch (`.evoview/patches/`), a candidate for the library.
 - Respond in English even when the client interface is French.

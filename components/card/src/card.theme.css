@@ -1,0 +1,28 @@
+/* card theme: client-owned. Sync creates it once and never overwrites it.
+   Loaded after the card sheets (through index.ts), so a token set here wins at
+   equal specificity. Uncomment only what the client needs; defaults shown.
+   The accent normally comes from the host --primary (foundation --ev-accent*). */
+
+.ev-card-track {
+  /* --card-track-accent: var(--ev-accent); */
+  /* --card-track-ink: var(--ev-accent-ink); */
+  /* --card-track-signal: var(--ev-accent-signal); */
+  /* --card-track-deep: var(--ev-accent-deep); */
+  /* Portrait cards, width / height (host knob, unset by default). */
+  /* --card-track-portrait-ratio: 2 / 3; */
+}
+
+.ev-card-deck {
+  /* --card-deck-accent: var(--ev-accent); */
+  /* --card-deck-ink: var(--ev-accent-ink); */
+  /* --card-deck-signal: var(--ev-accent-signal); */
+  /* --card-deck-deep: var(--ev-accent-deep); */
+}
+
+.ev-card-sequence {
+  /* --card-sequence-accent: var(--ev-accent); */
+  /* --card-sequence-ink: var(--ev-accent-ink); */
+  /* --card-sequence-signal: var(--ev-accent-signal); */
+  /* --card-sequence-deep: var(--ev-accent-deep); */
+  /* --card-sequence-well-signal: color-mix(in oklab, var(--card-sequence-accent) 88%, #fff); */
+}

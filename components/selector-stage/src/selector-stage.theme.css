@@ -1,0 +1,12 @@
+/* selector-stage theme: client-owned. Sync creates it once and never overwrites it.
+   Loaded after selector-stage.css (through index.ts), so a token set here wins
+   at equal specificity. Uncomment only what the client needs; defaults shown.
+   The accent normally comes from the host --primary / --primary-foreground. */
+
+.ev-selector-stage {
+  /* --ss-accent: var(--primary, #818cf8); */
+  /* --ss-accent-ink: var(--primary-foreground, #101011); */
+  /* --ss-accent-deep: color-mix(in oklab, var(--ss-accent) 62%, var(--ev-deep-toward, #000)); */
+  /* --ss-signal: color-mix(in oklab, var(--ss-accent) var(--ev-signal-mix, 88%), var(--ev-signal-toward, #fff)); */
+  /* --ss-on-media: color-mix(in oklab, var(--ss-accent) 62%, #fff); */
+}

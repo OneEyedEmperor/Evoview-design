@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Sync (`docs/SYNC.md`): `evoview.json` (`requires` foundation `>=1.9.0 <2`,
+  controls `>=1.2.0 <2`; client-owned config, theme, `media/`); `install.sh`
+  wraps `sync.sh` (clean plans only; local edits merged and recorded as
+  patches, files removed upstream deleted).
+- Config changes: new client-owned `src/selector-stage.theme.css` (accent
+  tokens), imported by `index.ts` after `selector-stage.css`; created by the
+  next sync, never overwritten. Existing config untouched; built CSS
+  unchanged.
 - Docs: ownership sections (RULES §13).
 - API (additive): exported variation array `COMPARE_TOGGLE_MODES` (new type
   `CompareToggleMode`). No config change.

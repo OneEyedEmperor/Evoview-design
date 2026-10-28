@@ -22,10 +22,13 @@ components/<name>/
   SKILL.md       agent procedure (symlinked into ~/.vibehub/skills/evoview-<name>)
   README.md      contract: files, host requirements, config, adaptation levers, verification
   CHANGELOG.md   per-version notes; breaking config changes go here
-  VERSION
-  install.sh     copies src/ into <client>/src/components/<name>/, preserves the config on re-run
-  src/           portable source; `<name>.config.tsx` is the only per-site file
+  VERSION        the only version number
+  evoview.json   requires (semver ranges), clientOwned paths, hostDeps (docs/SYNC.md)
+  install.sh     thin wrapper: sync.sh apply <client> <name> --if-clean
+  src/           portable source; client-owned: `<name>.config.tsx` (site data) and
+                 `<name>.theme.css` (adaptable tokens, commented defaults, imported last by index.ts)
 src/pages/       showcase pages, one per component, importing from ../../components/<name>/src
+sync.sh          plan | apply | verify into a client (docs/SYNC.md; tests: node scripts/sync-test.mjs)
 ```
 
 ## Components
@@ -58,15 +61,23 @@ liquid fill as reference): `animations/SKILL.md` (skill
 
 1. Edit `components/<name>/src`, run `pnpm build`, verify in the showcase at
    1440 and 390 wide.
-2. Bump `VERSION`, add a `CHANGELOG.md` entry (list config changes explicitly).
-3. Clients upgrade by re-running `install.sh`; it never touches their config.
+2. Bump `VERSION`, add a `CHANGELOG.md` entry (list config changes and
+   "Requires" explicitly), update `evoview.json` `requires` when the package
+   needs a newer foundation / controls. Breaking config or API = major bump
+   (`foundation` / `controls`: additive within a major). Commit: clients
+   install from git, never from the working tree.
+3. Clients upgrade with `sync.sh plan → apply → verify` (`install.sh` applies
+   clean plans only); client-owned files are never written, local patches are
+   merged and recorded (`docs/SYNC.md`).
 
 ## Adding a component
 
 Copy the `navbar` folder shape. Decouple all site data behind a single
 `<name>.config.tsx`, scope CSS under one root class with a `--<name>-*` token
-block that maps host tokens with fallbacks, write the SKILL/README pair, add
-a showcase page, symlink the skill:
+block that maps host tokens with fallbacks, list the adaptable tokens in
+`src/<name>.theme.css` (commented, imported by `index.ts` after the package
+CSS), write `evoview.json` and an `install.sh` wrapper, the SKILL/README pair,
+add a showcase page, symlink the skill:
 `ln -sfn $PWD/components/<name>/SKILL.md ~/.vibehub/skills/evoview-<name>/SKILL.md`.
 
 Each package's README and SKILL must carry the relevant strategy requirements

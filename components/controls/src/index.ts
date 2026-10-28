@@ -1,5 +1,6 @@
 import "../foundation";
 import "./controls.css";
+import "./controls.theme.css";
 
 export { PrimaryPlate, GhostAction, GlassClose, PagerOrb } from "./Commands";
 export type { PrimaryPlateProps, GhostActionProps, GlassCloseProps, PagerOrbProps } from "./Commands";

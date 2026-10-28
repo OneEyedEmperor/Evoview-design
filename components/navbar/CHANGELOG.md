@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- Sync (`docs/SYNC.md`): `evoview.json` (`requires` foundation `>=1.9.0 <2`;
+  client-owned `navbar.config.tsx`, `navbar.theme.css`, `brand/`);
+  `install.sh` wraps `sync.sh` (clean plans only). Fix: upgrades now delete
+  files removed upstream (the old `install.sh` never did); local edits are
+  merged and recorded as patches instead of overwritten.
+- Config changes: new client-owned `src/navbar.theme.css` (every `--nav-*`
+  token, commented defaults), imported by `index.ts` after the modules that
+  load `navbar.css` / `navbar.lang.css`; created by the next sync, never
+  overwritten. Token overrides move there (or stay in `config.vars`, which
+  wins); editing the token block in `navbar.css` becomes a recorded patch.
+  Existing config untouched; built CSS unchanged.
 - Docs: ownership sections (RULES §13). "Adapting" is split into Signature /
   Variations / Expression: of the former "change with care" items only the
   ink scale stays client-adaptable; timings, gloss, mobile tile wash and tray

@@ -1,0 +1,11 @@
+/* reservation theme: client-owned. Sync creates it once and never overwrites it.
+   Loaded after reservation.css (through index.ts), so a token set here wins at
+   equal specificity. Uncomment only what the client needs; defaults shown.
+   The accent normally comes from the host --primary / --primary-foreground;
+   config.accent / accentInk / vars are inline styles and win over this file.
+   The other --resa-* values are the Evoview chassis (Signature, RULES §13). */
+
+.evo-resa {
+  /* --resa-accent: var(--primary, #818cf8); */
+  /* --resa-accent-ink: var(--primary-foreground, #101011); */
+}

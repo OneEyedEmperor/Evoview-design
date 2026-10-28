@@ -67,7 +67,7 @@ fallback; override per subtree by setting `--primary`), tone, content.
 
 | File | Role | Edit per site? |
 | --- | --- | --- |
-| `src/controls.config.tsx` | Default labels FR / EN (close, previous, next, optional, counters, step statuses). | **yes — the only one** |
+| `src/controls.config.tsx` | Default labels FR / EN (close, previous, next, optional, counters, step statuses). | **yes** (client-owned, like the theme file) |
 | `src/Commands.tsx` | `PrimaryPlate`, `GhostAction`, `GlassClose`, `PagerOrb` | no |
 | `src/Choices.tsx` | `OptionChip`, `ChipGroup`, `OptionRow`, `OptionRows`, `CheckOrb`, `StepMark`, `Tag`, `Badge` | no |
 | `src/Fields.tsx` | `UnderlineField`, `FieldGrid`, `Switch`, `SegmentedControl` | no |
@@ -80,11 +80,16 @@ fallback; override per subtree by setting `--primary`), tone, content.
 ## Install
 
 ```bash
-/root/.vibehub/projects/evoview-design-library/components/controls/install.sh /root/.vibehub/projects/<client>
+L=/root/.vibehub/projects/evoview-design-library
+$L/sync.sh plan /root/.vibehub/projects/<client> controls   # read-only: files, deps, compat, changelog
+$L/sync.sh apply /root/.vibehub/projects/<client> controls  # then resolve conflicts, fill patch reasons
+$L/sync.sh verify /root/.vibehub/projects/<client>
 ```
 
-Installs / upgrades `foundation` first, then copies `src/` to
-`<client>/src/components/controls/`; re-runs keep `controls.config.tsx`.
+Writes `src/` to `<client>/src/components/controls/`, plus `foundation` when
+absent or too old; `controls.config.tsx` and `controls.theme.css` (tokens)
+are client-owned, never overwritten. `install.sh <client>` applies clean
+plans only. Contract: `docs/SYNC.md`.
 
 ```tsx
 import { PrimaryPlate, ChipGroup, ControlsProvider, buildControlsConfig } from "@/components/controls";

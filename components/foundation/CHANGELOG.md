@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Sync (`docs/SYNC.md`): `evoview.json` (no `requires`, no client-owned
+  file, `hostDeps` react ≥ 19). No theme template: the adaptable inputs are
+  host tokens (`--primary`, `--font-*`). `install.sh` wraps `sync.sh`.
+  Installed / upgraded only when a package's `requires` needs it. Policy:
+  additive within a major; a breaking change is a major bump. No API change.
 - Docs: ownership sections (RULES §13).
 
 ## 1.9.0

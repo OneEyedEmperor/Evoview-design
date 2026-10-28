@@ -1,0 +1,10 @@
+/* story-blocks theme: client-owned. Sync creates it once and never overwrites it.
+   Loaded after story-blocks.css (through index.ts), so a token set here wins at
+   equal specificity. Uncomment only what the client needs; defaults shown.
+   The accent normally comes from the host --primary (foundation --ev-accent*). */
+
+.ev-story-blocks {
+  /* --story-blocks-accent: var(--ev-accent); */
+  /* --story-blocks-signal: var(--ev-accent-signal); */
+  /* --story-blocks-accent-deep: var(--ev-accent-deep); */
+}

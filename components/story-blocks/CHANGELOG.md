@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Sync (`docs/SYNC.md`): `evoview.json` (`requires` foundation `>=1.9.0 <2`,
+  controls `>=1.1.0 <2`); `install.sh` wraps `sync.sh` (clean plans only;
+  local edits merged and recorded as patches, files removed upstream deleted).
+- Config changes: new client-owned `src/story-blocks.theme.css` (accent
+  tokens), imported by `index.ts` after `story-blocks.css`; created by the
+  next sync, never overwritten. Existing config untouched; built CSS
+  unchanged.
 - Docs: ownership sections (RULES §13).
 - API (additive): exported variation arrays `STORY_INTRO_ALIGNS`,
   `INDEXED_ROWS_SURFACES`, `PROOF_GRID_HEADING_POSITIONS` (new types

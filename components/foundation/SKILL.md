@@ -21,8 +21,9 @@ library's `STRATEGY.md` + `docs/RULES.md` first.
 
 ## Procedure
 
-- **Client**: installed automatically by every package's `install.sh`; run
-  `components/foundation/install.sh <client>` alone only to upgrade it. Map
+- **Client**: `sync.sh plan / apply` installs or upgrades it when a package
+  needs it, and checks every installed package against the new version
+  (`docs/SYNC.md`); `sync.sh plan <client> foundation` upgrades it alone. Map
   the client accent through `--primary` / `--primary-foreground` (use
   `inkFor` when the host has no foreground token). Map fonts through
   `--font-heading` / `--font-body` / `--font-readout` only when the client's
@@ -33,8 +34,8 @@ library's `STRATEGY.md` + `docs/RULES.md` first.
   root, use the type classes, gate every loop and clock with
   `useInViewPause` + `useSequenceClock`, gate media with `useMediaReady`
   (warm likely views with `preloadMedia` on idle / intent), put
-  the one `<EvoviewMark>` in the header strip. `install.sh` must call
-  `../foundation/install.sh` first.
+  the one `<EvoviewMark>` in the header strip. Declare the floor in
+  `evoview.json` `requires` (`"foundation": ">=x.y.z <2"`).
 - **Package with a modal**: follow `docs/CRAWLABLE-MODALS.md` — export
   `<name>Routes: ModalRoutes`, take `RouteViewProps` (`view`, `onNavigate`,
   `hrefFor`, `history`), keep history with `useRouteHistory`, navigate with

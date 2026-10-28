@@ -1,6 +1,7 @@
 import "../foundation";
 import "../controls";
 import "./dossier.css";
+import "./dossier.theme.css";
 
 export { Dossier, type DossierProps, type DossierRouteProps, type DossierLegacyProps } from "./Dossier";
 export { dossierRoutes, type DossierView } from "./routes";

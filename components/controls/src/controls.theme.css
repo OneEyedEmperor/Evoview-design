@@ -1,0 +1,12 @@
+/* controls theme: client-owned. Sync creates it once and never overwrites it.
+   Loaded after controls.css (through index.ts), so a token set here wins at
+   equal specificity. Uncomment only what the client needs; defaults shown.
+   The accent normally comes from the host --primary / --primary-foreground. */
+
+.ev-controls {
+  /* --controls-accent: var(--primary, #818cf8); */
+  /* --controls-accent-ink: var(--primary-foreground, #101011); */
+  /* --controls-accent-deep: color-mix(in oklab, var(--controls-accent) 62%, var(--ev-deep-toward, #000)); */
+  /* --controls-signal: color-mix(in oklab, var(--controls-accent) var(--ev-signal-mix, 88%), var(--ev-signal-toward, #fff)); */
+  /* --controls-tint: color-mix(in oklab, var(--controls-accent) 14%, transparent); */
+}

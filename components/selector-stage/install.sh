@@ -1,37 +1,24 @@
 #!/usr/bin/env bash
-# Installs / upgrades the Evoview selector stage (controls + foundation first) into a client project.
+# Installs / upgrades the Evoview selector stage (and the controls + foundation it needs) into a client project.
 #
-#   components/selector-stage/install.sh <client-project-dir>
+#   components/selector-stage/install.sh <client-project-dir> [sync flags]
 #
-# First run: copies src/ including the reference selector-stage.config.tsx and media/.
-# Later runs: replaces the source; selector-stage.config.tsx and media/ are kept.
+# Thin wrapper over sync.sh (docs/SYNC.md): plans, applies only a clean plan,
+# else prints the plan and exits non-zero; then review and run
+# sync.sh plan / apply / verify by hand. Never overwrites client-owned files.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TARGET="${1:?usage: install.sh <client-project-dir>}"
-TARGET="$(cd "$TARGET" && pwd)"
+TARGET="${1:?usage: install.sh <client-project-dir> [sync flags]}"
+shift
 DEST="$TARGET/src/components/selector-stage"
-VERSION="$(cat "$HERE/VERSION")"
-
-"$HERE/../controls/install.sh" "$TARGET"
-
-mkdir -p "$DEST"
 fresh=1
-[ -f "$DEST/selector-stage.config.tsx" ] && fresh=0
-find "$DEST" -mindepth 1 -maxdepth 1 ! -name selector-stage.config.tsx ! -name media -exec rm -rf {} +
+[ -e "$DEST" ] && fresh=0
 
-for file in "$HERE"/src/*; do
-  name="$(basename "$file")"
-  case "$name" in
-    selector-stage.config.tsx | media) [ "$fresh" = 1 ] && cp -r "$file" "$DEST/" ;;
-    *) cp -r "$file" "$DEST/" ;;
-  esac
-done
-echo "$VERSION" > "$DEST/.selector-stage-version"
+"$HERE/../../sync.sh" apply "$TARGET" selector-stage --if-clean "$@"
 
-echo "selector-stage $VERSION → $DEST"
-if [ "$fresh" = 1 ]; then
-  cat <<EOF
+[ "$fresh" = 1 ] || exit 0
+cat <<EOF
 
 Next:
   1. Replace the reference chapters in $DEST/selector-stage.config.tsx
@@ -40,6 +27,3 @@ Next:
   3. Check the host --primary / --primary-foreground (the client accent).
 See $HERE/README.md for the contract and the verification checklist.
 EOF
-else
-  echo "config + media preserved (upgrade). Check $HERE/CHANGELOG.md for breaking changes."
-fi

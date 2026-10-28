@@ -1,0 +1,19 @@
+/* dossier theme: client-owned. Sync creates it once and never overwrites it.
+   Loaded after dossier.css (through index.ts), so a token set here wins at
+   equal specificity. Uncomment only what the client needs; defaults shown.
+   The accent normally comes from the host --primary (an item's accent is
+   applied as --primary while it is shown). Shell / glass values are Signature. */
+
+.ev-dossier,
+.evd-scope {
+  /* --dossier-accent: var(--ev-accent); */
+  /* --dossier-ink: var(--ev-accent-ink); */
+  /* --dossier-signal: var(--ev-accent-signal); */
+  /* --dossier-deep: var(--ev-accent-deep); */
+}
+
+/* Host knobs (unset by default):
+   --dossier-z               modal z-index (1000)
+   --dossier-reserve-bottom  space under the windowed shell for host chrome
+                             (falls back to --ev-modal-reserve-bottom, then 0) */
+/* :root { --dossier-z: 1000; --dossier-reserve-bottom: 0px; } */

@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Sync (`docs/SYNC.md`): `evoview.json` (`requires` foundation `>=1.9.0 <2`);
+  `install.sh` wraps `sync.sh` (clean plans only; local edits merged and
+  recorded as patches, files removed upstream deleted). Policy: additive
+  within a major.
+- Config changes: new client-owned `src/controls.theme.css` (accent tokens,
+  commented defaults), imported by `index.ts` after `controls.css`; created by
+  the next sync, never overwritten. Existing config untouched; built CSS
+  unchanged.
 - Docs: ownership sections (RULES §13).
 
 ## 1.5.0
