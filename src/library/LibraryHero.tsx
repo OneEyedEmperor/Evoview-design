@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
 import { Link } from "react-router-dom";
 import EvoviewLogo from "../../components/foundation/src/brand/EvoviewLogo";
 import { TextFill } from "../../components/foundation/src/TextFill";
@@ -53,11 +53,13 @@ type Props = {
   bars?: ReactNode;
   /** Under the stage (the index's accent picker). */
   children?: ReactNode;
+  /** Showcase pages: the page navigation, in the palette slot's place. */
+  deck?: ReactNode;
 };
 
 /* The Evoview Library hero, first section of every library page: the
    one-line lockup over the method-card reel. */
-export default function LibraryHero({ accent, home = false, bars, children }: Props) {
+export default function LibraryHero({ accent, home = false, bars, children, deck }: Props) {
   const { t } = useLibraryLocale();
   const [revealed] = useState(heroRevealed);
   useEffect(() => {
@@ -75,12 +77,20 @@ export default function LibraryHero({ accent, home = false, bars, children }: Pr
       </span>
     </span>
   );
+  const stageRef = useRef<HTMLDivElement>(null);
+  const deckRef = useRef<HTMLDivElement>(null);
+  useDeckPull(stageRef, deckRef, Boolean(deck));
   return (
     <section className="lib-hero lib-toned" data-tone="dark" data-nav-tone="dark">
-      <div className="lib-rail lib-hero__stage">
+      <div ref={stageRef} className="lib-rail lib-hero__stage">
         <div className="lib-hero__frame">
           <HeroReel label={t(COPY)} revealed={revealed} />
-          {home ? (
+          {deck ? (
+            <span className="lib-hero__lockup" data-ghost="" aria-hidden="true">
+              {row}
+              <BarsSlot />
+            </span>
+          ) : home ? (
             <h1 className="lib-hero__lockup">
               {row}
               {bars}
@@ -98,8 +108,35 @@ export default function LibraryHero({ accent, home = false, bars, children }: Pr
           {children}
         </div>
       </div>
+      {deck && (
+        <div ref={deckRef} className="lib-rail lib-hero__deck">
+          {deck}
+        </div>
+      )}
     </section>
   );
+}
+
+/* Showcase pages: the lockup is held invisible so the stage, and with it
+   the reel, keeps the index's geometry; the deck rides up over the stage to
+   open where the lockup's row would be. */
+function useDeckPull(stage: RefObject<HTMLElement | null>, deck: RefObject<HTMLElement | null>, on: boolean) {
+  useLayoutEffect(() => {
+    const el = stage.current;
+    const target = deck.current;
+    if (!on || !el || !target) return;
+    const measure = () => {
+      const row = el.querySelector<HTMLElement>(".lib-hero__row");
+      if (!row) return;
+      const pull = el.getBoundingClientRect().bottom - row.getBoundingClientRect().top;
+      target.style.setProperty("--lib-hero-pull", `${Math.max(0, Math.round(pull))}px`);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    document.fonts?.ready.then(measure);
+    return () => ro.disconnect();
+  }, [stage, deck, on]);
 }
 
 function BarsSlot() {
@@ -113,7 +150,8 @@ function BarsSlot() {
 /* The method cards as an endless, full-bleed reel behind the lockup: the
    set is laid twice and the track slides one set's width, so the seam never
    shows. The loop obeys the pause model by pausing the CSS animation in
-   place. */
+   place. Nothing above the moving track may carry a filter, mask or group
+   opacity: it would be re-composited every frame. */
 const REEL_SET = Array.from({ length: REEL_REPEAT }, () => HERO_PANELS).flat();
 function HeroReel({ label, revealed }: { label: string; revealed: boolean }) {
   const { t } = useLibraryLocale();
@@ -150,9 +188,10 @@ function HeroStamp({ revealed }: { revealed: boolean }) {
   );
 }
 
-/* The method card without its eye: purple frame, graded image under a dim
-   and a centre falloff, one shine sweep. Revealed once decoded (`complete`
-   covers cached images on remount). */
+/* The method card without its eye, pre-rendered whole (frame, grade, dim,
+   blur, reel opacity: scripts/bake-hero-reel.mjs) so the moving track
+   carries no live effect. Revealed once decoded (`complete` covers cached
+   images on remount). */
 function HeroPanel({ id, alt, index, revealed }: { id: string; alt: string; index: number; revealed: boolean }) {
   const ref = useRef<HTMLImageElement>(null);
   const [ready, setReady] = useState(revealed);
@@ -161,23 +200,19 @@ function HeroPanel({ id, alt, index, revealed }: { id: string; alt: string; inde
   }, []);
   return (
     <div className="lib-hero__panel" data-ready={ready || undefined} style={{ "--lib-stagger": index } as CSSProperties}>
-      <div className="lib-hero__media">
-        <img
-          ref={ref}
-          src={`/library/hero/${id}-768.webp`}
-          srcSet={`/library/hero/${id}-480.webp 480w, /library/hero/${id}-768.webp 768w`}
-          sizes="(min-width: 1024px) 19em, 30vw"
-          alt={alt}
-          width={768}
-          height={768}
-          decoding="async"
-          draggable={false}
-          onLoad={() => setReady(true)}
-          onError={() => setReady(true)}
-        />
-        <span className="lib-hero__dim" aria-hidden="true" />
-        {ready && !revealed && <span className="lib-hero__shine" aria-hidden="true" />}
-      </div>
+      <img
+        ref={ref}
+        src={`/library/hero/${id}-reel-504.webp`}
+        srcSet={`/library/hero/${id}-reel-252.webp 252w, /library/hero/${id}-reel-504.webp 504w`}
+        sizes="(min-width: 1024px) 15.75em, 25vw"
+        alt={alt}
+        width={504}
+        height={504}
+        decoding="async"
+        draggable={false}
+        onLoad={() => setReady(true)}
+        onError={() => setReady(true)}
+      />
     </div>
   );
 }

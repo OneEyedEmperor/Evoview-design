@@ -340,26 +340,26 @@ a.lib-hero__lockup:focus-visible { outline: 2px solid var(--lib-signal); outline
 
 /* Panels = the Evoview method card in its finished state (site:
    IntroSection PhaseCard, showCompleted): 1px purple frame, image graded
-   grey at .85 over #0b0b10, .72 dim + centre falloff, one shine; the
-   phase eye is left off so the lockup's stamp is the only eye. */
-/* The reel sits behind the lockup and no wider than it, held back in
-   opacity and blur, softened at both ends so the title stays the subject.
-   Each item carries its own trailing gap, so one set is exactly half the
-   track. */
+   grey at .85 over #0b0b10, .72 dim + centre falloff; the phase eye is left
+   off so the lockup's stamp is the only eye. The card, the reel's .32
+   opacity and its 3px blur are baked into one alpha image per panel
+   (scripts/bake-hero-reel.mjs): as live effects above the moving track they
+   were re-composited every frame, about half the page's frame cost. */
+/* The reel sits behind the lockup, held back in opacity and blur so the
+   title stays the subject. Each item carries its own trailing gap, so one
+   set is exactly half the track. No end fade: over the graded ground it
+   would need a mask (see above). */
 /* Full bleed: the frame sits on the viewport's axis, so the reel spans the
-   whole screen from its centre (the hero clips the scrollbar overrun). */
+   whole screen from its centre (the hero clips the scrollbar overrun).
+   Clipped sideways only, so the baked blur spills above and below. */
 .lib-hero__reel {
   position: absolute;
   left: 50%;
   width: 100vw;
   top: 50%;
   translate: -50% -50%;
-  overflow: hidden;
-  opacity: 0.32;
-  filter: blur(3px);
+  overflow-x: clip;
   pointer-events: none;
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
 }
 .lib-hero__track {
   display: flex;
@@ -376,44 +376,24 @@ a.lib-hero__lockup:focus-visible { outline: 2px solid var(--lib-signal); outline
 .lib-hero__track > li { flex: none; width: calc(var(--lib-hero-card) * 0.75); padding-right: var(--lib-hero-gap); }
 @keyframes lib-hero-reel { to { transform: translateX(-50%); } }
 .lib-hero__panel {
-  padding: 1px;
-  border-radius: 1em;
-  background: rgb(99 75 114 / 0.4);
-  box-shadow: 0 6px 18px -8px rgb(0 0 0 / 0.35), 0 2px 6px -2px rgb(0 0 0 / 0.25);
+  position: relative;
+  aspect-ratio: 1;
   opacity: 0;
   transform: translateY(28px);
   transition: opacity 600ms var(--lib-ease), transform 900ms var(--lib-ease-cine);
   transition-delay: calc(var(--lib-stagger, 0) * 80ms);
 }
 .lib-hero__panel[data-ready] { opacity: 1; transform: none; }
-.lib-hero__media {
-  position: relative;
-  overflow: hidden;
-  aspect-ratio: 1;
-  border-radius: calc(1em - 1px);
-  background: #0b0b10;
-  container-type: inline-size;
-}
-.lib-hero__media img {
+/* The baked image carries a blur/shadow margin around the card: 12 px on a
+   228 px card (BLEED / CARD in the bake script). */
+.lib-hero__panel img {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  inset: -5.263%;
+  width: auto;
+  height: auto;
+  max-width: none;
   user-select: none;
-  opacity: 0.85;
-  filter: grayscale(1) contrast(1.2) brightness(1.06);
 }
-.lib-hero__dim {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle farthest-corner at 50% 50%, transparent 38%, rgb(0 0 0 / 0.22) 62%, rgb(0 0 0 / 0.5) 100%),
-    rgb(0 0 0 / 0.72);
-  opacity: 0;
-  transition: opacity 700ms ease-out calc(260ms + var(--lib-stagger, 0) * 80ms);
-}
-.lib-hero__panel[data-ready] .lib-hero__dim { opacity: 1; }
 .lib-eye { overflow: visible; }
 .lib-eye__stroke { stroke-dasharray: 1; stroke-dashoffset: 1; animation: lib-eye-draw 1s cubic-bezier(0.4, 0, 0.2, 1) both; }
 .lib-eye__finish { opacity: 0; animation: lib-eye-finish 180ms ease-out var(--eye-finish) forwards; }
@@ -421,24 +401,8 @@ a.lib-hero__lockup:focus-visible { outline: 2px solid var(--lib-signal); outline
 @keyframes lib-eye-finish { to { opacity: 1; } }
 .lib-hero__stamp[data-drawn] .lib-eye__stroke { animation: none; stroke-dashoffset: 0; }
 .lib-hero__stamp[data-drawn] .lib-eye__finish { animation: none; opacity: 1; }
-.lib-hero__shine { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
-.lib-hero__shine::before {
-  content: "";
-  position: absolute;
-  inset-block: 0;
-  left: 0;
-  width: 45%;
-  background: linear-gradient(105deg, transparent 28%, rgb(214 196 255 / 0.07) 40%, rgb(255 255 255 / 0.24) 50%, rgb(196 226 255 / 0.07) 60%, transparent 72%);
-  transform: translateX(-100%);
-  animation: lib-hero-shine 1260ms cubic-bezier(0.45, 0, 0.25, 1) both;
-  animation-delay: calc(1400ms + var(--lib-stagger, 0) * 200ms);
-}
-@keyframes lib-hero-shine { from { transform: translateX(-100%); } to { transform: translateX(235%); } }
-
 @media (max-width: 767px) {
   .lib-hero { --lib-hero-gap: 0.5em; }
-  .lib-hero__panel { border-radius: 0.75em; }
-  .lib-hero__media { border-radius: calc(0.75em - 1px); }
 }
 
 @media (min-width: 768px) {
@@ -715,8 +679,9 @@ a.lib-hero__lockup:focus-visible { outline: 2px solid var(--lib-signal); outline
 .lib-showcase[data-tone="dark"] { --foreground: oklch(0.98 0 0); --muted-foreground: oklch(0.6 0 0); }
 .lib-showcase[data-tone="light"] { --foreground: #151515; --muted-foreground: #6b6b6b; }
 
-/* Title strip: one module spanning the rail, on the strip's own grade (no
-   band colour of its own; ShowcasePage). One shell holds two parts on one
+/* Page navigation (showcase pages): one module spanning the rail, in the
+   hero in the lockup's place, on the hero's grade (no band colour of its
+   own; ShowcasePage). One shell holds two parts on one
    surface, told apart by tone, never a rule: the player (the shown page's
    glyph) and the page list. One glass pill straddles the shell's lower
    edge, centred on the seam between the parts: the title over category and
@@ -725,7 +690,6 @@ a.lib-hero__lockup:focus-visible { outline: 2px solid var(--lib-signal); outline
    a channel switch (foundation ChannelSwitch, RULES §6). The pill's glass is a pseudo
    layer, never the pill itself (a backdrop root would flatten what
    overlaps it). */
-.lib-showcase__head { position: relative; z-index: 3; padding-block: 7.5em var(--lib-chapter); }
 .lib-deck {
   --lib-ribbon-h: 70px;
   --lib-ribbon-inset: 14px;
@@ -763,10 +727,9 @@ a.lib-hero__lockup:focus-visible { outline: 2px solid var(--lib-signal); outline
 /* The player part: the shown page's glyph (icons.tsx) on a soft accent
    bloom, a tone lighter than the list part, centred on the part the pill
    leaves clear. */
+.lib-player__frame { position: relative; display: block; min-width: 0; height: clamp(150px, 40vw, 240px); }
 .lib-player__art {
   display: block;
-  min-width: 0;
-  height: clamp(150px, 40vw, 240px);
   background:
     radial-gradient(42% 58% at 50% 42%, color-mix(in oklab, var(--showcase-accent) 16%, transparent) 0%, transparent 72%),
     rgb(255 255 255 / 0.04);
@@ -783,15 +746,17 @@ a.lib-hero__lockup:focus-visible { outline: 2px solid var(--lib-signal); outline
 }
 /* Or a photograph (art.tsx), filling the part edge to edge. */
 .lib-player__photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 45%; user-select: none; }
-/* A dark veil over the photograph, deeper toward the pill. Over the
-   switching layer, so it holds still while the picture changes. */
-.lib-player__art:has(.lib-player__photo)::after {
-  content: "";
+/* A dark veil over the media (video or photograph), deeper toward the pill;
+   over the switching layer, so it holds still while the picture changes.
+   Not over a glyph. */
+.lib-veil {
   position: absolute;
   inset: 0;
+  display: none;
   pointer-events: none;
   background: linear-gradient(180deg, rgb(6 6 9 / 0.3) 0%, rgb(6 6 9 / 0.38) 55%, rgb(6 6 9 / 0.62) 100%);
 }
+.lib-player__frame:has(.lib-player__photo) .lib-veil { display: block; }
 /* The pill: half over the shell's foot, half under it, so the glass frosts
    both parts; two equal halves, so its middle sits on the parts' seam. */
 .lib-deck__pill {
@@ -967,54 +932,18 @@ a.lib-hero__lockup:focus-visible { outline: 2px solid var(--lib-signal); outline
 @media (prefers-reduced-motion: reduce) { .lib-screen__plate { transition: none; } }
 .lib-showcase__title .lib-display { font-size: var(--lib-title-fs); font-weight: 700; line-height: 1.04; text-transform: none; text-wrap: balance; }
 .lib-showcase__title .lib-display em { color: inherit; }
-/* A dark band takes the site's "La méthode" stage grade (evoview
-   IntroSection.css .method-stage). Its vignette keeps only the radial
-   falloff: the top/bottom fades are sized for a full section and would
-   swallow a band this short. */
-.lib-toned.lib-showcase__head[data-tone="dark"] { background: linear-gradient(180deg, #0a0a0f 0%, #08080c 45%, #060608 100%); }
-.lib-showcase__head > :not(.lib-stage-grade) { position: relative; z-index: 1; }
-.lib-stage-grade { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
-.lib-stage-grade > span { position: absolute; inset: 0; }
-.lib-stage-grade__light {
-  background:
-    radial-gradient(70% 55% at 50% -6%, rgb(178 172 216 / 0.09) 0%, rgb(178 172 216 / 0.028) 45%, transparent 75%),
-    radial-gradient(55% 45% at 88% 104%, rgb(63 81 181 / 0.22) 0%, transparent 70%),
-    radial-gradient(32% 28% at 2% 64%, rgb(196 42 52 / 0.03) 0%, transparent 70%);
-}
-.lib-stage-grade__phosphor {
-  opacity: 0.55;
-  background-image: radial-gradient(rgb(206 210 236 / 0.075) 0.55px, transparent 0.75px);
-  background-size: 3px 3px;
-  -webkit-mask-image: radial-gradient(85% 70% at 50% 18%, #000 0%, rgb(0 0 0 / 0.35) 55%, transparent 90%);
-  mask-image: radial-gradient(85% 70% at 50% 18%, #000 0%, rgb(0 0 0 / 0.35) 55%, transparent 90%);
-}
-.lib-stage-grade__scan {
-  background-image: repeating-linear-gradient(0deg, transparent 0 2px, rgb(220 222 255 / 0.014) 2px 3px);
-  -webkit-mask-image: linear-gradient(180deg, #000 0%, rgb(0 0 0 / 0.5) 60%, transparent 100%);
-  mask-image: linear-gradient(180deg, #000 0%, rgb(0 0 0 / 0.5) 60%, transparent 100%);
-}
-.lib-stage-grade__grain {
-  opacity: 0.6;
-  mix-blend-mode: screen;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.78 0 0 0 0 0.79 0 0 0 0 0.9 0 0 0 0.9 -0.32'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.09'/%3E%3C/svg%3E");
-  background-size: 200px 200px;
-}
-.lib-stage-grade__vignette { background: radial-gradient(120% 95% at 50% 40%, transparent 55%, rgb(2 2 4 / 0.62) 100%); }
 .lib-showcase__tail { height: var(--lib-chapter); }
 .lib-showcase__lead { position: relative; height: 0; pointer-events: none; }
 .lib-showcase__lead > span { position: absolute; inset-inline: 0; }
-/* Under the library hero the navbar clearance is the hero's: the header
-   opens one heading band below it, the hero's empty palette slot being air
-   enough on top. */
-.lib-showcase > .lib-hero { padding-bottom: 0; }
-/* Pages without a palette: the empty slot's top margin is pulled back; the
-   slot itself stays, it is the reel's run-out (pulling it would clip the
-   cards). */
-.lib-showcase > .lib-hero:has(.lib-hero__palette:empty) .lib-hero__stage { margin-bottom: -2.5em; }
-.lib-hero + .lib-showcase__head { padding-block: calc(var(--lib-lead) * 0.6); }
-/* The page's title block is full bleed in the page's opposite tone
-   (ShowcasePage), its own segment between the hero and the demos. */
-/* A first demo on the frame tone starts one heading band under the band. */
+/* One heading band between the hero (and its page navigation) and the
+   first demo. */
+.lib-showcase > .lib-hero { padding-bottom: var(--lib-lead); }
+/* Showcase pages: the page navigation takes the lockup's place, over the
+   reel (LibraryHero useDeckPull). */
+.lib-hero__lockup[data-ghost] { visibility: hidden; }
+.lib-hero__deck { --lib-hero-deck-lift: 44px; position: relative; z-index: 1; margin-top: calc(-1 * var(--lib-hero-pull, 0px) - var(--lib-hero-deck-lift)); }
+@media (min-width: 768px) { .lib-hero__deck { --lib-hero-deck-lift: 56px; } }
+/* A first demo on the frame tone starts one heading band under the hero. */
 .lib-showcase__stage > .lib-variant[data-frame]:first-child { --lib-variant-top: var(--lib-lead); }
 .lib-showcase .lib-showcase__stage:not(:has(> .lib-variant)) { padding-top: var(--lib-lead); }
 /* Under 768 the parts stack inside the shell, player over list, the list's
@@ -1055,10 +984,8 @@ a.lib-hero__lockup:focus-visible { outline: 2px solid var(--lib-signal); outline
 /* From 768 the parts sit side by side in equal halves, the list's rows
    setting the shell's height, the player part stretching to it. */
 @media (min-width: 768px) {
-  .lib-showcase__head { padding-top: 9em; }
-  .lib-hero + .lib-showcase__head { padding-top: calc(var(--lib-lead) * 0.6); }
   .lib-deck__shell { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .lib-player__art { height: auto; }
+  .lib-player__frame { height: auto; }
 }
 @media (min-width: 1024px) {
   .lib-deck { --lib-ribbon-h: 74px; --lib-ribbon-orb: 46px; --lib-row-h: 58px; }

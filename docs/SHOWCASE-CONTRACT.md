@@ -80,22 +80,26 @@ is expensive: a node child is not re-rendered on colour change.
 Default accent: `defaultAccent` ?? near-white (dark tone) / near-ink (light).
 
 Every library page opens on the index hero (`LibraryHero`, `src/library/LibraryHero.tsx`):
-the Evoview lockup over the method reel, rendered by `ShowcasePage` above its
-header (lockup links to `/`; LIBRARY takes the picked accent, Evoview indigo
-while on the page default). The index renders it with its h1, bars and palette.
+the method reel. The index renders it with the Evoview lockup (its h1; LIBRARY
+takes the picked accent, Evoview indigo while on the page default), bars and
+palette. `ShowcasePage` passes its page navigation as `deck`: the lockup is
+held invisible (stage and reel keep the index's exact geometry) and the deck
+is pulled up over the stage to open 44 px (phones) / 56 px (≥ 768) above the
+lockup row's top (`useDeckPull`); one heading band separates the hero from
+the first demo.
 
 Page changes inside `LibraryLayout` play the page curtain (`src/library/PageCurtain.tsx`,
-wired in `App.tsx`): a night panel rises from the bottom (cover), then drops back down (reveal); between a `/layouts/*` and a `/components/*` page it is always one right-to-left swipe instead (in from the right, out to the left). Navbar and title-strip navigation play the same curtain; the strip has no transition of its own. Over everything below
-`.lib-hero` (top follows the hero's bottom, 0 once scrolled past), routes render
+wired in `App.tsx`): a night panel rises from the bottom (cover), then drops back down (reveal); between a `/layouts/*` and a `/components/*` page it is always one right-to-left swipe instead (in from the right, out to the left). Navbar and page-navigation (deck) links play the same curtain; the deck has no transition of its own. Over everything below
+`.lib-hero` (top follows the hero's bottom, or the top of `.lib-hero__deck`
+when present, 0 once scrolled past), routes render
 the lagged location until it covers. The hero must read as shared: after its
 first reveal, remounts start revealed (no card rise, shine or eye draw) and the
 reel resumes on a shared clock. `lazyPage` renders preloaded modules directly so
 the swap never flashes the Suspense fallback. Reduced motion, iframes and the
 full-screen navbar demos swap instantly.
 
-The frame renders the hero (palette slot left empty off the index) and the
-header (`.lib-deck`, no band colour or shell of its own, on the strip's
-"La méthode" stage grade; glass in a flat neutral tint, no gradient,
+The frame renders the hero with the page navigation in it (`.lib-deck`, no
+band colour of its own, on the hero's "La méthode" stage grade; glass in a flat neutral tint, no gradient,
 accent only in the white section bars' faint glow and the keys' liquid hover
 fill): one module centred on the sections' rail, inset on each side
 (`clamp(0px, 4vw − 16px, 48px)`, none on phones) and at most 980 px wide,
@@ -103,7 +107,8 @@ so each half keeps a picture's proportions (≈ 16:10 at 1440).
 One shell (one radius, one surface, parts told apart by tone, no rule)
 holds two equal parts side by side from 768, stacked below: the player
 (the shown page's photograph, `src/library/art.tsx`, `public/library/art/
-<id>-640|1280.webp` via srcset, warmed on idle, under a dark veil;
+<id>-640|1280.webp` via srcset, warmed on idle, or a boomerang loop
+`<id>-720|1280.mp4` + first-frame poster, playing only on screen, under a dark veil;
 placeholders for the four layouts, also used for their list thumbnails
 (`-192.webp`) and index cards; otherwise its glyph, `EntryIcon`, on an
 accent bloom) and the page
@@ -213,7 +218,7 @@ shows a retry state inside the layout, never a blank app.
   only while a modal is open. It steps aside while the library footer is
   in view. From 768 px the frame sets `--ev-modal-reserve-bottom` (its
   footprint) for modal packages to keep free under their window.
-- **Nav tone**: the frame marks only its header (and bottom spacer) dark; the
+- **Nav tone**: the frame marks only its hero (and bottom spacer) dark; the
   stage is marked dark only while its content declares no tone. A dark
   `ShowcaseVariant` without `tone` is marked itself (only its caption when
   the component holds light grounds). Content tone

@@ -86,8 +86,12 @@ export function usePageCurtain({ pageKey, prepare, side }: Options): {
     running.current = true;
     let frame = 0;
     const follow = () => {
+      // A showcase page's navigation sits inside the hero: it changes with
+      // the page, so it goes under the curtain too.
+      const deck = document.querySelector<HTMLElement>(".lib-hero__deck");
       const hero = document.querySelector<HTMLElement>(".lib-hero");
-      const top = hero ? Math.max(0, hero.getBoundingClientRect().bottom) : 0;
+      const edge = deck ? deck.getBoundingClientRect().top : hero ? hero.getBoundingClientRect().bottom : 0;
+      const top = Math.max(0, edge);
       el.style.setProperty("--curtain-top", `${Math.round(top)}px`);
       frame = requestAnimationFrame(follow);
     };

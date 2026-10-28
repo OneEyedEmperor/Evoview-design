@@ -35,7 +35,6 @@
    background-attachment: fixed repainted every block on every scroll
    frame; the promoted layer is rasterised once and only composited. */
 .ev-library .lib-hero.lib-toned,
-.ev-library .lib-showcase__head > .lib-showcase__ground,
 .ev-library .lib-chapter.lib-toned[data-tone="dark"],
 .lib-showcase .lib-showcase__stage .lib-variant.lib-variant[data-tone="dark"],
 .lib-showcase .lib-showcase__stage > .ev-root.ev-root.ev-tone-dark,
@@ -46,7 +45,6 @@
   clip-path: inset(0);
 }
 .ev-library .lib-hero.lib-toned::before,
-.ev-library .lib-showcase__head > .lib-showcase__ground::before,
 .ev-library .lib-chapter.lib-toned[data-tone="dark"]::before,
 .lib-showcase .lib-showcase__stage .lib-variant.lib-variant[data-tone="dark"]::before,
 .lib-showcase .lib-showcase__stage > .ev-root.ev-root.ev-tone-dark::before,
@@ -64,6 +62,3 @@
 /* The demo's own flat dark root lets the variant's grade through, so a
    variant reads as one graded section. */
 .lib-showcase__stage .lib-variant[data-tone="dark"] .ev-root.ev-tone-dark:not(.ev-root .ev-root) { background: transparent; }
-
-/* The title strip continues the hero's grade (its ground layer above). */
-.ev-library .lib-showcase__head.lib-toned[data-tone="dark"] { background: transparent; }

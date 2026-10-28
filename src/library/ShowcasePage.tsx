@@ -263,7 +263,6 @@ export default function ShowcasePage({ entryId, title, tone = "dark", defaultAcc
   const ready = usePageReady(stageRef);
   const versionSlot = useFirstVersionSlot(stageRef);
   const dark = tone === "dark" ? "dark" : undefined;
-  const headTone = "dark" as "dark" | "light";
   const paletteProps = {
     swatches,
     value: accentId,
@@ -282,25 +281,24 @@ export default function ShowcasePage({ entryId, title, tone = "dark", defaultAcc
     <div className="lib-showcase lib-toned ev-library" data-tone={tone} data-lib-ready={ready ? "" : undefined} style={style}>
       {/* LIBRARY follows the accent on the index only; here it stays white.
           The palette floats bottom-right, so the hero's slot is empty. */}
-      <LibraryHero />
-      {/* The title block takes the opposite tone of the page: a full cut
-          segments it from the demos. */}
-      <header className="lib-showcase__head lib-toned" data-tone={headTone} data-nav-tone={headTone === "dark" ? "dark" : undefined}>
-        {/* The hero's viewport-pinned grade carries on behind the strip
-            (trial-grade.css). */}
-        <div className="lib-stage-grade lib-showcase__ground" aria-hidden="true" />
-        {/* One module on the rail: one shell holding the player (the shown
-            page's glyph) and the page list, under one glass pill centred on
-            the shell's lower edge (title over category and the position
-            track, then the list's category switch). Whatever page is
-            pointed at in the list plays on the player by a channel switch,
-            as on the evoview application's first question. */}
-        <div className="lib-showcase__intro lib-rail">
+      {/* One module under the lockup: one shell holding the player (the
+          shown page's glyph) and the page list, under one glass pill centred
+          on the shell's lower edge (title over category and the position
+          track, then the list's category switch). Whatever page is pointed
+          at in the list plays on the player by a channel switch, as on the
+          evoview application's first question. */}
+      <LibraryHero
+        deck={
           <div className="lib-deck">
             <div className="lib-deck__shell">
-              <ChannelSwitch as="span" channel={shown.id} className="lib-player__art" aria-hidden="true">
-                <EntryArt id={shown.id} />
-              </ChannelSwitch>
+              {/* The veil sits over the switching layer, so it holds still
+                  while the picture changes. */}
+              <span className="lib-player__frame">
+                <ChannelSwitch as="span" channel={shown.id} className="lib-player__art" style={{ position: "absolute", inset: 0 }} aria-hidden="true">
+                  <EntryArt id={shown.id} />
+                </ChannelSwitch>
+                <span className="lib-veil" aria-hidden="true" />
+              </span>
               <PageList id={listId} entry={entry} category={listCategory} previewId={previewId} point={point} />
             </div>
             <div className="lib-deck__pill">
@@ -332,8 +330,8 @@ export default function ShowcasePage({ entryId, title, tone = "dark", defaultAcc
               <CategorySwitch category={listCategory} onCategory={setListCategory} controls={listId} />
             </div>
           </div>
-        </div>
-      </header>
+        }
+      />
       <div ref={stageRef} className="lib-showcase__stage" data-nav-tone={tonedByContent ? undefined : dark}>
         <FrameTone.Provider value={tone}>
           <ViewOpen.Provider value={setViewOpen}>{body}</ViewOpen.Provider>
