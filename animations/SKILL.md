@@ -153,6 +153,9 @@ on 58 site routes) and hydration matches.
   use `AGENT_BROWSER_SESSION=<yours>`.
 - **Parallel builds in one repo** clobber `dist/`: build to
   `--outDir /tmp/<name>-dist`.
+- **framer-motion `x` / `y` / `scale` run on the main thread** (re-raster
+  every frame); a literal `transform` string (`"scaleX(.9) scaleY(.012)"`)
+  goes to WAAPI on the compositor (evoview `ServiceModal` shell).
 
 ## 5. Recipe
 
