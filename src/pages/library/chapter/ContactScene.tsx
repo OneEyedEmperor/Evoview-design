@@ -14,16 +14,16 @@ const T = {
     name: "Contact",
     when: "La section qui fait venir : une action, l'adresse, les moyens de joindre et les heures, l'état du jour calculé à l'heure du lieu.",
     controls: {
-      layout: { label: "Disposition", options: { columns: "Colonnes", split: "Scindé", band: "Bandeau" } satisfies Record<ChapterContactLayout, string> },
-      hours: { label: "Horaires", options: { today: "Aujourd'hui", week: "Semaine" } satisfies Record<ChapterContactHoursView, string> },
+      layout: { label: "Disposition", options: { columns: "Colonnes", split: "Scindé", band: "Bandeau" } },
+      hours: { label: "Horaires", options: { today: "Aujourd'hui", week: "Semaine" } },
     },
   },
   en: {
     name: "Contact",
     when: "The section that brings people in: one action, the address, ways to reach and the hours, today's state computed in the place's time.",
     controls: {
-      layout: { label: "Layout", options: { columns: "Columns", split: "Split", band: "Band" } satisfies Record<ChapterContactLayout, string> },
-      hours: { label: "Hours", options: { today: "Today", week: "Week" } satisfies Record<ChapterContactHoursView, string> },
+      layout: { label: "Layout", options: { columns: "Columns", split: "Split", band: "Band" } },
+      hours: { label: "Hours", options: { today: "Today", week: "Week" } },
     },
   },
 } satisfies Record<Locale, unknown>;

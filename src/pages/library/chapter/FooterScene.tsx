@@ -1,5 +1,5 @@
 import { useMemo, useState, type MouseEvent } from "react";
-import { CHAPTER_FOOTER_LAYOUTS, ChapterFooter, type ChapterConfig, type ChapterFooterLayout } from "../../../../components/chapter/src";
+import { ChapterFooter, type ChapterConfig, type ChapterFooterLayout } from "../../../../components/chapter/src";
 import { SegmentedControl } from "../../../../components/controls/src";
 import { useLibraryLocale, type Locale } from "../../../library/locale";
 import { DeskSetting, Scene, SceneDesk } from "../scene/Scene";
@@ -16,15 +16,17 @@ const T = {
     name: "Pied de page",
     when: "La dernière ligne de chaque page : le logo, les mentions, et le crédit Evoview à sa place approuvée.",
     label: "Disposition",
-    options: { bar: "Barre", panel: "Panneau" } satisfies Record<ChapterFooterLayout, string>,
+    options: { bar: "Barre", panel: "Panneau" },
   },
   en: {
     name: "Footer",
     when: "The last line of every page: the logo, the legal line, and the Evoview credit in its approved place.",
     label: "Layout",
-    options: { bar: "Bar", panel: "Panel" } satisfies Record<ChapterFooterLayout, string>,
+    options: { bar: "Bar", panel: "Panel" },
   },
 } satisfies Record<Locale, unknown>;
+
+const LAYOUTS: ChapterFooterLayout[] = ["bar", "panel"];
 
 /** `config`: the page's chapter config (its brand link points at the page scene). */
 export default function FooterScene({ config }: { config: ChapterConfig }) {
@@ -47,7 +49,7 @@ export default function FooterScene({ config }: { config: ChapterConfig }) {
             <SegmentedControl
               block
               label={t.label}
-              options={CHAPTER_FOOTER_LAYOUTS.map((value) => ({ value, label: t.options[value] }))}
+              options={LAYOUTS.map((value) => ({ value, label: t.options[value] }))}
               value={layout}
               onChange={(v) => setLayout(v as ChapterFooterLayout)}
             />

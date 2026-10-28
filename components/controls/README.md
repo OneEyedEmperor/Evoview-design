@@ -27,8 +27,6 @@ restyle them to a client's UI kit. Changing them is a library change
 - **Selection is multi-signal**: accent border + 14 % tint + filled mark with
   a check (index → check) + `aria-checked` / `aria-pressed` / `aria-current`.
   Never colour alone; light accents stay visible through `--controls-signal`.
-- **Indexed everything**: chips and rows carry `01…` marks, steps carry
-  numerals, counters read `2 sur 3`.
 - **Underline fields**: no boxes, 9px readout label, 16px value, accent
   underline on focus, error underline + message.
 - **Segmented progress**: equal cells, the current one charges in the

@@ -18,16 +18,16 @@ const T = {
     name: "Récit",
     when: "Le chapitre qui suit l'accueil : l'histoire du client, portée par ses images qui dérivent au rythme du défilement.",
     controls: {
-      layout: { label: "Texte", options: { start: "Gauche", center: "Centre", end: "Droite", above: "Dessus" } satisfies Record<ChapterStoryLayout, string> },
-      density: { label: "Images", options: { ample: "Amples", dense: "Denses" } satisfies Record<ChapterStoryDensity, string> },
+      layout: { label: "Texte", options: { start: "Gauche", center: "Centre", end: "Droite", above: "Dessus" } },
+      density: { label: "Images", options: { ample: "Amples", dense: "Denses" } },
     },
   },
   en: {
     name: "Story",
     when: "The chapter after the hero: the client's story, carried by its pictures drifting with the scroll.",
     controls: {
-      layout: { label: "Text", options: { start: "Left", center: "Centre", end: "Right", above: "Above" } satisfies Record<ChapterStoryLayout, string> },
-      density: { label: "Pictures", options: { ample: "Ample", dense: "Dense" } satisfies Record<ChapterStoryDensity, string> },
+      layout: { label: "Text", options: { start: "Left", center: "Centre", end: "Right", above: "Above" } },
+      density: { label: "Pictures", options: { ample: "Ample", dense: "Dense" } },
     },
   },
 } satisfies Record<Locale, unknown>;
