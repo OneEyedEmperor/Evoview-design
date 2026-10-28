@@ -284,7 +284,7 @@
       "source": ["foundation@1.8.0"],
       "incorporatedIn": null,
       "status": "approved",
-      "reason": "The site's framer channel switches are the origin. They animate scaleY / scaleX / x values, which framer runs on the main thread, against the site's own compositor rule for ServiceModal. Foundation's ChannelSwitch is the Web Animations generalisation (coalescing, turn-back, decode before open) and is installed but unused there.",
+      "reason": "Founder 2026-10-29: approved, and the contact screen adopts foundation's curve (35 % fold mid, per-segment open easing) after the side-by-side sheets (~/.vibehub/documents/evoview/channel-switch-2026-10-29/). Triage: The site's framer channel switches are the origin. They animate scaleY / scaleX / x values, which framer runs on the main thread, against the site's own compositor rule for ServiceModal. Foundation's ChannelSwitch is the Web Animations generalisation (coalescing, turn-back, decode before open) and is installed but unused there.",
       "evidence": ["src/components/ContactDossierScreen.tsx:39-62", "src/components/MethodStepModal.tsx:470-552", "site Project knowledge: 'ServiceModal motion stays compositor-only'"],
       "date": "2026-10-28",
       "layer": "Signature",
