@@ -1,6 +1,6 @@
 # card changelog
 
-## Unreleased
+## 2.3.0
 
 - Sync (`docs/SYNC.md`): `evoview.json` (`requires` foundation `>=1.8.0 <2`,
   controls `>=1.1.0 <2`); `install.sh` wraps `sync.sh` (clean plans only;

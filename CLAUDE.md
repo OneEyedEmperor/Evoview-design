@@ -46,16 +46,16 @@ liquid fill as reference): `animations/SKILL.md` (skill
 
 | Component | Status | Skill |
 | --- | --- | --- |
-| `foundation` — tokens, scale, tones, type voices, pause-model hooks, attribution mark, step gauge, orb + text liquid fill, channel switch (hover-preview screens, RULES §6), press jelly (pills / buttons, RULES §6), SSR + crawlable-modal routing | 1.9.0 | `evoview-foundation` |
-| `controls` — plate, ghost, glass close/pager, chips, rows, fields, switch, segmented control/progress, view links (`/components/controls`) | 1.5.0 | `evoview-controls` |
-| `chapter` — section shell, headings, tone cuts; story, FAQ and contact chapters; footer bar / panel with attribution (`/layouts/chapter`) | 1.4.0 | `evoview-chapter` |
-| `card` — media card in three compositions: scroll-scrubbed track, dealt category deck, timed video sequence (`/layouts/card`; was `card-track`) | 2.2.0 | `evoview-card` |
-| `process-sequence` — timed step board + step dossier, crawlable step views (`/layouts/process-sequence`) | 1.5.0 | `evoview-process-sequence` |
-| `story-blocks` — intro split, indexed sequence, proof collage, payoff (`/layouts/story-blocks`) | 2.4.0 | `evoview-story-blocks` |
-| `dossier` — portal modal, selection board, chapter strip, mobile dock, crawlable views (`/components/dossier`) | 1.5.0 | `evoview-dossier` |
-| `selector-stage` — selector ↔ stage, before/after, atlas (`/components/selector-stage`) | 1.5.0 | `evoview-selector-stage` |
-| `navbar` — finder capsule, desktop + mobile, cover-card trays (`/navbar`) | 2.8.0 | `evoview-navbar` |
-| `reservation` — Evoview booking application + short paper flow, client accent (`/components/reservation`) | 2.11.0 | `evoview-reservation` |
+| `foundation` — tokens, scale, tones, type voices, pause-model hooks, attribution mark, step gauge, orb + text liquid fill, channel switch (hover-preview screens, RULES §6), press jelly (pills / buttons, RULES §6), SSR + crawlable-modal routing | 1.9.1 | `evoview-foundation` |
+| `controls` — plate, ghost, glass close/pager, chips, rows, fields, switch, segmented control/progress, view links (`/components/controls`) | 1.6.0 | `evoview-controls` |
+| `chapter` — section shell, headings, tone cuts; story, FAQ and contact chapters; footer bar / panel with attribution (`/layouts/chapter`) | 1.5.0 | `evoview-chapter` |
+| `card` — media card in three compositions: scroll-scrubbed track, dealt category deck, timed video sequence (`/layouts/card`; was `card-track`) | 2.3.0 | `evoview-card` |
+| `process-sequence` — timed step board + step dossier, crawlable step views (`/layouts/process-sequence`) | 1.6.0 | `evoview-process-sequence` |
+| `story-blocks` — intro split, indexed sequence, proof collage, payoff (`/layouts/story-blocks`) | 2.5.0 | `evoview-story-blocks` |
+| `dossier` — portal modal, selection board, chapter strip, mobile dock, crawlable views (`/components/dossier`) | 1.6.0 | `evoview-dossier` |
+| `selector-stage` — selector ↔ stage, before/after, atlas (`/components/selector-stage`) | 1.6.0 | `evoview-selector-stage` |
+| `navbar` — finder capsule, desktop + mobile, cover-card trays (`/navbar`) | 2.9.0 | `evoview-navbar` |
+| `reservation` — Evoview booking application + short paper flow, client accent (`/components/reservation`) | 2.12.0 | `evoview-reservation` |
 
 ## Rules for changing a component here
 

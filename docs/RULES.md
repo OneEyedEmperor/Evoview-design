@@ -254,9 +254,10 @@ Configurable but on by default; README states it is the approved placement.
 - `components/foundation` — tokens (`--ev-scale`, type roles, radius, rails,
   rhythm, motion, accent mapping), hooks (`useInViewPause`, `useSequenceClock`,
   `useMediaReady`), primitives used by every other package. Installed once;
-  other packages import it relatively as `../foundation` and their
-  `install.sh` installs/upgrades foundation first.
-- Each package: `<name>.config.tsx` is the only per-site file; demo content is
+  other packages import it relatively as `../foundation`; `sync.sh` installs
+  or upgrades it when a package's `requires` needs it (`docs/SYNC.md`).
+- Each package: `<name>.config.tsx` and `<name>.theme.css` are the only
+  per-site (client-owned) files; demo content is
   neutral (no Evoview copy/imagery; generic client content in FR + EN via
   `build<Name>Config(locale)`); CSS scoped under `.ev-<name>`.
 - Each package's showcase page uses the shared `ShowcasePage` frame (title,

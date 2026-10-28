@@ -1,6 +1,6 @@
 # navbar changelog
 
-## Unreleased
+## 2.9.0
 
 - Sync (`docs/SYNC.md`): `evoview.json` (`requires` foundation `>=1.9.0 <2`;
   client-owned `navbar.config.tsx`, `navbar.theme.css`, `brand/`);

@@ -17,16 +17,16 @@ does the same when the plan is clean.
 
 | Pill | Package | Version |
 | --- | --- | --- |
-| Layouts | [chapter](components/chapter/README.md) | 1.4.0 |
-| Layouts | [card](components/card/README.md) | 2.2.0 |
-| Layouts | [process-sequence](components/process-sequence/README.md) | 1.5.0 |
-| Layouts | [story-blocks](components/story-blocks/README.md) | 2.4.0 |
-| Components | [reservation](components/reservation/README.md) | 2.11.0 |
-| Components | [dossier](components/dossier/README.md) | 1.5.0 |
-| Components | [selector-stage](components/selector-stage/README.md) | 1.5.0 |
-| Components | [controls](components/controls/README.md) | 1.5.0 |
-| Navbar | [navbar](components/navbar/README.md) | 2.8.0 |
-| — | [foundation](components/foundation/README.md) (base, not showcased) | 1.9.0 |
+| Layouts | [chapter](components/chapter/README.md) | 1.5.0 |
+| Layouts | [card](components/card/README.md) | 2.3.0 |
+| Layouts | [process-sequence](components/process-sequence/README.md) | 1.6.0 |
+| Layouts | [story-blocks](components/story-blocks/README.md) | 2.5.0 |
+| Components | [reservation](components/reservation/README.md) | 2.12.0 |
+| Components | [dossier](components/dossier/README.md) | 1.6.0 |
+| Components | [selector-stage](components/selector-stage/README.md) | 1.6.0 |
+| Components | [controls](components/controls/README.md) | 1.6.0 |
+| Navbar | [navbar](components/navbar/README.md) | 2.9.0 |
+| — | [foundation](components/foundation/README.md) (base, not showcased) | 1.9.1 |
 
 Design rules: [docs/RULES.md](docs/RULES.md).
 

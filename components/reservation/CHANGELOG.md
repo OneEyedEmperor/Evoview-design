@@ -1,6 +1,6 @@
 # reservation changelog
 
-## Unreleased
+## 2.12.0
 
 - Sync (`docs/SYNC.md`): `evoview.json` (`requires` foundation `>=1.9.0 <2`,
   controls `>=1.5.0 <2`; `hostDeps` react-day-picker ≥ 9, date-fns ≥ 4,

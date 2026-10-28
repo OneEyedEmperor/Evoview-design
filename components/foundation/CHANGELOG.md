@@ -1,6 +1,6 @@
 # foundation changelog
 
-## Unreleased
+## 1.9.1
 
 - Sync (`docs/SYNC.md`): `evoview.json` (no `requires`, no client-owned
   file, `hostDeps` react ≥ 19). No theme template: the adaptable inputs are

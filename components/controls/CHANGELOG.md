@@ -1,6 +1,6 @@
 # controls changelog
 
-## Unreleased
+## 1.6.0
 
 - Sync (`docs/SYNC.md`): `evoview.json` (`requires` foundation `>=1.9.0 <2`);
   `install.sh` wraps `sync.sh` (clean plans only; local edits merged and
