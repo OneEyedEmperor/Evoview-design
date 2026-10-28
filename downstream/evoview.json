@@ -568,6 +568,27 @@
       "reason": "Contact / method / partner / footer refinements in ab01614, beyond the liquid rollout, the lock and the pill ink, are the site's Expression (its Project knowledge entries). Nothing at mechanism level for the library.",
       "evidence": ["site ab01614 diff (ContactApplication.css, IntroSection.css, PartnerWorkModal.css, SiteFooter.css)"],
       "date": "2026-10-28"
+    },
+    {
+      "id": "loop-visibility-clip-up",
+      "capability": "navbar",
+      "direction": "up",
+      "class": "P",
+      "source": ["03a368c"],
+      "incorporatedIn": null,
+      "status": "candidate",
+      "reason": "Site port of navbar-idle-loops found that a ResizeObserver can't see a mark hidden by an ancestor clip-path (TextFill's lit copy), while an IntersectionObserver honours it. On the site the clipped copy was the costly one (layerize per frame). The library navbar's useLoop uses a ResizeObserver; today its marks sit in no clipped copy (pill ink declined), so this is a latent gap and a rule for any loop inside a liquid-fill copy.",
+      "evidence": ["components/navbar/src/finderShared.tsx:32-60 (useLoop, ResizeObserver)", "site src/components/nav/finderShared.tsx useRestingBlink (IntersectionObserver), trace in .generated of the lane worktree"],
+      "date": "2026-10-29",
+      "layer": "Constraints",
+      "targets": ["animations/SKILL.md §4", "components/navbar/src/finderShared.tsx"],
+      "adaptation": "One pitfall line in animations/SKILL.md §4 (hold ambient loops by IntersectionObserver when a copy can be clip-hidden). Optionally switch useLoop's visibility check to IntersectionObserver.",
+      "risk": "low",
+      "verify": "Doc review; for the code change, showcase navbar idle trace (layerize per frame) before / after at 1440, deck closed and open.",
+      "size": "xs",
+      "value": "low",
+      "signoff": false,
+      "recommendation": "Approve the pitfall line; the code change only with a measured case."
     }
   ]
 }
