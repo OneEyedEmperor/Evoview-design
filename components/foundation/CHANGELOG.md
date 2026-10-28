@@ -1,5 +1,23 @@
 # foundation changelog
 
+## 1.11.1
+
+No config or API change. Requires nothing new.
+
+Fix
+- `useMediaReady` element mode acted on whatever element it was handed. A
+  player that outlives its source (`ChannelSwitch` holds the outgoing
+  picture through its fold while the step, the gate's `src`, changes) was
+  paused and seeked to 0 mid-fold by the new cycle, accepted on `seeked`,
+  and `ready` turned true before the incoming player existed; an incoming
+  player that then errored was never reported (`failed` needs `!ready`): no
+  loader, no retry. The gate now acts only on the player that carries the
+  cycle's source (with `src`: the URL the gate returned; without: an element
+  that played other sources counts again on `loadstart` or `retry()`). Any
+  other element is never paused, seeked, played or accepted: the gate waits.
+  A player swapped within the cycle must pass again; no loader timer runs
+  after the reveal.
+
 ## 1.11.0
 
 No config changes. Additive API; two behaviour changes in existing hooks

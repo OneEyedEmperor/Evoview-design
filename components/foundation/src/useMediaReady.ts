@@ -8,7 +8,8 @@ export type MediaSource = string | { src: string; type?: "image" | "video" } | n
 export type MediaElementGate = {
   /** The mounted `<video>` (callback-ref state). `null`: expected, not mounted yet (the gate waits). Omitted: no player. */
   video?: HTMLVideoElement | null;
-  /** The player's source; a change starts a new cycle. Required with `buffer: "full"`. */
+  /** The player's source (the URL it is given); a change starts a new cycle. Only a player carrying it
+      is gated: pass it whenever the player can change source while open. Required with `buffer: "full"`. */
   src?: string;
   /**
    * "frame" (default): first frame decoded. "full": `src` is fetched whole into
@@ -271,8 +272,16 @@ function useProbeGate(open: boolean, sources: MediaSource[], options: MediaReady
   return { ready: state.ready, slow: state.slow, failed: state.failed, retry, loaded: state.loaded, total: items.length };
 }
 
-type Cycle = { key: string | null; loaded: ReadonlySet<string>; player: boolean; slow: boolean; wasSlow: boolean; failed: boolean; ready: boolean };
-const freshCycle = (key: string | null, slow = false): Cycle => ({ key, loaded: new Set(), player: false, slow, wasSlow: slow, failed: false, ready: false });
+// player: the element accepted in this cycle (a replaced element must pass again).
+type Cycle = { key: string | null; loaded: ReadonlySet<string>; player: HTMLVideoElement | null; slow: boolean; wasSlow: boolean; failed: boolean; ready: boolean };
+const freshCycle = (key: string | null, slow = false): Cycle => ({ key, loaded: new Set(), player: null, slow, wasSlow: slow, failed: false, ready: false });
+
+/** The element is given `url`: its `src`, its selected source or one of its `<source>`s. */
+function carries(video: HTMLVideoElement, url: string): boolean {
+  const href = new URL(url, document.baseURI).href;
+  if (video.src === href || video.currentSrc === href) return true;
+  return Array.from(video.querySelectorAll("source")).some((source) => source.src === href);
+}
 
 function useElementGate(open: boolean, sources: MediaSource[], options: MediaReadyOptions): MediaElementReady {
   const { graceMs = mediaGate.graceMs, minVisibleMs = mediaGate.minVisibleMs, timeoutMs = mediaGate.timeoutMs, video: videoEvent = "loadeddata", element = {} } = options;
@@ -293,6 +302,8 @@ function useElementGate(open: boolean, sources: MediaSource[], options: MediaRea
   const current = state.key === key ? state : freshCycle(key);
   const slowSince = useRef<{ key: string; at: number } | null>(null);
   const started = useRef<string | null>(null);
+  // Without `src`: the element that last played a cycle, and that cycle's base.
+  const lastPlayer = useRef<{ el: HTMLVideoElement; base: string } | null>(null);
 
   const update = useCallback((target: string, patch: (c: Cycle) => Partial<Cycle>) => {
     setState((previous) => {
@@ -311,6 +322,15 @@ function useElementGate(open: boolean, sources: MediaSource[], options: MediaRea
   // Client state: never read while hydrating (the server HTML has no source).
   const blob = fullSrc !== null && hydrated ? blobs.get(fullSrc) : undefined;
   const playerSrc = !hasPlayer ? undefined : fullSrc === null ? src : (blob ?? (key && fetched?.key === key ? (fetched.url ?? fullSrc) : undefined));
+
+  // The cycle's player carries its source. A player still showing another one (an
+  // outgoing picture held through a channel switch) is not this cycle's: it is never
+  // paused, seeked, played or accepted, and the gate waits as if it had no player.
+  const owns = (el: HTMLVideoElement) => {
+    if (src !== undefined) return playerSrc !== undefined && carries(el, playerSrc);
+    const last = lastPlayer.current;
+    return !last || last.el !== el || last.base === base;
+  };
 
   useEffect(() => {
     if (!key || fullSrc === null || blobs.has(fullSrc)) return;
@@ -347,18 +367,20 @@ function useElementGate(open: boolean, sources: MediaSource[], options: MediaRea
 
   // Gate the real player: never an extra detached decoder for the same file.
   useEffect(() => {
-    if (!key || !video || (full && !playerSrc)) return;
+    if (!key || !base || !video || (full && !playerSrc)) return;
     let disposed = false;
+    let gating = false;
     let accepted = false;
     let stall: number | undefined;
     const accept = () => {
-      if (disposed || accepted) return;
+      if (disposed || !gating || accepted) return;
       accepted = true;
       window.clearTimeout(stall);
-      update(key, () => ({ player: true }));
+      lastPlayer.current = { el: video, base };
+      update(key, () => ({ player: video }));
     };
     const check = () => {
-      if (disposed || accepted || video.error) return;
+      if (disposed || !gating || accepted || video.error) return;
       if (!full) {
         if (video.readyState >= 2) accept();
         return;
@@ -374,35 +396,49 @@ function useElementGate(open: boolean, sources: MediaSource[], options: MediaRea
     // until it plays; a stall is metadata with no data arriving.
     const armStall = () => {
       window.clearTimeout(stall);
-      if (!accepted && !video.error && video.readyState >= 1) stall = window.setTimeout(accept, METADATA_FALLBACK_MS);
+      if (gating && !accepted && !video.error && video.readyState >= 1) stall = window.setTimeout(accept, METADATA_FALLBACK_MS);
     };
     const fail = () => {
-      if (!disposed && !accepted) update(key, () => ({ failed: true }));
+      if (!disposed && gating && !accepted) update(key, () => ({ failed: true }));
+    };
+    const begin = () => {
+      if (disposed || gating || !owns(video)) return;
+      gating = true;
+      if (started.current !== key) video.pause();
+      if (video.preload !== "auto") video.preload = "auto";
+      if (video.error || (attempt > 0 && video.readyState < 2)) video.load();
+      else if (started.current !== key && video.readyState >= 1 && video.currentTime !== 0) video.currentTime = 0;
+      check();
+      armStall();
+    };
+    // The same element given this cycle's source (or, without `src`, reloading) becomes its player.
+    const reload = () => {
+      if (!gating && src === undefined) lastPlayer.current = { el: video, base };
+      begin();
     };
     const checks = ["loadeddata", "canplay", "canplaythrough", "progress", "seeked", "durationchange"];
     const stalls = ["loadedmetadata", "progress"];
+    const reloads = ["loadstart", "emptied"];
     checks.forEach((event) => video.addEventListener(event, check));
     stalls.forEach((event) => video.addEventListener(event, armStall));
+    reloads.forEach((event) => video.addEventListener(event, reload));
     video.addEventListener("error", fail);
-    if (started.current !== key) video.pause();
-    if (video.preload !== "auto") video.preload = "auto";
-    if (video.error || (attempt > 0 && video.readyState < 2)) video.load();
-    else if (started.current !== key && video.readyState >= 1 && video.currentTime !== 0) video.currentTime = 0;
-    check();
-    armStall();
+    begin();
     return () => {
       disposed = true;
       window.clearTimeout(stall);
       checks.forEach((event) => video.removeEventListener(event, check));
       stalls.forEach((event) => video.removeEventListener(event, armStall));
+      reloads.forEach((event) => video.removeEventListener(event, reload));
       video.removeEventListener("error", fail);
     };
   }, [key, video, full, playerSrc, attempt, update]);
 
-  const assetsReady = !!key && current.loaded.size === items.length && (!hasPlayer || current.player);
+  const assetsReady = !!key && current.loaded.size === items.length && (!hasPlayer || (!!video && current.player === video));
 
   useEffect(() => {
-    if (!key || assetsReady) return;
+    // After the reveal no loader comes back (a player swapped in the same cycle re-passes silently).
+    if (!key || assetsReady || current.ready) return;
     const grace = window.setTimeout(() => {
       // A retry already holds the loader: its minimum time runs from the retry.
       if (slowSince.current?.key === key) return;
@@ -414,7 +450,7 @@ function useElementGate(open: boolean, sources: MediaSource[], options: MediaRea
       window.clearTimeout(grace);
       window.clearTimeout(timeout);
     };
-  }, [key, assetsReady, graceMs, timeoutMs, update]);
+  }, [key, assetsReady, current.ready, graceMs, timeoutMs, update]);
 
   const ready = empty ? !!key : !!key && current.ready;
 
@@ -437,7 +473,7 @@ function useElementGate(open: boolean, sources: MediaSource[], options: MediaRea
   }, [key, empty, assetsReady, current.ready, minVisibleMs, update]);
 
   useEffect(() => {
-    if (!video) return;
+    if (!video || (key && !owns(video))) return;
     if (!ready) {
       started.current = null;
       video.pause();
@@ -456,17 +492,19 @@ function useElementGate(open: boolean, sources: MediaSource[], options: MediaRea
     // Keep the loader up through the retry instead of re-arming its grace.
     const next = `${base}#${attempt + 1}`;
     slowSince.current = { key: next, at: performance.now() };
+    // Without `src`, a retry adopts the element on screen as this cycle's player.
+    if (src === undefined && video) lastPlayer.current = { el: video, base };
     setState(freshCycle(next, true));
     setFetched(null);
     setAttempt(attempt + 1);
-  }, [base, attempt]);
+  }, [base, attempt, src, video]);
 
   return {
     ready,
     slow: !!key && !ready && (current.slow || current.failed),
     failed: !!key && !ready && current.failed,
     retry,
-    loaded: current.loaded.size + (hasPlayer && current.player ? 1 : 0),
+    loaded: current.loaded.size + (hasPlayer && !!video && current.player === video ? 1 : 0),
     total: items.length + (hasPlayer ? 1 : 0),
     src: playerSrc,
     wasSlow: !!key && current.wasSlow,

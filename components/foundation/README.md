@@ -141,7 +141,15 @@ only. `buffer: "frame"` reveals on its first decoded frame (the caller sets
 the player's `src`); `"full"` fetches `src` whole into a session blob URL
 (`bufferMedia`) and returns it as `src`, undefined while held (the player
 starts no download), the network URL if the fetch fails; it reveals once
-buffered end to end. Short loops only: blob URLs are never revoked. A player
+buffered end to end. Short loops only: blob URLs are never revoked. The
+gate acts only on the player that carries the cycle's source: with `src`,
+an element given the URL the gate returned (its `src`, selected source or a
+`<source>`); without `src`, an element that played a cycle with other
+sources counts again once it reloads (`loadstart`) or on `retry()`. Any
+other element (an outgoing picture held through a channel switch) is never
+paused, seeked, played or accepted: the gate waits as if it had no player,
+and a player swapped in the same cycle must pass again. Pass `src` whenever
+the player can change source while open. A player
 held at metadata with no data arriving for 1.2s counts as ready (mobile
 WebKit, data saver). The player is paused until ready, seeks to 0 on reveal
 and plays while `play` (turning `play` off and on resumes it). Reveal: when
