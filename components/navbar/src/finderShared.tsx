@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode, type RefObject, type TransitionEvent } from "react";
 import { OrbFill } from "../foundation/OrbFill";
 import { SurfaceFill } from "../foundation/SurfaceFill";
+import { isBackgroundSuspended, subscribeSuspension } from "../foundation/suspension";
 import { DeckIcon } from "./NavIcons";
 import type { NavDeckEntry, NavTray, NavTrayItem, NavbarConfig, NavbarLabels } from "./types";
 import { ensureTray, getTrayItems, trayLayout, useTrayVersion } from "./useNavTrays";
@@ -23,7 +24,9 @@ const CSS_ANIMATION_EVENTS = ["animationstart", "animationend", "animationcancel
 /** The bar's resting loops run as Web Animations, not CSS animations: React
     listens for `animationiteration`, so a CSS loop wakes the main thread at
     every iteration, where a script animation stays on the compositor.
-    The loop holds where it is while `running` is false or the mark has no
+    The loop holds where it is while `running` is false, a modal suspends
+    the page (foundation pause model: a script animation ignores
+    `html[data-ev-suspended]`), or the mark has no
     box (the other finder is `display: none`, and unlike a CSS animation a
     script one keeps running there): a mark that isn't painted has no
     compositor layer, so its loop would tick on the main thread. A CSS
@@ -40,11 +43,16 @@ function useLoop(ref: RefObject<Element | null>, loop: Loop | null, running: boo
     const animation = element.animate(loop.keyframes, { duration: loop.duration, iterations: Infinity });
     let replaced = false;
     let boxed = false;
+    let suspended = isBackgroundSuspended();
     const apply = () => {
       if (replaced) animation.cancel();
-      else if (runningRef.current && boxed) animation.play();
+      else if (runningRef.current && boxed && !suspended) animation.play();
       else animation.pause();
     };
+    const unsubscribe = subscribeSuspension(() => {
+      suspended = isBackgroundSuspended();
+      apply();
+    });
     const onCss = (event: Event) => {
       if (event.target !== element) return;
       replaced = event.type === "animationstart";
@@ -61,6 +69,7 @@ function useLoop(ref: RefObject<Element | null>, loop: Loop | null, running: boo
     return () => {
       CSS_ANIMATION_EVENTS.forEach((type) => element.removeEventListener(type, onCss));
       box.disconnect();
+      unsubscribe();
       applyRef.current = null;
       animation.cancel();
     };

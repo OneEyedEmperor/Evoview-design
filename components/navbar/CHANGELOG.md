@@ -1,5 +1,18 @@
 # navbar changelog
 
+## 2.10.3
+
+Fix. No config change, no visual change at rest. Requires nothing new
+(foundation suspension API, present since 1.0.0).
+
+- The bar's resting loops (eye pulse `nav-reticle-lids`, 3.2 s; REC dot
+  `nav-page-pill-dot`, 1 s) are Web Animations, which ignore
+  `html[data-ev-suspended]`: they kept running under an open modal. They now
+  follow foundation suspension (`subscribeSuspension`), pausing in place and
+  resuming from the same frame (no restart). Read in the loop's effect only:
+  nothing changes in render, server HTML or hydration. Showcase dossier open:
+  2 → 0 running navbar animations.
+
 ## 2.10.2
 
 No config changes.
