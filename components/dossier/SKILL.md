@@ -1,6 +1,6 @@
 ---
 name: evoview-dossier
-description: Evoview portal modal (dossier) for client sites — header strip with the approved Evoview mark, 4-tile selection board, open chapters with a reading-progress chapter strip, glass capsule + dock on phones, media-gated loader, full modal contract (focus, Escape one level, history Back), every view a crawlable, prerenderable URL (dossierRoutes). Use when a client page needs to present a multi-part offer (services, projects, menus, rooms) as an Evoview dossier. Triggers on "evoview dossier", "portal modal", "selection board", "service dossier", "dossier modal".
+description: Evoview portal modal (dossier) for client sites — panorama or sheet composition, optional opening screen, live entry counts, header strip with the approved Evoview mark, selection board, open chapters with a reading-progress chapter strip, glass capsule + dock on phones, media-gated loader, full modal contract (focus, Escape one level, history Back), every view a crawlable, prerenderable URL (dossierRoutes). Use when a client page needs to present a multi-part offer (services, projects, menus, rooms) as an Evoview dossier. Triggers on "evoview dossier", "portal modal", "selection board", "service dossier", "dossier modal".
 ---
 
 # Evoview dossier
@@ -17,21 +17,30 @@ tokens and the pause model.
 - **Preserve** (README "Signature"): header strip, board mosaic, chapter
   strip, phone chrome, open chapters, media gate, modal contract, motion,
   the header mark. Changes go into the library, never the client.
-- **Select** (README "Variations"): one or several universes; the chapter
-  kit, `DOSSIER_CHAPTER_VARIANTS`, `CHAPTER_ROWS_SURFACES`. Nothing else.
-- **Invent** (README "Expression"): brand, items, entries, copy, media,
-  accent (per item too).
+- **Select** (README "Variations"): the composition (`DOSSIER_COMPOSITIONS`:
+  `panorama` default, `sheet` for quick-glance dossiers such as a menu); the
+  tile media (`DOSSIER_TILE_MEDIA`: `graded` default, `true-colour` when the
+  client's photos must stay true to colour, e.g. food); an opening screen or
+  not; one or several universes; the chapter kit,
+  `DOSSIER_CHAPTER_VARIANTS`, `CHAPTER_ROWS_SURFACES`. Nothing else.
+- **Invent** (README "Expression"): brand, opening title / label, items
+  (cover, readout, empty-day sentence), entries, copy, media, accent (per
+  item too).
 
 ## Procedure
 
 1. Open the showcase at 1440 and 390; open a universe, enter an experience,
    scroll to the toast, press Escape twice; open the single-universe variant
-   (no pager); switch the palette to the client's accent and to yellow /
-   off-white.
-2. Map the client's offer to items × 4 entries: several families → several
-   items (pager); one offer → one item. The board is for choosing between
-   exactly four destinations; if an item has fewer, do not pad it — ask, or
-   use another component.
+   (no pager); open the menu (opening screen), try specials 0 / 3 / 5 and
+   both compositions (desk, from 1024) and both tile photos (graded | true
+   colour); switch the palette to the client's
+   accent and to yellow / off-white.
+2. Map the client's offer to items: several families → several items
+   (pager), or an opening screen choosing between 2–4 of them; one offer →
+   one item. Four entries make the panorama's mosaic; other counts take the
+   symmetric grid, so do not pad an item to four. Content the client edits
+   live (promotions, specials) is an item built from fetched data
+   (README "Live content": `pending`, `empty`, stable entry ids).
 3. Install: `sync.sh plan /root/.vibehub/projects/<client> dossier`, then
    `apply`, then `verify` (library root, `docs/SYNC.md`); resolve conflicts,
    fill patch reasons. Client tokens go in `dossier.theme.css`.

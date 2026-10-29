@@ -17,8 +17,13 @@ chain). Fixed shapes (the harness and clients rely on them):
 
 | Package | View | `key` | Level / parent |
 | --- | --- | --- | --- |
-| `dossier` | `type DossierView = { item: string; entry?: string }` | `item`, `item/entry` | overview 1 → `null`; entry 2 → its item's overview |
+| `dossier` | `type DossierView = { item: string; entry?: string; opening?: string } \| { opening: string }` | `item`, `item/entry`; `opening` (its id) with `config.opening` | overview 1 → `null`; entry 2 → its item's overview. With an opening screen (≥ 1.8.0): opening 1 → `null`, overview 2 → the opening, entry 3 → its overview |
 | `process-sequence` | `type ProcessSequenceView = { step: string }` | `step` | 1 → `null`; only steps with `detail` |
+
+Shapes only grow additively: a config that does not use a new level keeps
+the old views, keys and levels. A level above existing views is carried in
+the views below it (dossier: item and entry views carry `opening`), so
+`parent` stays a function of the view alone.
 
 ## 2. Package API
 
@@ -53,6 +58,10 @@ export type ProcessSequenceProps = Partial<RouteViewProps<ProcessSequenceView>> 
   `view`. A board that is itself page content (the process board) may stay
   uncontrolled when `view` is `undefined` and keep working without URLs.
 - `view === null` renders no modal markup.
+- Live content: `parse` returns `null` for a key that names nothing; it may
+  accept keys of content still loading (dossier `item.pending`). A view
+  whose content disappears settles on its nearest existing ancestor and is
+  reported through `onNavigate`.
 - Without `hrefFor` the package works as before (buttons, history entries on
   the current URL). Legacy props may stay for one minor version, mapped onto
   `view`; list them in the CHANGELOG.

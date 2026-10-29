@@ -20,6 +20,7 @@ import {
   HeldCopy,
   inkFor,
   lockScroll,
+  mediaGate,
   pad,
   preloadMedia,
   RouteLink,
@@ -31,15 +32,17 @@ import {
   useRouteHistory,
   usePressJelly,
   useSuspendBackground,
+  type MediaSource,
   type RouteViewProps,
 } from "../foundation";
-import { GlassClose, PagerOrb } from "../controls";
-import { SelectionBoard } from "./Board";
+import { GhostAction, GlassClose, PagerOrb } from "../controls";
+import { SelectionBoard, type SelectionBoardLayout, type SelectionTile } from "./Board";
 import { ChapterRevealContext, type ChapterReveal } from "./Chapters";
+import { fullCopy } from "./copy";
 import { DossierLoader } from "./Loader";
 import { DESKTOP_QUERY, isVideo, toSource } from "./hooks";
-import { dossierRoutes, entryHeading, resolveView, type DossierView } from "./routes";
-import type { DossierConfig, DossierEntryContext } from "./types";
+import { dossierRoutes, entryHeading, itemCover, itemView, openingLabel, topView, type DossierView } from "./routes";
+import type { DossierConfig, DossierEntry, DossierEntryContext, DossierItem } from "./types";
 
 type DossierBaseProps = {
   config: DossierConfig;
@@ -57,7 +60,7 @@ export type DossierLegacyProps = {
   open: boolean;
   /** Called for every close (button, Escape at overview, backdrop at overview, history Back). Set `open` false. */
   onClose: () => void;
-  /** Item shown on open (default: first). */
+  /** Item shown on open (default: the top level, the opening screen when there is one). */
   initialItemId?: string;
   /** Opens directly on one entry. */
   initialEntryId?: string;
@@ -71,12 +74,23 @@ export type DossierProps = DossierBaseProps & (DossierRouteProps | DossierLegacy
 /** Exit animation is 340 ms; past this the layer is removed even if no animationend arrives (hidden tab, animations off). */
 const EXIT_FALLBACK_MS = 700;
 
-/** A view of this config: unknown ids fall back to the first item / the item's overview. */
-function canonicalView(config: DossierConfig, itemId?: string, entryId?: string): DossierView | null {
-  const item = config.items.find((i) => i.id === itemId) ?? config.items[0];
-  if (!item) return null;
-  const entry = entryId === undefined ? undefined : item.entries.find((e) => e.id === entryId);
-  return entry ? { item: item.id, entry: entry.id } : { item: item.id };
+/**
+ * The view this config can show for a requested one. Unknown ids fall back one level (an entry to its item's
+ * overview, an item to the top level); a pending item keeps an unknown entry (its live content may hold it).
+ */
+function canonicalView(config: DossierConfig, requested: DossierView): DossierView | null {
+  if (requested.item === undefined) return config.opening && requested.opening === config.opening.id ? { opening: config.opening.id } : topView(config);
+  const item = config.items.find((i) => i.id === requested.item);
+  if (!item) return topView(config);
+  if (requested.entry === undefined) return itemView(config, item.id);
+  if (item.pending || item.entries.some((e) => e.id === requested.entry)) return itemView(config, item.id, requested.entry);
+  return itemView(config, item.id);
+}
+
+function legacySeed(config: DossierConfig, itemId?: string, entryId?: string): DossierView | null {
+  if (itemId === undefined && entryId === undefined) return topView(config);
+  const item = itemId ?? config.items[0]?.id;
+  return item === undefined ? null : canonicalView(config, entryId === undefined ? { item } : { item, entry: entryId });
 }
 
 /** The portal modal: isolate, demonstrate, explain. Renders in place (fixed layer) so the host accent is inherited. */
@@ -87,12 +101,12 @@ export function Dossier(props: DossierProps) {
 
   /* Legacy API: an internal view, seeded from initialItemId / initialEntryId on every open. */
   const legacyOpen = !controlled && !!props.open;
-  const [legacy, setLegacy] = useState(() => ({ open: legacyOpen, view: legacyOpen ? canonicalView(config, props.initialItemId, props.initialEntryId) : null }));
-  if (!controlled && legacy.open !== legacyOpen) setLegacy({ open: legacyOpen, view: legacyOpen ? canonicalView(config, props.initialItemId, props.initialEntryId) : null });
+  const [legacy, setLegacy] = useState(() => ({ open: legacyOpen, view: legacyOpen ? legacySeed(config, props.initialItemId, props.initialEntryId) : null }));
+  if (!controlled && legacy.open !== legacyOpen) setLegacy({ open: legacyOpen, view: legacyOpen ? legacySeed(config, props.initialItemId, props.initialEntryId) : null });
 
   // Legacy: the host's `open` stays the authority (a Back / Forward report never opens it on its own).
   const requested = controlled ? props.view : legacyOpen ? legacy.view : null;
-  const view = requested ? canonicalView(config, requested.item, requested.entry) : null;
+  const view = requested ? canonicalView(config, requested) : null;
   const hrefFor = controlled ? props.hrefFor : undefined;
 
   const latest = useRef(props);
@@ -108,6 +122,14 @@ export function Dossier(props: DossierProps) {
   }, []);
 
   useRouteHistory({ view, routes: dossierRoutes, hrefFor, onNavigate: navigate, history });
+
+  /* Live content: a requested view the config no longer (or never) held settles on its canonical view; the host
+     hears it, so its state and the URL agree with what is on screen. */
+  const requestedKey = requested ? dossierRoutes.key(requested) : null;
+  const canonicalKey = view ? dossierRoutes.key(view) : null;
+  useEffect(() => {
+    if (controlled && requestedKey !== null && requestedKey !== canonicalKey) navigate(view);
+  }, [controlled, requestedKey, canonicalKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Every open gets a fresh layer: reopening during the exit animation must not resume the closing one.
   // The layer keeps the last view, so the content stays on screen through the exit.
@@ -136,7 +158,35 @@ const FOCUSABLE = 'a[href], button, input, textarea, select, [tabindex], video[c
 /** Host chrome that must stay usable over the modal (a dev/showcase tool, never client UI): not made inert, not in the Tab trap. */
 const KEEP_INTERACTIVE = "data-ev-keep-interactive";
 
-type View = { item: number; entry: number | null };
+type Kind = "opening" | "overview" | "detail";
+
+/** A view resolved in a list of items: what the body draws and what its media gate waits for. */
+type Scene = { kind: Kind; item: DossierItem | null; itemIndex: number; entry: DossierEntry | null; entryIndex: number; sig: string };
+
+function describe(items: DossierItem[], kind: Kind, itemId: string | null, entryId: string | null): Scene | null {
+  if (kind === "opening") return { kind, item: null, itemIndex: -1, entry: null, entryIndex: -1, sig: `o|${items.map((i) => `${i.id}:${itemCover(i)?.src ?? ""}`).join(",")}` };
+  const itemIndex = items.findIndex((i) => i.id === itemId);
+  const item = items[itemIndex];
+  if (!item) return null;
+  if (kind === "overview") return { kind, item, itemIndex, entry: null, entryIndex: -1, sig: `v|${item.id}|${item.entries.map((e) => `${e.id}:${e.media.src}`).join(",")}` };
+  const entryIndex = item.entries.findIndex((e) => e.id === entryId);
+  const entry = item.entries[entryIndex];
+  if (!entry) return null;
+  return { kind, item, itemIndex, entry, entryIndex, sig: `d|${item.id}|${entry.id}|${[entry.media.src, ...(entry.sources ?? []).map(sourceSrc)].join(",")}` };
+}
+
+const sourceSrc = (s: MediaSource) => (typeof s === "string" ? s : s ? s.src : "");
+
+function sourcesOf(scene: Scene, items: DossierItem[]): MediaSource[] {
+  if (scene.kind === "opening") return items.map((i) => itemCover(i)).filter((m) => m !== undefined).map(toSource);
+  if (scene.kind === "overview") return (scene.item?.entries ?? []).map((e) => toSource(e.media));
+  return scene.entry ? [toSource(scene.entry.media), ...(scene.entry.sources ?? [])] : [];
+}
+
+/** The board an overview draws: the mosaic for four entries, the symmetric grid for other counts, a panel for none. */
+const boardLayout = (count: number): SelectionBoardLayout | "empty" => (count === 4 ? "mosaic" : count === 0 ? "empty" : "grid");
+
+type Shown = { kind: Kind; item: string | null; entry: string | null; sig: string; items: DossierItem[] };
 
 type DossierLayerProps = {
   config: DossierConfig;
@@ -149,7 +199,10 @@ type DossierLayerProps = {
 };
 
 function DossierLayer({ config, view, hrefFor, onNavigate, className, closing, onExited }: DossierLayerProps) {
-  const { items, copy } = config;
+  const { items, opening } = config;
+  const copy = fullCopy(config.copy, config.locale);
+  const composition = config.composition ?? "panorama";
+  const tileMedia = config.tileMedia ?? "graded";
   const uid = useId();
   const titleId = `${uid}-title`;
   const boardHeadingId = `${uid}-board`;
@@ -161,42 +214,45 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, closing, o
      target's media is decoded, so a switch never cuts to an empty body; the loader covers it if the wait
      is long. Before the first view is shown, the body holds the target's copy (server HTML, crawlers):
      mounted but hidden once hydrated, it goes live — and enters — when the media is ready. */
-  const found = resolveView(config, view);
-  const itemIndex = found?.itemIndex ?? 0;
-  const entryIndex = found?.entry ? found.entryIndex : null;
-  const [shown, setShown] = useState<View | null>(null);
-  const [cut, setCut] = useState(0);
-
-  const item = items[itemIndex] ?? items[0];
-  const entries = item.entries;
-  const entry = entryIndex === null ? null : (entries[entryIndex] ?? null);
+  const atOpening = view.item === undefined;
+  const itemIndex = atOpening ? -1 : Math.max(0, items.findIndex((i) => i.id === view.item));
+  const item: DossierItem | null = atOpening ? null : (items[itemIndex] ?? null);
+  const entries = item?.entries ?? [];
+  const entryIndex = item && view.entry !== undefined ? entries.findIndex((e) => e.id === view.entry) : -1;
+  const entry = entryIndex >= 0 ? entries[entryIndex] : null;
+  const kind: Kind = atOpening || !item ? "opening" : entry ? "detail" : "overview";
+  const target = describe(items, kind, item?.id ?? null, entry?.id ?? null) as Scene;
+  // A pending item's overview, or an entry its live content has not brought yet, waits behind the loader.
+  const awaiting = !!item?.pending && !entry;
   const itemCount = items.length;
-  const prevItem = items[(itemIndex - 1 + itemCount) % itemCount];
-  const nextItem = items[(itemIndex + 1) % itemCount];
+  const prevItem = itemIndex >= 0 ? items[(itemIndex - 1 + itemCount) % itemCount] : null;
+  const nextItem = itemIndex >= 0 ? items[(itemIndex + 1) % itemCount] : null;
   const href = (v: DossierView | null) => hrefFor?.(v);
+  const wide = useMediaQuery(DESKTOP_QUERY, true) && composition === "panorama";
+
+  const [shown, setShown] = useState<Shown | null>(null);
+  const [cut, setCut] = useState(0);
 
   /* ── Media gate on the target. The layer exists only while open, so the gate stays open through
      the exit animation and the content does not vanish while the shell leaves. */
-  const sources = useMemo(
-    () => (entry ? [toSource(entry.media), ...(entry.sources ?? [])] : entries.map((e) => toSource(e.media))),
-    [entry, entries],
-  );
+  const sources = useMemo(() => sourcesOf(target, items), [target.sig]); // eslint-disable-line react-hooks/exhaustive-deps
   const gate = useMediaReady(true, sources);
-  const settled = shown !== null && shown.item === itemIndex && shown.entry === entryIndex;
-  if (gate.ready && !settled) {
-    if (shown && shown.item !== itemIndex) setCut((n) => n + 1);
-    setShown({ item: itemIndex, entry: entryIndex });
+  const ready = gate.ready && !awaiting;
+  const settled = shown !== null && shown.kind === target.kind && shown.item === (target.item?.id ?? null) && shown.entry === (target.entry?.id ?? null) && shown.sig === target.sig;
+  if (ready && !settled) {
+    if (shown?.item && target.item && shown.item !== target.item.id) setCut((n) => n + 1);
+    setShown({ kind: target.kind, item: target.item?.id ?? null, entry: target.entry?.id ?? null, sig: target.sig, items });
   }
-  const shownItem = shown ? (items[shown.item] ?? items[0]) : null;
-  const shownEntry = shownItem && shown && shown.entry !== null ? (shownItem.entries[shown.entry] ?? null) : null;
-  const overviewReady = settled && !entry;
-  const detailReady = settled && !!entry;
+  /* What the body carries: the shown view (from the live config while its content is unchanged, else as it was
+     when shown, until the target is ready), or before anything is shown the target held. */
+  const liveShown = shown ? describe(items, shown.kind, shown.item, shown.entry) : null;
+  const body: Scene = shown ? ((liveShown && liveShown.sig === shown.sig ? liveShown : describe(shown.items, shown.kind, shown.item, shown.entry)) ?? target) : target;
+  const bodyItems = shown && !(liveShown && liveShown.sig === shown.sig) ? shown.items : items;
+  const openingReady = settled && kind === "opening";
+  const overviewReady = settled && kind === "overview";
+  const detailReady = settled && kind === "detail";
   const pending = shown !== null && !settled;
-  /* What the body carries: the shown view, else the target held (copy mounted, media and motion waiting). */
   const bodyLive = shown !== null;
-  const bodyItem = shownItem ?? item;
-  const bodyEntry = shown ? shownEntry : entry;
-  const bodyEntryIndex = shown ? shown.entry : entryIndex;
   // The held stand-in is not shown once hydrated (the body looks as it always did: empty until the view enters).
   const waiting = hydrated && !bodyLive;
 
@@ -209,13 +265,22 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, closing, o
   const closeRef = useRef<HTMLButtonElement>(null);
   const tileRefs = useRef<(HTMLElement | null)[]>([]);
   const returnTileRef = useRef<number | null>(null);
-  const prevTargetRef = useRef({ itemIndex, entryIndex });
+  const prevTargetRef = useRef({ kind, itemIndex, entryIndex });
   const lastScrollRef = useRef(0);
 
-  const desktop = useMediaQuery(DESKTOP_QUERY, true);
   const [chromeHidden, setChromeHidden] = useState(false);
   const [complete, setComplete] = useState(false);
   const [live, setLive] = useState("");
+  const [awaitSlow, setAwaitSlow] = useState(false);
+
+  useEffect(() => {
+    if (!awaiting) {
+      setAwaitSlow(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setAwaitSlow(true), mediaGate.graceMs);
+    return () => window.clearTimeout(timer);
+  }, [awaiting]);
 
   /* ── Page behind: suspended (pause model), inert, scroll-locked while open. Released as soon as the
      exit starts (focus back on the launcher, page clickable), not when the animation ends. */
@@ -262,42 +327,47 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, closing, o
   navigateRef.current = onNavigate;
   const go = useCallback((next: DossierView | null) => navigateRef.current(next), []);
 
-  const overviewView: DossierView = { item: item.id };
-  const entryView = (i: number): DossierView => ({ item: item.id, entry: entries[i].id });
-  const prevItemView: DossierView = { item: prevItem.id };
-  const nextItemView: DossierView = { item: nextItem.id };
+  const openingView: DossierView | null = opening ? { opening: opening.id } : null;
+  const overviewView: DossierView | null = item ? itemView(config, item.id) : null;
+  const entryView = (i: number): DossierView => itemView(config, (item as DossierItem).id, entries[i].id);
+  const itemOverview = (it: DossierItem): DossierView => itemView(config, it.id);
   // The toast and the dock's next: next entry, else the next item's overview, else back to this overview.
   const nextView: DossierView | null =
-    entryIndex === null ? null : entryIndex < entries.length - 1 ? entryView(entryIndex + 1) : itemCount > 1 ? nextItemView : overviewView;
+    !entry || !nextItem ? null : entryIndex < entries.length - 1 ? entryView(entryIndex + 1) : itemCount > 1 ? itemOverview(nextItem) : overviewView;
 
   const viewRef = useRef(view);
   viewRef.current = view;
   const closeAll = useCallback(() => go(null), [go]);
-  const toOverview = () => go(overviewView);
+  const toOverview = () => overviewView && go(overviewView);
+  const toOpening = () => openingView && go(openingView);
   const openEntry = (index: number) => go(entryView(index));
-  const switchItem = (delta: number) => go({ item: items[(itemIndex + delta + itemCount) % itemCount].id });
+  const switchItem = (delta: number) => go(itemOverview(items[(itemIndex + delta + itemCount) % itemCount]));
   const goNextEntry = () => {
     if (nextView) go(nextView);
   };
-  // Escape and backdrop: one level up (entry → overview → closed).
+  // Escape and backdrop: one level up (entry → overview → opening → closed).
   const dismissOneLevel = useCallback(() => go(dossierRoutes.parent(viewRef.current)), [go]);
 
   /* ── Target changes: chrome, completion, live region, the tile to refocus on the way back. */
+  const enteredFrom = useRef<Kind | null>(null);
   useEffect(() => {
     const previous = prevTargetRef.current;
-    prevTargetRef.current = { itemIndex, entryIndex };
-    // Back to the overview of the same item (Sommaire, Escape, browser Back): refocus the tile we came from.
-    if (entryIndex === null && previous.entryIndex !== null) returnTileRef.current = previous.itemIndex === itemIndex ? previous.entryIndex : null;
-    else if (entryIndex !== null || previous.itemIndex !== itemIndex) returnTileRef.current = null;
+    prevTargetRef.current = { kind, itemIndex, entryIndex };
+    // Back up a level (Sommaire, Escape, browser Back): refocus the tile we came from.
+    if (kind === "overview" && previous.kind === "detail") returnTileRef.current = previous.itemIndex === itemIndex ? previous.entryIndex : null;
+    else if (kind === "opening" && previous.kind !== "opening") returnTileRef.current = previous.itemIndex;
+    else if (kind !== previous.kind || previous.itemIndex !== itemIndex) returnTileRef.current = null;
+    if (previous.kind !== kind) enteredFrom.current = previous.kind;
     setChromeHidden(false);
     setComplete(false);
-    if (entryIndex !== null) setLive(copy.entryLocation(entryIndex + 1, entries.length, entries[entryIndex]?.title ?? ""));
-    else if (previous.entryIndex !== null) setLive(copy.backTo(item.label));
-    else setLive(copy.itemLocation(itemIndex + 1, itemCount, item.label));
-  }, [entryIndex, itemIndex]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (kind === "opening") setLive(opening?.title ?? "");
+    else if (entry) setLive(copy.entryLocation(entryIndex + 1, entries.length, entry.title));
+    else if (previous.kind === "detail" && item) setLive(copy.backTo(item.label));
+    else if (item) setLive(copy.itemLocation(itemIndex + 1, itemCount, item.label));
+  }, [kind, entryIndex, itemIndex]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── Shown view changes: the new view starts at the top (before paint, before chapters measure). */
-  const shownKey = shown ? `${shown.item}:${shown.entry}` : "";
+  const shownKey = shown ? `${shown.kind}:${shown.item}:${shown.entry}` : "";
   useLayoutEffect(() => {
     lastScrollRef.current = 0;
     if (bodyRef.current) bodyRef.current.scrollTop = 0;
@@ -305,20 +375,20 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, closing, o
 
   const reveal = useChapterReveal(bodyRef);
 
-  const enteredFromOverview = useRef(false);
+  // Going down a level moves focus into the new view: the detail itself, or an item's board from the opening screen.
   useEffect(() => {
-    if (entryIndex === null) enteredFromOverview.current = true;
-  }, [entryIndex]);
-  useEffect(() => {
-    if (!detailReady) return;
-    if (enteredFromOverview.current) {
-      enteredFromOverview.current = false;
-      detailRef.current?.focus({ preventScroll: true });
-    }
+    if (!detailReady || enteredFrom.current !== "overview") return;
+    enteredFrom.current = null;
+    detailRef.current?.focus({ preventScroll: true });
   }, [detailReady, entryIndex]);
+  useEffect(() => {
+    if (!overviewReady || enteredFrom.current !== "opening") return;
+    enteredFrom.current = null;
+    boardHeadingRef.current?.focus({ preventScroll: true });
+  }, [overviewReady, itemIndex]);
 
   useEffect(() => {
-    if (!overviewReady) return;
+    if (!overviewReady && !openingReady) return;
     const index = returnTileRef.current;
     returnTileRef.current = null;
     if (index === null) return;
@@ -328,14 +398,14 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, closing, o
       else boardHeadingRef.current?.focus({ preventScroll: true });
     });
     return () => cancelAnimationFrame(frame);
-  }, [overviewReady]);
+  }, [overviewReady, openingReady]);
 
   /* ── Desktop strip: the active tab's underline is the reading progress; ≥ 90 % offers the next tab. */
   useEffect(() => {
     const body = bodyRef.current;
     const strip = stripRef.current;
     strip?.style.setProperty("--evd-progress", "0");
-    if (!body || !strip || !detailReady || !desktop) return;
+    if (!body || !strip || !detailReady || !wide) return;
     let frame = 0;
     const update = () => {
       frame = 0;
@@ -358,12 +428,12 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, closing, o
       observer.disconnect();
       body.removeEventListener("scroll", schedule);
     };
-  }, [detailReady, desktop, entryIndex]);
+  }, [detailReady, wide, entryIndex]);
 
-  /* ── Phone / tablet: capsule and dock leave on scroll-down, return on scroll-up, near the top or on focus. */
+  /* ── Capsule and dock (phone / tablet, the sheet): leave on scroll-down, return on scroll-up, near the top or on focus. */
   const onBodyScroll = useCallback(() => {
     const body = bodyRef.current;
-    if (!body || desktop || viewRef.current.entry === undefined) return;
+    if (!body || wide || viewRef.current.entry === undefined) return;
     if (document.activeElement?.closest(".evd-header, .evd-dock")) return;
     const top = body.scrollTop;
     const last = lastScrollRef.current;
@@ -371,7 +441,7 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, closing, o
     if (top <= 24) return setChromeHidden(false);
     if (Math.abs(top - last) < 6) return;
     setChromeHidden(top > last);
-  }, [desktop]);
+  }, [wide]);
 
   /* ── Keyboard (document-level, so a view swap that drops focus never strands it):
      Escape = one level; Tab stays in the dialog. */
@@ -419,26 +489,45 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, closing, o
       if (!active || active === document.body || !dialogRef.current?.contains(active)) dialogRef.current?.focus({ preventScroll: true });
     });
     return () => cancelAnimationFrame(frame);
-  }, [entryIndex, itemIndex, complete, shownKey, closing]);
+  }, [kind, entryIndex, itemIndex, complete, shownKey, closing]);
 
-  const accentStyle = item.accent
+  const accentStyle = item?.accent
     ? ({ "--primary": item.accent, "--primary-foreground": item.accentInk ?? inkFor(item.accent) } as CSSProperties)
     : undefined;
 
+  const bodyItem = body.item;
+  const bodyEntry = body.entry;
   const bodyCtx: DossierEntryContext | null =
-    bodyEntry && bodyEntryIndex !== null ? { item: bodyItem, entry: bodyEntry, index: bodyEntryIndex, total: bodyItem.entries.length, close: closeAll, toOverview } : null;
+    bodyItem && bodyEntry ? { item: bodyItem, entry: bodyEntry, index: body.entryIndex, total: bodyItem.entries.length, close: closeAll, toOverview: () => go(itemView(config, bodyItem.id)) } : null;
+  const bodyBoard = body.kind === "opening" ? "choice" : body.kind === "overview" ? boardLayout(bodyItem?.entries.length ?? 0) : undefined;
+  const boardSizes = composition === "sheet" ? `${bodyBoard === "choice" && bodyItems.length <= 2 ? "" : "(max-width: 599px) 100vw, "}(max-width: 1023px) 50vw, 360px` : undefined;
 
-  const nextEntryLabel = entryIndex === null ? "" : entryIndex < entries.length - 1 ? (entries[entryIndex + 1].label ?? entries[entryIndex + 1].title) : itemCount > 1 ? nextItem.label : copy.overview;
-  const nextAria = entryIndex === null ? "" : entryIndex < entries.length - 1 ? copy.nextEntry(nextEntryLabel) : itemCount > 1 ? copy.nextItem(nextItem.label) : copy.overviewOf(item.label);
-  const dockShown = !!entry || itemCount > 1;
-  const hideChrome = !!entry && chromeHidden && !desktop;
+  const nextEntryLabel = !entry || !nextItem ? "" : entryIndex < entries.length - 1 ? (entries[entryIndex + 1].label ?? entries[entryIndex + 1].title) : itemCount > 1 ? nextItem.label : copy.overview;
+  const nextAria = !entry || !item || !nextItem ? "" : entryIndex < entries.length - 1 ? copy.nextEntry(nextEntryLabel) : itemCount > 1 ? copy.nextItem(nextItem.label) : copy.overviewOf(item.label);
+  // An overview under an opening screen: the strip names the way up and the items (the pager would repeat them).
+  const itemsStrip = kind === "overview" && !!opening;
+  const dockShown = kind === "detail" || (kind === "overview" && (itemCount > 1 || !!opening));
+  const hideChrome = kind === "detail" && chromeHidden && !wide;
+  const upLabel = opening ? openingLabel(opening) : "";
+
+  const headerTitle =
+    kind === "detail" && entry ? (
+      <h1 id={titleId} className="evd-header__title">{entryHeading(entry)}</h1>
+    ) : (
+      <>
+        <h1 id={titleId} className="evd-header__title evd-header__title-full">{kind === "opening" ? opening?.title : copy.overviewTitle(itemIndex + 1, item?.label ?? "")}</h1>
+        <span className="evd-header__title evd-header__title-short" aria-hidden="true">{kind === "opening" ? upLabel : item?.label}</span>
+      </>
+    );
 
   return (
     <div
       ref={rootRef}
       className={cn("ev-root ev-tone-dark ev-dossier", className)}
       data-phase={closing ? "closing" : "open"}
-      data-view={bodyEntry ? "detail" : "overview"}
+      data-composition={composition}
+      data-view={body.kind}
+      data-board={bodyBoard}
       data-dock={dockShown || undefined}
       data-ev-route-layer=""
       style={accentStyle}
@@ -458,22 +547,15 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, closing, o
               <div className="evd-header__identity">
                 <span className="evd-header__brand">{config.brand.logo ?? <span className="ev-t-readout-lg">{config.brand.name}</span>}</span>
                 <div className="evd-header__meta">
-                  <span className="evd-header__kicker">{entry ? item.label : config.kicker}</span>
+                  <span className="evd-header__kicker">{entry && item ? item.label : config.kicker}</span>
                   {/* The view's one h1 (its title; docs/CRAWLABLE-MODALS.md §4). Phones show the short readout instead, the h1 stays spoken. */}
-                  {entry ? (
-                    <h1 id={titleId} className="evd-header__title">{entryHeading(entry)}</h1>
-                  ) : (
-                    <>
-                      <h1 id={titleId} className="evd-header__title evd-header__title-full">{copy.overviewTitle(itemIndex + 1, item.label)}</h1>
-                      <span className="evd-header__title evd-header__title-short" aria-hidden="true">{item.label}</span>
-                    </>
-                  )}
+                  {headerTitle}
                 </div>
               </div>
 
-              {itemCount > 1 && (
+              {itemCount > 1 && item && prevItem && nextItem && !itemsStrip && (
                 <nav className="evd-pager" aria-label={copy.itemsNav}>
-                  <PagerLink direction="prev" label={copy.previousItem(prevItem.label)} href={href(prevItemView)} onFollow={() => switchItem(-1)} />
+                  <PagerLink direction="prev" label={copy.previousItem(prevItem.label)} href={href(itemOverview(prevItem))} onFollow={() => switchItem(-1)} />
                   <div className="evd-pager__location" role="status" aria-label={copy.itemLocation(itemIndex + 1, itemCount, item.label)}>
                     <span className="evd-pager__label" aria-hidden="true">{item.label}</span>
                     <span className="evd-bars" aria-hidden="true" style={{ ["--evd-bars" as string]: itemCount }}>
@@ -482,7 +564,7 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, closing, o
                       ))}
                     </span>
                   </div>
-                  <PagerLink direction="next" label={copy.nextItem(nextItem.label)} href={href(nextItemView)} onFollow={() => switchItem(1)} />
+                  <PagerLink direction="next" label={copy.nextItem(nextItem.label)} href={href(itemOverview(nextItem))} onFollow={() => switchItem(1)} />
                 </nav>
               )}
 
@@ -493,7 +575,7 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, closing, o
             </div>
           </header>
 
-          {entry && entryIndex !== null && (
+          {entry && item && overviewView && (
             <nav ref={stripRef} className="evd-strip" aria-label={copy.entriesNav} style={{ ["--evd-tabs" as string]: entries.length }}>
               <RouteLink className="evd-strip__overview" href={href(overviewView)} onFollow={toOverview} aria-label={copy.overviewOf(item.label)}>
                 <TextFill hoverWithin=".evd-strip__overview" hoverInk="#fff" withFocus={false}><ArrowLeft /></TextFill>
@@ -501,29 +583,16 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, closing, o
               </RouteLink>
               <div className="evd-strip__tabs">
                 {entries.map((e, i) => (
-                  <RouteLink
+                  <StripTab
                     key={e.id}
-                    className="evd-strip__tab"
                     href={href(entryView(i))}
-                    data-state={i === entryIndex ? "active" : i < entryIndex ? "past" : undefined}
-                    aria-current={i === entryIndex ? "page" : undefined}
-                    aria-label={copy.entryLocation(i + 1, entries.length, e.title)}
+                    state={i === entryIndex ? "active" : i < entryIndex ? "past" : undefined}
+                    label={copy.entryLocation(i + 1, entries.length, e.title)}
+                    index={i}
                     onFollow={() => i !== entryIndex && openEntry(i)}
                   >
-                    <span className="evd-strip__num">{pad(i + 1)}</span>
-                    <span className="evd-strip__label">
-                      <TextFill
-                        truncate
-                        ink={i === entryIndex ? "#fff" : i < entryIndex ? "rgb(255 255 255 / 0.72)" : undefined}
-                        hoverWithin={i === entryIndex ? undefined : ".evd-strip__tab"}
-                        hoverInk="#fff"
-                        withFocus={false}
-                      >
-                        {e.label ?? e.title}
-                      </TextFill>
-                    </span>
-                    <span className="evd-strip__progress" aria-hidden="true" />
-                  </RouteLink>
+                    {e.label ?? e.title}
+                  </StripTab>
                 ))}
               </div>
               {complete && detailReady && (
@@ -552,11 +621,34 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, closing, o
             </nav>
           )}
 
+          {itemsStrip && openingView && (
+            <nav ref={stripRef} className="evd-strip" data-level="items" aria-label={copy.itemsNav} style={{ ["--evd-tabs" as string]: itemCount }}>
+              <RouteLink className="evd-strip__overview" href={href(openingView)} onFollow={toOpening} aria-label={copy.up(upLabel)}>
+                <TextFill hoverWithin=".evd-strip__overview" hoverInk="#fff" withFocus={false}><ArrowLeft /></TextFill>
+                <TextFill truncate hoverWithin=".evd-strip__overview" hoverInk="#fff" withFocus={false}>{upLabel}</TextFill>
+              </RouteLink>
+              <div className="evd-strip__tabs">
+                {items.map((it, i) => (
+                  <StripTab
+                    key={it.id}
+                    href={href(itemOverview(it))}
+                    state={i === itemIndex ? "active" : undefined}
+                    label={copy.itemLocation(i + 1, itemCount, it.label)}
+                    index={i}
+                    onFollow={() => i !== itemIndex && go(itemOverview(it))}
+                  >
+                    {it.label}
+                  </StripTab>
+                ))}
+              </div>
+            </nav>
+          )}
+
           <div className="evd-viewport">
             <div
               ref={bodyRef}
               className="evd-body"
-              data-locked={(hydrated && (!shown || (!shownEntry && pending))) || undefined}
+              data-locked={(hydrated && (!shown || (body.kind !== "detail" && pending))) || undefined}
               data-pending={pending || undefined}
               onScroll={onBodyScroll}
             >
@@ -565,7 +657,36 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, closing, o
                 {/* Copy mounted from the first render (server HTML included); held until the view's media is
                     decoded, then remounted live so its entrance starts when the view used to mount. */}
                 <HeldCopy live={bodyLive}>
-                  {!bodyEntry && (
+                  {body.kind === "opening" && opening && (
+                    <section
+                      key="opening"
+                      className="evd-overview evd-overview--opening"
+                      aria-labelledby={boardHeadingId}
+                      inert={hydrated && !openingReady}
+                      aria-hidden={waiting || undefined}
+                      data-waiting={waiting || undefined}
+                    >
+                      <h2 id={boardHeadingId} ref={boardHeadingRef} tabIndex={-1} className="ev-sr">
+                        {copy.chooseItem}
+                      </h2>
+                      <SelectionBoard
+                        entries={bodyItems.map((it): SelectionTile => ({ id: it.id, title: it.label, kicker: it.kicker, media: itemCover(it) }))}
+                        label={opening.title}
+                        layout="choice"
+                        numbered={false}
+                        sizes={boardSizes}
+                        tileMedia={tileMedia}
+                        revealed
+                        onSelect={(i) => go(itemView(config, bodyItems[i].id))}
+                        hrefFor={hrefFor ? (i) => href(itemView(config, bodyItems[i].id)) : undefined}
+                        openLabel={copy.openItem}
+                        registerTile={(i, el) => {
+                          tileRefs.current[i] = el;
+                        }}
+                      />
+                    </section>
+                  )}
+                  {body.kind === "overview" && bodyItem && (
                     <section
                       key={bodyItem.id}
                       className="evd-overview"
@@ -577,20 +698,29 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, closing, o
                       <h2 id={boardHeadingId} ref={boardHeadingRef} tabIndex={-1} className="ev-sr">
                         {copy.boardHeading(bodyItem.label)}
                       </h2>
-                      <SelectionBoard
-                        entries={bodyItem.entries}
-                        label={copy.boardHeading(bodyItem.label)}
-                        revealed
-                        onSelect={(i) => go({ item: bodyItem.id, entry: bodyItem.entries[i].id })}
-                        hrefFor={hrefFor ? (i) => href({ item: bodyItem.id, entry: bodyItem.entries[i].id }) : undefined}
-                        openLabel={copy.openEntry}
-                        registerTile={(i, el) => {
-                          tileRefs.current[i] = el;
-                        }}
-                      />
+                      {bodyItem.entries.length > 0 ? (
+                        <SelectionBoard
+                          entries={bodyItem.entries}
+                          label={copy.boardHeading(bodyItem.label)}
+                          sizes={boardSizes}
+                          tileMedia={tileMedia}
+                          revealed
+                          onSelect={(i) => go(itemView(config, bodyItem.id, bodyItem.entries[i].id))}
+                          hrefFor={hrefFor ? (i) => href(itemView(config, bodyItem.id, bodyItem.entries[i].id)) : undefined}
+                          openLabel={copy.openEntry}
+                          registerTile={(i, el) => {
+                            tileRefs.current[i] = el;
+                          }}
+                        />
+                      ) : bodyItem.pending ? null : (
+                        <EmptyBoard
+                          {...(bodyItem.empty ?? copy.empty)}
+                          next={itemCount > 1 && nextItem && nextItem.id !== bodyItem.id ? { label: nextItem.label, aria: copy.nextItem(nextItem.label), href: href(itemOverview(nextItem)), onFollow: () => switchItem(1) } : null}
+                        />
+                      )}
                     </section>
                   )}
-                  {bodyEntry && bodyCtx && (
+                  {body.kind === "detail" && bodyItem && bodyEntry && bodyCtx && (
                     <div
                       key={`${bodyItem.id}:${bodyEntry.id}`}
                       ref={detailRef}
@@ -609,15 +739,15 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, closing, o
               </ChapterRevealContext.Provider>
             </div>
             {cut > 0 && <div key={cut} className="evd-cut" aria-hidden="true" />}
-            {hydrated && (gate.slow || gate.failed) && !gate.ready && (
+            {hydrated && !ready && (awaiting ? awaitSlow : gate.slow || gate.failed) && (
               <DossierLoader
-                kicker={entry ? copy.loader.detailKicker((entryIndex ?? 0) + 1) : copy.loader.overviewKicker(itemIndex + 1)}
+                kicker={kind === "detail" ? copy.loader.detailKicker(entryIndex + 1) : kind === "opening" ? upLabel : copy.loader.overviewKicker(itemIndex + 1)}
                 title={copy.loader.title}
-                status={copy.loader.status}
-                loaded={gate.loaded}
-                total={gate.total}
-                spoken={copy.loader.spoken(gate.loaded, gate.total)}
-                failed={gate.failed}
+                status={awaiting ? copy.pendingStatus : copy.loader.status}
+                loaded={awaiting ? 0 : gate.loaded}
+                total={awaiting ? 1 : gate.total}
+                spoken={awaiting ? copy.pendingStatus : copy.loader.spoken(gate.loaded, gate.total)}
+                failed={!awaiting && gate.failed}
                 failedText={copy.loader.failed}
                 retryLabel={copy.loader.retry}
                 onRetry={gate.retry}
@@ -625,25 +755,24 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, closing, o
             )}
           </div>
 
-          {dockShown && (
+          {dockShown && item && (
             <nav className="evd-dock" data-hidden={hideChrome || undefined} aria-label={entry ? copy.entriesNav : copy.itemsNav} onFocusCapture={() => setChromeHidden(false)}>
               <div className="evd-dock__glass">
-                <DockButton
-                  side="start"
-                  label={entry ? copy.dock.home : copy.dock.previous}
-                  aria={entry ? copy.overviewOf(item.label) : copy.previousItem(prevItem.label)}
-                  icon={entry ? <HomeIcon /> : <ArrowLeft />}
-                  href={href(entry ? overviewView : prevItemView)}
-                  onClick={entry ? toOverview : () => switchItem(-1)}
-                />
+                {entry ? (
+                  <DockButton side="start" label={copy.dock.home} aria={copy.overviewOf(item.label)} icon={<HomeIcon />} href={href(overviewView)} onClick={toOverview} />
+                ) : opening ? (
+                  <DockButton side="start" label={upLabel} aria={copy.up(upLabel)} icon={<ArrowLeft />} href={href(openingView)} onClick={toOpening} />
+                ) : (
+                  prevItem && <DockButton side="start" label={copy.dock.previous} aria={copy.previousItem(prevItem.label)} icon={<ArrowLeft />} href={href(itemOverview(prevItem))} onClick={() => switchItem(-1)} />
+                )}
                 <div
                   className="evd-dock__location"
                   role="status"
-                  aria-label={entry && entryIndex !== null ? copy.entryLocation(entryIndex + 1, entries.length, entry.title) : copy.itemLocation(itemIndex + 1, itemCount, item.label)}
+                  aria-label={entry ? copy.entryLocation(entryIndex + 1, entries.length, entry.title) : copy.itemLocation(itemIndex + 1, itemCount, item.label)}
                 >
                   <span className="evd-dock__kicker" aria-hidden="true">{entry ? item.label : copy.dock.item}</span>
                   <span key={entry ? `e${entryIndex}` : `i${itemIndex}`} className="evd-dock__count" aria-hidden="true">
-                    {pad((entry ? (entryIndex ?? 0) : itemIndex) + 1)}
+                    {pad((entry ? entryIndex : itemIndex) + 1)}
                     <span>/</span>
                     {pad(entry ? entries.length : itemCount)}
                   </span>
@@ -653,19 +782,62 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, closing, o
                     ))}
                   </span>
                 </div>
-                <DockButton
-                  side="end"
-                  label={copy.dock.next}
-                  aria={entry ? nextAria : copy.nextItem(nextItem.label)}
-                  icon={<ArrowRight />}
-                  href={href(entry ? nextView : nextItemView)}
-                  onClick={entry ? goNextEntry : () => switchItem(1)}
-                />
+                {(entry || itemCount > 1) && nextItem && (
+                  <DockButton
+                    side="end"
+                    label={copy.dock.next}
+                    aria={entry ? nextAria : copy.nextItem(nextItem.label)}
+                    icon={<ArrowRight />}
+                    href={href(entry ? nextView : itemOverview(nextItem))}
+                    onClick={entry ? goNextEntry : () => switchItem(1)}
+                  />
+                )}
               </div>
             </nav>
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+/** A strip cell: an entry of the item (detail) or an item under the opening screen (overview). */
+function StripTab({ href, state, label, index, onFollow, children }: { href?: string; state?: "active" | "past"; label: string; index: number; onFollow: () => void; children: ReactNode }) {
+  return (
+    <RouteLink className="evd-strip__tab" href={href} data-state={state} aria-current={state === "active" ? "page" : undefined} aria-label={label} onFollow={onFollow}>
+      <span className="evd-strip__num">{pad(index + 1)}</span>
+      <span className="evd-strip__label">
+        <TextFill
+          truncate
+          ink={state === "active" ? "#fff" : state === "past" ? "rgb(255 255 255 / 0.72)" : undefined}
+          hoverWithin={state === "active" ? undefined : ".evd-strip__tab"}
+          hoverInk="#fff"
+          withFocus={false}
+        >
+          {children}
+        </TextFill>
+      </span>
+      <span className="evd-strip__progress" aria-hidden="true" />
+    </RouteLink>
+  );
+}
+
+/** The board of an item without entries (a live list on an empty day): the config's sentence, and the way on. */
+function EmptyBoard({ title, body, next }: { title: string; body?: string; next: { label: string; aria: string; href?: string; onFollow: () => void } | null }) {
+  return (
+    <div className="evd-empty">
+      <p className="ev-t-card evd-empty__title">{title}</p>
+      {body && <p className="ev-t-body evd-empty__body">{body}</p>}
+      {next &&
+        (next.href === undefined ? (
+          <GhostAction className="evd-empty__action" icon={<ArrowRight />} iconPosition="end" aria-label={next.aria} onClick={next.onFollow}>
+            {next.label}
+          </GhostAction>
+        ) : (
+          <GhostAction className="evd-empty__action" icon={<ArrowRight />} iconPosition="end" aria-label={next.aria} href={next.href} onClick={(event) => followRouteLink(event, next.onFollow)}>
+            {next.label}
+          </GhostAction>
+        ))}
     </div>
   );
 }
@@ -721,12 +893,15 @@ function useChapterReveal(bodyRef: RefObject<HTMLDivElement | null>): ChapterRev
 
 /* Decode every item's board media once the page is idle (foundation `preloadMedia`, the gate's own
    memory): opening or switching to a preloaded universe is ready on the gate's first render.
-   Images only (videos are left to the gate); first tile of each item first. */
+   Images only (videos are left to the gate); the opening screen's covers first, then the first tile of
+   each item, and so on. */
 function useIdlePreload(config: DossierConfig | null) {
   const list = useMemo(() => {
     if (!config) return [];
-    const rows = config.items.map((item) => item.entries.map((e) => e.media).filter((m) => !isVideo(m)).map((m) => m.src));
-    const ordered: string[] = [];
+    const image = (m: DossierEntry["media"] | undefined) => (m && !isVideo(m) ? [m.src] : []);
+    const covers = config.opening ? config.items.flatMap((item) => image(itemCover(item))) : [];
+    const rows = config.items.map((item) => item.entries.flatMap((e) => image(e.media)));
+    const ordered: string[] = [...covers];
     for (let i = 0; rows.some((r) => i < r.length); i++) for (const r of rows) if (i < r.length) ordered.push(r[i]);
     return Array.from(new Set(ordered));
   }, [config]);

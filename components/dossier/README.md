@@ -9,21 +9,31 @@ from the service dossiers of evoview.be (`docs/extraction/service-dossiers.md`
 A1/A2/A11, `portfolio-contact.md` A3) and decoupled. Depends on `foundation`
 and `controls`.
 
+Two compositions (Variation): **panorama**, the wide desktop shell below,
+and **sheet**, the phone / tablet composition at every width (a narrow
+portrait shell from 1024) for quick-glance content such as a menu. An
+optional **opening screen** chooses between the items.
+
 Showcase: `https://evoview-library.said.bet/components/dossier` (Maison
-Ardoise, a fictional restaurant, in the two configurations a client chooses
-between: three universes behind a pager with a deep link and the
-per-universe accent switch, and a single-universe dossier launched from a
-light page; FR/EN, live palette). Every view has a URL:
+Ardoise, a fictional restaurant: three universes behind a pager with a deep
+link and the per-universe accent switch; a single-universe dossier launched
+from a light page; its menu behind an opening screen, the menu or the day's
+specials (0 / 3 / 5 posted); desks pick the composition (from 1024), the
+tiles' photos (graded | true colour) and the specials count; FR/EN, live
+palette). Every view has a URL:
 `/components/dossier/<key>/` addresses the three-universe dossier
-(`table/tasting`), `/components/dossier/single/<key>/` the single one.
+(`table/tasting`), `/components/dossier/single/<key>/` the single one,
+`/components/dossier/opening/<key>/` the menu (`choose`, `specials/amber`).
 
 ```
-desktop ≥ 1024 (shell 92.5em × min(57.5em, 100vh − 2em), radius shell)
+panorama ≥ 1024 (shell 92.5em × min(57.5em, 100vh − 2em), radius shell)
 ┌ CLIENT │ KICKER / TITLE        (‹) LABEL ▬▭▭ (›)        EVOVIEW │ [× FERMER] ┐ 77
 ├ ‹ SOMMAIRE │ 01 Tab ▔▔▔ │ 02 Tab │ 03 Tab │ 04 Tab ─────────────────────────┤ 58 (detail)
 │ overview: 7/5 over 4/8 board (rows 1.2 / .8)  ·  detail: open chapters      │
 └──────────────────────────────────────────────────────────────────────────────┘
-phone: [glass capsule: CLIENT │ TITLE · EVOVIEW (×)] … body … [‹ | 01 / 04 ▬ | SUIVANT ›]
+phone (both): [glass capsule: CLIENT │ TITLE · EVOVIEW (×)] … body … [‹ | 01 / 04 ▬ | SUIVANT ›]
+sheet ≥ 1024: the tablet dossier (capsule, 2×2 board, dock, tablet chapters) in a
+centred shell max(40em, .9 × h) × h, h = min(57.5em, 100vh − 2em) (51.75em × 57.5em)
 ```
 
 ## Signature (preserve)
@@ -36,14 +46,28 @@ restyle them to the client's UI kit. Changing them is a library change
   readout (Satoshi 700 uppercase, kicker accent-mixed) · item pager (glass
   orbs, label, location bars; only with two or more items) · the Evoview
   mark · labelled glass close. Grouped by space, no divider rules.
-- **Selection board**: exactly four tiles, 7/5 over 4/8 on 12 columns, rows
-  1.2fr / .8fr; 2×2 at 600–1023; four rows on phones. Graded media
+- **Selection board**: four tiles make the asymmetric mosaic, 7/5 over 4/8
+  on 12 columns, rows 1.2fr / .8fr (panorama ≥ 1024); 2×2 from 600 (and in
+  the sheet); four rows on phones. Any other count (live content) takes the
+  symmetric grid: two equal columns from 600, one below, an odd count's
+  first tile spanning the row; rows share the height down to a floor (7em
+  phones, 10em from 600), then the body scrolls. No entries: one tonal panel
+  with the item's sentence and a link to the next item. Graded media
   (desaturated, darkened) releasing colour on hover / focus / touch-cycle
-  focus, accent border + bottom edge + numeral, shine sweep, scrim, title
-  bottom-left. Numerals in the display face (not Gaegu).
+  focus, or true-colour media with the state carried by the frame (a
+  Variation, `tileMedia`); either way accent border + bottom edge + numeral,
+  shine sweep, slight scale, caption scrim, title bottom-left. Numerals in
+  the display face (not Gaegu).
+- **Opening screen** (optional): the items as one row of equal choice tiles
+  (2 per row on phones, 3 from 600, 4 in the panorama ≥ 1024, then the
+  grid's rule), the board tile without numeral, a larger title, the item's
+  readout above it.
 - **Chapter strip**: `Sommaire` + numbered tabs; the per-tab 3px track is the
   strip's one line and its fill is the reading progress (past tabs full);
   completion toast at ≥ 90 % under the tab it opens, with a 12px accent stem.
+  Under an opening screen the panorama's overview gets the same strip one
+  level up: `‹ <opening label>` + the items as tabs (the current one's track
+  full), and the header pager steps aside.
 - **Phone chrome**: floating glass capsule + 3-column glass dock
   (`prev/home · 01 / 04 + bars · next`), both leaving on scroll-down and
   returning on scroll-up, near the top or on focus; spring press + touch bloom.
@@ -98,9 +122,39 @@ other marks.
 
 ## Variations (select)
 
+- **Composition** (`config.composition`, `DOSSIER_COMPOSITIONS`):
+  - `panorama` (default): the wide shell from 1024 (header strip, chapter
+    strip, mosaic, desktop chapters); below 1024 the phone / tablet chrome.
+  - `sheet`: that phone / tablet composition at every width (glass capsule,
+    glass dock, 2×2 / symmetric board, tablet chapters). Below 1024 it is
+    identical to the panorama. From 1024 the shell is centred and portrait:
+    height = the panorama's, `min(57.5em, 100dvh − 2em − reserve)`, so both
+    share the window's top and bottom; width = `.9 ×` that height (RULES §4
+    portrait card ratio), 51.75em at full height (712px at 1440), never under
+    40em (the narrowest width the tablet's two-column board was built for);
+    radius shell (1.5em), capsule / dock 16px as on tablets. For quick-glance,
+    single-purpose dossiers (a menu); it overwhelms less than the panorama.
+- **Tile media** (`config.tileMedia`, `DOSSIER_TILE_MEDIA`), board and
+  opening tiles alike:
+  - `graded` (default): desaturated and dimmed at rest, neighbours of a
+    hovered tile dim further, the focused tile releases its colour (still
+    softened, with the accent wash `.evd-tile__grade`).
+  - `true-colour`: the photo as shot at rest, hover, focus and touch-cycle
+    focus, neighbours undimmed, no accent wash, no filter (so no filter
+    transition). The frame carries the state: accent border, bottom edge,
+    numeral liquid fill, shine sweep, slight scale; the touch cycle frames its
+    tile the same way. The caption scrim stays. For clients whose photos must
+    stay true to colour (food).
+- **Opening screen** (`config.opening`): an optional top level choosing
+  between the items (Tchin: `Carte | Promotions`); selecting opens that
+  item's overview, Escape / Back / `‹ <label>` return to it. Its own view
+  and URL (`opening.id`), h1 `opening.title`. Meant for 2–4 items.
 - **Universes:** one item (no pager; the last entry's next returns to the
-  overview) or several (pager in the header, dock steps through items);
-  each with exactly four entries (the board).
+  overview) or several (pager in the header, dock steps through items).
+- **Entry counts:** four entries make the mosaic (panorama) / 2×2 (sheet);
+  any other count, 1 to n, the symmetric grid (both compositions); none,
+  the empty panel (`item.empty`, else `copy.empty`). Counts may change while
+  open (live content, below).
 - **Detail chapters**, composed from the chapter kit (`Chapters.tsx`):
   `DossierChapter` `variant` from `DOSSIER_CHAPTER_VARIANTS` (`intro` ·
   `standard` · `payoff`, default standard; intro opens the story, payoff
@@ -111,9 +165,10 @@ other marks.
 
 ## Expression (adapt)
 
-Config only: brand (logo node or name), kicker, items (label, accent),
-entries (title, short label, kicker, media, detail chapters' content), all
-copy, attribution label. Accent = the client's: the host `--primary` /
+Config only: brand (logo node or name), kicker, opening (title, label),
+items (label, accent, cover and readout for the opening tile, empty-day
+sentence), entries (title, short label, kicker, media, detail chapters'
+content), all copy, attribution label. Accent = the client's: the host `--primary` /
 `--primary-foreground`; an item may set its own (`item.accent`), applied as
 `--primary` on the dossier while that item is shown.
 
@@ -121,10 +176,11 @@ copy, attribution label. Accent = the client's: the host `--primary` /
 
 | File | Role | Edit per site? |
 | --- | --- | --- |
-| `src/dossier.config.tsx` | Brand, kicker, items, entries + detail chapters, copy FR/EN, attribution | **yes** (client-owned, like the theme file) |
-| `src/Dossier.tsx` | Modal, header strip, pager, chapter strip, toast, dock, history, focus, gate | no |
+| `src/dossier.config.tsx` | Brand, kicker, items, entries + detail chapters, copy FR/EN, attribution; reference: `buildDossierConfig` (universes), `buildDossierMenuConfig` (opening screen + live specials) | **yes** (client-owned, like the theme file) |
+| `src/Dossier.tsx` | Modal, header strip, pager, chapter strip, toast, dock, history, focus, gate, live content | no |
 | `src/routes.ts` | `dossierRoutes` (views, keys, parents, head data), `DossierView` | no |
-| `src/Board.tsx` | `SelectionBoard` (mosaic, grade, touch cycle) | no |
+| `src/Board.tsx` | `SelectionBoard` (mosaic, grid, choice, grade, touch cycle) | no |
+| `src/copy.ts` | Defaults for the 1.8.0 copy keys (configs that predate them) | no |
 | `src/Loader.tsx` | `DossierLoader` | no |
 | `src/Chapters.tsx` | `DossierChapter`, `ChapterHead`, `ChapterFigure`, `ChapterSplit`, `ChapterRows`, `ChapterSpecimen`, `ChapterPayoff` | no |
 | `src/types.ts`, `src/hooks.ts`, `src/index.ts`, `src/dossier.css` | Types, media helpers, exports, styles (`.ev-dossier`, `evd-*`) | no |
@@ -164,13 +220,24 @@ const open = (v: DossierView) => ({ href: hrefFor(v), onClick: (e: MouseEvent) =
 ```ts
 type DossierConfig = {
   locale: "fr" | "en";
+  composition?: "panorama" | "sheet";              // DOSSIER_COMPOSITIONS; default "panorama"
+  tileMedia?: "graded" | "true-colour";            // DOSSIER_TILE_MEDIA; default "graded"
   brand: { name: string; logo?: ReactNode };      // logo ≈ 18px tall, currentColor
   kicker: string;                                  // overview kicker
+  opening?: {                                      // optional top level choosing between the items
+    id: string;                                    // its URL slug, distinct from every item id
+    title: string;                                 // h1 + head title
+    label?: string;                                // phone readout, "‹ label", breadcrumb (default: title)
+    description?: string;
+  };
   items: {
     id: string; label: string;
     accent?: string; accentInk?: string;           // per-item accent; omit to follow the host
     description?: string;                          // overview meta description (default: label + entry titles)
-    entries: {                                     // exactly 4 (the board)
+    cover?: DossierMedia; kicker?: string;         // opening tile (default media: first entry's)
+    empty?: { title: string; body?: string };      // board without entries (default copy.empty)
+    pending?: boolean;                             // live content still loading
+    entries: {                                     // 4 = mosaic; any other count, 0..n = symmetric grid
       id: string; title: string; label?: string; kicker?: string;
       media: { src; type?: "image" | "video"; poster?; srcSet?; sizes?; position?; fit?; alt? };  // alt: head image only
       sources?: MediaSource[];                     // further detail media to decode first
@@ -183,7 +250,34 @@ type DossierConfig = {
 };
 ```
 
-Ids (items, entries) are URL slugs: `[a-z0-9-]`.
+Ids (opening, items, entries) are URL slugs: `[a-z0-9-]`. Copy keys added in
+1.8.0 are optional (`openItem`, `chooseItem`, `up`, `empty`,
+`loader.pending`); omitted, they take the locale's defaults.
+
+### Live content
+
+A config is data: build an item's entries from fetched content (an
+admin-edited list) and rebuild the config when it changes.
+
+```tsx
+const [promos, setPromos] = useState<Promo[] | null>(null);       // null: loading
+useEffect(() => { fetchPromos().then(setPromos, () => setPromos([])); }, []);
+const config = useMemo(() => buildConfig(locale, promos), [locale, promos]);
+// item: { id: "promotions", pending: promos === null, entries: (promos ?? []).map(toEntry), empty: { title, body } }
+```
+
+- `pending: true` while loading: the item's views wait behind the loader
+  (status `loader.pending`) and `parse` accepts its entry keys, so a deep
+  link (`/menu/promotions/<id>/`) seeds a view that opens once the entry
+  arrives. Set it false once the data is in, whatever it holds.
+- Entries may change while the dossier is open: the board re-lays out (the
+  previous one stays until the new media are decoded); an open entry that
+  disappears, or a pending key that never arrives, settles on its item's
+  overview, history steps Back to it and the host hears it through
+  `onNavigate`; an unknown item settles on the top level. Entry ids must be
+  stable across fetches (they are URLs).
+- Prerender the views of the data available at build time; entries added
+  later render client-side (their URLs work once the data has them).
 
 `<Dossier>` props: `config`, `view` (`DossierView | null`, null = closed),
 `onNavigate(view | null)` (every navigation the dossier asks for and every
@@ -219,20 +313,22 @@ to cover this and the `process-sequence` step dossier.
   outside the Tab trap, so pointer only while open. For host dev/showcase
   tools (the library's floating accent palette); client sites never render it.
 - Focus to the close on open; Tab trapped; a view swap that removes the
-  focused control returns focus to the dialog; returning to the overview
-  focuses the tile you came from.
+  focused control returns focus to the dialog; returning up a level (overview,
+  opening screen) focuses the tile you came from; entering an item from the
+  opening screen focuses its board.
 - **Close**: the page is released as soon as the exit starts (inert, scroll
   lock and suspension lifted, focus back on the launcher, the fading layer
   lets clicks through); the content stays on screen through the 340 ms exit;
   the layer is removed on `animationend` or after 700 ms at most.
-- **Escape = one level** (detail → overview → close), handled at document
-  level. Backdrop click = one level. The close button closes everything.
-- **History** (foundation `useRouteHistory`): the overview and the detail
-  each own an entry (URL `hrefFor(view)`); deeper = push, sideways (another
-  entry of the item; another item from an overview) = replace, up
-  (`Sommaire`, Escape, the pager from a detail) = Back; browser / OS Back
-  follows the same one-level model; closing goes Back past every level, so
-  Back never reopens it, Forward does.
+- **Escape = one level** (detail → overview → opening screen → close),
+  handled at document level. Backdrop click = one level. The close button
+  closes everything.
+- **History** (foundation `useRouteHistory`): the opening screen, the
+  overview and the detail each own an entry (URL `hrefFor(view)`); deeper =
+  push, sideways (another entry of the item; another item from an overview)
+  = replace, up (`Sommaire`, `‹ <opening label>`, Escape, the pager from a
+  detail) = Back; browser / OS Back follows the same one-level model;
+  closing goes Back past every level, so Back never reopens it, Forward does.
 - Live region announces location (`Expérience 2 sur 4 : …`, `Univers 3 sur 3 : …`).
 - Host requirement: no `transform` / `filter` / `contain` on an ancestor of
   `<Dossier>` (it would trap the fixed layer), and no ancestor stacking context
@@ -243,10 +339,14 @@ to cover this and the `process-sequence` step dossier.
 Binding contract: `docs/CRAWLABLE-MODALS.md` (library repo); client wiring
 is its §7. What the package gives:
 
-- **Views**: `DossierView = { item; entry? }`; `dossierRoutes.views(config)`
-  lists every overview and entry in on-screen order, `key` → `table`,
-  `table/tasting`, `parse(config, key)` is its inverse, `parent` of an entry
-  is its overview.
+- **Views**: `DossierView = { item; entry?; opening? } | { opening }`;
+  `dossierRoutes.views(config)` lists the opening screen (with
+  `config.opening`), then every overview and entry in on-screen order;
+  `key` → `choose`, `table`, `table/tasting`; `parse(config, key)` is its
+  inverse (unknown keys → null, a pending item's entry keys accepted);
+  `parent` of an entry is its overview, of an overview the opening screen
+  (item and entry views carry `opening`; `parse` and the dossier add it, a
+  host may pass `{ item }` alone). Without an opening: as in 1.7.
 - **Server HTML** of `<Dossier view={v} … />` (`react-dom/static`
   `prerender`): the modal root with `data-ev-route-layer`, one h1 (the
   header title), the view's full copy (board titles and kickers; the
@@ -254,9 +354,11 @@ is its §7. What the package gives:
   `inert` / loader. Desktop layout on the server; a phone swaps after
   hydration.
 - **Head data**: `dossierRoutes.head(config, view)` → `{ title, description,
-  breadcrumb, image }` (data only). Overview title = `copy.overviewTitle`;
-  entry title = `<entry title> — <item label>` (contains the h1); set
-  `description` on items / entries from their own copy.
+  breadcrumb, image }` (data only). Opening title = `opening.title`;
+  overview title = `copy.overviewTitle`; entry title = `<entry title> —
+  <item label>` (contains the h1); the breadcrumb starts with the opening's
+  label when there is one; set `description` on the opening, items and
+  entries from their own copy.
 
 Client steps (§7):
 1. **Route table**: one route per page and locale with a splat
@@ -278,9 +380,15 @@ Client steps (§7):
 
 ## Desktop / mobile
 
-- ≥ 1024: opaque header strip (77px), item pager, chapter strip + toast in
-  detail, hover grade on fine pointers.
-- 768–1023: windowed shell; glass capsule + dock; board 2×2 (from 600).
+- ≥ 1024, panorama: opaque header strip (77px), item pager, chapter strip +
+  toast in detail (and on an overview under an opening screen), desktop
+  chapters, hover grade on fine pointers.
+- ≥ 1024, sheet: the 768–1023 dossier below in the portrait shell (no
+  header strip, pager or chapter strip; capsule and dock leave on
+  scroll-down); hover grade on fine pointers. Chapters take their desktop
+  layouts from the body's width (`@container evd-body`, ≥ 900px), so the
+  sheet keeps the tablet's.
+- 768–1023 (both): windowed shell; glass capsule + dock; board 2×2 (from 600).
 - < 768: full-bleed, square; < 600: four board rows, capsule shows one line
   (the full title stays spoken), media leads every split (intro hero first).
 - Touch / no-hover (≤ 1023 or coarse pointer): the board's touch cycle gives
@@ -329,3 +437,23 @@ is suspended while open.
    item: no pager; the last entry's next returns to the overview.
 7. Touch cycle on a phone: 2 s per tile, pauses while touched / tab hidden.
 8. Attribution: one linked mark in the header strip, named, new tab.
+9. Sheet (desk "Composition", from 1024): shell 711 × 790 at 1440×900 in the
+   showcase (`.9 ×` the panorama's height), capsule + dock, 2×2 board, tablet chapters; below 1024
+   layout identical to the panorama. Opening screen (menu demo): opening →
+   item → entry → Escape ×3 (tile refocused at each level) → closed; Back /
+   Forward per level; deep links on `opening/choose/`, `opening/specials/`,
+   `opening/specials/amber/`. Specials 0 / 3 / 5: empty panel with a link to
+   the menu, odd lead spanning the row, three rows. Panorama with an opening:
+   header end on the right, overview strip `‹ Au menu` + items.
+10. Live content (a host harness): a pending deep link waits behind the
+    loader and opens once the entry arrives; an entry removed while open, or
+    never arriving, settles on its overview (URL and host follow); reordered
+    entries keep the open one.
+11. True colour (desk "Photos"): every `.evd-tile__media` computes `filter:
+    none` and transitions `transform` only, at rest, hover (neighbours
+    included), keyboard focus and touch-cycle focus; `.evd-tile__grade` is
+    not displayed; the scrim stays; the hovered / focused / cycled tile shows
+    the accent border, edge and scale. Graded unchanged. Headless Chrome has
+    no hover pointer: test hover with
+    `--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4`
+    and without touch emulation.

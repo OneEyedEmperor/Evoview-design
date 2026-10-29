@@ -1,5 +1,77 @@
 # dossier changelog
 
+## 1.8.0
+
+Additive. Requires `foundation` ≥ 1.10.0 and `controls` ≥ 1.5.0 (unchanged).
+Existing configs render as in 1.7.0 except the two fixes below. Browsers:
+container queries (Chrome 105, Safari 16, Firefox 110); without them the
+panorama's chapters keep their tablet layout.
+
+Config (all optional):
+- `composition?: "panorama" | "sheet"` (new Variation, `DOSSIER_COMPOSITIONS`;
+  default `"panorama"`). `sheet` = the phone / tablet composition at every
+  width; from 1024 a centred portrait shell `max(40em, .9 × h) × h`, h = the
+  panorama's height.
+- `tileMedia?: "graded" | "true-colour"` (new Variation, `DOSSIER_TILE_MEDIA`;
+  default `"graded"` = 1.7). `true-colour`: board and opening tiles show the
+  photo as shot in every state (no filter, no filter transition, no accent
+  wash, neighbours undimmed); border, edge, numeral, shine and scale carry
+  the state; the caption scrim stays. `SelectionBoard` takes it as
+  `tileMedia` (`data-tile-media` on `.evd-board`).
+- `opening?: { id, title, label?, description? }`: an opening screen above
+  the items (own view, URL and head).
+- Items: `cover?`, `kicker?` (opening tile), `empty?: { title, body? }`
+  (board without entries), `pending?` (live content loading).
+- Entry counts: any count from 0 (was exactly four). Four keep the
+  panorama's mosaic (2×2 in the sheet); other counts take the symmetric
+  grid (two columns from 600, one below, an odd count's first tile spans
+  the row); none shows the empty panel.
+- Copy (optional, defaults per locale): `openItem`, `chooseItem`, `up`,
+  `empty`, `loader.pending`. The reference config adds them, plus
+  `buildDossierMenuConfig(locale, { specials?, composition? })` (Maison
+  Ardoise's menu behind an opening screen; not exported by `index.ts`, so an
+  older client-owned config keeps compiling).
+
+API:
+- `DossierView` = `{ item: string; entry?: string; opening?: string } |
+  { opening: string }`: with `config.opening`, the opening view (key =
+  its id) is level 1 and item / entry views carry `opening` (levels 2 / 3);
+  without it, views, keys and levels are unchanged
+  (`docs/CRAWLABLE-MODALS.md` §1). Code reading `view.item` now gets
+  `string | undefined`.
+- `dossierRoutes.parse` accepts the entry keys of a pending item.
+- Live content: a requested view the config no longer holds settles on its
+  ancestor (unknown entry → overview, unknown item → top level) and the
+  dossier reports it through `onNavigate`; the body follows entries by id
+  (reorders keep the open entry) and keeps the previous board until changed
+  media are decoded.
+- `SelectionBoard`: `entries` accepts `SelectionTile` (`{ id, title, kicker?,
+  media? }`, entries still fit); new `layout?` (`SELECTION_BOARD_LAYOUTS`:
+  `mosaic` · `grid` · `choice`; default mosaic for four, grid otherwise; was
+  the first four in the mosaic), `numbered?`, `sizes?`.
+- New exports: `DOSSIER_COMPOSITIONS`, `DossierComposition`,
+  `DOSSIER_TILE_MEDIA`, `DossierTileMedia`, `DossierOpening`,
+  `SELECTION_BOARD_LAYOUTS`, `SelectionBoardLayout`, `SelectionTile`.
+
+Markup / CSS:
+- Root: `data-composition`; `data-view` gains `opening`; `data-board`
+  (`mosaic` · `grid` · `choice` · `empty`) on overviews.
+- `.evd-body` is a size container (`evd-body`): the desktop rules of the
+  atmosphere, tile text and chapters apply from 1024 *and* a body ≥ 900px
+  (the panorama always is; the sheet is not). Measured identical to 1.7.0 at
+  390, 834 and 1024 / 1440 (detail).
+- New: `.evd-empty*`, `.evd-strip[data-level="items"]`,
+  `.evd-board[data-layout]` grid rules, the sheet block (`[data-composition="sheet"]`
+  from 1024).
+
+Fixes (visible in 1.7 configs, panorama ≥ 1024):
+- Without a header pager (one item) the Evoview mark and the close sat in
+  the middle column; they are back on the right edge (`.evd-header__end`
+  `grid-column: 3`).
+- Every overview scrolled by ~76px (the atmosphere's box hung past the
+  body): the glow is drawn inside the body, the board gains the scrollbar's
+  10px; rows unchanged (387 / 258 at 1440).
+
 ## 1.7.0
 
 Requires `foundation` ≥ 1.10.0 (`lockScroll`). No config changes, no CSS

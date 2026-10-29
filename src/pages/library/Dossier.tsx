@@ -1,20 +1,26 @@
 import { useMemo, useState, type MouseEvent } from "react";
-import { ControlsProvider, GhostAction, Switch, buildControlsConfig } from "../../../components/controls/src";
-import { ArrowRight, followRouteLink, pad, routeHrefs } from "../../../components/foundation/src";
-import { Dossier as DossierModal, buildDossierConfig, dossierRoutes, type DossierConfig, type DossierItem, type DossierView } from "../../../components/dossier/src";
+import { ControlsProvider, GhostAction, SegmentedControl, Switch, buildControlsConfig } from "../../../components/controls/src";
+import { ArrowRight, followRouteLink, pad, routeHrefs, useMediaQuery } from "../../../components/foundation/src";
+import { Dossier as DossierModal, buildDossierConfig, dossierRoutes, type DossierComposition, type DossierConfig, type DossierTileMedia, type DossierView } from "../../../components/dossier/src";
+import { buildDossierMenuConfig } from "../../../components/dossier/src/dossier.config";
 import "../../../components/dossier/showcase.css";
 import ShowcasePage, { ShowcaseVariant, useShowcaseViewOpen } from "../../library/ShowcasePage";
 import { useShowcaseSubpath } from "../../library/routing";
 import { useLibraryLocale, type Locale, type Localized } from "../../library/locale";
+import { DeskSetting, SceneDesk, deskOptions } from "./scene/Scene";
 
-/* /components/dossier — one fictional restaurant (Maison Ardoise) in the two
+/* /components/dossier — one fictional restaurant (Maison Ardoise) in the
    configurations a client actually chooses between: several universes behind
-   a pager, or a single offer. Colour comes from the frame's --primary (or the
-   per-universe accents); a locale switch only swaps copy, nothing remounts.
+   a pager, a single offer, and its menu behind an opening screen (the menu or
+   the day's specials, a live list). Colour comes from the frame's --primary
+   (or the per-universe accents); a locale switch only swaps copy, nothing
+   remounts. The desks pick the composition (panorama | sheet, shown from
+   1024 only: below it both are the same), the tiles' photos (graded | true
+   colour) and how many specials are posted.
 
    Every view has a URL (docs/CRAWLABLE-MODALS.md): `<page>/<key>/` addresses
    the main variant (several universes), `<page>/single/<key>/` the
-   one-universe variant. */
+   one-universe variant, `<page>/opening/<key>/` the menu. */
 export default function DossierPage() {
   return (
     <ShowcasePage
@@ -58,9 +64,37 @@ const T = {
       en: "Private dinner, business lunch, courtyard reception, workshop: four formats, one request.",
     },
   },
+  menu: {
+    name: { fr: "Dossier · écran d'ouverture", en: "Dossier · opening screen" },
+    when: {
+      fr: "Une carte à consulter d'un coup d'œil, depuis n'importe quelle page. Un premier écran choisit entre la carte et les suggestions du jour, une liste que le restaurant tient à jour lui-même.",
+      en: "A menu to glance at from any page. A first screen chooses between the menu and today's specials, a list the restaurant keeps up to date itself.",
+    },
+    title: { fr: "La carte, sans quitter la page.", en: "The menu, without leaving the page." },
+    body: {
+      fr: "La carte de saison d'un côté, les suggestions du jour de l'autre. Les jours sans suggestion, le dossier le dit et renvoie à la carte.",
+      en: "The seasonal menu on one side, today's specials on the other. On a day without specials, the dossier says so and points to the menu.",
+    },
+  },
   explore: { fr: "Découvrir", en: "Explore" },
   openAria: (label: string, l: Locale) => (l === "fr" ? `Découvrir : ${label}` : `Explore: ${label}`),
 } satisfies Record<string, unknown>;
+
+/* Desk labels: the page's own records (they name what the reader sees, not the package's option ids). */
+const DESK = {
+  fr: {
+    composition: { label: "Composition", options: { panorama: "Panorama", sheet: "Feuillet" } },
+    tiles: { label: "Photos", options: { graded: "Gradées", "true-colour": "Couleur" } },
+    specials: { label: "Suggestions du jour", options: { "0": "Aucune", "3": "Trois", "5": "Cinq" } },
+  },
+  en: {
+    composition: { label: "Composition", options: { panorama: "Panorama", sheet: "Sheet" } },
+    tiles: { label: "Photos", options: { graded: "Graded", "true-colour": "True colour" } },
+    specials: { label: "Today's specials", options: { "0": "None", "3": "Three", "5": "Five" } },
+  },
+} satisfies Localized<unknown>;
+
+type Specials = "0" | "3" | "5";
 
 const tr = <V,>(v: Localized<V>, l: Locale) => v[l];
 
@@ -70,26 +104,38 @@ const COVERS: Record<string, string> = {
   salons: "/library/dossier/salon-private.webp",
 };
 const SINGLE_COVER = "/library/dossier/salon-reception.webp";
+const MENU_COVER = "/library/dossier/table-market.webp";
 
-type Set = "multi" | "single";
-/** The one-universe variant's views live under `<page>/single/`. */
-const SINGLE_SEGMENT = "single";
+type Set = "multi" | "single" | "menu";
+/** The one-universe variant's views live under `<page>/single/`, the menu's under `<page>/opening/`. */
+const SEGMENTS = { single: "single", menu: "opening" } as const;
+const SPECIALS_DEFAULT: Specials = "3";
 
 const singleOnly = (config: DossierConfig): DossierConfig => ({ ...config, items: config.items.filter((item) => item.id === "salons") });
+const under = (path: string, segment: string) => (path === segment || path.startsWith(`${segment}/`) ? path.slice(segment.length + 1) : null);
 
 /** The view a page sub-path names, and the variant it belongs to. */
 function viewFromSubpath(path: string, locale: Locale): { set: Set; view: DossierView | null } {
   const config = buildDossierConfig(locale);
-  if (path === SINGLE_SEGMENT || path.startsWith(`${SINGLE_SEGMENT}/`)) {
-    return { set: "single", view: dossierRoutes.parse(singleOnly(config), path.slice(SINGLE_SEGMENT.length + 1)) };
-  }
+  const single = under(path, SEGMENTS.single);
+  if (single !== null) return { set: "single", view: dossierRoutes.parse(singleOnly(config), single) };
+  const menu = under(path, SEGMENTS.menu);
+  if (menu !== null) return { set: "menu", view: dossierRoutes.parse(buildDossierMenuConfig(locale, { specials: Number(SPECIALS_DEFAULT) }), menu) };
   return { set: "multi", view: path ? dossierRoutes.parse(config, path) : null };
 }
 
 function Showcase() {
   const { locale } = useLibraryLocale();
+  const desk = DESK[locale];
   const { base, path } = useShowcaseSubpath();
+  // Below 1024 both compositions are the same phone / tablet dossier: the choice only exists where it shows.
+  const wide = useMediaQuery("(min-width: 1024px)", true);
   const [itemAccents, setItemAccents] = useState(false);
+  const [composition, setComposition] = useState<DossierComposition>("panorama");
+  const [menuComposition, setMenuComposition] = useState<DossierComposition>("sheet");
+  const [tileMedia, setTileMedia] = useState<DossierTileMedia>("graded");
+  const [menuTileMedia, setMenuTileMedia] = useState<DossierTileMedia>("graded");
+  const [specials, setSpecials] = useState<Specials>(SPECIALS_DEFAULT);
   // Seeded once from the URL; the modal keeps the URL in step from there. `set` is kept through the exit animation.
   const [state, setState] = useState(() => viewFromSubpath(path, locale));
   const { set, view } = state;
@@ -98,16 +144,22 @@ function Showcase() {
 
   const multi = useMemo<DossierConfig>(() => {
     const config = buildDossierConfig(locale);
-    return itemAccents ? config : { ...config, items: config.items.map((item) => ({ ...item, accent: undefined })) };
-  }, [locale, itemAccents]);
+    const items = itemAccents ? config.items : config.items.map((item) => ({ ...item, accent: undefined }));
+    return { ...config, items, composition, tileMedia };
+  }, [locale, itemAccents, composition, tileMedia]);
   const single = useMemo(() => singleOnly(multi), [multi]);
+  const menu = useMemo(
+    () => ({ ...buildDossierMenuConfig(locale, { specials: Number(specials), composition: menuComposition }), tileMedia: menuTileMedia }),
+    [locale, specials, menuComposition, menuTileMedia],
+  );
+  const configs = { multi, single, menu };
 
   const hrefs = useMemo(() => {
-    const singleViews = routeHrefs(`${base}/${SINGLE_SEGMENT}`, dossierRoutes.key);
-    return {
-      multi: routeHrefs(base, dossierRoutes.key),
-      single: (v: DossierView | null) => (v === null ? base : singleViews(v)),
+    const nested = (segment: string) => {
+      const views = routeHrefs(`${base}/${segment}`, dossierRoutes.key);
+      return (v: DossierView | null) => (v === null ? base : views(v));
     };
+    return { multi: routeHrefs(base, dossierRoutes.key), single: nested(SEGMENTS.single), menu: nested(SEGMENTS.menu) };
   }, [base]);
 
   const launch = (nextSet: Set, next: DossierView) => setState({ set: nextSet, view: next });
@@ -115,6 +167,17 @@ function Showcase() {
     href: hrefs[nextSet](next),
     onClick: (event: MouseEvent<HTMLAnchorElement>) => followRouteLink(event, () => launch(nextSet, next)),
   });
+  const compositionSetting = (value: DossierComposition, onChange: (v: DossierComposition) => void) =>
+    wide && (
+      <DeskSetting label={desk.composition.label}>
+        <SegmentedControl block label={desk.composition.label} options={deskOptions(desk.composition.options)} value={value} onChange={(v) => onChange(v as DossierComposition)} />
+      </DeskSetting>
+    );
+  const tilesSetting = (value: DossierTileMedia, onChange: (v: DossierTileMedia) => void) => (
+    <DeskSetting label={desk.tiles.label}>
+      <SegmentedControl block label={desk.tiles.label} options={deskOptions(desk.tiles.options)} value={value} onChange={(v) => onChange(v as DossierTileMedia)} />
+    </DeskSetting>
+  );
 
   return (
     <ControlsProvider config={buildControlsConfig(locale)}>
@@ -127,13 +190,24 @@ function Showcase() {
               {tr(T.multi.deep, locale)}
             </GhostAction>
             <div className="dsh-scene__choice">
+              <SceneDesk className="dsh-desk">
+                {compositionSetting(composition, setComposition)}
+                {tilesSetting(tileMedia, setTileMedia)}
+              </SceneDesk>
               <Switch checked={itemAccents} onCheckedChange={setItemAccents} label={tr(T.multi.accent, locale)} description={tr(T.multi.accentHint, locale)} />
             </div>
           </div>
           <ul className="dsh-launchers">
             {multi.items.map((item, i) => (
               <li key={item.id} className="dsh-launchers__item" data-index={i + 1}>
-                <Launcher item={item} cover={COVERS[item.id]} index={`${pad(i + 1)} / ${pad(multi.items.length)}`} locale={locale} {...launcher("multi", { item: item.id })} />
+                <Launcher
+                  title={item.label}
+                  meta={item.entries.map((e) => e.label ?? e.title).join(" · ")}
+                  cover={COVERS[item.id]}
+                  index={`${pad(i + 1)} / ${pad(multi.items.length)}`}
+                  locale={locale}
+                  {...launcher("multi", { item: item.id })}
+                />
               </li>
             ))}
           </ul>
@@ -146,32 +220,60 @@ function Showcase() {
             <h2 className="ev-t-section-feature">{tr(T.single.title, locale)}</h2>
             <p className="ev-t-body dsh-scene__body">{tr(T.single.body, locale)}</p>
           </div>
-          <Launcher item={single.items[0]} cover={SINGLE_COVER} locale={locale} wide {...launcher("single", { item: "salons" })} />
+          <Launcher
+            title={single.items[0].label}
+            meta={single.items[0].entries.map((e) => e.label ?? e.title).join(" · ")}
+            cover={SINGLE_COVER}
+            locale={locale}
+            wide
+            {...launcher("single", { item: "salons" })}
+          />
         </div>
       </ShowcaseVariant>
 
-      <DossierModal
-        config={set === "single" ? single : multi}
-        view={view}
-        onNavigate={(next) => setState((s) => ({ ...s, view: next }))}
-        hrefFor={hrefs[set]}
-      />
+      <ShowcaseVariant name={tr(T.menu.name, locale)} when={tr(T.menu.when, locale)} rhythm="standard">
+        <div className="ev-root ev-chapter lib-rail dsh-scene">
+          <div className="dsh-scene__copy">
+            <h2 className="ev-t-section-feature">{tr(T.menu.title, locale)}</h2>
+            <p className="ev-t-body dsh-scene__body">{tr(T.menu.body, locale)}</p>
+            <div className="dsh-scene__choice">
+              <SceneDesk className="dsh-desk">
+                {compositionSetting(menuComposition, setMenuComposition)}
+                {tilesSetting(menuTileMedia, setMenuTileMedia)}
+                <DeskSetting label={desk.specials.label}>
+                  <SegmentedControl block label={desk.specials.label} options={deskOptions(desk.specials.options)} value={specials} onChange={(v) => setSpecials(v as Specials)} />
+                </DeskSetting>
+              </SceneDesk>
+            </div>
+          </div>
+          <Launcher
+            title={menu.opening?.title ?? ""}
+            meta={menu.items.map((item) => item.label).join(" · ")}
+            cover={MENU_COVER}
+            locale={locale}
+            wide
+            {...launcher("menu", { opening: "choose" })}
+          />
+        </div>
+      </ShowcaseVariant>
+
+      <DossierModal config={configs[set]} view={view} onNavigate={(next) => setState((s) => ({ ...s, view: next }))} hrefFor={hrefs[set]} />
     </ControlsProvider>
   );
 }
 
-type LauncherProps = { item: DossierItem; cover: string; index?: string; locale: Locale; wide?: boolean; href: string; onClick: (event: MouseEvent<HTMLAnchorElement>) => void };
+type LauncherProps = { title: string; meta: string; cover: string; index?: string; locale: Locale; wide?: boolean; href: string; onClick: (event: MouseEvent<HTMLAnchorElement>) => void };
 
-function Launcher({ item, cover, index, locale, wide = false, href, onClick }: LauncherProps) {
+function Launcher({ title, meta, cover, index, locale, wide = false, href, onClick }: LauncherProps) {
   return (
-    <a className="dsh-launcher" href={href} data-wide={wide || undefined} aria-label={T.openAria(item.label, locale)} onClick={onClick}>
+    <a className="dsh-launcher" href={href} data-wide={wide || undefined} aria-label={T.openAria(title, locale)} onClick={onClick}>
       <span className="dsh-launcher__media">
         <img src={cover} alt="" decoding="async" />
       </span>
       <span className="dsh-launcher__meta">
         {index && <span className="ev-t-readout dsh-launcher__index">{index}</span>}
-        <span className="ev-t-card dsh-launcher__title">{item.label}</span>
-        <span className="ev-t-compact dsh-launcher__entries">{item.entries.map((e) => e.label ?? e.title).join(" · ")}</span>
+        <span className="ev-t-card dsh-launcher__title">{title}</span>
+        <span className="ev-t-compact dsh-launcher__entries">{meta}</span>
       </span>
       <span className="dsh-launcher__cta" aria-hidden="true">
         <span>{tr(T.explore, locale)}</span>

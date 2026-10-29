@@ -22,7 +22,7 @@ does the same when the plan is clean.
 | Layouts | [process-sequence](components/process-sequence/README.md) | 1.7.0 |
 | Layouts | [story-blocks](components/story-blocks/README.md) | 2.5.0 |
 | Components | [reservation](components/reservation/README.md) | 2.12.0 |
-| Components | [dossier](components/dossier/README.md) | 1.7.0 |
+| Components | [dossier](components/dossier/README.md) | 1.8.0 |
 | Components | [selector-stage](components/selector-stage/README.md) | 1.6.0 |
 | Components | [controls](components/controls/README.md) | 1.6.0 |
 | Navbar | [navbar](components/navbar/README.md) | 2.10.2 |

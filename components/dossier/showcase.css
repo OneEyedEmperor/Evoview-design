@@ -7,7 +7,7 @@
 .dsh-scene__copy { display: grid; align-content: start; justify-items: start; gap: 1.25em; }
 .dsh-scene__copy h2, .dsh-scene__head h2 { margin: 0; }
 .dsh-scene__body { max-width: 34em; margin: 0; color: var(--ev-fg-65); }
-.dsh-scene__choice { width: 100%; max-width: 30em; margin-top: 1.75em; }
+.dsh-scene__choice { display: grid; width: 100%; max-width: 30em; gap: 1.75em; margin-top: 1.75em; }
 /* One offer: heading split (.72 title | 1.28 copy, bottom-aligned) over a full-width panorama launcher. */
 .dsh-scene__head { display: grid; gap: 1.25em; }
 @media (min-width: 1024px) {
@@ -78,4 +78,6 @@
 }
 @media (min-width: 1024px) {
   .dsh-launcher[data-wide] { aspect-ratio: 2.4 / 1; }
+  /* Beside the copy (the menu scene), the launcher keeps a picture's proportion. */
+  .dsh-scene:not(.dsh-scene--single) > .dsh-launcher[data-wide] { aspect-ratio: 4 / 3; }
 }

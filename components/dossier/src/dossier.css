@@ -84,6 +84,15 @@
     box-shadow: 0 40px 120px -40px rgb(0 0 0 / 0.85), 0 30px 110px -70px var(--dossier-deep);
   }
 }
+/* Sheet from 1024: the panorama's height (same window top and bottom), a portrait width of .9 × that height (RULES §4
+   portrait card), 51.75em at full height, never under 40em (the tablet board's narrowest two columns). */
+@media (min-width: 1024px) {
+  .ev-dossier[data-composition="sheet"] .evd-shell {
+    --evd-sheet-h: min(57.5em, calc(100dvh - 2em - var(--dossier-reserve-bottom, var(--ev-modal-reserve-bottom, 0px))));
+    width: min(100%, max(40em, var(--evd-sheet-h) * 0.9));
+    height: var(--evd-sheet-h);
+  }
+}
 
 /* ── Header strip (chassis signature). Phone/tablet: floating glass capsule. */
 .evd-header {
@@ -199,7 +208,8 @@
   .evd-header__identity { gap: 24px; }
   .evd-header__meta { gap: 3px; }
   .evd-header__title { font-size: 11px; }
-  .evd-header__end { justify-self: end; gap: 24px; }
+  /* Column 3 even without a pager (one item, the opening screen, an overview whose strip lists the items). */
+  .evd-header__end { grid-column: 3; justify-self: end; gap: 24px; }
   .ev-dossier .evd-mark svg { width: 72px; }
   .evd-close.evd-close { width: auto; height: 44px; padding: 0 16px 0 13px; border-radius: var(--ev-radius-control); }
   .evd-close .ev-t-label { display: inline; }
@@ -298,6 +308,9 @@
   }
   .evd-strip__tab[data-state="past"] .evd-strip__progress { transform: scaleX(1); }
   .evd-strip__tab[data-state="active"] .evd-strip__progress { transform: scaleX(var(--evd-progress, 0)); }
+  /* Under an opening screen the overview's strip lists the items: the current one's track is its location, full. */
+  .evd-strip[data-level="items"] .evd-strip__tab[data-state="active"] .evd-strip__progress { transform: scaleX(1); }
+  .evd-strip[data-level="items"] .evd-strip__overview { min-width: 0; padding-inline: 12px; }
   @media (hover: hover) {
     .evd-strip__overview:hover, .evd-strip__tab:hover { background-color: rgb(255 255 255 / 0.06); }
   }
@@ -352,6 +365,9 @@
   background: var(--dossier-shell);
   scrollbar-color: color-mix(in oklab, var(--dossier-accent) 45%, transparent) transparent;
   scrollbar-width: thin;
+  /* The body's own width picks the desktop layouts of what it holds (atmosphere, tiles' text, chapters): from 1024 the
+     panorama is ≥ 980px wide and takes them, the sheet (≤ 52em) keeps the tablet's. */
+  container: evd-body / inline-size;
 }
 .evd-body[data-locked] { overflow-y: hidden; }
 .evd-atmosphere {
@@ -364,11 +380,14 @@
   animation: evd-fade-in 900ms ease 300ms both;
 }
 @media (min-width: 1024px) {
-  .evd-atmosphere {
-    inset: -40% -30% auto auto;
-    width: 78em;
-    height: 78em;
-    background: radial-gradient(circle closest-side, color-mix(in oklab, var(--dossier-accent) 9%, transparent), color-mix(in oklab, var(--dossier-accent) 5%, transparent) 55%, transparent 100%);
+  /* The 78em glow centred off the top-right corner, drawn inside the body's box: a box hanging past the body's bottom
+     made every overview scroll by a few dozen pixels. */
+  @container evd-body (min-width: 900px) {
+    .evd-atmosphere {
+      inset: 0;
+      height: auto;
+      background: radial-gradient(circle 39em at calc(130% - 39em) calc(39em - 40%), color-mix(in oklab, var(--dossier-accent) 9%, transparent), color-mix(in oklab, var(--dossier-accent) 5%, transparent) 55%, transparent 100%);
+    }
   }
 }
 .evd-overview, .evd-detail { position: relative; z-index: 1; transition: opacity 220ms var(--ev-ease); }
@@ -550,9 +569,21 @@ a.evd-tile { -webkit-user-drag: none; -webkit-touch-callout: none; }
   100% { opacity: 0; transform: translate3d(145%, 0, 0); }
 }
 
+/* True colour (`tileMedia`): the photo as shot at rest, hover, focus and cycle focus, neighbours undimmed; border,
+   edge, numeral, shine, scale and the caption scrim carry the state. No filter, so no filter transition. The repeated
+   selectors outrank every graded rule above (up to 0,6,0), so this block stays additive. */
+.evd-board[data-tile-media="true-colour"][data-layout] .evd-tile .evd-tile__media.evd-tile__media {
+  filter: none;
+  transition: transform 260ms var(--ev-ease-cinematic);
+}
+.evd-board[data-tile-media="true-colour"][data-cycle] .evd-tile .evd-tile__media.evd-tile__media { transition-duration: 700ms; }
+.evd-board[data-tile-media="true-colour"] .evd-tile__grade { display: none; }
+
 @media (min-width: 1024px) {
-  .evd-tile__num { top: 20px; left: 22px; }
-  .evd-tile__caption { gap: 10px; padding: 1.6em 1.75em; }
+  @container evd-body (min-width: 900px) {
+    .evd-tile__num { top: 20px; left: 22px; }
+    .evd-tile__caption { gap: 10px; padding: 1.6em 1.75em; }
+  }
 }
 @media (min-width: 600px) and (max-width: 1023px) {
   .evd-overview { padding: max(84px, calc(env(safe-area-inset-top) + 78px)) 28px 28px; }
@@ -572,6 +603,53 @@ a.evd-tile { -webkit-user-drag: none; -webkit-touch-callout: none; }
 @media (max-width: 599px) and (max-height: 640px) {
   .evd-tile__kicker { display: none; }
 }
+
+/* ── Symmetric boards: the grid (entry counts other than four) and the opening choice. Columns come from the
+   board (`--evd-cols-s` < 600, `-m` from 600, `-l` panorama from 1024); an odd count's first tile spans the row.
+   Rows share the height down to a floor, then the body scrolls: the body becomes a column so the board can fill it. */
+.ev-dossier:is([data-board="grid"], [data-board="choice"], [data-board="empty"]) .evd-body { display: flex; flex-direction: column; }
+.ev-dossier:is([data-board="grid"], [data-board="choice"], [data-board="empty"]) .evd-overview { height: auto; flex: 1 0 auto; }
+.evd-board:is([data-layout="grid"], [data-layout="choice"]) {
+  --evd-row-min: 7em;
+  height: auto;
+  min-height: 0;
+  flex: 1 0 auto;
+  grid-template-columns: repeat(var(--evd-cols-s, 1), minmax(0, 1fr));
+  grid-template-rows: none;
+  grid-auto-rows: minmax(var(--evd-row-min), 1fr);
+  gap: 8px;
+}
+.evd-board:is([data-layout="grid"], [data-layout="choice"]) > .evd-tile[data-index] { grid-column: auto; }
+@media (min-width: 600px) {
+  .evd-board:is([data-layout="grid"], [data-layout="choice"]) { --evd-row-min: 10em; grid-template-columns: repeat(var(--evd-cols-m, 2), minmax(0, 1fr)); gap: 12px; }
+  .evd-board:is([data-layout="grid"], [data-layout="choice"]) > .evd-tile[data-span~="m"] { grid-column: 1 / -1; }
+}
+@media (min-width: 1024px) {
+  .ev-dossier[data-composition="panorama"] .evd-board[data-layout="choice"] { grid-template-columns: repeat(var(--evd-cols-l, 2), minmax(0, 1fr)); }
+  .ev-dossier[data-composition="panorama"] .evd-board[data-layout="choice"] > .evd-tile[data-span~="m"]:not([data-span~="l"]) { grid-column: auto; }
+  .ev-dossier[data-composition="panorama"] .evd-board[data-layout="choice"] > .evd-tile[data-span~="l"] { grid-column: 1 / -1; }
+}
+/* The opening choice names a universe, not a step: no numeral, a larger title. */
+.evd-board[data-layout="choice"] .evd-tile__title { font-size: clamp(20px, 3.4vw, 2.4em); letter-spacing: -0.025em; }
+
+/* An item without entries (a live list on an empty day): the config's sentence on a tonal panel, and the way on. */
+.evd-empty {
+  display: flex;
+  min-height: 14em;
+  flex: 1 0 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 2.5em 1.5em;
+  border-radius: var(--ev-radius-surface);
+  background: var(--ev-surface-list, #141416);
+  text-align: center;
+  animation: evd-detail-in 340ms var(--ev-ease-cinematic) 40ms backwards;
+}
+.evd-empty__title { max-width: 18em; color: var(--ev-fg); text-wrap: balance; }
+.evd-empty__body { max-width: 30em; color: var(--ev-fg-65); text-wrap: pretty; }
+.evd-empty__action { margin-top: 8px; }
 
 /* ── Loader: honest wait state. */
 .evd-loader {
@@ -765,6 +843,58 @@ a.evd-tile { -webkit-user-drag: none; -webkit-touch-callout: none; }
   .evd-dock__glass, .evd-dock__item, .evd-dock__location { min-height: 58px; }
 }
 @media (min-width: 1024px) { .evd-dock { display: none; } }
+/* No next item (one item under an opening screen): the way up and the location share the glass. */
+.evd-dock__glass:not(:has(> [data-side="end"])) { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
+
+/* ── Sheet from 1024: the tablet chrome as it is from 600 to 1023 (glass capsule, glass dock, 2×2 mosaic), in the
+   narrow shell. Content (atmosphere, tile text, chapters) follows the body's width through `evd-body` queries. */
+@media (min-width: 1024px) {
+  .ev-dossier[data-composition="sheet"] .evd-header {
+    position: absolute;
+    inset: 0 0 auto;
+    flex: initial;
+    padding: max(10px, env(safe-area-inset-top)) 24px 8px;
+    background: none;
+    pointer-events: none;
+    transition: opacity 220ms var(--ev-ease), transform 280ms var(--ev-ease-cinematic);
+  }
+  .ev-dossier[data-composition="sheet"] .evd-header__bar {
+    display: flex;
+    min-height: 58px;
+    gap: 10px;
+    padding: 7px 7px 7px 18px;
+    overflow: hidden;
+    border: 1px solid rgb(255 255 255 / 0.18);
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgb(255 255 255 / 0.13), rgb(255 255 255 / 0.055)), var(--dossier-glass);
+    box-shadow: 0 12px 30px rgb(0 0 0 / 0.32), inset 0 1px 0 rgb(255 255 255 / 0.24), inset 0 -1px 0 rgb(0 0 0 / 0.2);
+    -webkit-backdrop-filter: blur(28px) saturate(1.6);
+    backdrop-filter: blur(28px) saturate(1.6);
+  }
+  .ev-dossier[data-composition="sheet"] .evd-header__bar::before { display: block; }
+  .ev-dossier[data-composition="sheet"] .evd-header__identity { gap: 18px; }
+  .ev-dossier[data-composition="sheet"] .evd-header__meta { gap: 4px; }
+  .ev-dossier[data-composition="sheet"] .evd-header__end { gap: 14px; }
+  .ev-dossier[data-composition="sheet"] .evd-mark svg { width: 60px; }
+  .ev-dossier[data-composition="sheet"] .evd-close.evd-close { width: 44px; height: 44px; padding: 0; border-radius: 15px; }
+  .ev-dossier[data-composition="sheet"] .evd-close .ev-t-label { display: none; }
+  .ev-dossier[data-composition="sheet"] :is(.evd-pager, .evd-strip) { display: none; }
+  .ev-dossier[data-composition="sheet"] .evd-dock { display: flex; }
+
+  .ev-dossier[data-composition="sheet"][data-view="detail"] .evd-body {
+    padding-top: max(64px, calc(env(safe-area-inset-top) + 58px));
+    padding-bottom: max(80px, calc(env(safe-area-inset-bottom) + 72px));
+    scroll-padding-top: 64px;
+  }
+  .ev-dossier[data-composition="sheet"] .evd-overview { padding: max(84px, calc(env(safe-area-inset-top) + 78px)) 28px 28px; }
+  .ev-dossier[data-composition="sheet"][data-dock] .evd-overview { padding-bottom: max(92px, calc(env(safe-area-inset-bottom) + 82px)); }
+  .ev-dossier[data-composition="sheet"] .evd-board[data-layout="mosaic"] { min-height: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); }
+  .ev-dossier[data-composition="sheet"] .evd-board[data-layout="mosaic"] > .evd-tile[data-index] { grid-column: auto; }
+  /* The tablet sizes these on the viewport (vw); the sheet's tiles are as wide as the tablet's narrowest. */
+  .ev-dossier[data-composition="sheet"] .evd-tile__num { font-size: 1.9em; }
+  .ev-dossier[data-composition="sheet"] .evd-tile__title { font-size: clamp(16px, 2cqi, 1.75em); }
+  .ev-dossier[data-composition="sheet"] .evd-board[data-layout="choice"] .evd-tile__title { font-size: clamp(20px, 4cqi, 2.4em); }
+}
 
 /* ── Open chapters (detail). Separated by space and the a / b near-black alternation, never by rules. */
 .evd-chapter {
@@ -780,10 +910,13 @@ a.evd-tile { -webkit-user-drag: none; -webkit-touch-callout: none; }
 .evd-chapter[data-tone="paper"] { --dossier-list: #f6f5f6; --dossier-list-alt: #fbfbfb; background: #eeecef; color: var(--ev-fg); }
 .evd-chapter--intro { padding-top: 24px; background: transparent; }
 .evd-rail { position: relative; display: grid; width: 100%; max-width: calc(85em + 48px); gap: 32px; margin-inline: auto; padding-inline: 24px; }
+/* Desktop chapter layouts need the panorama's width: from 1024 and a body ≥ 900px (the sheet keeps the tablet's). */
 @media (min-width: 1024px) {
-  .evd-chapter { padding-block: 4.5em; }
-  .evd-chapter--intro { padding-top: 2em; }
-  .evd-rail { max-width: calc(85em + 7em); gap: 3.5em; padding-inline: 3.5em; }
+  @container evd-body (min-width: 900px) {
+    .evd-chapter { padding-block: 4.5em; }
+    .evd-chapter--intro { padding-top: 2em; }
+    .evd-rail { max-width: calc(85em + 7em); gap: 3.5em; padding-inline: 3.5em; }
+  }
 }
 /* Reveal once (y 16 → 0, stagger 80). Hidden only while explicitly pending (set after hydration), so content never depends on a transition or a script running. */
 .evd-chapter .evd-rail > * { transition: opacity 600ms var(--ev-ease-cinematic), transform 600ms var(--ev-ease-cinematic); }
@@ -797,9 +930,11 @@ a.evd-tile { -webkit-user-drag: none; -webkit-touch-callout: none; }
 .evd-head__lead { color: var(--ev-fg-90); font-weight: 600; }
 .evd-head__body { color: var(--ev-fg-65); }
 @media (min-width: 1024px) {
-  .evd-head { grid-template-columns: 0.72fr 1.28fr; column-gap: 3.5em; align-items: end; }
-  .evd-head--solo { grid-template-columns: minmax(0, 1fr); }
-  .evd-split .evd-head { grid-template-columns: minmax(0, 1fr); align-items: start; }
+  @container evd-body (min-width: 900px) {
+    .evd-head { grid-template-columns: 0.72fr 1.28fr; column-gap: 3.5em; align-items: end; }
+    .evd-head--solo { grid-template-columns: minmax(0, 1fr); }
+    .evd-split .evd-head { grid-template-columns: minmax(0, 1fr); align-items: start; }
+  }
 }
 
 .evd-figure {
@@ -811,8 +946,11 @@ a.evd-tile { -webkit-user-drag: none; -webkit-touch-callout: none; }
   background: var(--ev-well);
 }
 .evd-figure--hero { aspect-ratio: 4 / 5; }
-/* Phones and tablets: show, then explain — the intro's media leads. */
-@media (max-width: 1023px) { .evd-chapter--intro .evd-rail > .evd-figure { order: -1; } }
+/* Phones, tablets and the sheet: show, then explain — the intro's media leads. */
+.evd-chapter--intro .evd-rail > .evd-figure { order: -1; }
+@media (min-width: 1024px) {
+  @container evd-body (min-width: 900px) { .evd-chapter--intro .evd-rail > .evd-figure { order: 0; } }
+}
 @media (min-width: 768px) { .evd-figure--hero { aspect-ratio: 16 / 10; } }
 .evd-figure > img, .evd-figure > video { position: absolute; inset: 0; width: 100%; height: 100%; }
 .evd-figure__caption {
@@ -828,13 +966,17 @@ a.evd-tile { -webkit-user-drag: none; -webkit-touch-callout: none; }
 .evd-figure__kicker { grid-column: 1; color: var(--dossier-signal); }
 .evd-figure__title { grid-column: 1; color: #fff; font-family: var(--ev-font-body); font-size: max(0.875em, 13px); font-weight: 600; line-height: 1.35; }
 .evd-figure__dot { grid-column: 2; grid-row: 1 / span 2; width: 10px; height: 10px; align-self: center; border-radius: 50%; background: var(--dossier-signal); box-shadow: 0 0 16px var(--dossier-deep), 0 0 0 4px color-mix(in oklab, var(--dossier-accent) 18%, transparent); }
-@media (min-width: 1024px) { .evd-figure__caption { padding: 4em 1.75em 1.5em; } }
+@media (min-width: 1024px) {
+  @container evd-body (min-width: 900px) { .evd-figure__caption { padding: 4em 1.75em 1.5em; } }
+}
 
 .evd-split { display: grid; gap: 32px; }
 .evd-split__stage { order: -1; min-width: 0; }
 @media (min-width: 1024px) {
-  .evd-split { grid-template-columns: 0.7fr 1.3fr; column-gap: 3.5em; align-items: center; }
-  .evd-split__stage { order: 0; }
+  @container evd-body (min-width: 900px) {
+    .evd-split { grid-template-columns: 0.7fr 1.3fr; column-gap: 3.5em; align-items: center; }
+    .evd-split__stage { order: 0; }
+  }
 }
 
 /* Rows: text lists on tonal surfaces, no rules, same text ladder (RULES §3).
@@ -859,7 +1001,7 @@ a.evd-tile { -webkit-user-drag: none; -webkit-touch-callout: none; }
 .evd-rows__detail { color: var(--ev-fg-65); font-family: var(--ev-font-body); font-size: max(1em, 13px); line-height: 1.5; }
 /* A list placed straight on the rail sits under the heading's copy column (the 1.28 side), not across the whole rail. */
 @media (min-width: 1024px) {
-  .evd-rail > .evd-rows { width: calc((100% - 3.5em) * 1.28 / 2); justify-self: end; }
+  @container evd-body (min-width: 900px) { .evd-rail > .evd-rows { width: calc((100% - 3.5em) * 1.28 / 2); justify-self: end; } }
 }
 @media (min-width: 768px) {
   .evd-rows__row { grid-template-columns: 11em minmax(0, 1fr); column-gap: 1.5em; align-items: baseline; padding: 1.2em 1.75em 1.3em 1.5em; }
@@ -887,8 +1029,10 @@ a.evd-tile { -webkit-user-drag: none; -webkit-touch-callout: none; }
 .evd-specimen:has(> .evd-rows) > .evd-specimen__note { padding: 16px 20px 20px; }
 @media (min-width: 768px) { .evd-specimen:has(> .evd-rows) > .evd-specimen__note { padding: 18px 24px 22px calc(1.5 * 16px * var(--ev-scale, 1)); } }
 @media (min-width: 1024px) {
-  .evd-specimen { gap: 2.5em; padding: 2.75em 3em 2.5em; }
-  .evd-specimen > .evd-rows > .evd-rows__row:first-child { padding-top: 1.75em; }
+  @container evd-body (min-width: 900px) {
+    .evd-specimen { gap: 2.5em; padding: 2.75em 3em 2.5em; }
+    .evd-specimen > .evd-rows > .evd-rows__row:first-child { padding-top: 1.75em; }
+  }
 }
 
 .evd-chapter--payoff { overflow: hidden; }
@@ -931,5 +1075,5 @@ a.evd-tile { -webkit-user-drag: none; -webkit-touch-callout: none; }
   .evd-payoff__results > div:nth-child(even) { display: flex; flex-direction: column-reverse; justify-content: flex-end; gap: 6px; padding: 1.1em 1.35em 1.2em; border-radius: var(--ev-radius-surface); background: var(--dossier-list); }
 }
 @media (min-width: 1024px) {
-  .evd-payoff { grid-template-columns: 1.2fr 0.8fr; column-gap: 4em; align-items: end; }
+  @container evd-body (min-width: 900px) { .evd-payoff { grid-template-columns: 1.2fr 0.8fr; column-gap: 4em; align-items: end; } }
 }

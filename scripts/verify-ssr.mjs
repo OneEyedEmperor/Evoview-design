@@ -25,7 +25,8 @@ const DOC = "docs/CRAWLABLE-MODALS.md";
 const noop = () => {};
 
 /* One entry per routable package: the §1 view list and the copy each view
-   must carry, both from the reference config; `legacy` renders a view through
+   must carry, both from the reference config (`configs`: several reference
+   configs, one per shape a client can choose); `legacy` renders a view through
    the pre-contract API until the package exports its routes. */
 const PACKAGES = [
   {
@@ -34,11 +35,28 @@ const PACKAGES = [
     component: "Dossier",
     routes: "dossierRoutes",
     config: (m, locale) => m.buildDossierConfig(locale),
-    views: (c) => c.items.flatMap((item) => [{ item: item.id }, ...item.entries.map((entry) => ({ item: item.id, entry: entry.id }))]),
-    key: (v) => (v.entry ? `${v.item}/${v.entry}` : v.item),
+    // Universes (panorama); the menu behind an opening screen (sheet, odd board); the same on a day without specials (panorama, empty item).
+    async configs(m, locale) {
+      const reference = await vite.ssrLoadModule("/components/dossier/src/dossier.config.tsx");
+      return [
+        { name: "", config: m.buildDossierConfig(locale) },
+        { name: "menu", config: reference.buildDossierMenuConfig(locale) },
+        { name: "menu-empty", config: reference.buildDossierMenuConfig(locale, { specials: 0, composition: "panorama" }) },
+      ];
+    },
+    views: (c) => [
+      ...(c.opening ? [{ opening: c.opening.id }] : []),
+      ...c.items.flatMap((item) => [{ item: item.id }, ...item.entries.map((entry) => ({ item: item.id, entry: entry.id }))]),
+    ],
+    key: (v) => (v.item === undefined ? v.opening : v.entry ? `${v.item}/${v.entry}` : v.item),
     async copy(c, v, { blocks }) {
+      if (v.item === undefined) return c.items.flatMap((i) => [i.label, i.kicker]);
       const item = c.items.find((i) => i.id === v.item);
       if (!item) return [];
+      if (!v.entry && !item.entries.length) {
+        const empty = item.empty ?? c.copy.empty ?? {};
+        return [item.label, empty.title, empty.body];
+      }
       if (!v.entry) return [item.label, ...item.entries.flatMap((e) => [e.title, e.kicker])];
       const index = item.entries.findIndex((e) => e.id === v.entry);
       const entry = item.entries[index];
@@ -315,14 +333,17 @@ async function verifyPackage(spec, foundation) {
   check(hasRoutes, pkg, "api", "", `index.ts must export \`${spec.routes}: ModalRoutes\` (views, parent, key, parse, head) — ${DOC} §2. Probing the current API instead (no URLs, links or head checked).`);
   check(typeof m[spec.component] === "function", pkg, "api", "", `index.ts must export the \`${spec.component}\` component`);
 
-  for (const locale of LOCALES) {
-    let config;
+  // One run per locale and reference config; `locale` labels the run's subjects ("fr", "fr:menu").
+  const runs = [];
+  for (const lang of LOCALES) {
     try {
-      config = spec.config(m, locale);
+      const list = spec.configs ? await spec.configs(m, lang) : [{ name: "", config: spec.config(m, lang) }];
+      for (const { name, config } of list) runs.push({ locale: name ? `${lang}:${name}` : lang, config });
     } catch (error) {
-      check(false, pkg, "config", locale, `reference config failed to build: ${error.message}`);
-      continue;
+      check(false, pkg, "config", lang, `reference config failed to build: ${error.message}`);
     }
+  }
+  for (const { locale, config } of runs) {
     const expected = spec.views(config);
     const ctx = { blocks: textBlocks };
     if (!hasRoutes) {
@@ -385,7 +406,7 @@ async function verifyPackage(spec, foundation) {
     }
 
     /* Renders. */
-    const base = `/${locale}/${pkg}/`;
+    const base = `/${locale.replace(":", "/")}/${pkg}/`;
     const hrefFor = foundation ? foundation.routeHrefs(base, key) : (v) => (v ? `${base}${key(v)}/` : base);
     const make = (view) => h(m[spec.component], { config, view, onNavigate: noop, hrefFor });
     const linked = new Set();

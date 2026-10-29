@@ -1,12 +1,14 @@
 /* Per-site file: the dossier's items, entries, detail chapters, chrome copy
    and attribution. Reference content: "Maison Ardoise", a fictional
-   restaurant (three universes × four experiences). Replace the content, keep
-   the shape. Media paths point at the library's public placeholders. */
+   restaurant: three universes × four experiences (`buildDossierConfig`), and
+   its menu behind an opening screen, the menu and the day's specials, a live
+   list (`buildDossierMenuConfig`). Replace the content, keep the shape. Media
+   paths point at the library's public placeholders. */
 
 import { EVOVIEW_URL } from "../foundation";
 import { PrimaryPlate } from "../controls";
 import { ChapterFigure, ChapterHead, ChapterPayoff, ChapterRows, ChapterSpecimen, ChapterSplit, DossierChapter } from "./Chapters";
-import type { DossierConfig, DossierCopy, DossierItem, Locale } from "./types";
+import type { DossierComposition, DossierConfig, DossierCopy, DossierItem, Locale } from "./types";
 
 type L = Record<Locale, string>;
 type Rows = Record<Locale, [string, string][]>;
@@ -40,7 +42,12 @@ const COPY: Record<Locale, DossierCopy> = {
       spoken: (loaded, total) => `Chargement : ${loaded} média${loaded > 1 ? "s" : ""} sur ${total}`,
       failed: "Certains médias n'ont pas pu être chargés. Réessayez pour afficher le contenu complet.",
       retry: "Réessayer",
+      pending: "Chargement du contenu",
     },
+    openItem: (i, n, label) => `Ouvrir ${i} sur ${n} : ${label}`,
+    chooseItem: "Choisissez",
+    up: (label) => `Retour : ${label}`,
+    empty: { title: "Rien pour le moment.", body: "Revenez bientôt." },
   },
   en: {
     close: "Close",
@@ -70,7 +77,12 @@ const COPY: Record<Locale, DossierCopy> = {
       spoken: (loaded, total) => `Loading: ${loaded} of ${total} media`,
       failed: "Some media could not be loaded. Try again to show the full content.",
       retry: "Try again",
+      pending: "Loading content",
     },
+    openItem: (i, n, label) => `Open ${i} of ${n}: ${label}`,
+    chooseItem: "Choose",
+    up: (label) => `Back: ${label}`,
+    empty: { title: "Nothing for now.", body: "Come back soon." },
   },
 };
 
@@ -535,5 +547,341 @@ export function buildDossierConfig(locale: Locale): DossierConfig {
     items: DATA.map((d) => buildItem(d, locale)),
     attribution: { enabled: true, href: EVOVIEW_URL, label: T.attribution[locale] },
     copy: COPY[locale],
+  };
+}
+
+/* ── The menu behind an opening screen: the menu (four sections) and the day's specials, a list the restaurant
+   edits live (any count, none included). A client builds that item's entries from its fetched data. */
+
+type Section = {
+  id: string;
+  image: string;
+  title: L;
+  label?: L;
+  kicker: L;
+  alt: L;
+  caption: { kicker: L; title: L };
+  story: { title: L; lead: L; body: L };
+  note: L;
+  dishes: Rows;
+};
+
+type Special = { id: string; image: string; title: L; label: L; kicker: L; alt: L; story: { title: L; lead: L; body: L }; facts: Rows };
+
+const M = {
+  kicker: { fr: "À table", en: "At the table" },
+  opening: {
+    title: { fr: "La carte ou les suggestions", en: "The menu or today's specials" },
+    label: { fr: "Au menu", en: "On the menu" },
+    description: {
+      fr: "Maison Ardoise, au menu : la carte de saison et les suggestions du jour, renouvelées chaque midi.",
+      en: "Maison Ardoise, on the menu: the seasonal menu and today's specials, renewed every lunchtime.",
+    },
+  },
+  menu: {
+    label: { fr: "La carte", en: "The menu" },
+    kicker: { fr: "Entrées · plats · desserts · vins", en: "Starters · mains · desserts · wine" },
+    alt: { fr: "Assiette de la carte sur une table en ardoise", en: "A plate from the menu on a slate table" },
+    description: { fr: "La carte de Maison Ardoise : entrées, plats, fromages et desserts, vins.", en: "The Maison Ardoise menu: starters, mains, cheese and desserts, wine." },
+  },
+  specials: {
+    label: { fr: "Suggestions", en: "Today's specials" },
+    kicker: { fr: "Nouvelles chaque midi", en: "New every lunchtime" },
+    alt: { fr: "Pâtes fraîches et tomates sur une table farinée", en: "Fresh pasta and tomatoes on a floured table" },
+    description: { fr: "Les suggestions du jour de Maison Ardoise, renouvelées chaque midi.", en: "Today's specials at Maison Ardoise, renewed every lunchtime." },
+    empty: {
+      title: { fr: "Pas de suggestion aujourd'hui.", en: "No specials today." },
+      body: { fr: "La cuisine en écrit de nouvelles chaque midi. En attendant, toute la carte est servie.", en: "The kitchen writes new ones every lunchtime. Meanwhile, the whole menu is served." },
+    },
+  },
+  payoff: {
+    lines: { fr: ["Une table.", "Ce soir."], en: ["A table.", "Tonight."] },
+    lead: { fr: "Réservez en deux minutes ; nous confirmons par SMS dans l'heure.", en: "Book in two minutes; we confirm by text within the hour." },
+    cta: { fr: "Réserver une table", en: "Book a table" },
+  },
+  practical: { fr: "Bon à savoir.", en: "Good to know." },
+};
+
+const SECTIONS: Section[] = [
+  {
+    id: "starters",
+    image: "table-market.webp",
+    title: { fr: "Entrées", en: "Starters" },
+    kicker: { fr: "Quatre assiettes · dès 9 €", en: "Four plates · from €9" },
+    alt: { fr: "Bols de légumes de saison et pain au levain près d'une fenêtre", en: "Bowls of seasonal vegetables and sourdough by a window" },
+    caption: { kicker: { fr: "Entrée · saison", en: "Starter · season" }, title: { fr: "Betterave rôtie, chèvre frais", en: "Roast beetroot, fresh goat cheese" } },
+    story: {
+      title: { fr: "Pour commencer.", en: "To begin." },
+      lead: { fr: "Des légumes du marché, travaillés simplement.", en: "Market vegetables, cooked simply." },
+      body: { fr: "Quatre entrées qui changent avec les arrivages. Elles se partagent aussi, au milieu de la table.", en: "Four starters that change with the deliveries. They share well too, in the middle of the table." },
+    },
+    note: { fr: "Exemple de carte — elle change avec la saison.", en: "Sample menu — it changes with the season." },
+    dishes: {
+      fr: [["Velouté de courge, graines torréfiées", "9 €"], ["Betterave rôtie, chèvre frais, noisette", "12 €"], ["Radis, beurre fumé, sel de céleri", "9 €"], ["Œuf parfait, champignons, jus de volaille", "14 €"]],
+      en: [["Squash velouté, toasted seeds", "€9"], ["Roast beetroot, fresh goat cheese, hazelnut", "€12"], ["Radish, smoked butter, celery salt", "€9"], ["Slow-cooked egg, mushrooms, chicken jus", "€14"]],
+    },
+  },
+  {
+    id: "mains",
+    image: "table-chef.webp",
+    title: { fr: "Plats", en: "Mains" },
+    kicker: { fr: "Cinq assiettes · dès 21 €", en: "Five plates · from €21" },
+    alt: { fr: "Mains dressant une assiette à la pince au comptoir de la cuisine", en: "Hands plating a dish with tweezers at the kitchen counter" },
+    caption: { kicker: { fr: "Plat · passe", en: "Main · pass" }, title: { fr: "Lieu jaune, beurre noisette", en: "Pollock, brown butter" } },
+    story: {
+      title: { fr: "Le cœur du repas.", en: "The heart of the meal." },
+      lead: { fr: "Un poisson, une viande, un légume en vedette.", en: "A fish, a meat, a vegetable in the lead." },
+      body: { fr: "Les plats sont dressés à la commande, au comptoir ouvert. Les garnitures suivent le marché du matin.", en: "Mains are plated to order at the open counter. Sides follow the morning market." },
+    },
+    note: { fr: "Exemple de carte.", en: "Sample menu." },
+    dishes: {
+      fr: [["Lieu jaune, beurre noisette, oseille", "26 €"], ["Poulet fermier, carottes glacées, jus court", "24 €"], ["Épeautre, champignons, parmesan", "21 €"], ["Joue de bœuf, purée fumée", "28 €"], ["Pêche du jour, selon l'arrivage", "Prix du jour"]],
+      en: [["Pollock, brown butter, sorrel", "€26"], ["Free-range chicken, glazed carrots, jus", "€24"], ["Spelt, mushrooms, parmesan", "€21"], ["Beef cheek, smoked mash", "€28"], ["Catch of the day", "Market price"]],
+    },
+  },
+  {
+    id: "desserts",
+    image: "bar-boards.webp",
+    title: { fr: "Fromages et desserts", en: "Cheese and desserts" },
+    label: { fr: "Desserts", en: "Desserts" },
+    kicker: { fr: "Affinés sur place · dès 8 €", en: "Aged in-house · from €8" },
+    alt: { fr: "Planche de fromages, charcuterie et pain à la lueur des bougies", en: "Board of cheeses, charcuterie and bread by candlelight" },
+    caption: { kicker: { fr: "Cave à fromages", en: "Cheese cellar" }, title: { fr: "Comté 24 mois, tomme de brebis", en: "24-month Comté, sheep tomme" } },
+    story: {
+      title: { fr: "Pour finir.", en: "To finish." },
+      lead: { fr: "Trois fromages affinés sur place, trois desserts de saison.", en: "Three cheeses aged in-house, three seasonal desserts." },
+      body: { fr: "Le plateau se commande pour la table. Les desserts sont dressés à la minute : comptez dix minutes.", en: "The board is ordered for the table. Desserts are plated to order: allow ten minutes." },
+    },
+    note: { fr: "Exemple de carte.", en: "Sample menu." },
+    dishes: {
+      fr: [["Plateau de trois fromages", "12 €"], ["Poire pochée, sarrasin, crème crue", "9 €"], ["Chocolat noir, sel fumé", "9 €"], ["Glace du jour", "8 €"]],
+      en: [["Board of three cheeses", "€12"], ["Poached pear, buckwheat, raw cream", "€9"], ["Dark chocolate, smoked salt", "€9"], ["Ice cream of the day", "€8"]],
+    },
+  },
+  {
+    id: "wine",
+    image: "table-cellar.webp",
+    title: { fr: "Vins", en: "Wine" },
+    kicker: { fr: "240 références · 18 au verre", en: "240 wines · 18 by the glass" },
+    alt: { fr: "Cave voûtée, casiers de bouteilles et deux verres sur un tonneau", en: "Cellar racks of bottles and two glasses on a barrel" },
+    caption: { kicker: { fr: "Cave · niveau −1", en: "Cellar · level −1" }, title: { fr: "Loire, Jura, Rhône nord", en: "Loire, Jura, northern Rhône" } },
+    story: {
+      title: { fr: "Au verre ou à la bouteille.", en: "By the glass or the bottle." },
+      lead: { fr: "Une cave de vignerons que nous connaissons.", en: "A cellar of winemakers we know." },
+      body: { fr: "Dix-huit vins sont ouverts chaque soir. Le sommelier vous en sert un trait avant de choisir.", en: "Eighteen wines are open every evening. The sommelier pours you a taste before you choose." },
+    },
+    note: { fr: "Exemple — la sélection tourne chaque semaine.", en: "Sample — the selection rotates weekly." },
+    dishes: {
+      fr: [["Pétillant naturel, Loire", "8 € le verre"], ["Chenin, Anjou", "9 € le verre"], ["Poulsard, Jura", "10 € le verre"], ["Syrah, Saint-Joseph", "12 € le verre"]],
+      en: [["Pét-nat, Loire", "€8 a glass"], ["Chenin, Anjou", "€9 a glass"], ["Poulsard, Jura", "€10 a glass"], ["Syrah, Saint-Joseph", "€12 a glass"]],
+    },
+  },
+];
+
+/* The day's specials, in the order the kitchen posts them: a client fetches these (any count, none included). */
+const SPECIALS: Special[] = [
+  {
+    id: "pollock",
+    image: "table-tasting.webp",
+    title: { fr: "Lieu jaune, beurre noisette", en: "Pollock, brown butter" },
+    label: { fr: "Lieu jaune", en: "Pollock" },
+    kicker: { fr: "Plat · 26 €", en: "Main · €26" },
+    alt: { fr: "Assiette de poisson sur une table en ardoise", en: "Fish plate on a slate table" },
+    story: {
+      title: { fr: "Arrivé ce matin.", en: "In this morning." },
+      lead: { fr: "Un lieu jaune de ligne, cuit sur la peau.", en: "Line-caught pollock, cooked skin-side." },
+      body: { fr: "Servi avec un beurre noisette et de l'oseille du jardin, tant qu'il en reste.", en: "Served with brown butter and garden sorrel, while it lasts." },
+    },
+    facts: { fr: [["Prix", "26 €"], ["Quand", "Midi et soir"], ["Jusqu'à", "Épuisement"]], en: [["Price", "€26"], ["When", "Lunch and dinner"], ["Until", "Sold out"]] },
+  },
+  {
+    id: "pasta",
+    image: "salon-workshop.webp",
+    title: { fr: "Pâtes fraîches, tomates anciennes", en: "Fresh pasta, heritage tomatoes" },
+    label: { fr: "Pâtes fraîches", en: "Fresh pasta" },
+    kicker: { fr: "Plat · 21 €", en: "Main · €21" },
+    alt: { fr: "Table de travail avec farine, pâtes fraîches et tomates", en: "Work table with flour, fresh pasta and tomatoes" },
+    story: {
+      title: { fr: "Roulées à la main.", en: "Rolled by hand." },
+      lead: { fr: "Des tagliatelles du matin, des tomates de fin de saison.", en: "Morning tagliatelle, late-season tomatoes." },
+      body: { fr: "La pâte est faite chaque jour avec un blé ancien. Il y a vingt portions.", en: "The dough is made daily from heritage wheat. There are twenty portions." },
+    },
+    facts: { fr: [["Prix", "21 €"], ["Quand", "Midi"], ["Jusqu'à", "Vingt portions"]], en: [["Price", "€21"], ["When", "Lunch"], ["Until", "Twenty portions"]] },
+  },
+  {
+    id: "amber",
+    image: "bar-cocktails.webp",
+    title: { fr: "Ambre, poire rôtie", en: "Amber, roast pear" },
+    label: { fr: "Cocktail", en: "Cocktail" },
+    kicker: { fr: "Au bar · 12 €", en: "At the bar · €12" },
+    alt: { fr: "Deux cocktails sur un comptoir en marbre sombre", en: "Two cocktails on a dark marble counter" },
+    story: {
+      title: { fr: "Le verre du jour.", en: "Today's glass." },
+      lead: { fr: "Whisky, sirop de poire rôtie, écorce de bergamote.", en: "Whisky, roast-pear syrup, bergamot peel." },
+      body: { fr: "Le bar le compose avec ce que la cuisine n'utilise pas. Il existe sans alcool.", en: "The bar builds it from what the kitchen doesn't use. It comes alcohol-free too." },
+    },
+    facts: { fr: [["Prix", "12 € · 8 € sans alcool"], ["Quand", "Dès 18 h"], ["Où", "Au comptoir"]], en: [["Price", "€12 · €8 alcohol-free"], ["When", "From 6 pm"], ["Where", "At the counter"]] },
+  },
+  {
+    id: "chenin",
+    image: "bar-wine.webp",
+    title: { fr: "Chenin d'Anjou au verre", en: "Anjou Chenin by the glass" },
+    label: { fr: "Au verre", en: "By the glass" },
+    kicker: { fr: "Vin · 9 €", en: "Wine · €9" },
+    alt: { fr: "Vin versé dans un verre à pied au bar", en: "Wine poured into a stemmed glass at the bar" },
+    story: {
+      title: { fr: "Une bouteille ouverte.", en: "One bottle open." },
+      lead: { fr: "Un chenin sec de 2021, servi au verre ce soir seulement.", en: "A dry 2021 Chenin, by the glass tonight only." },
+      body: { fr: "Le sommelier l'accorde au lieu jaune. Il en reste une douzaine de verres.", en: "The sommelier pairs it with the pollock. About a dozen glasses are left." },
+    },
+    facts: { fr: [["Prix", "9 € le verre"], ["Quand", "Ce soir"], ["Avec", "Le lieu jaune"]], en: [["Price", "€9 a glass"], ["When", "Tonight"], ["With", "The pollock"]] },
+  },
+  {
+    id: "piano",
+    image: "bar-live.webp",
+    title: { fr: "Jeudi piano, menu court", en: "Piano Thursday, short menu" },
+    label: { fr: "Jeudi piano", en: "Piano Thursday" },
+    kicker: { fr: "Jeudi · 21 h", en: "Thursday · 9 pm" },
+    alt: { fr: "Bar intime le soir, piano droit et tabourets", en: "Intimate bar at night, upright piano and stools" },
+    story: {
+      title: { fr: "Trois assiettes, deux sets.", en: "Three plates, two sets." },
+      lead: { fr: "Le jeudi, un menu court accompagne le pianiste invité.", en: "On Thursdays, a short menu accompanies the guest pianist." },
+      body: { fr: "Une entrée, un plat, un dessert, servis entre les sets. Arrivez tôt pour les places près du clavier.", en: "A starter, a main, a dessert, served between sets. Arrive early for the seats by the keys." },
+    },
+    facts: { fr: [["Prix", "38 € le menu"], ["Quand", "Jeudi, 21 h"], ["Places", "Premier arrivé, premier assis"]], en: [["Price", "€38 the menu"], ["When", "Thursday, 9 pm"], ["Seats", "First come, first seated"]] },
+  },
+];
+
+/** How many specials the reference config posts (`SPECIALS` holds five). */
+export const DOSSIER_MENU_SPECIALS_MAX = SPECIALS.length;
+
+const MENU_COPY: Record<Locale, Partial<DossierCopy>> = {
+  fr: {
+    itemsNav: "La carte et les suggestions",
+    entriesNav: "Rubriques",
+    itemLocation: (i, n, label) => `${label}, ${i} sur ${n}`,
+    entryLocation: (i, n, label) => `Rubrique ${i} sur ${n} : ${label}`,
+    previousItem: (label) => `Voir : ${label}`,
+    nextItem: (label) => `Voir : ${label}`,
+    nextEntry: (label) => `Rubrique suivante : ${label}`,
+    openEntry: (i, n, title) => `Ouvrir ${i} sur ${n} : ${title}`,
+    boardHeading: (item) => `${item} — choisissez`,
+    overviewTitle: (_i, label) => label,
+    toastNext: "Rubrique suivante",
+    toastEnd: "Voir aussi",
+  },
+  en: {
+    itemsNav: "The menu and the specials",
+    entriesNav: "Sections",
+    itemLocation: (i, n, label) => `${label}, ${i} of ${n}`,
+    entryLocation: (i, n, label) => `Section ${i} of ${n}: ${label}`,
+    previousItem: (label) => `See: ${label}`,
+    nextItem: (label) => `See: ${label}`,
+    nextEntry: (label) => `Next section: ${label}`,
+    openEntry: (i, n, title) => `Open ${i} of ${n}: ${title}`,
+    boardHeading: (item) => `${item} — choose`,
+    overviewTitle: (_i, label) => label,
+    toastNext: "Next section",
+    toastEnd: "See also",
+  },
+};
+
+function closing(locale: Locale, close: () => void) {
+  return (
+    <DossierChapter tone="b" variant="payoff">
+      <ChapterPayoff
+        lines={M.payoff.lines[locale]}
+        accentLine={1}
+        lead={M.payoff.lead[locale]}
+        action={
+          <PrimaryPlate size="lg" block onClick={close}>
+            {M.payoff.cta[locale]}
+          </PrimaryPlate>
+        }
+        consequence={T.consequence[locale]}
+      />
+    </DossierChapter>
+  );
+}
+
+function menuItem(locale: Locale): DossierItem {
+  return {
+    id: "menu",
+    label: M.menu.label[locale],
+    kicker: M.menu.kicker[locale],
+    cover: { src: `${MEDIA}table-tasting.webp`, alt: M.menu.alt[locale] },
+    description: M.menu.description[locale],
+    entries: SECTIONS.map((s) => ({
+      id: s.id,
+      title: s.title[locale],
+      label: s.label?.[locale],
+      kicker: s.kicker[locale],
+      media: { src: MEDIA + s.image, alt: s.alt[locale] },
+      description: `${s.story.lead[locale]} ${s.story.body[locale]}`,
+      content: ({ close }) => (
+        <>
+          <DossierChapter tone="a" variant="intro">
+            <ChapterHead level="title" title={s.story.title[locale]} lead={s.story.lead[locale]} body={s.story.body[locale]} />
+            <ChapterFigure ratio="hero" media={{ src: MEDIA + s.image, alt: s.alt[locale] }} caption={{ kicker: s.caption.kicker[locale], title: s.caption.title[locale] }} />
+          </DossierChapter>
+          <DossierChapter tone="b">
+            <ChapterSpecimen note={s.note[locale]}>
+              <ChapterRows rows={s.dishes[locale].map(([label, detail]) => ({ label, detail }))} />
+            </ChapterSpecimen>
+          </DossierChapter>
+          {closing(locale, close)}
+        </>
+      ),
+    })),
+  };
+}
+
+function specialsItem(locale: Locale, count: number): DossierItem {
+  return {
+    id: "specials",
+    label: M.specials.label[locale],
+    kicker: M.specials.kicker[locale],
+    cover: { src: `${MEDIA}salon-workshop.webp`, alt: M.specials.alt[locale] },
+    description: M.specials.description[locale],
+    empty: { title: M.specials.empty.title[locale], body: M.specials.empty.body[locale] },
+    entries: SPECIALS.slice(0, Math.max(0, count)).map((s) => ({
+      id: s.id,
+      title: s.title[locale],
+      label: s.label[locale],
+      kicker: s.kicker[locale],
+      media: { src: MEDIA + s.image, alt: s.alt[locale] },
+      description: `${s.story.lead[locale]} ${s.story.body[locale]}`,
+      content: ({ close }) => (
+        <>
+          <DossierChapter tone="a" variant="intro">
+            <ChapterHead level="title" title={s.story.title[locale]} lead={s.story.lead[locale]} body={s.story.body[locale]} />
+            <ChapterFigure ratio="hero" media={{ src: MEDIA + s.image, alt: s.alt[locale] }} />
+          </DossierChapter>
+          <DossierChapter tone="b">
+            <ChapterHead title={M.practical[locale]} />
+            <ChapterRows rows={s.facts[locale].map(([label, detail]) => ({ label, detail }))} />
+          </DossierChapter>
+          {closing(locale, close)}
+        </>
+      ),
+    })),
+  };
+}
+
+/**
+ * Reference for an opening screen and a live item: the menu and the day's specials (`specials`: how many are posted,
+ * 0–5; a client maps its fetched list instead and sets `pending` while it loads). Sheet composition by default.
+ */
+export function buildDossierMenuConfig(locale: Locale, options: { specials?: number; composition?: DossierComposition } = {}): DossierConfig {
+  const { specials = 3, composition = "sheet" } = options;
+  return {
+    locale,
+    composition,
+    brand: { name: "Maison Ardoise" },
+    kicker: M.kicker[locale],
+    opening: { id: "choose", title: M.opening.title[locale], label: M.opening.label[locale], description: M.opening.description[locale] },
+    items: [menuItem(locale), specialsItem(locale, specials)],
+    attribution: { enabled: true, href: EVOVIEW_URL, label: T.attribution[locale] },
+    copy: { ...COPY[locale], ...MENU_COPY[locale] },
   };
 }
