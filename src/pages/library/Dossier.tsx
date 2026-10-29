@@ -161,7 +161,7 @@ function Showcase() {
   const single = useMemo(() => singleOnly(multi), [multi]);
   // The menu (a page of its own on a client site, often entered from search) loads its URL at rest; the universes keep the entrance.
   const menu = useMemo<DossierConfig>(
-    () => ({ ...buildDossierMenuConfig(locale, { specials: Number(specials), composition: menuComposition }), tileMedia: menuTileMedia, directLoad: "at-rest" }),
+    () => ({ ...buildDossierMenuConfig(locale, { specials: Number(specials), composition: menuComposition }), tileMedia: menuTileMedia, directLoad: "at-rest", kicker: undefined }),
     [locale, specials, menuComposition, menuTileMedia],
   );
   const configs = { multi, single, menu };

@@ -535,6 +535,11 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, clos
   const hideChrome = kind === "detail" && chromeHidden && !wide;
   const upLabel = opening ? openingLabel(opening) : "";
 
+  /* No kicker on a detail (RULES §1); on the opening and overviews only the config's, and no element at all without
+     text: an empty one keeps the meta column's gap and pushes the title off-centre. */
+  const headerKicker = kind === "detail" ? undefined : config.kicker?.trim();
+  // A detail's item, no longer shown above its title, stays spoken: in the dialog's name and right after the h1.
+  const itemNameId = `${uid}-item`;
   const headerTitle =
     kind === "detail" && entry ? (
       <h1 id={titleId} className="evd-header__title">{entryHeading(entry)}</h1>
@@ -565,7 +570,7 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, clos
           if (closing && e.target === e.currentTarget) onExited();
         }}
       >
-        <div ref={dialogRef} className="evd-dialog" role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} data-ev-modal="">
+        <div ref={dialogRef} className="evd-dialog" role="dialog" aria-modal="true" aria-labelledby={kind === "detail" && item ? `${titleId} ${itemNameId}` : titleId} tabIndex={-1} data-ev-modal="">
           <span className="ev-sr" aria-live="polite" aria-atomic="true">{live}</span>
 
           <header className="evd-header" data-hidden={hideChrome || undefined} onFocusCapture={() => setChromeHidden(false)}>
@@ -573,9 +578,14 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, clos
               <div className="evd-header__identity">
                 <span className="evd-header__brand">{config.brand.logo ?? <span className="ev-t-readout-lg">{config.brand.name}</span>}</span>
                 <div className="evd-header__meta">
-                  <span className="evd-header__kicker">{entry && item ? item.label : config.kicker}</span>
+                  {headerKicker && <span className="evd-header__kicker">{headerKicker}</span>}
                   {/* The view's one h1 (its title; docs/CRAWLABLE-MODALS.md §4). Phones show the short readout instead, the h1 stays spoken. */}
                   {headerTitle}
+                  {kind === "detail" && item && (
+                    <span id={itemNameId} className="ev-sr">
+                      {item.label}
+                    </span>
+                  )}
                 </div>
               </div>
 

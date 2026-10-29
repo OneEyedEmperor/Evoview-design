@@ -27,7 +27,7 @@ palette). Every view has a URL:
 
 ```
 panorama ≥ 1024 (shell 92.5em × min(57.5em, 100vh − 2em), radius shell)
-┌ CLIENT │ KICKER / TITLE        (‹) LABEL ▬▭▭ (›)        EVOVIEW │ [× FERMER] ┐ 77
+┌ CLIENT │ TITLE                 (‹) LABEL ▬▭▭ (›)        EVOVIEW │ [× FERMER] ┐ 77
 ├ ‹ SOMMAIRE │ 01 Tab ▔▔▔ │ 02 Tab │ 03 Tab │ 04 Tab ─────────────────────────┤ 58 (detail)
 │ overview: 7/5 over 4/8 board (rows 1.2 / .8)  ·  detail: open chapters      │
 └──────────────────────────────────────────────────────────────────────────────┘
@@ -42,10 +42,14 @@ Read `STRATEGY.md`. These make the dossier recognisably Evoview; do not
 restyle them to the client's UI kit. Changing them is a library change
 (RULES §13).
 
-- **Header strip (chassis signature)**: client identity · kicker / title
-  readout (Satoshi 700 uppercase, kicker accent-mixed) · item pager (glass
-  orbs, label, location bars; only with two or more items) · the Evoview
-  mark · labelled glass close. Grouped by space, no divider rules.
+- **Header strip (chassis signature)**: client identity · title readout
+  (Satoshi 700 uppercase, centred in the bar) · item pager (glass orbs,
+  label, location bars; only with two or more items) · the Evoview mark ·
+  labelled glass close. Grouped by space, no divider rules. No kicker over a
+  detail's title (RULES §1): the item is carried by the pager / chapter strip
+  / dock and stays in the dialog's accessible name. An optional
+  `config.kicker` may sit over the opening / overview title (≥ 600); omit it
+  by default.
 - **Selection board**: four tiles make the asymmetric mosaic, 7/5 over 4/8
   on 12 columns, rows 1.2fr / .8fr (panorama ≥ 1024); 2×2 from 600 (and in
   the sheet); four rows on phones. Any other count (live content) takes the
@@ -193,7 +197,7 @@ other marks.
 
 ## Expression (adapt)
 
-Config only: brand (logo node or name), kicker, opening (title, label),
+Config only: brand (logo node or name), optional kicker, opening (title, label),
 items (label, accent, cover and readout for the opening tile, empty-day
 sentence), entries (title, short label, kicker, media, detail chapters'
 content), all copy, attribution label. Accent = the client's: the host `--primary` /
@@ -252,7 +256,7 @@ type DossierConfig = {
   tileMedia?: "graded" | "true-colour";            // DOSSIER_TILE_MEDIA; default "graded"
   directLoad?: "entrance" | "at-rest";             // DOSSIER_DIRECT_LOADS; default "entrance"
   brand: { name: string; logo?: ReactNode };      // logo ≈ 18px tall, currentColor
-  kicker: string;                                  // overview kicker
+  kicker?: string;                                 // opening / overview header kicker (≥ 600); omit: none, title centred (RULES §1)
   opening?: {                                      // optional top level choosing between the items
     id: string;                                    // its URL slug, distinct from every item id
     title: string;                                 // h1 + head title

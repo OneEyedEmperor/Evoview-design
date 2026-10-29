@@ -1,5 +1,38 @@
 # dossier changelog
 
+## 1.11.0
+
+Requires nothing new (foundation ≥ 1.13.0, unchanged).
+
+Config changes (additive: existing configs keep compiling)
+- `kicker` is optional. When it is omitted, empty or blank, no kicker
+  element is rendered, so no gap and no empty node. The opening / overview
+  title then sits centred in the header bar at every width. Before, a
+  `kicker: ""` left an empty span whose 4px gap put the title 2px below the
+  bar's centre (≥ 600). Omit it rather than set `""`.
+
+Visual change for every client (RULES §1, no kicker tags)
+- A detail view no longer shows its item's label as a kicker over the entry
+  title; the title sits alone, centred in the bar (≥ 600; phones already
+  showed one line).
+  - The item stays on screen through the pager label (panorama), the
+    chapter strip's way up and the dock's location glass.
+  - For screen readers, it stays as a visually hidden label right after the
+    h1, and the dialog's accessible name is now "<entry> <item>".
+- Opening and overview views show `config.kicker` only when it is set,
+  as before.
+
+Measured on the showcase (title box centre minus bar centre):
+- No kicker, ≥ 600: Δ 2.0 → 0.0.
+- Details at 1440 / 1024: Δ 6.0–6.5 (two-line stack) → 0.0.
+- Phones: Δ 0.0, unchanged.
+- Cap-height ink within ±0.5px everywhere.
+
+`verify:ssr`: the opening / first overview renders one kicker node when
+`kicker` is set and none when it is omitted, `""` or blank. Every detail
+renders none, even with `kicker` set, and keeps its item in the dialog's
+`aria-labelledby`.
+
 ## 1.10.0
 
 Requires `foundation` ≥ 1.13.0 (`HeldCopy rest`).

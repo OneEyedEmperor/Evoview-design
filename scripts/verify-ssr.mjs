@@ -77,6 +77,13 @@ const PACKAGES = [
       return { expected: (own.match(/class="evd-rows__media"/g) ?? []).length, required: Boolean(c.opening) && item.id === "menu" };
     },
     legacy: (m, c, v) => h(m.Dossier, { config: c, open: true, onClose: noop, initialItemId: v.item, initialEntryId: v.entry, preload: false }),
+    /* Header kicker (RULES §1): optional on the opening / overviews, a node only when it has text (an empty one
+       off-centres the title); never on a detail, whose item stays in the dialog's accessible name. */
+    headerKicker: {
+      selector: /(^|\s)evd-header__kicker(\s|$)/,
+      set: (c, kicker) => ({ ...c, kicker }),
+      itemOf: (c, v) => c.items.find((i) => i.id === v.item)?.label,
+    },
     /* `directLoad: "at-rest"`: a direct load's server HTML is the settled view (README, Variations). Every view again
        with the option, then what makes it at rest; a pending item (live content still loading) keeps the held path. */
     atRest: {
@@ -445,8 +452,31 @@ async function verifyPackage(spec, foundation) {
     /* Renders. */
     const base = `/${locale.replace(":", "/")}/${pkg}/`;
     const hrefFor = foundation ? foundation.routeHrefs(base, key) : (v) => (v ? `${base}${key(v)}/` : base);
-    const make = (view) => h(m[spec.component], { config, view, onNavigate: noop, hrefFor });
+    const make = (view, c = config) => h(m[spec.component], { config: c, view, onNavigate: noop, hrefFor });
     const linked = new Set();
+
+    if (spec.headerKicker) {
+      const hk = spec.headerKicker;
+      const kickers = (html) => read(html).tags.filter((t) => hk.selector.test(t.attrs.class ?? "")).length;
+      const top = views.find((v) => !routes.parent(v));
+      for (const [label, value] of [["omitted", undefined], ["empty", ""], ["blank", "  "], ["set", "Kicker probe"]]) {
+        const out = await renderCaptured(make(top, hk.set(config, value)));
+        if (!check(!out.error, pkg, "kicker", `${locale} ${key(top)} (${label})`, `render threw: ${out.error?.message}`)) continue;
+        const n = kickers(out.html);
+        check(value?.trim() ? n === 1 : n === 0, pkg, "kicker", `${locale} ${key(top)} (${label})`, value?.trim() ? "a set kicker renders one header kicker" : "no kicker text: no header kicker node (an empty one off-centres the title)", `${n} node(s)`);
+      }
+      for (const view of views.filter((v) => v.entry !== undefined)) {
+        const out = await renderCaptured(make(view, hk.set(config, "Kicker probe")));
+        if (out.error) continue;
+        const r = read(out.html);
+        check(kickers(out.html) === 0, pkg, "kicker", `${locale} ${key(view)}`, "a detail shows no header kicker (RULES §1), not even with config.kicker set");
+        const dialog = r.tags.find((t) => t.attrs.role === "dialog");
+        const ids = (dialog?.attrs["aria-labelledby"] ?? "").split(/\s+/).filter(Boolean);
+        const named = decode(ids.map((id) => out.html.match(new RegExp(`id="${id}"[^>]*>([^<]*)<`))?.[1] ?? "").join(" "));
+        const label = hk.itemOf(config, view);
+        check(!label || norm(named).includes(norm(label)), pkg, "kicker", `${locale} ${key(view)}`, "the detail's item stays in the dialog's accessible name (aria-labelledby)", `name "${named}", item "${label}"`);
+      }
+    }
 
     const closed = await renderCaptured(make(null));
     if (check(!closed.error, pkg, "closed", locale, `render with view=null threw: ${closed.error?.message}${where(closed.error)}`)) {

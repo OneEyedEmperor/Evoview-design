@@ -49,7 +49,8 @@ tokens and the pause model.
    `apply`, then `verify` (library root, `docs/SYNC.md`); resolve conflicts,
    fill patch reasons. Client tokens go in `dossier.theme.css`.
 4. Edit only `src/components/dossier/dossier.config.tsx`: brand (client logo
-   node), kicker, items (labels, optional per-item accent), entries (title,
+   node), no header kicker by default (RULES §1; `kicker` is optional, omit
+   it rather than set `""`), items (labels, optional per-item accent), entries (title,
    short label, kicker, the client's own media), detail chapters built from
    `DossierChapter` + `ChapterHead` / `ChapterFigure` / `ChapterSplit` /
    `ChapterRows` / `ChapterSpecimen` / `ChapterPayoff` (or story-blocks), one
