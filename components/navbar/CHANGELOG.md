@@ -1,5 +1,18 @@
 # navbar changelog
 
+## 2.10.1
+
+No config changes.
+
+- Fix: with the current-page pill showing (multi-page sites off the home
+  route, or `sectionPill`), the desktop unfold shift counted only the Menu
+  pill as folding away, not the page slot beside it. The open finder slid
+  left too far by the slot's width (≈ 100–180 px), or shifted where nothing
+  overflowed. The shift now subtracts the whole trigger cell (Menu pill +
+  page slot), so the open capsule ends on the 16px gutter exactly when it
+  would cross it. Trays follow, as their clamp reads the shift. Mobile and
+  the home route were unaffected.
+
 ## 2.10.0
 
 Requires `foundation` ≥ 1.10.0 (`useScrollLock`). No config changes.

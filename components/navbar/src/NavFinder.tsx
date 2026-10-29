@@ -237,17 +237,20 @@ export default function NavFinder({ config, activeKey, current, accent }: { conf
   // slides left by exactly the overflow, timed with the unfold.
   useLayoutEffect(() => {
     const anchor = anchorRef.current;
-    const trigger = triggerRef.current;
+    const triggerInner = triggerCellRef.current?.firstElementChild;
     const deckEl = deckRef.current;
-    if (!anchor || !trigger || !deckEl) return;
+    if (!anchor || !triggerInner || !deckEl) return;
     if (!open) {
       anchor.style.setProperty("--nav-finder-shift", "0px");
       return;
     }
     // offsetLeft ignores the (possibly mid-transition) translate.
     const restLeft = (anchor.offsetParent?.getBoundingClientRect().left ?? 0) + anchor.offsetLeft;
-    // The cells clip, but their contents keep their intrinsic widths.
-    const finalWidth = anchor.offsetWidth - trigger.offsetWidth + deckEl.offsetWidth;
+    // The cells clip, but their contents keep their intrinsic widths. The whole
+    // trigger cell folds away: the Menu pill and the current-page slot beside it.
+    // offsetWidth, not scrollWidth, which would count a pressed pill's jelly.
+    const folding = [...triggerInner.children].reduce((sum, child) => sum + (child as HTMLElement).offsetWidth, 0);
+    const finalWidth = anchor.offsetWidth - folding + deckEl.offsetWidth;
     const overflow = restLeft + finalWidth - (document.documentElement.clientWidth - VIEWPORT_GUTTER);
     const shift = overflow > 0 ? -Math.min(overflow, Math.max(0, restLeft - VIEWPORT_GUTTER)) : 0;
     anchor.style.setProperty("--nav-finder-shift", `${shift}px`);
