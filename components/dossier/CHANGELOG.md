@@ -1,5 +1,35 @@
 # dossier changelog
 
+## 1.10.0
+
+Requires `foundation` ≥ 1.13.0 (`HeldCopy rest`).
+
+Config changes (additive, opt-in; nothing changes without them)
+- `directLoad?: "entrance" | "at-rest"` (`DOSSIER_DIRECT_LOADS`, default
+  `"entrance"`), a Variation. With `"at-rest"`, the layer the dossier mounts
+  with (a page loaded or hydrated on a view URL) shows its first view
+  settled from the first paint and hydrates in place:
+  - no hold, no media gate, no loader, no remount;
+  - that view's entrances run in zero time, ending on their end state;
+  - its chapters start revealed;
+  - videos get their source after hydration;
+  - `<html>` has `overflow: hidden` from the first paint, so the scroll
+    lock shifts nothing at hydration.
+
+  Not affected: in-page opens, reopening after a close, every later view,
+  and a first view waiting on a `pending` item. These keep the gated
+  entrance. README "Direct load at rest".
+- New `dossierViewMedia(config, view)`: the images a view shows first, in
+  order, for the head preloads of a prerendered view page.
+
+Measured in Tchin (`/menu/`, Lighthouse mobile, devtools throttling, median
+of 3): LCP 4.65 s → 2.45 s (= FCP), score 0.78 → 0.93. No hydration warnings
+(development React).
+
+`pnpm verify:ssr` renders every reference view with `at-rest` too: the full
+per-view contract, plus `data-rest`, no held copy, no waiting / locked /
+pending markup, and enabled tiles. A pending item must keep the held path.
+
 ## 1.9.2
 
 Fix. No config change. Requires `foundation` ≥ 1.12.0 (`restoreFocus`).

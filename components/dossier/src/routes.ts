@@ -1,4 +1,4 @@
-import type { ModalRoutes, ViewHead } from "../foundation";
+import type { MediaSource, ModalRoutes, ViewHead } from "../foundation";
 import { fullCopy } from "./copy";
 import { isVideo } from "./hooks";
 import type { DossierConfig, DossierEntry, DossierItem, DossierMedia, DossierOpening } from "./types";
@@ -12,6 +12,7 @@ export type DossierView = { item: string; entry?: string; opening?: string } | {
 
 const DESCRIPTION_MAX = 160;
 const SLUG = /^[a-z0-9][a-z0-9-]*$/i;
+const VIDEO_FILE = /\.(mp4|webm|mov|m4v|ogv)(\?|#|$)/i;
 
 const fold = (s: string) => s.replace(/\s+/g, " ").trim().toLowerCase();
 
@@ -72,6 +73,23 @@ function itemImage(item: DossierItem): ViewHead["image"] {
   if (item.cover) return headImage(item.cover, item.label);
   const first = item.entries[0];
   return first ? headImage(first.media, first.title) : undefined;
+}
+
+/**
+ * Images a view shows first (what its media gate waits on; a video as its poster), in order: what a page loaded on the
+ * view's URL preloads in its head (the first ones `fetchpriority="high"`) with `directLoad: "at-rest"`. Pure, server-safe.
+ */
+export function dossierViewMedia(config: DossierConfig, view: DossierView): string[] {
+  const found = resolveView(config, view);
+  if (!found) return [];
+  const still = (m: DossierMedia | undefined) => (!m ? undefined : isVideo(m) ? m.poster : m.src);
+  const source = (s: MediaSource) => (!s ? undefined : typeof s === "string" ? s : s.type === "video" ? undefined : s.src);
+  const list = !found.item
+    ? config.items.map((item) => still(itemCover(item)))
+    : !found.entry
+      ? found.item.entries.map((e) => still(e.media))
+      : [still(found.entry.media), ...(found.entry.sources ?? []).map(source).filter((src) => src && !VIDEO_FILE.test(src))];
+  return Array.from(new Set(list.filter((s): s is string => !!s)));
 }
 
 /**

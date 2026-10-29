@@ -154,6 +154,14 @@ other marks.
     numeral liquid fill, shine sweep, slight scale; the touch cycle frames its
     tile the same way. The caption scrim stays. For clients whose photos must
     stay true to colour (food).
+- **Direct load** (`config.directLoad`, `DOSSIER_DIRECT_LOADS`): the first
+  view of a page loaded on a view URL (the dossier mounts with a `view`).
+  - `entrance` (default): that view waits for its media and hydration, then
+    plays the same entrance as an in-page open.
+  - `at-rest`: that view is the settled view from the first paint and
+    hydrates in place, for dossiers that are a page of their own (a menu
+    reached from search). For details see "Direct load at rest" below.
+    In-page opens and every later view keep the full entrance.
 - **Opening screen** (`config.opening`): an optional top level choosing
   between the items (Tchin: `Carte | Promotions`); selecting opens that
   item's overview, Escape / Back / `‹ <label>` return to it. Its own view
@@ -242,6 +250,7 @@ type DossierConfig = {
   locale: "fr" | "en";
   composition?: "panorama" | "sheet";              // DOSSIER_COMPOSITIONS; default "panorama"
   tileMedia?: "graded" | "true-colour";            // DOSSIER_TILE_MEDIA; default "graded"
+  directLoad?: "entrance" | "at-rest";             // DOSSIER_DIRECT_LOADS; default "entrance"
   brand: { name: string; logo?: ReactNode };      // logo ≈ 18px tall, currentColor
   kicker: string;                                  // overview kicker
   opening?: {                                      // optional top level choosing between the items
@@ -400,6 +409,34 @@ Client steps (§7):
 4. **Verify** as a crawler without JavaScript (contract §7.3): each view URL
    has its title, one h1, the copy, canonical / hreflang, no `inert`. In the
    library: `pnpm verify:ssr dossier`.
+
+### Direct load at rest (`directLoad: "at-rest"`)
+
+Only for the layer the dossier mounts with (a page loaded or hydrated on a
+view URL). Its first view is never held. It renders live and settled from
+the first render, server included, so hydration keeps the server DOM. That
+view's entrances run in zero time and land on their end state: shell
+(rounded clip), backdrop, atmosphere, board tiles (the blur convergence),
+detail, empty panel, dock count. Its chapters start revealed, with no scroll
+reveal. Videos keep their poster until hydration. While it is open, `<html>`
+has `overflow: hidden` from the first paint, so the script's lock shifts
+nothing at hydration. On a direct load the page under the modal is laid out
+without a scrollbar.
+
+The next view the visitor opens, and every later open, takes the usual gate
+and entrance. A first view waiting on live content (a `pending` item's
+overview, or an entry not brought yet) keeps the held path.
+
+The images load like any page's, so the client must:
+- preload them in the head: `dossierViewMedia(config, view)` lists them in
+  order, with `fetchpriority="high"` on the first ones;
+- render the first client view from the same live state as the server, e.g.
+  a fetched list seeded from a snapshot in the HTML. A `pending` flag that
+  differs at hydration changes the markup.
+
+Measured in Tchin (`/menu/`, Lighthouse mobile, devtools throttling, median
+of 3): LCP 4.65 s → 2.45 s, now equal to FCP. The view is identical at first
+paint and after hydration.
 
 ## Desktop / mobile
 

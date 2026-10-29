@@ -13,6 +13,13 @@ export type DossierComposition = (typeof DOSSIER_COMPOSITIONS)[number];
 export const DOSSIER_TILE_MEDIA = ["graded", "true-colour"] as const;
 export type DossierTileMedia = (typeof DOSSIER_TILE_MEDIA)[number];
 
+/** entrance: a page loaded on a view URL plays the same media-gated entrance as an in-page open.
+    at-rest: that first view is the settled view from the first paint (server HTML included) and hydrates in place:
+    no hold, no entrance; its images load like any page's (preload them in the head, `dossierViewMedia`).
+    In-page opens and every later view keep the entrance. */
+export const DOSSIER_DIRECT_LOADS = ["entrance", "at-rest"] as const;
+export type DossierDirectLoad = (typeof DOSSIER_DIRECT_LOADS)[number];
+
 export type DossierMedia = {
   src: string;
   /** "video" plays muted, looped, inline. Guessed from the extension when omitted. */
@@ -143,6 +150,8 @@ export type DossierConfig = {
   composition?: DossierComposition;
   /** Variation (RULES §13), from `DOSSIER_TILE_MEDIA`: board and opening tiles. Default "graded". */
   tileMedia?: DossierTileMedia;
+  /** Variation (RULES §13), from `DOSSIER_DIRECT_LOADS`: the first view of a page loaded on a view URL. Default "entrance". */
+  directLoad?: DossierDirectLoad;
   /** Client identity in the header strip. */
   brand: { name: string; logo?: ReactNode };
   /** Header kicker on the overview ("Maison Ardoise · Expériences"). */

@@ -200,7 +200,7 @@ routeHrefs(base, routes.key) → (view | null) => string              // "<base>
 viewFromPath(pathname, base, routes, config) → V | null | undefined // inverse (undefined: outside base)
 followRouteLink(event, action)            // onClick of a view link: plain click → action, modified click → native
 <RouteLink href? onFollow disabled? …>    // <a href> + handler; <button> when href is undefined
-<HeldCopy live>, useHeld(), useHeldSrc(src)  // copy mounted before media; no video src until live
+<HeldCopy live rest?>, useHeld(), useHeldSrc(src)  // copy mounted before media; no video src until live
 ROUTE_LAYER_NOSCRIPT_CSS                  // <noscript><style> for prerendered view pages
 ```
 
@@ -218,7 +218,10 @@ entries keep the current URL.
 `HeldCopy`: wrap the open view's copy, `live={gate.ready}`. Until live it
 carries `data-ev-held` (CSS animations paused) and `useHeldSrc` returns
 `undefined`; going live remounts it, so its entrance starts when the view
-used to mount (state inside resets). Images keep their `src`.
+used to mount (state inside resets). Images keep their `src`. `rest`: a
+view shown settled from the first render (a direct load at rest). It is
+never held and never remounted, so hydration keeps the server DOM, and
+`useHeldSrc` withholds video sources only until hydration.
 
 Primitives: `<Readout size?>`, `<Index current total srLabel? size?>`,
 `<StepGauge current total srLabel?>` (stacked-list position as a vertical

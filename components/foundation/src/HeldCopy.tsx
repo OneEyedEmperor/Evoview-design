@@ -1,4 +1,5 @@
 import { createContext, useContext, type ReactNode } from "react";
+import { useHydrated } from "./hydration";
 
 const Held = createContext(false);
 
@@ -10,11 +11,18 @@ const Held = createContext(false);
  * remounts, so its entrance starts at the exact moment the view used to
  * mount: the choreography is unchanged. State inside resets at that swap.
  * Pass the media gate: `<HeldCopy live={gate.ready}>`.
+ *
+ * `rest`: the view is shown at rest from the first render (a direct load
+ * whose server HTML is the settled view): never held, never remounted, so
+ * hydration keeps the server DOM. Video sources still wait for hydration
+ * (poster in server HTML).
  */
-export function HeldCopy({ live, children }: { live: boolean; children: ReactNode }) {
+export function HeldCopy({ live, rest = false, children }: { live: boolean; rest?: boolean; children: ReactNode }) {
+  const hydrated = useHydrated();
+  const shown = rest || live;
   return (
-    <Held.Provider value={!live}>
-      <div key={live ? "live" : "held"} data-ev-held={live ? undefined : ""} style={{ display: "contents" }}>
+    <Held.Provider value={rest ? !hydrated : !live}>
+      <div key={shown ? "live" : "held"} data-ev-held={shown ? undefined : ""} style={{ display: "contents" }}>
         {children}
       </div>
     </Held.Provider>

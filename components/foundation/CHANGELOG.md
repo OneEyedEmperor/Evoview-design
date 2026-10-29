@@ -1,5 +1,15 @@
 # foundation changelog
 
+## 1.13.0
+
+No config change. Additive API. Requires nothing new.
+
+- `HeldCopy` takes `rest?: boolean`: the view is shown settled from the
+  first render (a direct load at rest). It is never held (no
+  `data-ev-held`) and never remounted, so hydration keeps the server DOM.
+  `useHeldSrc` inside it withholds video sources until hydration only.
+  Without `rest`, nothing changes.
+
 ## 1.12.1
 
 No config or API change. Requires nothing new. No visual change.

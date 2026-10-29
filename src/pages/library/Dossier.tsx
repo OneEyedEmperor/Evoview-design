@@ -159,8 +159,9 @@ function Showcase() {
     return { ...config, items, composition, tileMedia };
   }, [locale, itemAccents, composition, tileMedia]);
   const single = useMemo(() => singleOnly(multi), [multi]);
-  const menu = useMemo(
-    () => ({ ...buildDossierMenuConfig(locale, { specials: Number(specials), composition: menuComposition }), tileMedia: menuTileMedia }),
+  // The menu (a page of its own on a client site, often entered from search) loads its URL at rest; the universes keep the entrance.
+  const menu = useMemo<DossierConfig>(
+    () => ({ ...buildDossierMenuConfig(locale, { specials: Number(specials), composition: menuComposition }), tileMedia: menuTileMedia, directLoad: "at-rest" }),
     [locale, specials, menuComposition, menuTileMedia],
   );
   const configs = { multi, single, menu };

@@ -88,6 +88,13 @@ function canonicalView(config: DossierConfig, requested: DossierView): DossierVi
   return itemView(config, item.id);
 }
 
+/** The view's body waits on a pending item's live content (its overview, or an entry not brought yet). */
+function awaitsLiveContent(config: DossierConfig, view: DossierView): boolean {
+  if (view.item === undefined) return false;
+  const item = config.items.find((i) => i.id === view.item);
+  return !!item?.pending && !item.entries.some((e) => e.id === view.entry);
+}
+
 function legacySeed(config: DossierConfig, itemId?: string, entryId?: string): DossierView | null {
   if (itemId === undefined && entryId === undefined) return topView(config);
   const item = itemId ?? config.items[0]?.id;
@@ -134,8 +141,12 @@ export function Dossier(props: DossierProps) {
 
   // Every open gets a fresh layer: reopening during the exit animation must not resume the closing one.
   // The layer keeps the last view, so the content stays on screen through the exit.
-  const [layer, setLayer] = useState<{ key: number; closing: boolean; view: DossierView } | null>(() => (view ? { key: 1, closing: false, view } : null));
-  if (view && (!layer || layer.closing)) setLayer({ key: (layer?.key ?? 0) + 1, closing: false, view });
+  // Only the layer of a direct load (the dossier mounts on a view) may show its first view at rest; a view still
+  // waiting on live content enters as usual, and every later open is an in-page open.
+  const [layer, setLayer] = useState<{ key: number; closing: boolean; view: DossierView; rest: boolean } | null>(() =>
+    view ? { key: 1, closing: false, view, rest: config.directLoad === "at-rest" && !awaitsLiveContent(config, view) } : null,
+  );
+  if (view && (!layer || layer.closing)) setLayer({ key: (layer?.key ?? 0) + 1, closing: false, view, rest: false });
   else if (view && layer && dossierRoutes.key(view) !== dossierRoutes.key(layer.view)) setLayer({ ...layer, view });
   else if (!view && layer && !layer.closing) setLayer({ ...layer, closing: true });
   useIdlePreload(preload ? config : null);
@@ -149,6 +160,7 @@ export function Dossier(props: DossierProps) {
       hrefFor={hrefFor}
       onNavigate={navigate}
       className={className}
+      rest={layer.rest}
       closing={layer.closing}
       onExited={() => setLayer((l) => (l && l.key === key && l.closing ? null : l))}
     />
@@ -195,11 +207,15 @@ type DossierLayerProps = {
   hrefFor?: (view: DossierView | null) => string;
   onNavigate: (view: DossierView | null) => void;
   className?: string;
+  /** The first view is shown at rest (config `directLoad: "at-rest"`, a direct load). */
+  rest: boolean;
   closing: boolean;
   onExited: () => void;
 };
 
-function DossierLayer({ config, view, hrefFor, onNavigate, className, closing, onExited }: DossierLayerProps) {
+const sceneKey = (s: { kind: Kind; item: string | null; entry: string | null }) => `${s.kind}:${s.item}:${s.entry}`;
+
+function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, closing, onExited }: DossierLayerProps) {
   const { items, opening } = config;
   const copy = fullCopy(config.copy, config.locale);
   const composition = config.composition ?? "panorama";
@@ -231,7 +247,15 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, closing, o
   const href = (v: DossierView | null) => hrefFor?.(v);
   const wide = useMediaQuery(DESKTOP_QUERY, true) && composition === "panorama";
 
-  const [shown, setShown] = useState<Shown | null>(null);
+  /* At rest (a direct load): the first view counts as shown from the first render, server included, so the body is
+     live, settled and unheld at once and hydration keeps the server DOM. Its own elements carry `data-rest` (no
+     entrance); the next view the visitor opens takes the usual gate and entrance. */
+  const [shown, setShown] = useState<Shown | null>(() =>
+    rest ? { kind: target.kind, item: target.item?.id ?? null, entry: target.entry?.id ?? null, sig: target.sig, items } : null,
+  );
+  const [restKey] = useState(() => (rest ? sceneKey({ kind: target.kind, item: target.item?.id ?? null, entry: target.entry?.id ?? null }) : null));
+  const restView = restKey !== null && shown !== null && sceneKey(shown) === restKey;
+  const restTarget = restKey !== null && sceneKey({ kind, item: item?.id ?? null, entry: entry?.id ?? null }) === restKey;
   const [cut, setCut] = useState(0);
 
   /* ── Media gate on the target. The layer exists only while open, so the gate stays open through
@@ -530,6 +554,7 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, closing, o
       data-view={body.kind}
       data-board={bodyBoard}
       data-dock={dockShown || undefined}
+      data-rest={rest || undefined}
       data-ev-route-layer=""
       style={accentStyle}
     >
@@ -654,10 +679,10 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, closing, o
               onScroll={onBodyScroll}
             >
               <div className="evd-atmosphere" aria-hidden="true" />
-              <ChapterRevealContext.Provider value={reveal}><ChapterMediaContext.Provider value={tileMedia}>
+              <ChapterRevealContext.Provider value={restView ? null : reveal}><ChapterMediaContext.Provider value={tileMedia}>
                 {/* Copy mounted from the first render (server HTML included); held until the view's media is
                     decoded, then remounted live so its entrance starts when the view used to mount. */}
-                <HeldCopy live={bodyLive}>
+                <HeldCopy live={bodyLive} rest={restView}>
                   {body.kind === "opening" && opening && (
                     <section
                       key="opening"
@@ -666,6 +691,7 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, closing, o
                       inert={hydrated && !openingReady}
                       aria-hidden={waiting || undefined}
                       data-waiting={waiting || undefined}
+                      data-rest={restView || undefined}
                     >
                       <h2 id={boardHeadingId} ref={boardHeadingRef} tabIndex={-1} className="ev-sr">
                         {copy.chooseItem}
@@ -695,6 +721,7 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, closing, o
                       inert={hydrated && !overviewReady}
                       aria-hidden={waiting || undefined}
                       data-waiting={waiting || undefined}
+                      data-rest={restView || undefined}
                     >
                       <h2 id={boardHeadingId} ref={boardHeadingRef} tabIndex={-1} className="ev-sr">
                         {copy.boardHeading(bodyItem.label)}
@@ -731,6 +758,7 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, closing, o
                       inert={hydrated && !detailReady}
                       aria-hidden={waiting || undefined}
                       data-waiting={waiting || undefined}
+                      data-rest={restView || undefined}
                     >
                       <h2 id={detailHeadingId} className="ev-sr">{bodyEntry.title}</h2>
                       {bodyEntry.content(bodyCtx)}
@@ -740,7 +768,7 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, closing, o
               </ChapterMediaContext.Provider></ChapterRevealContext.Provider>
             </div>
             {cut > 0 && <div key={cut} className="evd-cut" aria-hidden="true" />}
-            {hydrated && !ready && (awaiting ? awaitSlow : gate.slow || gate.failed) && (
+            {hydrated && !ready && !settled && (awaiting ? awaitSlow : gate.slow || gate.failed) && (
               <DossierLoader
                 kicker={kind === "detail" ? copy.loader.detailKicker(entryIndex + 1) : kind === "opening" ? upLabel : copy.loader.overviewKicker(itemIndex + 1)}
                 title={copy.loader.title}
@@ -772,7 +800,7 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, closing, o
                   aria-label={entry ? copy.entryLocation(entryIndex + 1, entries.length, entry.title) : copy.itemLocation(itemIndex + 1, itemCount, item.label)}
                 >
                   <span className="evd-dock__kicker" aria-hidden="true">{entry ? item.label : copy.dock.item}</span>
-                  <span key={entry ? `e${entryIndex}` : `i${itemIndex}`} className="evd-dock__count" aria-hidden="true">
+                  <span key={entry ? `e${entryIndex}` : `i${itemIndex}`} className="evd-dock__count" aria-hidden="true" data-rest={restTarget || undefined}>
                     {pad((entry ? entryIndex : itemIndex) + 1)}
                     <span>/</span>
                     {pad(entry ? entries.length : itemCount)}

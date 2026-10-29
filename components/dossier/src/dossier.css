@@ -64,6 +64,16 @@
   100% { opacity: 0; transform: translateY(10px) scale(0.975); clip-path: inset(3% 2% round var(--evd-radius)); }
 }
 
+/* Direct load at rest (`directLoad: "at-rest"`): the first view is painted settled. Its entrances run in zero time, so
+   each lands on its end state (the shell keeps its rounded clip); the page is locked from the first paint (server
+   HTML, before the script's lock), so hydration shifts nothing. */
+.ev-dossier[data-rest][data-phase="open"] :is(.evd-backdrop, .evd-shell, .evd-atmosphere),
+.evd-body [data-rest] .evd-board .evd-tile,
+.evd-body .evd-detail[data-rest],
+.evd-body [data-rest] .evd-empty,
+.evd-dock__count[data-rest] { animation-duration: 0s; animation-delay: 0s; }
+html:has(.ev-dossier[data-rest][data-phase="open"]) { overflow: hidden; }
+
 .evd-dialog {
   position: relative;
   display: flex;

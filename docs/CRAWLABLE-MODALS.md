@@ -89,6 +89,13 @@ export type ProcessSequenceProps = Partial<RouteViewProps<ProcessSequenceView>> 
    animations are paused and no video source is set; when `live` turns true
    the copy remounts, so its entrance starts at the moment the view used to
    mount. A client-side switch mounts the incoming view held at once.
+   A package may offer a direct load at rest (dossier `directLoad:
+   "at-rest"`). There, the first view of the layer it mounts with renders
+   `<HeldCopy live rest>`, settled from the first render. It is never held
+   and never remounted, so hydration keeps the server DOM. Its entrances run
+   in zero time, and video sources still wait for hydration. Its gate media
+   go in the page head as preloads. `verify:ssr` renders every view this way
+   too.
 6. **Resting look.** Entrances are CSS animations whose rest is visible
    (fill backwards) or classes added after hydration; never inline
    `opacity: 0` / `visibility: hidden` / `display: none` on copy in server

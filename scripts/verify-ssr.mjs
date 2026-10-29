@@ -77,6 +77,28 @@ const PACKAGES = [
       return { expected: (own.match(/class="evd-rows__media"/g) ?? []).length, required: Boolean(c.opening) && item.id === "menu" };
     },
     legacy: (m, c, v) => h(m.Dossier, { config: c, open: true, onClose: noop, initialItemId: v.item, initialEntryId: v.entry, preload: false }),
+    /* `directLoad: "at-rest"`: a direct load's server HTML is the settled view (README, Variations). Every view again
+       with the option, then what makes it at rest; a pending item (live content still loading) keeps the held path. */
+    atRest: {
+      config: (c) => ({ ...c, directLoad: "at-rest" }),
+      expect(r) {
+        const root = r.tags.find((t) => "data-ev-route-layer" in t.attrs);
+        const viewEl = r.tags.find((t) => /(^|\s)evd-(overview|detail)(\s|$)/.test(t.attrs.class ?? ""));
+        const flagged = (name) => r.tags.filter((t) => name in t.attrs).length;
+        const tiles = r.tags.filter((t) => /(^|\s)evd-tile(\s|$)/.test(t.attrs.class ?? ""));
+        return [
+          [root && "data-rest" in root.attrs, "the modal root carries data-rest (chrome lands settled, page locked from first paint)"],
+          [viewEl && "data-rest" in viewEl.attrs, "the view's element carries data-rest (its entrances run in zero time)"],
+          [!flagged("data-ev-held"), "no held copy (data-ev-held): the view is live in server HTML, hydration keeps it", `${flagged("data-ev-held")}×`],
+          [!flagged("data-waiting") && !flagged("data-locked") && !flagged("data-pending"), "no waiting / locked / pending markup"],
+          [!tiles.some((t) => "disabled" in t.attrs || t.attrs["aria-disabled"] === "true"), "board tiles are enabled (the view is interactive once hydrated)"],
+        ];
+      },
+      pending: (c) => {
+        const at = c.items.findIndex(Boolean);
+        return at < 0 ? null : { config: { ...c, items: c.items.map((item, i) => (i === at ? { ...item, pending: true, entries: [] } : item)) }, view: { item: c.items[at].id, ...(c.opening ? { opening: c.opening.id } : {}) } };
+      },
+    },
   },
   {
     name: "process-sequence",
@@ -291,6 +313,7 @@ async function verifyFoundation() {
       },
       h("video", { "data-gated": "", src: element.src }),
       h(f.HeldCopy, { live: gate.ready }, h(HeldVideo), h("p", null, "held copy")),
+      h("section", { "data-rest-probe": "" }, h(f.HeldCopy, { live: false, rest: true }, h(HeldVideo), h("p", null, "rest copy"))),
       h(f.RouteLink, { href: "/x/a/", onFollow: noop }, "link"),
       h(f.RouteLink, { onFollow: noop }, "button"),
       h(f.OrbFill, { on: true }, "1"),
@@ -318,6 +341,10 @@ async function verifyFoundation() {
   check(tags.some((t) => t.name === "video" && "data-gated" in t.attrs && !("src" in t.attrs)), pkg, "held", "element gate", "a full-buffer player must render no src on the server");
   check(tags.some((t) => t.name === "div" && "data-ev-held" in t.attrs), pkg, "held", "HeldCopy", "server HTML must carry the held copy (data-ev-held)");
   check(tags.some((t) => t.name === "video" && !("src" in t.attrs) && t.attrs.poster), pkg, "held", "useHeldSrc", "held video must render a poster and no src");
+  const restPart = first.html.slice(first.html.indexOf("data-rest-probe"));
+  const restTags = read(`<section ${restPart.slice(0, restPart.indexOf("</section>"))}</section>`).tags;
+  check(!restTags.some((t) => "data-ev-held" in t.attrs), pkg, "held", "HeldCopy rest", "a copy at rest is never held (no data-ev-held), so hydration keeps it");
+  check(restTags.some((t) => t.name === "video" && !("src" in t.attrs) && t.attrs.poster), pkg, "held", "HeldCopy rest", "a copy at rest still withholds video sources until hydration (poster only)");
   check(tags.some((t) => t.name === "a" && t.attrs.href === "/x/a/") && tags.some((t) => t.name === "button" && t.attrs.type === "button"), pkg, "links", "RouteLink", "RouteLink must render <a href> with an href, <button> without");
   check(first.html.includes('data-ink="#101011#fafafa#101011"'), pkg, "inkFor", "inkFor", `server inks ${first.html.match(/data-ink="([^"]*)"/)?.[1]} ≠ #101011 #fafafa #101011`);
   const hrefs = f.routeHrefs("/carte/", (v) => v.k);
@@ -454,6 +481,35 @@ async function verifyPackage(spec, foundation) {
     }
     for (const v of views) {
       if (routes.parent(v) && !linked.has(key(v))) check(false, pkg, "links", `${locale} ${key(v)}`, "no rendered view links to this view: unreachable for crawlers");
+    }
+
+    /* Direct load at rest: the same contract per view, plus the at-rest markup. */
+    if (spec.atRest) {
+      const restConfig = spec.atRest.config(config);
+      const makeRest = (view, c = restConfig) => h(m[spec.component], { config: c, view, onNavigate: noop, hrefFor });
+      for (const view of views) {
+        const k = key(view);
+        let head = null;
+        try {
+          head = routes.head(config, view);
+        } catch {
+          /* reported above */
+        }
+        await verifyView({ pkg, spec, m, config: restConfig, view, locale: `${locale}:at-rest`, key: k, element: makeRest(view), ctx, head });
+        const out = await renderCaptured(makeRest(view));
+        if (out.error) continue;
+        const r = read(out.html);
+        for (const [ok, message, detail = ""] of spec.atRest.expect(r)) check(ok, pkg, "at-rest", `${locale}:at-rest ${k}`, message, detail);
+      }
+      const pending = spec.atRest.pending(restConfig);
+      if (pending) {
+        const out = await renderCaptured(makeRest(pending.view, pending.config));
+        if (check(!out.error, pkg, "at-rest", `${locale}:at-rest pending`, `render threw: ${out.error?.message}`)) {
+          const r = read(out.html);
+          const root = r.tags.find((t) => "data-ev-route-layer" in t.attrs);
+          check(root && !("data-rest" in root.attrs) && r.tags.some((t) => "data-ev-held" in t.attrs), pkg, "at-rest", `${locale}:at-rest pending ${key(pending.view)}`, "a view waiting on live content (pending item) must keep the held, gated path");
+        }
+      }
     }
   }
 }
