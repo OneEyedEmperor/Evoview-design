@@ -178,7 +178,7 @@ on 58 site routes) and hydration matches.
 **Press jelly** (foundation 1.9.0, RULES §6; `components/foundation/src/jelly.ts`
 + `usePressJelly.ts`). Every clickable pill / button squashes (−7px tall,
 +10px wide, capped 11 % / 7 %) while pressed and springs back ringing
-like jelly (release ζ .14: ~7 %, 4 %, 3 %, 2 %, 1 % over ~1.5s). Félix
+like jelly (release ζ .14: ~7 %, 4 %, 3 %, 2 %, 1 % over ~1.5s). The emperor
 tuned it up twice: half the depth with one 1.4 % overshoot was too subtle,
 then three bounces still too damped. Press feedback has to read at a
 glance; err on the elastic side. Lessons:
