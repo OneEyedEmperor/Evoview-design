@@ -116,7 +116,6 @@ const T = {
   practical: { fr: "En pratique.", en: "In practice." },
   practicalNote: { fr: "Les informations utiles avant de venir.", en: "What to know before you come." },
   consequence: { fr: "Quitte le dossier", en: "Leaves the dossier" },
-  kicker: { fr: "Expériences", en: "Experiences" },
   attribution: { fr: "Site conçu par Evoview — evoview.be (nouvel onglet)", en: "Site designed by Evoview — evoview.be (new tab)" },
 };
 
@@ -543,7 +542,6 @@ export function buildDossierConfig(locale: Locale): DossierConfig {
   return {
     locale,
     brand: { name: "Maison Ardoise" },
-    kicker: T.kicker[locale],
     items: DATA.map((d) => buildItem(d, locale)),
     attribution: { enabled: true, href: EVOVIEW_URL, label: T.attribution[locale] },
     copy: COPY[locale],
@@ -592,7 +590,6 @@ function dishMarks(marks: DishMark[] | undefined, locale: Locale) {
 type Special = { id: string; image: string; title: L; label: L; kicker: L; alt: L; story: { title: L; lead: L; body: L }; facts: Rows };
 
 const M = {
-  kicker: { fr: "À table", en: "At the table" },
   opening: {
     title: { fr: "La carte ou les suggestions", en: "The menu or today's specials" },
     label: { fr: "Au menu", en: "On the menu" },
@@ -915,7 +912,6 @@ export function buildDossierMenuConfig(locale: Locale, options: { specials?: num
     locale,
     composition,
     brand: { name: "Maison Ardoise" },
-    kicker: M.kicker[locale],
     opening: { id: "choose", title: M.opening.title[locale], label: M.opening.label[locale], description: M.opening.description[locale] },
     items: [menuItem(locale), specialsItem(locale, specials)],
     attribution: { enabled: true, href: EVOVIEW_URL, label: T.attribution[locale] },

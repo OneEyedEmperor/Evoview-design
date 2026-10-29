@@ -197,7 +197,7 @@ other marks.
 
 ## Expression (adapt)
 
-Config only: brand (logo node or name), optional kicker, opening (title, label),
+Config only: brand (logo node or name), opening (title, label),
 items (label, accent, cover and readout for the opening tile, empty-day
 sentence), entries (title, short label, kicker, media, detail chapters'
 content), all copy, attribution label. Accent = the client's: the host `--primary` /

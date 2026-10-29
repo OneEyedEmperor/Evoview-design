@@ -52,7 +52,7 @@ liquid fill as reference): `animations/SKILL.md` (skill
 | `card` — media card in three compositions: scroll-scrubbed track, dealt category deck, timed video sequence (`/layouts/card`; was `card-track`) | 2.3.0 | `evoview-card` |
 | `process-sequence` — timed step board + step dossier, crawlable step views (`/layouts/process-sequence`) | 1.7.2 | `evoview-process-sequence` |
 | `story-blocks` — intro split, indexed sequence, proof collage, payoff (`/layouts/story-blocks`) | 2.5.0 | `evoview-story-blocks` |
-| `dossier` — portal modal, selection board, chapter strip, mobile dock, crawlable views; panorama / sheet compositions, optional opening screen, live entry counts, rows with media, direct load at rest, optional header kicker (`/components/dossier`) | 1.11.1 | `evoview-dossier` |
+| `dossier` — portal modal, selection board, chapter strip, mobile dock, crawlable views; panorama / sheet compositions, optional opening screen, live entry counts, rows with media, direct load at rest, optional header kicker (`/components/dossier`) | 1.11.2 | `evoview-dossier` |
 | `selector-stage` — selector ↔ stage, before/after, atlas (`/components/selector-stage`) | 1.6.0 | `evoview-selector-stage` |
 | `navbar` — finder capsule, desktop + mobile, cover-card trays (`/navbar`) | 2.10.3 | `evoview-navbar` |
 | `reservation` — Evoview booking application + short paper flow, client accent (`/components/reservation`) | 2.12.1 | `evoview-reservation` |

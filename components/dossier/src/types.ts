@@ -154,8 +154,8 @@ export type DossierConfig = {
   directLoad?: DossierDirectLoad;
   /** Client identity in the header strip. */
   brand: { name: string; logo?: ReactNode };
-  /** Header kicker above the title on the opening screen and overviews, ≥ 600 ("Maison Ardoise · Expériences"). Omitted or
-      empty: no kicker, the title alone centred in the bar (RULES §1, no kicker tags). */
+  /** Header kicker above the title on the opening screen and overviews, ≥ 600. Leave it out (the templates do): omitted
+      or empty, no kicker, the title alone centred in the bar (RULES §1, no kicker tags). */
   kicker?: string;
   /** Optional opening screen: the dossier's top level, choosing between the items. */
   opening?: DossierOpening;

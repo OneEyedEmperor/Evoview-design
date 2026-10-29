@@ -1,5 +1,19 @@
 # dossier changelog
 
+## 1.11.2
+
+Template change. No API change. Requires nothing new.
+
+- The client-owned reference templates (`dossier.config.tsx`:
+  `buildDossierConfig`, `buildDossierMenuConfig`) no longer set the header
+  `kicker` ("Expériences" / "À table"), so new clients start without one
+  (RULES §1).
+- **Existing clients are unaffected:** `sync.sh` never writes a client-owned
+  file. A client that wants its kicker gone deletes the line from its own
+  config.
+- `kicker` stays an optional field. `verify:ssr` keeps a fixture proving a
+  set kicker still renders one node.
+
 ## 1.11.1
 
 Fix. No config change. Requires nothing new (foundation ≥ 1.13.0).
