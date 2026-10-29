@@ -34,6 +34,9 @@ are sentence case; brand statements are uppercase.
 **No small counting tags.** Never label items with position readouts such as
 `01 / 04` or `02 / 03`. When an item's order matters, show the bare number
 (`1`, `2`…, no padding, no total) in a round orb attached to the item.
+Exemption (the emperor, 2026-10-29): counters inside a modal, rendered at
+low opacity as an overlay (dossier tile numerals, the chrome's position
+readout), are allowed.
 
 **Stacked lists: the step gauge (norm).** When a vertical list carries its
 order at the head of each row (steps, options, stages), the position is a
