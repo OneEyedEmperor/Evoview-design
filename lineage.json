@@ -372,6 +372,11 @@
           "origin": { "ref": "f72e48d", "files": ["src/components/ServiceModal.tsx", "src/components/PartnerWorkModal.tsx", "src/components/PartnerWorkModal.css", "src/data/serviceModals.ts"] },
           "files": ["src/components/ServiceModal.tsx", "src/components/PartnerWorkModal.tsx", "src/components/PartnerWorkModal.css", "src/components/dossierChromeFill.tsx"],
           "note": "Shell CSS (service-modal-*, service-dossier-shell) lives in src/index.css."
+        },
+        "tchin": {
+          "relation": "none",
+          "files": [],
+          "note": "Install approved 2026-10-29 (downstream/tchin.json dossier-install): becomes `installed` once synced."
         }
       }
     },
