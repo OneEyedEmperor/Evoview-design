@@ -549,6 +549,8 @@ a.ps-card { display: block; color: inherit; text-decoration: none; }
 .psd__strip { position: absolute; top: 0; right: 0; left: 0; display: flex; align-items: center; padding: 1.4em 1.6em; }
 .psd__well .psd__strip { padding: 14px 16px; }
 .psd__well .psd__strip .ev-attribution svg { width: 64px; }
+/* The stage clips the hit area's top edge: a taller one keeps ≥ 44px inside it. */
+.psd__well .psd__strip .ev-attribution::before { height: 48px; }
 .psd__stamp { position: absolute; bottom: 1.5em; left: 1.6em; display: grid; gap: 0.6em; }
 .psd__numeral {
   font-family: var(--ev-font-display);

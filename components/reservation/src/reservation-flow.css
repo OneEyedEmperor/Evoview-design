@@ -4,6 +4,8 @@
 
 .evrf { display: grid; gap: calc(2.5 * var(--ev-rem)); min-width: 0; }
 .evrf__strip { display: flex; align-items: center; margin-bottom: calc(-1 * var(--ev-rem)); }
+/* The progress segments' 44px hit areas reach into the mark's bottom padding: its hit area ends 3px under the wordmark and grows up. */
+.evrf__strip .ev-attribution::before { top: auto; bottom: 12px; translate: -50% 0; }
 .evrf__step { display: grid; align-content: start; gap: 22px; min-height: 12.5em; animation: evrf-step-in var(--ev-dur-reveal) var(--ev-ease-cinematic) both; }
 @keyframes evrf-step-in { from { opacity: 0; transform: translateY(12px); } }
 .evrf__contact { display: grid; gap: 14px; max-width: 28em; }

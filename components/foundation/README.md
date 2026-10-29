@@ -314,6 +314,10 @@ tab, `rel="noopener"`, no tracking, accessible name in the page language that
 names Evoview and the new tab. Never inside or next to a client CTA. Further
 marks are decorative (`<EvoviewLogo alt="">`, `aria-hidden`, ≤ .12 opacity).
 On by default in every package config; turning it off is the founder's call.
+Hit area ≥ 44 × 44 whatever the wordmark's size: the link's padding plus a
+centred `::before` (`max(100%, 44px)` each way). A package whose neighbours'
+hit areas or an `overflow` clip cut into it moves or grows that `::before`
+only (reservation strip, step dossier well); the mark never moves.
 
 ## Signature (preserve)
 

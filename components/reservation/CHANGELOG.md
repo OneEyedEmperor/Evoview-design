@@ -1,5 +1,16 @@
 # reservation changelog
 
+## 2.12.1
+
+Fix. No config change, no visual change. Requires `foundation` ≥ 1.12.1
+(the attribution `::before` hit area).
+
+- Paper flow strip: the progress segments' 44px hit areas covered the
+  attribution's bottom padding, leaving the mark a 35.5px (390) / 41px
+  (≥ 1024) tall target. Its hit area now ends 3px under the wordmark and
+  grows up into the free space: 47.5 / 53.5px tall. The progress hit areas
+  are unchanged.
+
 ## 2.12.0
 
 - Sync (`docs/SYNC.md`): `evoview.json` (`requires` foundation `>=1.9.0 <2`,

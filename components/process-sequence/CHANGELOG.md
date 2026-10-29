@@ -1,5 +1,14 @@
 # process-sequence changelog
 
+## 1.7.2
+
+Fix. No config change, no visual change. Requires `foundation` ≥ 1.12.1
+(the attribution `::before` hit area).
+
+- Step dossier on phones (the well): the stage's `overflow: hidden` clipped
+  the attribution's hit area to 80 × 43.7. Its `::before` is 48px tall there:
+  80 × 44.5 inside the clip. The wordmark is unchanged.
+
 ## 1.7.1
 
 Fix. No config change. Requires `foundation` ≥ 1.12.0 (`restoreFocus`).

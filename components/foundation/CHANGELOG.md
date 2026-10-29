@@ -1,5 +1,16 @@
 # foundation changelog
 
+## 1.12.1
+
+No config or API change. Requires nothing new. No visual change.
+
+Fix
+- `.ev-attribution` hit area ≥ 44 × 44 at any wordmark size (RULES §7):
+  a centred `::before` of `max(100%, 44px)` each way; the link gains
+  `position: relative`. The dossier header mark on phones (54px wordmark)
+  measured 70 × 42, now 70 × 44. The wordmark, its size and its placement
+  are unchanged.
+
 ## 1.12.0
 
 No config change. Additive API. Requires nothing new.
