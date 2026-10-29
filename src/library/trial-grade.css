@@ -41,9 +41,21 @@
 .lib-showcase .lib-showcase__stage .lib-variant:not([data-tone="dark"]) .lib-scene > .ev-root.ev-root.ev-tone-dark,
 .lib-showcase .lib-showcase__stage:has(> .ev-root.ev-tone-dark:first-child) {
   background: transparent;
+}
+/* Clip and isolate only while no in-place modal (a route layer: the step
+   dossier) is mounted inside the block: both would trap its fixed layer
+   under the hero and navbar and clip its top. Meanwhile the block's grade
+   runs unclipped behind the modal's own blurred backdrop. */
+:is(
+  .ev-library .lib-hero.lib-toned,
+  .ev-library .lib-chapter.lib-toned[data-tone="dark"],
+  .lib-showcase .lib-showcase__stage .lib-variant.lib-variant[data-tone="dark"],
+  .lib-showcase .lib-showcase__stage > .ev-root.ev-root.ev-tone-dark,
+  .lib-showcase .lib-showcase__stage .lib-variant:not([data-tone="dark"]) .lib-scene > .ev-root.ev-root.ev-tone-dark,
+  .lib-showcase .lib-showcase__stage:has(> .ev-root.ev-tone-dark:first-child)
+):not(:has([data-ev-route-layer])) {
   isolation: isolate;
-  /* Reaches into the body padding a scroll lock adds for the scrollbar, or
-     an in-place modal (step dossier) leaves a strip of body there. */
+  /* Reaches into the body padding a scroll lock adds for the scrollbar. */
   clip-path: inset(0 calc(-1 * var(--ev-scroll-lock-gap, 0px)) 0 0);
 }
 .ev-library .lib-hero.lib-toned::before,
