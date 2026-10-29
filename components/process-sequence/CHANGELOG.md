@@ -1,5 +1,13 @@
 # process-sequence changelog
 
+## 1.7.1
+
+Fix. No config change. Requires `foundation` ≥ 1.12.0 (`restoreFocus`).
+
+- Closing the step dossier returns focus through `restoreFocus`: a launcher
+  that became inert or hidden meanwhile hands focus to its disclosure's
+  trigger instead of dropping it on `<body>`.
+
 ## 1.7.0
 
 Requires `foundation` ≥ 1.10.0 (`useScrollLock`). No config changes, no CSS

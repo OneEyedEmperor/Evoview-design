@@ -23,6 +23,7 @@ import {
   mediaGate,
   pad,
   preloadMedia,
+  restoreFocus,
   RouteLink,
   SurfaceFill,
   TextFill,
@@ -305,7 +306,7 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, closing, o
       for (const [el, inert] of touched) el.inert = inert;
       unlock();
       // After the commit: React restores the focus it saw before the commit (the close button) once mutations are done.
-      if (launcher) queueMicrotask(() => launcher.isConnected && launcher.focus({ preventScroll: true }));
+      if (launcher) queueMicrotask(() => restoreFocus(launcher));
     };
   }, [closing]);
 

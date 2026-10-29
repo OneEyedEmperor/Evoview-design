@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
 import { SegmentedProgress } from "../controls";
-import { Check, cn, pad, TextFill, useInViewPause, useMediaQuery, useMediaReady, useRouteHistory, useSequenceClock, type RouteViewProps } from "../foundation";
+import { Check, cn, pad, restoreFocus, TextFill, useInViewPause, useMediaQuery, useMediaReady, useRouteHistory, useSequenceClock, type RouteViewProps } from "../foundation";
 import { isVideo } from "./media";
 import { processSequenceRoutes } from "./routes";
 import { StepCard } from "./StepCard";
@@ -122,7 +122,7 @@ export function ProcessSequence({
       setMountedIndex(null);
       const el = launcher.current;
       launcher.current = null;
-      if (el) window.requestAnimationFrame(() => el.isConnected && el.focus({ preventScroll: true }));
+      if (el) window.requestAnimationFrame(() => restoreFocus(el));
     }, STEP_DOSSIER_EXIT_MS);
     return () => window.clearTimeout(t);
   }, [openIndex, mountedIndex]);

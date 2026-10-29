@@ -11,6 +11,7 @@ export {
   useSuspendBackground,
 } from "./suspension";
 export { lockScroll, useScrollLock, SCROLL_LOCK_GAP } from "./scrollLock";
+export { restoreFocus } from "./focus";
 export { useInViewPause, type InViewPause, type InViewPauseOptions } from "./useInViewPause";
 export { useMediaQuery } from "./useMediaQuery";
 export { useHydrated } from "./hydration";

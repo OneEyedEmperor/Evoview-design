@@ -337,7 +337,10 @@ to cover this and the `process-sequence` step dossier.
   opening screen) focuses the tile you came from; entering an item from the
   opening screen focuses its board.
 - **Close**: the page is released as soon as the exit starts (inert, scroll
-  lock and suspension lifted, focus back on the launcher, the fading layer
+  lock and suspension lifted, focus back on the launcher through foundation
+  `restoreFocus`: a launcher inside a disclosure that closed meanwhile (a
+  navbar finder pill) hands it to that disclosure's `aria-controls`
+  trigger; the fading layer
   lets clicks through); the content stays on screen through the 340 ms exit;
   the layer is removed on `animationend` or after 700 ms at most.
 - **Escape = one level** (detail → overview → opening screen → close),

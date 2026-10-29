@@ -1,5 +1,13 @@
 # dossier changelog
 
+## 1.9.2
+
+Fix. No config change. Requires `foundation` ≥ 1.12.0 (`restoreFocus`).
+
+- Close returns focus through `restoreFocus`: a launcher made inert while the
+  dossier was open (the navbar finder's pill, its deck closed on launch)
+  hands focus to the finder trigger instead of dropping it on `<body>`.
+
 ## 1.9.1
 
 Fix. No config change; requires unchanged.

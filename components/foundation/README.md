@@ -98,6 +98,12 @@ lockScroll(): () => void                 // ref-counted: nested locks release in
 useScrollLock(active: boolean)           // for modals; layout effect (before paint), nothing on the server
 SCROLL_LOCK_GAP                          // "--ev-scroll-lock-gap"
 
+// Modal close: focus back on the launcher
+restoreFocus(target, options = { preventScroll: true }): boolean
+  // target unfocusable (inert / hidden: a disclosure closed meanwhile) → the trigger whose
+  // `aria-controls` names the nearest closed region around it, up through nested disclosures;
+  // disconnected target → nothing. Disclosures need no opt-in beyond the ARIA pattern.
+
 // Timed sequences: only enabled time counts, remainder carried, new key = 0
 useSequenceClock(key, enabled, durationMs, onElapsed)
   → { key, duration, running, elapsed, done, progress(): 0–1, reset() }

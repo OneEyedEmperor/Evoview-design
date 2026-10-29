@@ -1,5 +1,16 @@
 # foundation changelog
 
+## 1.12.0
+
+No config change. Additive API. Requires nothing new.
+
+- New `restoreFocus(target, options?)`: gives focus back to a modal's
+  launcher. A launcher that can no longer take it (inert or hidden: a navbar
+  finder pill whose deck closed when it opened the modal) hands it to the
+  trigger of its disclosure, the element whose `aria-controls` names the
+  nearest region around it, up through nested disclosures. Works with any
+  host disclosure that follows the ARIA pattern; no opt-in attribute.
+
 ## 1.11.2
 
 No config or API change. Requires nothing new.

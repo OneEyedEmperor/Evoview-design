@@ -44,7 +44,9 @@ library's `STRATEGY.md` + `docs/RULES.md` first.
   gate `inert` / `aria-hidden` / loaders on `useHydrated()`, lock page
   scroll with `useScrollLock` / `lockScroll` (never an own `overflow`
   write; fixed chrome anchored right adds `var(--ev-scroll-lock-gap, 0px)`
-  to its `right`); then add it to
+  to its `right`), return focus on close with `restoreFocus(launcher)`
+  (never a bare `.focus()`: an inert launcher falls back to its
+  disclosure's trigger); then add it to
   `PACKAGES` in `scripts/verify-ssr.mjs` and keep `pnpm verify:ssr` green.
 
 ## Rules
