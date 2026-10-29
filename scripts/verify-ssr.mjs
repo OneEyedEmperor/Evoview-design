@@ -94,7 +94,8 @@ const PACKAGES = [
         const flagged = (name) => r.tags.filter((t) => name in t.attrs).length;
         const tiles = r.tags.filter((t) => /(^|\s)evd-tile(\s|$)/.test(t.attrs.class ?? ""));
         return [
-          [root && "data-rest" in root.attrs, "the modal root carries data-rest (chrome lands settled, page locked from first paint)"],
+          [root && "data-rest" in root.attrs, "the modal root carries data-rest (chrome lands settled)"],
+          [root && "data-rest-lock" in root.attrs, "the server HTML carries data-rest-lock (page locked from first paint, until hydration)"],
           [viewEl && "data-rest" in viewEl.attrs, "the view's element carries data-rest (its entrances run in zero time)"],
           [!flagged("data-ev-held"), "no held copy (data-ev-held): the view is live in server HTML, hydration keeps it", `${flagged("data-ev-held")}×`],
           [!flagged("data-waiting") && !flagged("data-locked") && !flagged("data-pending"), "no waiting / locked / pending markup"],

@@ -159,7 +159,7 @@ other marks.
     tile the same way. The caption scrim stays. For clients whose photos must
     stay true to colour (food).
 - **Direct load** (`config.directLoad`, `DOSSIER_DIRECT_LOADS`): the first
-  view of a page loaded on a view URL (the dossier mounts with a `view`).
+  view of a page loaded on a view URL (the view the document was served on).
   - `entrance` (default): that view waits for its media and hydration, then
     plays the same entrance as an in-page open.
   - `at-rest`: that view is the settled view from the first paint and
@@ -416,16 +416,30 @@ Client steps (§7):
 
 ### Direct load at rest (`directLoad: "at-rest"`)
 
-Only for the layer the dossier mounts with (a page loaded or hydrated on a
-view URL). Its first view is never held. It renders live and settled from
-the first render, server included, so hydration keeps the server DOM. That
-view's entrances run in zero time and land on their end state: shell
-(rounded clip), backdrop, atmosphere, board tiles (the blur convergence),
-detail, empty panel, dock count. Its chapters start revealed, with no scroll
-reveal. Videos keep their poster until hydration. While it is open, `<html>`
-has `overflow: hidden` from the first paint, so the script's lock shifts
-nothing at hydration. On a direct load the page under the modal is laid out
-without a scrollbar.
+Only for the view the document was served on, mounted with the dossier. That
+means one of two things:
+- the server render, or the render that hydrates that server HTML;
+- in a client-rendered page, a dossier mounting on the view whose URL the
+  document was loaded at (the navigation entry, not the current location,
+  which a router or a launcher may already have moved).
+
+A dossier a client mounts later, on intent, even its first mount from an
+in-page launcher, is an in-page open: full entrance, normal scroll lock.
+
+That first view is never held. It renders live and settled from the first
+render, server included, so hydration keeps the server DOM. Its entrances
+run in zero time and land on their end state: shell (rounded clip),
+backdrop, atmosphere, board tiles (the blur convergence), detail, empty
+panel, dock count. Its chapters start revealed, with no scroll reveal.
+Videos keep their poster until hydration.
+
+Scroll lock:
+- Server HTML carries `data-rest-lock` until hydration, so `<html>` has
+  `overflow: hidden` from the first paint and no scrollbar exists. At
+  hydration the script's lock takes over, so nothing shifts. On such a
+  direct load the page under the modal is laid out without a scrollbar.
+- A client-rendered mount never carries `data-rest-lock`: foundation's lock
+  measures any scrollbar and compensates it, as for an in-page open.
 
 The next view the visitor opens, and every later open, takes the usual gate
 and entrance. A first view waiting on live content (a `pending` item's

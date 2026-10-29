@@ -1,5 +1,28 @@
 # dossier changelog
 
+## 1.11.1
+
+Fix. No config change. Requires nothing new (foundation ≥ 1.13.0).
+
+- `directLoad: "at-rest"` was keyed on "the dossier mounted already holding a
+  view". A client that mounts the dossier lazily, on intent (Tchin, inside
+  `startTransition`), mounts it already holding the in-page view when the
+  visitor's first interaction is a launcher. That open was treated as a
+  direct load: no entrance, and the CSS first-paint lock hid the scrollbar
+  before the script's lock could measure it, so there was no compensation
+  (at 1440, `main` 1425 → 1440 and the navbar moved 7.5 px).
+- At rest now applies only to the view the document was served on:
+  - the server render, or the render that hydrates its HTML (`useHydrated()`
+    false);
+  - or, in a client-rendered page, a mount on the view whose URL the
+    document was loaded at (the navigation entry's URL, not
+    `location`).
+- Any other mount is an in-page open: full entrance, normal lock.
+- The first-paint CSS lock moved to `data-rest-lock`. Server HTML carries it
+  only until hydration, then the script's lock takes over. A client mount
+  never carries it, so a scrollbar present at mount is always compensated.
+- `verify:ssr`: at-rest server HTML must carry `data-rest-lock`.
+
 ## 1.11.0
 
 Requires nothing new (foundation ≥ 1.13.0, unchanged).

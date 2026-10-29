@@ -95,6 +95,29 @@ function awaitsLiveContent(config: DossierConfig, view: DossierView): boolean {
   return !!item?.pending && !item.entries.some((e) => e.id === view.entry);
 }
 
+const pathOf = (href: string) => {
+  let path = new URL(href, window.location.href).pathname;
+  try {
+    path = decodeURI(path);
+  } catch {
+    /* keep as is */
+  }
+  return path.replace(/\/+$/, "") || "/";
+};
+
+/**
+ * The view is the one the document was served on: this render is the server's or hydrates its HTML (`hydrated`
+ * false), or, in a client-rendered page, the document was loaded at the view's URL (the navigation entry, not the
+ * current location, which a router or an in-page launcher may already have moved). Any other mount, a first mount
+ * on an in-page launcher included, is an in-page open.
+ */
+function servedOn(href: string | undefined, hydrated: boolean): boolean {
+  if (!hydrated) return true;
+  if (href === undefined || typeof window === "undefined") return false;
+  const loaded = (performance.getEntriesByType?.("navigation")[0] as PerformanceNavigationTiming | undefined)?.name;
+  return loaded !== undefined && pathOf(loaded) === pathOf(href);
+}
+
 function legacySeed(config: DossierConfig, itemId?: string, entryId?: string): DossierView | null {
   if (itemId === undefined && entryId === undefined) return topView(config);
   const item = itemId ?? config.items[0]?.id;
@@ -141,10 +164,13 @@ export function Dossier(props: DossierProps) {
 
   // Every open gets a fresh layer: reopening during the exit animation must not resume the closing one.
   // The layer keeps the last view, so the content stays on screen through the exit.
-  // Only the layer of a direct load (the dossier mounts on a view) may show its first view at rest; a view still
-  // waiting on live content enters as usual, and every later open is an in-page open.
+  // Only the layer of a direct load (the dossier mounts on the view the document was served on) may show its first
+  // view at rest; a view still waiting on live content enters as usual, and every other open is an in-page open.
+  const hydrated = useHydrated();
   const [layer, setLayer] = useState<{ key: number; closing: boolean; view: DossierView; rest: boolean } | null>(() =>
-    view ? { key: 1, closing: false, view, rest: config.directLoad === "at-rest" && !awaitsLiveContent(config, view) } : null,
+    view
+      ? { key: 1, closing: false, view, rest: config.directLoad === "at-rest" && !awaitsLiveContent(config, view) && servedOn(hrefFor?.(view), hydrated) }
+      : null,
   );
   if (view && (!layer || layer.closing)) setLayer({ key: (layer?.key ?? 0) + 1, closing: false, view, rest: false });
   else if (view && layer && dossierRoutes.key(view) !== dossierRoutes.key(layer.view)) setLayer({ ...layer, view });
@@ -560,6 +586,7 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, clos
       data-board={bodyBoard}
       data-dock={dockShown || undefined}
       data-rest={rest || undefined}
+      data-rest-lock={(rest && !hydrated) || undefined}
       data-ev-route-layer=""
       style={accentStyle}
     >

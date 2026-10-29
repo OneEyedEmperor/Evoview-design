@@ -152,6 +152,11 @@ function Showcase() {
   const { set, view } = state;
   // An open view owns the page's h1 (the page title renders as h2 meanwhile).
   useShowcaseViewOpen(view !== null);
+  /* Test hook (`?lazy-mount`, nothing visible): the modal mounts on its first launch, already holding the view, as a
+     client that loads the dossier on intent does. That mount is an in-page open, never a direct load. */
+  const [lazyMount] = useState(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).has("lazy-mount"));
+  const [launched, setLaunched] = useState(false);
+  if (lazyMount && view && !launched) setLaunched(true);
 
   const multi = useMemo<DossierConfig>(() => {
     const config = buildDossierConfig(locale);
@@ -269,7 +274,9 @@ function Showcase() {
         </div>
       </ShowcaseVariant>
 
-      <DossierModal config={configs[set]} view={view} onNavigate={(next) => setState((s) => ({ ...s, view: next }))} hrefFor={hrefs[set]} />
+      {(!lazyMount || launched) && (
+        <DossierModal config={configs[set]} view={view} onNavigate={(next) => setState((s) => ({ ...s, view: next }))} hrefFor={hrefs[set]} />
+      )}
     </ControlsProvider>
   );
 }
