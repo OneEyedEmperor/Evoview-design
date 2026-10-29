@@ -25,7 +25,7 @@ does the same when the plan is clean.
 | Components | [dossier](components/dossier/README.md) | 1.6.0 |
 | Components | [selector-stage](components/selector-stage/README.md) | 1.6.0 |
 | Components | [controls](components/controls/README.md) | 1.6.0 |
-| Navbar | [navbar](components/navbar/README.md) | 2.9.0 |
+| Navbar | [navbar](components/navbar/README.md) | 2.10.2 |
 | — | [foundation](components/foundation/README.md) (base, not showcased) | 1.9.1 |
 
 Design rules: [docs/RULES.md](docs/RULES.md).

@@ -54,7 +54,7 @@ liquid fill as reference): `animations/SKILL.md` (skill
 | `story-blocks` — intro split, indexed sequence, proof collage, payoff (`/layouts/story-blocks`) | 2.5.0 | `evoview-story-blocks` |
 | `dossier` — portal modal, selection board, chapter strip, mobile dock, crawlable views (`/components/dossier`) | 1.7.0 | `evoview-dossier` |
 | `selector-stage` — selector ↔ stage, before/after, atlas (`/components/selector-stage`) | 1.6.0 | `evoview-selector-stage` |
-| `navbar` — finder capsule, desktop + mobile, cover-card trays (`/navbar`) | 2.10.1 | `evoview-navbar` |
+| `navbar` — finder capsule, desktop + mobile, cover-card trays (`/navbar`) | 2.10.2 | `evoview-navbar` |
 | `reservation` — Evoview booking application + short paper flow, client accent (`/components/reservation`) | 2.12.0 | `evoview-reservation` |
 
 ## Rules for changing a component here

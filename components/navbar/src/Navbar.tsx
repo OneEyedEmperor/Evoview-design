@@ -39,7 +39,7 @@ export default function Navbar({ config: siteConfig }: { config: NavbarConfig })
     <header
       data-tone={tone}
       data-reticle={config.reticle ?? "eye"}
-      className={`ev-navbar fixed top-0 left-0 right-0 z-50 flex justify-center px-4${prefersReducedMotion ? " reduced-motion" : ""}`}
+      className={`ev-navbar fixed top-0 left-0 right-0 z-50 flex justify-center px-4 ${prefersReducedMotion ? "reduced-motion" : ""}`}
       style={{
         paddingTop: "max(0.75rem, env(safe-area-inset-top))",
         "--nav-orb-accent": "currentColor",

@@ -1,5 +1,15 @@
 # navbar changelog
 
+## 2.10.2
+
+No config changes.
+
+- Fix: the bar's `px-4` sat glued to a template expression
+  (`` `…px-4${…}` ``), so Tailwind's scanner saw `px-4${prefersReducedMotion`
+  and only generated `.px-4` when another source file used it. Production
+  builds of hosts without another `px-4` (the library showcase) lost the
+  bar's 16px side padding on phones. The class is now a separate token.
+
 ## 2.10.1
 
 No config changes.
