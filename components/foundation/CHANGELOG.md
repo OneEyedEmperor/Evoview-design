@@ -1,5 +1,20 @@
 # foundation changelog
 
+## 1.11.2
+
+No config or API change. Requires nothing new.
+
+Fix
+- `useRouteHistory`: a page loaded (or routed) on a URL the host resolves to
+  another view (an unknown key falling back to its nearest ancestor) kept
+  that URL as the entry under the modal, so closing landed on a dead view
+  URL. On first open, any URL other than `hrefFor(null)` is now a deep link:
+  its entry becomes `hrefFor(null)`, the resolved view's ancestry is pushed
+  (the address bar shows the resolved URL), and Back / close step out one
+  level at a time, as for a valid deep link. Hosts: `hrefFor(null)` must be
+  the URL of the page an in-page launcher sits on (docs/CRAWLABLE-MODALS.md
+  §5).
+
 ## 1.11.1
 
 No config or API change. Requires nothing new.

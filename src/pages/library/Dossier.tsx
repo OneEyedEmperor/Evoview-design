@@ -3,6 +3,7 @@ import { ControlsProvider, GhostAction, SegmentedControl, Switch, buildControlsC
 import { ArrowRight, followRouteLink, pad, routeHrefs, useMediaQuery } from "../../../components/foundation/src";
 import { Dossier as DossierModal, buildDossierConfig, dossierRoutes, type DossierComposition, type DossierConfig, type DossierTileMedia, type DossierView } from "../../../components/dossier/src";
 import { buildDossierMenuConfig } from "../../../components/dossier/src/dossier.config";
+import { topView } from "../../../components/dossier/src/routes";
 import "../../../components/dossier/showcase.css";
 import ShowcasePage, { ShowcaseVariant, useShowcaseViewOpen } from "../../library/ShowcasePage";
 import { useShowcaseSubpath } from "../../library/routing";
@@ -114,14 +115,24 @@ const SPECIALS_DEFAULT: Specials = "3";
 const singleOnly = (config: DossierConfig): DossierConfig => ({ ...config, items: config.items.filter((item) => item.id === "salons") });
 const under = (path: string, segment: string) => (path === segment || path.startsWith(`${segment}/`) ? path.slice(segment.length + 1) : null);
 
+/** A sub-path's view; an unknown key falls back to its nearest existing ancestor, else the top level (a removed entry). */
+function nearestView(config: DossierConfig, key: string): DossierView | null {
+  const parts = key.split("/");
+  for (let n = parts.length; n > 0; n -= 1) {
+    const view = dossierRoutes.parse(config, parts.slice(0, n).join("/"));
+    if (view) return view;
+  }
+  return topView(config);
+}
+
 /** The view a page sub-path names, and the variant it belongs to. */
 function viewFromSubpath(path: string, locale: Locale): { set: Set; view: DossierView | null } {
   const config = buildDossierConfig(locale);
   const single = under(path, SEGMENTS.single);
-  if (single !== null) return { set: "single", view: dossierRoutes.parse(singleOnly(config), single) };
+  if (single !== null) return { set: "single", view: single ? nearestView(singleOnly(config), single) : null };
   const menu = under(path, SEGMENTS.menu);
-  if (menu !== null) return { set: "menu", view: dossierRoutes.parse(buildDossierMenuConfig(locale, { specials: Number(SPECIALS_DEFAULT) }), menu) };
-  return { set: "multi", view: path ? dossierRoutes.parse(config, path) : null };
+  if (menu !== null) return { set: "menu", view: menu ? nearestView(buildDossierMenuConfig(locale, { specials: Number(SPECIALS_DEFAULT) }), menu) : null };
+  return { set: "multi", view: path ? nearestView(config, path) : null };
 }
 
 function Showcase() {

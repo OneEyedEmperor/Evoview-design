@@ -133,7 +133,9 @@ type RouteHistoryOptions<V> = {
  * level n). Opening pushes the view's ancestry; deeper = push, same level =
  * replace, up = Back (the landing entry is rewritten to the ancestor of the
  * view on screen), close = Back past every level. A page loaded (or routed)
- * on the view's URL first rewrites its own entry to `hrefFor(null)`, so Back
+ * on a view URL (the view's own, or one the host resolved to it, e.g. an
+ * unknown key falling back to its ancestor: any URL other than
+ * `hrefFor(null)`) first rewrites its own entry to `hrefFor(null)`, so Back
  * and Escape step out to the page. A reload or Forward onto an entry this
  * modal made adopts it. Keep the package mounted while closed: Forward after
  * a close reopens through `onNavigate`.
@@ -245,14 +247,18 @@ export function useRouteHistory<V>({ view, routes, hrefFor, onNavigate, history 
         const chain = chainOf(target);
         const level = chain.length;
         const href = live.current.hrefFor?.(target);
-        const atViewUrl = href !== undefined && hrefPath(href) === normPath(window.location.pathname);
+        const here = normPath(window.location.pathname);
+        const atViewUrl = href !== undefined && hrefPath(href) === here;
         if (from === null || !onOwnEntry) {
           if (entry && entry.key === keyOf(target) && entry.level === level && (href === undefined || atViewUrl)) {
             // Reload or Forward onto an entry made by this modal: adopt it.
             owner.current = entry.owner;
           } else {
             owner.current = newOwner();
-            if (atViewUrl) write("replace", null, 0);
+            // Off the page's own URL, the entry is a view URL the host resolved to this view (itself, or an
+            // ancestor of an unknown key): it becomes the page, so closing never lands on it.
+            const pageHref = href === undefined ? undefined : live.current.hrefFor?.(null);
+            if (atViewUrl || (pageHref !== undefined && hrefPath(pageHref) !== here)) write("replace", null, 0);
             chain.forEach((v, i) => write("push", v, i + 1));
           }
           depth.current = level;

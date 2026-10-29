@@ -125,7 +125,10 @@ once with its own props; it never calls `pushState` directly.
   the close button closes (`onNavigate(null)`).
 - Deep link: a page loaded (or routed) on a view URL rewrites its entry to
   `hrefFor(null)` and pushes the ancestry, so Back steps out one level at a
-  time. Reload or Forward onto an entry the modal made adopts it; Forward
+  time. A URL the host resolves to another view (an unknown key falling
+  back to its nearest ancestor) is a deep link of that view: on first open,
+  any URL other than `hrefFor(null)` counts as one, so `hrefFor(null)` must
+  be the URL of the page an in-page launcher sits on. Reload or Forward onto an entry the modal made adopts it; Forward
   after a close reopens it (keep the package mounted while closed).
 - `history={false}`: the host's router owns history and must implement the
   same model from `onNavigate`.
