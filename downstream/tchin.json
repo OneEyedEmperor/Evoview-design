@@ -76,20 +76,23 @@
       "direction": "up",
       "class": "P",
       "source": ["817e98d"],
-      "incorporatedIn": null,
-      "status": "approved",
+      "incorporatedIn": "dossier@1.8.0",
+      "status": "applied",
       "reason": "Founder 2026-10-29, from the client's request: the tablet / phone composition of the dossier (glass navigation, symmetrical grid, narrower vertical modal) becomes a library Variation usable at every width. It suits quick-glance, sector-specific content such as a restaurant menu. It lands in the library first, with a showcase switch, and Tchin then selects it.",
-      "evidence": ["library components/dossier/README.md 'Desktop / mobile' (phone: glass capsule + dock)"],
+      "evidence": [
+        "library 71aa21c (dossier 1.8.0): config.composition 'panorama' | 'sheet' (DOSSIER_COMPOSITIONS); sheet ≥ 1024 = centred shell max(40em, .9 × h) × h; config.tileMedia 'graded' | 'true-colour' (DOSSIER_TILE_MEDIA, emperor 2026-10-29: Tchin's food photos stay true to colour, the caption scrim stays); config.opening (own view / URL / head, docs/CRAWLABLE-MODALS.md §1 additive); entry counts 0..n (symmetric grid, empty panel); item.pending + canonical views for live content",
+        "showcase /components/dossier: Composition desk (from 1024) on the universes and the menu demo; Maison Ardoise 'La carte | Suggestions' behind an opening screen, specials 0 / 3 / 5",
+        "pnpm verify:ssr 1567 checks (dossier 653 → 1387: opening screen in the sheet, empty item in the panorama), verify:chapter 1442 / 0, sync-test 13 / 13, tsc + vite build",
+        "production preview (vite preview :4791, own headless Chrome, 15px scrollbars) at 1440 / 1024 / 390: opening → item → entry → Escape ×3 with tile refocus, Back / Forward per level, close → page URL, Forward reopens, deep links, scroll-lock gap 15px, suspension + inert walk, palette (yellow), FR / EN, no horizontal overflow",
+        "layout fingerprints vs master at 390 / 834: identical; 1024 / 1440: details identical, overviews differ only by two 1.7 fixes (header end without a pager; overview phantom scroll)",
+        "live-content harness: pending deep link waits then opens; removed / never-arriving entry → overview (URL + host follow); reorder keeps the open entry; emptied → empty panel → refilled while open",
+        "true colour (preview, headless Chrome with a hover pointer): every tile media computes filter none and transitions transform only at rest, hover (neighbours included), keyboard focus and touch-cycle focus; .evd-tile__grade not displayed; scrim kept; frame (border, edge, scale) on the hovered / focused / cycled tile; graded unchanged",
+        "captures ~/.vibehub/documents/evoview-library/shots/dossier-sheet-*.png and dossier-truecolour-*.png (look sign-off pending)"
+      ],
       "date": "2026-10-29",
       "layer": "Variations",
-      "targets": ["components/dossier/src/", "src/pages/library/Dossier.tsx (showcase switch)"],
-      "adaptation": "New Variation: the sheet composition (narrow vertical shell, glass capsule header, glass dock navigation, symmetrical grid) at every width; an optional opening screen choosing between items; boards that accept the entry counts the sheet grid can lay out. Panorama stays the default.",
-      "risk": "medium",
-      "verify": "pnpm build, verify:ssr (new views), showcase at 1440 / 1024 / 390 with both variations, palette, FR / EN.",
-      "size": "m",
-      "value": "high",
       "signoff": true,
-      "recommendation": "Approved by the founder; look signed off on showcase captures."
+      "recommendation": "Landed in dossier 1.8.0; the founder signs off the look on the dossier-sheet-*.png captures before Tchin selects it (dossier-install)."
     }
   ]
 }

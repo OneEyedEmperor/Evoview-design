@@ -365,7 +365,7 @@
       "title": "Dossier portal modal: selection board, chapter strip, mobile dock, loader, views",
       "class": "P",
       "source": "split-by-design",
-      "library": { "package": "dossier", "files": ["components/dossier/src/Dossier.tsx", "components/dossier/src/Board.tsx", "components/dossier/src/Loader.tsx", "components/dossier/src/hooks.ts", "components/dossier/src/routes.ts", "components/dossier/src/dossier.css"] },
+      "library": { "package": "dossier", "files": ["components/dossier/src/Dossier.tsx", "components/dossier/src/Board.tsx", "components/dossier/src/Loader.tsx", "components/dossier/src/hooks.ts", "components/dossier/src/routes.ts", "components/dossier/src/copy.ts", "components/dossier/src/dossier.css"] },
       "downstream": {
         "evoview": {
           "relation": "counterpart",
