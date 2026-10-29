@@ -1009,6 +1009,42 @@ a.evd-tile { -webkit-user-drag: none; -webkit-touch-callout: none; }
   .evd-rows__index { grid-row: auto; }
 }
 
+/* Rows with media (`ChapterRow.media`): the thumbnail is flush with the row's leading edge over its full height, so
+   the row's radius (tiles) or the panel's (rows, a specimen card) rounds its outer corners: concentric by
+   construction, no inset radius to fit. Beside the text at every width (a list stays scannable on phones); the text
+   keeps its tonal surface and grid. A tonal well until decoded; the thumbnail takes the board's `tileMedia`. */
+.evd-rows__row[data-has-media] {
+  --evd-row-media: 5.5em;
+  position: relative;
+  overflow: hidden;
+  min-height: calc(var(--evd-row-media) * 0.82);
+  padding-left: calc(var(--evd-row-media) + 1em);
+  align-content: center;
+}
+.evd-rows__media { position: absolute; inset: 0 auto 0 0; width: var(--evd-row-media); background: var(--ev-well); }
+.evd-rows__media img { display: block; width: 100%; height: 100%; }
+.evd-rows[data-media="graded"] .evd-rows__media img {
+  filter: grayscale(0.62) saturate(0.46) contrast(1.08) brightness(0.68);
+  transition: filter 420ms var(--ev-ease);
+}
+@media (hover: hover) {
+  .evd-rows[data-media="graded"] .evd-rows__row:hover .evd-rows__media img { filter: saturate(0.85) sepia(0.08) contrast(1.08) brightness(0.92); }
+}
+.evd-rows__marks {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  margin-left: 0.6em;
+  vertical-align: -0.2em;
+  color: var(--ev-fg-65);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.evd-rows__marks svg { width: 1.3em; height: 1.3em; flex-shrink: 0; }
+@media (min-width: 768px) {
+  .evd-rows__row[data-has-media] { --evd-row-media: 7em; padding-left: calc(var(--evd-row-media) + 1.5em); }
+}
+
 /* Paper specimen (a client artefact: menu, programme). The card is the panel: its rows run edge
    to edge and band a step down from the paper; the example note closes it on the paper itself. */
 .evd-specimen {

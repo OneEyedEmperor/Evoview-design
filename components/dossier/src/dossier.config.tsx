@@ -564,7 +564,30 @@ type Section = {
   story: { title: L; lead: L; body: L };
   note: L;
   dishes: Rows;
+  /** One per dish: a placeholder image and its crop (object-position). */
+  photos: [string, string][];
+  /** Dish index → its marks. */
+  marks?: Record<number, DishMark[]>;
 };
+
+/* Small marks after a dish name (`ChapterRow.marks`): an inline glyph with its own accessible name. */
+type DishMark = "veg" | "spicy";
+const MARK_NAME: Record<DishMark, L> = { veg: { fr: "Végétarien", en: "Vegetarian" }, spicy: { fr: "Relevé", en: "Spicy" } };
+const MARK_PATHS: Record<DishMark, string[]> = {
+  veg: ["M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z", "M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"],
+  spicy: ["M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"],
+};
+
+function dishMarks(marks: DishMark[] | undefined, locale: Locale) {
+  if (!marks?.length) return undefined;
+  return marks.map((mark) => (
+    <span key={mark} role="img" aria-label={MARK_NAME[mark][locale]} title={MARK_NAME[mark][locale]}>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        {MARK_PATHS[mark].map((d) => <path key={d} d={d} />)}
+      </svg>
+    </span>
+  ));
+}
 
 type Special = { id: string; image: string; title: L; label: L; kicker: L; alt: L; story: { title: L; lead: L; body: L }; facts: Rows };
 
@@ -617,9 +640,11 @@ const SECTIONS: Section[] = [
     },
     note: { fr: "Exemple de carte — elle change avec la saison.", en: "Sample menu — it changes with the season." },
     dishes: {
-      fr: [["Velouté de courge, graines torréfiées", "9 €"], ["Betterave rôtie, chèvre frais, noisette", "12 €"], ["Radis, beurre fumé, sel de céleri", "9 €"], ["Œuf parfait, champignons, jus de volaille", "14 €"]],
-      en: [["Squash velouté, toasted seeds", "€9"], ["Roast beetroot, fresh goat cheese, hazelnut", "€12"], ["Radish, smoked butter, celery salt", "€9"], ["Slow-cooked egg, mushrooms, chicken jus", "€14"]],
+      fr: [["Velouté de courge, graines torréfiées", "9 €"], ["Betterave rôtie, chèvre frais, noisette", "12 €"], ["Radis, beurre fumé, piment d'Espelette", "9 €"], ["Œuf parfait, champignons, jus de volaille", "14 €"]],
+      en: [["Squash velouté, toasted seeds", "€9"], ["Roast beetroot, fresh goat cheese, hazelnut", "€12"], ["Radish, smoked butter, Espelette pepper", "€9"], ["Slow-cooked egg, mushrooms, chicken jus", "€14"]],
     },
+    photos: [["table-market.webp", "30% 55%"], ["table-market.webp", "72% 40%"], ["table-market.webp", "50% 85%"], ["table-tasting.webp", "50% 50%"]],
+    marks: { 0: ["veg"], 1: ["veg"], 2: ["veg", "spicy"] },
   },
   {
     id: "mains",
@@ -638,6 +663,8 @@ const SECTIONS: Section[] = [
       fr: [["Lieu jaune, beurre noisette, oseille", "26 €"], ["Poulet fermier, carottes glacées, jus court", "24 €"], ["Épeautre, champignons, parmesan", "21 €"], ["Joue de bœuf, purée fumée", "28 €"], ["Pêche du jour, selon l'arrivage", "Prix du jour"]],
       en: [["Pollock, brown butter, sorrel", "€26"], ["Free-range chicken, glazed carrots, jus", "€24"], ["Spelt, mushrooms, parmesan", "€21"], ["Beef cheek, smoked mash", "€28"], ["Catch of the day", "Market price"]],
     },
+    photos: [["table-tasting.webp", "40% 50%"], ["table-chef.webp", "50% 40%"], ["salon-workshop.webp", "50% 55%"], ["table-chef.webp", "72% 62%"], ["table-tasting.webp", "70% 30%"]],
+    marks: { 2: ["veg"] },
   },
   {
     id: "desserts",
@@ -657,6 +684,8 @@ const SECTIONS: Section[] = [
       fr: [["Plateau de trois fromages", "12 €"], ["Poire pochée, sarrasin, crème crue", "9 €"], ["Chocolat noir, sel fumé", "9 €"], ["Glace du jour", "8 €"]],
       en: [["Board of three cheeses", "€12"], ["Poached pear, buckwheat, raw cream", "€9"], ["Dark chocolate, smoked salt", "€9"], ["Ice cream of the day", "€8"]],
     },
+    photos: [["bar-boards.webp", "50% 50%"], ["bar-boards.webp", "20% 62%"], ["bar-boards.webp", "82% 40%"], ["salon-workshop.webp", "28% 40%"]],
+    marks: { 1: ["veg"], 2: ["veg"], 3: ["veg"] },
   },
   {
     id: "wine",
@@ -675,6 +704,7 @@ const SECTIONS: Section[] = [
       fr: [["Pétillant naturel, Loire", "8 € le verre"], ["Chenin, Anjou", "9 € le verre"], ["Poulsard, Jura", "10 € le verre"], ["Syrah, Saint-Joseph", "12 € le verre"]],
       en: [["Pét-nat, Loire", "€8 a glass"], ["Chenin, Anjou", "€9 a glass"], ["Poulsard, Jura", "€10 a glass"], ["Syrah, Saint-Joseph", "€12 a glass"]],
     },
+    photos: [["bar-wine.webp", "50% 40%"], ["bar-wine.webp", "28% 55%"], ["table-cellar.webp", "40% 50%"], ["table-cellar.webp", "72% 50%"]],
   },
 ];
 
@@ -826,7 +856,14 @@ function menuItem(locale: Locale): DossierItem {
           </DossierChapter>
           <DossierChapter tone="b">
             <ChapterSpecimen note={s.note[locale]}>
-              <ChapterRows rows={s.dishes[locale].map(([label, detail]) => ({ label, detail }))} />
+              <ChapterRows
+                rows={s.dishes[locale].map(([label, detail], i) => ({
+                  label,
+                  detail,
+                  media: { src: MEDIA + s.photos[i][0], position: s.photos[i][1] },
+                  marks: dishMarks(s.marks?.[i], locale),
+                }))}
+              />
             </ChapterSpecimen>
           </DossierChapter>
           {closing(locale, close)}

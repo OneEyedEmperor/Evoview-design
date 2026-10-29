@@ -54,6 +54,9 @@ tokens and the pause model.
    never rules. Every text list goes on tonal surfaces, never bare text:
    `ChapterRows` (one panel, alternating rows — info sheets, programmes) or
    `surface="tiles"` (peers); number rows only when they are a sequence.
+   Dishes / products with a picture: rows with `media` (+ `marks` for
+   dietary icons), best as `tiles`; when they open the entry, list the
+   first screenful's media in `entry.sources`.
    Demonstrations carry their "example" note (`ChapterSpecimen note`).
 5. Mount `<Dossier config view onNavigate hrefFor>` near the page root (no
    transformed ancestor), open or not: the host keeps `view` in state

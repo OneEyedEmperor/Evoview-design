@@ -86,7 +86,16 @@ restyle them to the client's UI kit. Changing them is a library change
   the panel: rows run edge to edge and band a step down, the example note
   closes it. Payoff results are peer tiles (one joined alternating panel on
   phones). No borders; same text ladder; radius by role (surface for panels
-  and tiles, 0 for joined rows). Lists with media per item are exempt.
+  and tiles, 0 for joined rows).
+- **Rows with media** (`ChapterRow.media`, 1.9.0): a thumbnail flush with the
+  row's leading edge over its full height (5.5em phones, 7em from 768), so the
+  tile's or panel's radius rounds its outer corners — concentric by
+  construction, never an inset radius. Beside the text at every width (a list
+  stays scannable on a phone; above would turn each row into a card). The text
+  keeps its tonal surface, grid and floors; the thumbnail is a tonal well
+  (`--ev-well`) until decoded and takes the config's `tileMedia` (graded at
+  rest, released on row hover; true-colour: no filter). `marks` (dietary
+  icons, a short tag) follow the label, each node naming itself.
 - **Media gate**: a view is revealed only once its media is decoded. The body
   keeps the previous view (inert, dimmed after 140 ms) until the next one is
   ready, so a switch never cuts to an empty body; loader after 350 ms over
@@ -161,7 +170,18 @@ other marks.
   closes it), `ChapterHead`, `ChapterFigure`, `ChapterSplit`, `ChapterRows`
   (`surface` from `CHAPTER_ROWS_SURFACES`: `rows` for info sheets and
   programmes, default · `tiles` for peers; `numbered` only for a real
-  sequence), `ChapterSpecimen`, `ChapterPayoff`.
+  sequence; per row optional `media` and `marks`, below), `ChapterSpecimen`,
+  `ChapterPayoff`.
+- **Rows with media** (a menu, a product list): `{ label, detail, media?,
+  marks? }`. `media` is a `DossierMedia` image (a video shows its `poster`),
+  decorative unless `alt` is set; `srcSet` / `sizes` honoured (default sizes
+  `(min-width: 768px) 112px, 88px`); always `loading="lazy"`, `decoding="async"`.
+  Thumbnails stay **outside the media gate**: a long list must not hold the
+  entry's reveal, and rows usually sit below the intro. When rows open the
+  entry (visible at reveal), list the first screenful's media in
+  `entry.sources`: the gate decodes them, the lazy images then come from the
+  cache. `tiles` suit dishes / products (one card per row); in `rows` and a
+  `ChapterSpecimen` the thumbnails form one column.
 
 ## Expression (adapt)
 

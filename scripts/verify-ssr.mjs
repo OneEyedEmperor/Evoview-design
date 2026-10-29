@@ -66,6 +66,16 @@ const PACKAGES = [
       const own = await blocks(content);
       return [entry.title, ...own];
     },
+    // Row thumbnails (`ChapterRow.media`) the entry's own content carries; the reference menu's sections must have some.
+    async rowMedia(c, v, { html }) {
+      if (!v.entry) return null;
+      const item = c.items.find((i) => i.id === v.item);
+      const index = item ? item.entries.findIndex((e) => e.id === v.entry) : -1;
+      if (index < 0) return null;
+      const entry = item.entries[index];
+      const own = await html(entry.content({ item, entry, index, total: item.entries.length, close: noop, toOverview: noop }));
+      return { expected: (own.match(/class="evd-rows__media"/g) ?? []).length, required: Boolean(c.opening) && item.id === "menu" };
+    },
     legacy: (m, c, v) => h(m.Dossier, { config: c, open: true, onClose: noop, initialItemId: v.item, initialEntryId: v.entry, preload: false }),
   },
   {
@@ -345,7 +355,7 @@ async function verifyPackage(spec, foundation) {
   }
   for (const { locale, config } of runs) {
     const expected = spec.views(config);
-    const ctx = { blocks: textBlocks };
+    const ctx = { blocks: textBlocks, html: async (node) => (await renderCaptured(node)).html ?? "" };
     if (!hasRoutes) {
       for (const view of expected) await verifyView({ pkg, spec, m, config, view, locale, key: spec.key(view), element: spec.legacy(m, config, view), ctx });
       continue;
@@ -516,6 +526,23 @@ async function verifyView({ pkg, spec, config, view, locale, key, element, ctx, 
   check(!sourced, pkg, "video", subject, "server HTML sets a video source: withhold it until live (useHeldSrc) — §3.5", `${sourced} source(s)`);
   const noPoster = videos.filter((t) => !t.attrs.poster).length;
   if (noPoster) warn(pkg, "video", subject, "<video> without poster", `${noPoster}×`);
+
+  // Row thumbnails: an <img> right inside each `.evd-rows__media`, lazy and async, never holding the media gate.
+  const thumbs = [];
+  r.tags.forEach((t, i) => {
+    if (t.name === "span" && /(^|\s)evd-rows__media(\s|$)/.test(t.attrs.class ?? "")) thumbs.push(r.tags[i + 1]);
+  });
+  if (thumbs.length) {
+    const bad = thumbs.filter((t) => t?.name !== "img" || !t.attrs.src || !("alt" in t.attrs) || t.attrs.loading !== "lazy" || t.attrs.decoding !== "async");
+    check(!bad.length, pkg, "rows", subject, "a row thumbnail must be an <img> with src, alt, loading=lazy, decoding=async", `${bad.length}/${thumbs.length}`);
+  }
+  if (spec.rowMedia) {
+    const rows = await spec.rowMedia(config, view, ctx);
+    if (rows) {
+      check(thumbs.length === rows.expected, pkg, "rows", subject, "the view's server HTML must carry every row thumbnail of its content", `expected ${rows.expected}, found ${thumbs.length}`);
+      if (rows.required) check(rows.expected > 0, pkg, "rows", subject, "the reference menu's sections must show rows with media (coverage)");
+    }
+  }
   return hrefs;
 }
 

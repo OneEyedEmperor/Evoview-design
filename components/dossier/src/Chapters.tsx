@@ -1,6 +1,6 @@
 import { createContext, useContext, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { cn, pad, useHeldSrc, useHydrated } from "../foundation";
-import type { DossierMedia } from "./types";
+import type { DossierMedia, DossierTileMedia } from "./types";
 import { isVideo } from "./hooks";
 
 /* Open chapters for a dossier detail: claim → artefact → one interpreting
@@ -12,6 +12,9 @@ import { isVideo } from "./hooks";
 /** Provided by the dossier body: registers a chapter for its scroll-driven reveal; returns the unregister. */
 export type ChapterReveal = (el: HTMLElement, reveal: () => void) => () => void;
 export const ChapterRevealContext = createContext<ChapterReveal | null>(null);
+
+/** Provided by the dossier body: the config's `tileMedia`, so row thumbnails take the board's treatment. */
+export const ChapterMediaContext = createContext<DossierTileMedia>("graded");
 
 export const DOSSIER_CHAPTER_VARIANTS = ["intro", "standard", "payoff"] as const;
 export type DossierChapterVariant = (typeof DOSSIER_CHAPTER_VARIANTS)[number];
@@ -111,7 +114,16 @@ export function ChapterSplit({ aside, children }: { aside: ReactNode; children: 
   );
 }
 
-export type ChapterRow = { label: ReactNode; detail: ReactNode; index?: string };
+export type ChapterRow = {
+  label: ReactNode;
+  detail: ReactNode;
+  index?: string;
+  /** Thumbnail beside the text (a dish, a product): an image (a video shows its poster). Decorative unless `alt` is set;
+      lazy, outside the media gate (list the first rows' media in `entry.sources` when the rows open the entry). */
+  media?: DossierMedia;
+  /** Small marks after the label (dietary icons, a short tag): nodes carrying their own accessible name. */
+  marks?: ReactNode;
+};
 
 export type ChapterRowsProps = {
   rows: ChapterRow[];
@@ -125,14 +137,41 @@ export type ChapterRowsProps = {
 export const CHAPTER_ROWS_SURFACES = ["rows", "tiles"] as const;
 export type ChapterRowsSurface = (typeof CHAPTER_ROWS_SURFACES)[number];
 
-/** A text list on tonal surfaces: label · detail, no rules. */
-export function ChapterRows({ rows, numbered = false, surface = "rows", className }: ChapterRowsProps) {
+/** Default `sizes` of a row thumbnail: its column width (5.5em phones, 7em from 768) at the 16px root. */
+const ROW_MEDIA_SIZES = "(min-width: 768px) 112px, 88px";
+
+function RowMedia({ media }: { media: DossierMedia }) {
+  const src = isVideo(media) ? media.poster : media.src;
+  if (!src) return null;
   return (
-    <ol className={cn("evd-rows", numbered && "evd-rows--numbered", className)} data-surface={surface}>
+    <span className="evd-rows__media">
+      <img
+        src={src}
+        srcSet={isVideo(media) ? undefined : media.srcSet}
+        sizes={isVideo(media) || !media.srcSet ? undefined : (media.sizes ?? ROW_MEDIA_SIZES)}
+        alt={media.alt ?? ""}
+        loading="lazy"
+        decoding="async"
+        style={{ objectPosition: media.position ?? "50% 50%", objectFit: media.fit ?? "cover" }}
+      />
+    </span>
+  );
+}
+
+/** A text list on tonal surfaces: label · detail, no rules. Rows may carry a thumbnail (`media`) and marks. */
+export function ChapterRows({ rows, numbered = false, surface = "rows", className }: ChapterRowsProps) {
+  const tileMedia = useContext(ChapterMediaContext);
+  const withMedia = rows.some((row) => row.media);
+  return (
+    <ol className={cn("evd-rows", numbered && "evd-rows--numbered", className)} data-surface={surface} data-media={withMedia ? tileMedia : undefined}>
       {rows.map((row, i) => (
-        <li key={i} className="evd-rows__row">
+        <li key={i} className="evd-rows__row" data-has-media={row.media ? "" : undefined}>
+          {row.media && <RowMedia media={row.media} />}
           {numbered && <span className="ev-t-readout evd-rows__index">{row.index ?? pad(i + 1)}</span>}
-          <span className="ev-t-label evd-rows__label">{row.label}</span>
+          <span className="ev-t-label evd-rows__label">
+            {row.label}
+            {row.marks && <span className="evd-rows__marks">{row.marks}</span>}
+          </span>
           <span className="evd-rows__detail">{row.detail}</span>
         </li>
       ))}

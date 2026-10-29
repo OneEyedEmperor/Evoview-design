@@ -37,7 +37,7 @@ import {
 } from "../foundation";
 import { GhostAction, GlassClose, PagerOrb } from "../controls";
 import { SelectionBoard, type SelectionBoardLayout, type SelectionTile } from "./Board";
-import { ChapterRevealContext, type ChapterReveal } from "./Chapters";
+import { ChapterMediaContext, ChapterRevealContext, type ChapterReveal } from "./Chapters";
 import { fullCopy } from "./copy";
 import { DossierLoader } from "./Loader";
 import { DESKTOP_QUERY, isVideo, toSource } from "./hooks";
@@ -653,7 +653,7 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, closing, o
               onScroll={onBodyScroll}
             >
               <div className="evd-atmosphere" aria-hidden="true" />
-              <ChapterRevealContext.Provider value={reveal}>
+              <ChapterRevealContext.Provider value={reveal}><ChapterMediaContext.Provider value={tileMedia}>
                 {/* Copy mounted from the first render (server HTML included); held until the view's media is
                     decoded, then remounted live so its entrance starts when the view used to mount. */}
                 <HeldCopy live={bodyLive}>
@@ -736,7 +736,7 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, closing, o
                     </div>
                   )}
                 </HeldCopy>
-              </ChapterRevealContext.Provider>
+              </ChapterMediaContext.Provider></ChapterRevealContext.Provider>
             </div>
             {cut > 0 && <div key={cut} className="evd-cut" aria-hidden="true" />}
             {hydrated && !ready && (awaiting ? awaitSlow : gate.slow || gate.failed) && (

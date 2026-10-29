@@ -1,5 +1,34 @@
 # dossier changelog
 
+## 1.9.0
+
+Additive. Requires `foundation` ≥ 1.10.0 and `controls` ≥ 1.5.0 (unchanged).
+Existing configs render as in 1.8.0.
+
+Chapter kit:
+- `ChapterRow.media?: DossierMedia`: a thumbnail beside the row's text (a
+  dish, a product). Flush with the row's leading edge over its full height
+  (5.5em phones, 7em from 768), clipped by the tile's or panel's radius, so
+  concentric with no inset radius; beside the text at every width. Takes the
+  config's `tileMedia` through the dossier body (graded at rest and released
+  on row hover; true-colour: no filter). `<img>` always `loading="lazy"`,
+  `decoding="async"`, `srcSet` / `sizes` honoured (default sizes
+  `(min-width: 768px) 112px, 88px`), `alt` from `media.alt` else `""`
+  (decorative: the label names the row); a video shows its poster. Outside the
+  media gate: list the first rows' media in `entry.sources` when rows open the
+  entry.
+- `ChapterRow.marks?: ReactNode`: small marks after the label (dietary icons,
+  a short tag), sized to the label, `--ev-fg-65`; each node names itself.
+
+Markup / CSS:
+- `.evd-rows[data-media="graded" | "true-colour"]` when any row has media;
+  `.evd-rows__row[data-has-media]`, `.evd-rows__media`, `.evd-rows__marks`.
+
+Reference: Maison Ardoise's menu sections carry a thumbnail per dish and
+vegetarian / spicy marks (inline glyphs). `verify:ssr`: every row thumbnail is
+an `<img>` with src, alt, lazy, async, and a view carries as many as its
+content (the menu's sections must have some).
+
 ## 1.8.0
 
 Additive. Requires `foundation` ≥ 1.10.0 and `controls` ≥ 1.5.0 (unchanged).
