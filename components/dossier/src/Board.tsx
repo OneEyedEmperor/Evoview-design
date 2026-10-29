@@ -4,8 +4,9 @@ import { isVideo, TILE_HOVER_QUERY, TOUCH_CYCLE_QUERY } from "./hooks";
 import type { DossierMedia, DossierTileMedia } from "./types";
 
 /** mosaic: exactly four, 7/5 over 4/8 (panorama ≥ 1024), 2×2 from 600, rows below. grid: any count, two columns from
-    600 (one below), an odd count's first tile spanning the row. choice: the opening screen, every tile in one row while
-    they fit (2 on phones, 3 from 600, 4 in the panorama ≥ 1024), then the grid's rule. */
+    600 (one below), an odd count's first tile spanning the row. choice: the opening screen, stacked on phones (half a
+    phone's width fits no photo's aspect), from 600 every tile in one row while they fit (3, 4 in the panorama ≥ 1024),
+    then the grid's rule. */
 export const SELECTION_BOARD_LAYOUTS = ["mosaic", "grid", "choice"] as const;
 export type SelectionBoardLayout = (typeof SELECTION_BOARD_LAYOUTS)[number];
 
@@ -42,12 +43,11 @@ const SIGNAL = "var(--dossier-signal)";
 
 /** Columns per width band (s < 600, m from 600, l = the panorama from 1024) and which bands the lead tile spans. */
 function columns(layout: SelectionBoardLayout, n: number) {
-  const s = layout === "choice" && n <= 2 ? n : 1;
   const m = layout === "choice" && n <= 3 ? n : 2;
   const l = layout === "choice" && n <= 4 ? n : m;
   const odd = n > 1 && n % 2 === 1;
   const span = [m === 2 && odd ? "m" : "", l === 2 && odd ? "l" : ""].filter(Boolean).join(" ");
-  return { s: Math.max(s, 1), m: Math.max(m, 1), l: Math.max(l, 1), span: span || undefined };
+  return { s: 1, m: Math.max(m, 1), l: Math.max(l, 1), span: span || undefined };
 }
 
 /** Entrance offsets of a grid tile: from its side of the board, a short stagger capped so long boards don't drag. */

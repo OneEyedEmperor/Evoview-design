@@ -1,5 +1,15 @@
 # dossier changelog
 
+## 1.9.1
+
+Fix. No config change; requires unchanged.
+
+- Opening screen on phones (< 600): the choice tiles stack one per row
+  instead of sharing a row. Two tiles side by side on a phone came out
+  around 1:4.5, too narrow for any photo's aspect; stacked, two tiles are
+  about square. From 600 unchanged. Sheet tile `sizes` now always
+  `(max-width: 599px) 100vw`.
+
 ## 1.9.0
 
 Additive. Requires `foundation` ≥ 1.10.0 and `controls` ≥ 1.5.0 (unchanged).

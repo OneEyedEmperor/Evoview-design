@@ -58,9 +58,9 @@ restyle them to the client's UI kit. Changing them is a library change
   Variation, `tileMedia`); either way accent border + bottom edge + numeral,
   shine sweep, slight scale, caption scrim, title bottom-left. Numerals in
   the display face (not Gaegu).
-- **Opening screen** (optional): the items as one row of equal choice tiles
-  (2 per row on phones, 3 from 600, 4 in the panorama ≥ 1024, then the
-  grid's rule), the board tile without numeral, a larger title, the item's
+- **Opening screen** (optional): the items as equal choice tiles, stacked
+  one per row on phones, then one row from 600 (up to 3, 4 in the panorama
+  ≥ 1024, then the grid's rule), the board tile without numeral, a larger title, the item's
   readout above it.
 - **Chapter strip**: `Sommaire` + numbered tabs; the per-tab 3px track is the
   strip's one line and its fill is the reading progress (past tabs full);

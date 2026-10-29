@@ -500,7 +500,7 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, closing, o
   const bodyCtx: DossierEntryContext | null =
     bodyItem && bodyEntry ? { item: bodyItem, entry: bodyEntry, index: body.entryIndex, total: bodyItem.entries.length, close: closeAll, toOverview: () => go(itemView(config, bodyItem.id)) } : null;
   const bodyBoard = body.kind === "opening" ? "choice" : body.kind === "overview" ? boardLayout(bodyItem?.entries.length ?? 0) : undefined;
-  const boardSizes = composition === "sheet" ? `${bodyBoard === "choice" && bodyItems.length <= 2 ? "" : "(max-width: 599px) 100vw, "}(max-width: 1023px) 50vw, 360px` : undefined;
+  const boardSizes = composition === "sheet" ? "(max-width: 599px) 100vw, (max-width: 1023px) 50vw, 360px" : undefined;
 
   const nextEntryLabel = !entry || !nextItem ? "" : entryIndex < entries.length - 1 ? (entries[entryIndex + 1].label ?? entries[entryIndex + 1].title) : itemCount > 1 ? nextItem.label : copy.overview;
   const nextAria = !entry || !item || !nextItem ? "" : entryIndex < entries.length - 1 ? copy.nextEntry(nextEntryLabel) : itemCount > 1 ? copy.nextItem(nextItem.label) : copy.overviewOf(item.label);
