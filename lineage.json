@@ -374,9 +374,10 @@
           "note": "Shell CSS (service-modal-*, service-dossier-shell) lives in src/index.css."
         },
         "tchin": {
-          "relation": "none",
-          "files": [],
-          "note": "Install approved 2026-10-29 (downstream/tchin.json dossier-install): becomes `installed` once synced."
+          "relation": "installed",
+          "version": "1.11.2",
+          "files": ["src/components/dossier/Dossier.tsx", "src/components/dossier/Board.tsx", "src/components/dossier/Loader.tsx", "src/components/dossier/hooks.ts", "src/components/dossier/routes.ts", "src/components/dossier/copy.ts", "src/components/dossier/dossier.css", "src/components/dossier/dossier.config.tsx", "src/components/menu-dossier/MenuDossier.tsx", "src/components/layout/Layout.tsx"],
+          "note": "Installed 2026-10-29 via sync.sh (provenance in src/components/.evoview/dossier.json): /menu as a sheet dossier, opening Carte | Promotions (live API), directLoad at-rest. Host glue: menu-dossier/ and Layout.tsx (history pin, backdrop)."
         }
       }
     },
@@ -426,9 +427,9 @@
         },
         "tchin": {
           "relation": "installed",
-          "version": "2.1.0",
+          "version": "2.10.3",
           "files": ["src/components/navbar/NavFinder.tsx", "src/components/navbar/NavFinderMobile.tsx", "src/components/navbar/finderShared.tsx", "src/components/navbar/navbar.css", "src/components/navbar/navbar.config.tsx", "src/components/navbar/.navbar-version"],
-          "note": "Legacy install (stamp, no provenance). 2.0.0 took Tchin's refinements as the baseline."
+          "note": "sync.sh provenance since 2026-10-29 (adopted from the legacy 2.1.0 stamp). 2.0.0 took Tchin's refinements as the baseline."
         }
       }
     },
@@ -448,9 +449,9 @@
         },
         "tchin": {
           "relation": "installed",
-          "version": "2.8.0",
+          "version": "2.12.1",
           "files": ["src/components/reservation/Reservation.tsx", "src/components/reservation/reservation.css", "src/components/reservation/reservation.config.tsx", "src/components/reservation/.reservation-version"],
-          "note": "Legacy install (stamp, no provenance); 1.0.0 was extracted from Tchin's booking form."
+          "note": "sync.sh provenance since 2026-10-29 (adopted from the legacy 2.8.0 stamp); 1.0.0 was extracted from Tchin's booking form."
         }
       }
     }
