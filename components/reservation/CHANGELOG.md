@@ -1,5 +1,18 @@
 # reservation changelog
 
+## 2.13.0
+
+Additive. Requires `foundation` ≥ 1.14.0.
+
+Config changes:
+- `ReservationConfig.attribution?: { href?: string | null }` (new): `href: null`
+  pauses the header wordmark's link while evoview.be isn't live; the wordmark
+  stays (`data-link="paused"`). A string overrides the destination.
+- `ReservationFlowConfig.attribution` `{ href: null }` now pauses the link too
+  (it used to fall back to the default URL).
+
+Existing configs render unchanged.
+
 ## 2.12.1
 
 Fix. No config change, no visual change. Requires `foundation` ≥ 1.12.1

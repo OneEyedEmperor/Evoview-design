@@ -73,7 +73,8 @@ export function SectionMarker({ live = false, className }: { live?: boolean; cla
 type EvoviewMarkProps = {
   /** Accessible name in the page language; must name Evoview and the new tab. */
   label: string;
-  href?: string;
+  /** `null` pauses the link (destination not live yet): the wordmark stays, unlinked. */
+  href?: string | null;
   className?: string;
 };
 
@@ -82,6 +83,12 @@ type EvoviewMarkProps = {
  * header / chassis strip, never inside or next to a client CTA.
  */
 export function EvoviewMark({ label, href = EVOVIEW_URL, className }: EvoviewMarkProps) {
+  if (href === null)
+    return (
+      <span className={cn("ev-attribution", className)} data-link="paused" role="img" aria-label="Evoview">
+        <EvoviewLogo alt="" />
+      </span>
+    );
   return (
     <a className={cn("ev-attribution", className)} href={href} target="_blank" rel="noopener" aria-label={label}>
       <EvoviewLogo alt="" />

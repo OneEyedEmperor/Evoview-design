@@ -116,6 +116,8 @@ export type ReservationConfig = {
   accentInk?: string;
   /** Any `--resa-*` token override. */
   vars?: Record<`--resa-${string}`, string>;
+  /** `{ href: null }` pauses the header wordmark's link (destination not live yet); the wordmark stays. */
+  attribution?: { href?: string | null };
   className?: string;
   style?: CSSProperties;
 };
@@ -174,6 +176,6 @@ export type ReservationFlowConfig = {
   /** Tone of the module. Default "paper" (white); "light" on #efefef sites. */
   tone?: "paper" | "light";
   /** The approved Evoview attribution (linked wordmark above the progress). Default true. */
-  attribution?: boolean | { href?: string };
+  attribution?: boolean | { href?: string | null };
   className?: string;
 };

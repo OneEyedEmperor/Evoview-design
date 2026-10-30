@@ -1,5 +1,5 @@
 {
-  "requires": { "foundation": ">=1.12.1 <2", "controls": ">=1.5.0 <2" },
+  "requires": { "foundation": ">=1.14.0 <2", "controls": ">=1.5.0 <2" },
   "clientOwned": ["reservation.config.tsx", "reservation.theme.css"],
   "hostDeps": { "react": ">=19", "react-day-picker": ">=9", "date-fns": ">=4", "lucide-react": "*" }
 }

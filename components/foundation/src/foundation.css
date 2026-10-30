@@ -293,7 +293,7 @@
   transition: opacity var(--ev-dur-fast) ease;
 }
 .ev-attribution::before { content: ""; position: absolute; top: 50%; left: 50%; width: max(100%, 44px); height: max(100%, 44px); translate: -50% -50%; }
-@media (hover: hover) { .ev-attribution:hover { opacity: 1; } }
+@media (hover: hover) { .ev-attribution:not([data-link="paused"]):hover { opacity: 1; } }
 .ev-attribution:focus-visible { outline: 2px solid var(--ev-accent-signal); outline-offset: 2px; }
 .ev-attribution svg { display: block; width: 76px; height: auto; filter: brightness(0) invert(var(--ev-logo-invert, 1)); }
 

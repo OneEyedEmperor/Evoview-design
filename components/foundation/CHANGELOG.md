@@ -1,5 +1,13 @@
 # foundation changelog
 
+## 1.14.0
+
+Additive. `EvoviewMark` `href: null` pauses the attribution link while its
+destination isn't live: the wordmark stays in place, rendered as a
+`<span class="ev-attribution" data-link="paused" role="img" aria-label="Evoview">`
+(no link, not focusable, no hover lift). The emperor's call, client by client;
+restore the URL (or omit `href`) to relink.
+
 ## 1.13.0
 
 No config change. Additive API. Requires nothing new.

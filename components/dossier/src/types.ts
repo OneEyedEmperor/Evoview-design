@@ -160,7 +160,7 @@ export type DossierConfig = {
   /** Optional opening screen: the dossier's top level, choosing between the items. */
   opening?: DossierOpening;
   items: DossierItem[];
-  /** The one linked Evoview mark, in the header strip. On by default. */
-  attribution: { enabled: boolean; href: string; label: string };
+  /** The one linked Evoview mark, in the header strip. On by default. `href: null` pauses the link (destination not live yet); the mark stays. */
+  attribution: { enabled: boolean; href: string | null; label: string };
   copy: DossierCopy;
 };

@@ -26,7 +26,7 @@ export function ReservationFlow({ config }: { config: ReservationFlowConfig }) {
   const current = done ? null : steps[step];
   const emailValid = EMAIL_RE.test(email.trim());
   const canContinue = current?.kind === "choice" ? answers[current.id] !== undefined : emailValid;
-  const href = typeof attribution === "object" ? attribution.href ?? EVOVIEW_URL : EVOVIEW_URL;
+  const href = typeof attribution === "object" && attribution.href !== undefined ? attribution.href : EVOVIEW_URL;
 
   const send = async () => {
     const request: ReservationFlowRequest = { answers, email: email.trim(), ...(contact?.sms ? { sms } : {}) };

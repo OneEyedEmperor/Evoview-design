@@ -538,9 +538,15 @@ export function Reservation({ config }: { config: ReservationConfig }) {
         <span className="evo-resa__grain" aria-hidden="true" />
 
         <header className="evo-resa-top">
-          <a className="evo-resa-top__brand" href={EVOVIEW_URL} target="_blank" rel="noopener" aria-label={c.signatureAriaLabel}>
-            <EvoviewLogo className="evo-resa-top__logo" alt="" />
-          </a>
+          {config.attribution?.href === null ? (
+            <span className="evo-resa-top__brand" data-link="paused" role="img" aria-label="Evoview">
+              <EvoviewLogo className="evo-resa-top__logo" alt="" />
+            </span>
+          ) : (
+            <a className="evo-resa-top__brand" href={config.attribution?.href ?? EVOVIEW_URL} target="_blank" rel="noopener" aria-label={c.signatureAriaLabel}>
+              <EvoviewLogo className="evo-resa-top__logo" alt="" />
+            </a>
+          )}
           <span className="evo-resa-top__divider" aria-hidden="true" />
           <span className="evo-resa-top__meta">
             <span className="evo-resa-readout evo-resa-top__kicker">{c.kicker} · {venue.name}</span>

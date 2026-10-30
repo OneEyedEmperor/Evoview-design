@@ -46,16 +46,16 @@ liquid fill as reference): `animations/SKILL.md` (skill
 
 | Component | Status | Skill |
 | --- | --- | --- |
-| `foundation` — tokens, scale, tones, type voices, pause-model hooks, attribution mark, step gauge, orb + text liquid fill, channel switch (hover-preview screens, RULES §6), press jelly (pills / buttons, RULES §6), shared page scroll lock, media gate (probe or mounted player), SSR + crawlable-modal routing | 1.13.0 | `evoview-foundation` |
+| `foundation` — tokens, scale, tones, type voices, pause-model hooks, attribution mark, step gauge, orb + text liquid fill, channel switch (hover-preview screens, RULES §6), press jelly (pills / buttons, RULES §6), shared page scroll lock, media gate (probe or mounted player), SSR + crawlable-modal routing | 1.14.0 | `evoview-foundation` |
 | `controls` — plate, ghost, glass close/pager, chips, rows, fields, switch, segmented control/progress, view links (`/components/controls`) | 1.6.0 | `evoview-controls` |
 | `chapter` — section shell, headings, tone cuts; story, FAQ and contact chapters; footer bar / panel with attribution (`/layouts/chapter`) | 1.5.0 | `evoview-chapter` |
 | `card` — media card in three compositions: scroll-scrubbed track, dealt category deck, timed video sequence (`/layouts/card`; was `card-track`) | 2.3.0 | `evoview-card` |
 | `process-sequence` — timed step board + step dossier, crawlable step views (`/layouts/process-sequence`) | 1.7.2 | `evoview-process-sequence` |
 | `story-blocks` — intro split, indexed sequence, proof collage, payoff (`/layouts/story-blocks`) | 2.5.0 | `evoview-story-blocks` |
-| `dossier` — portal modal, selection board, chapter strip, mobile dock, crawlable views; panorama / sheet compositions, optional opening screen, live entry counts, rows with media, direct load at rest, optional header kicker (`/components/dossier`) | 1.11.2 | `evoview-dossier` |
+| `dossier` — portal modal, selection board, chapter strip, mobile dock, crawlable views; panorama / sheet compositions, optional opening screen, live entry counts, rows with media, direct load at rest, optional header kicker (`/components/dossier`) | 1.12.0 | `evoview-dossier` |
 | `selector-stage` — selector ↔ stage, before/after, atlas (`/components/selector-stage`) | 1.6.0 | `evoview-selector-stage` |
 | `navbar` — finder capsule, desktop + mobile, cover-card trays (`/navbar`) | 2.10.3 | `evoview-navbar` |
-| `reservation` — Evoview booking application + short paper flow, client accent (`/components/reservation`) | 2.12.1 | `evoview-reservation` |
+| `reservation` — Evoview booking application + short paper flow, client accent (`/components/reservation`) | 2.13.0 | `evoview-reservation` |
 
 ## Rules for changing a component here
 

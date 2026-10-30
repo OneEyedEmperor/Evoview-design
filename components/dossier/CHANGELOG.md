@@ -1,5 +1,13 @@
 # dossier changelog
 
+## 1.12.0
+
+Additive. Requires `foundation` ≥ 1.14.0.
+
+Config changes: `attribution.href` accepts `null` to pause the header mark's
+link while evoview.be isn't live (foundation `EvoviewMark` paused state); the
+mark stays. Existing configs render unchanged.
+
 ## 1.11.2
 
 Template change. No API change. Requires nothing new.
