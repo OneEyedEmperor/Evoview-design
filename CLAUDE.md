@@ -11,6 +11,9 @@ experiences and long-lived Evoview publicity assets. Preserve both roles.
 
 - Showcase URL: `https://evoview-library.said.bet` (vhdev-managed; `vhdev up`
   from this dir if it 502s, never `pnpm dev` directly).
+- Remote: `origin` = private `OneEyedEmperor/Evoview-design` (SSH host alias
+  `github.com-evoview-library`, repo deploy key). Push `master` and tags after
+  every merge: it is the library's only off-server copy.
 - Source of the originals: `/root/.vibehub/projects/evoview` (the live site).
   Components here are *extracted and decoupled* versions; never copy from the
   site directly into a client.
@@ -65,7 +68,8 @@ liquid fill as reference): `animations/SKILL.md` (skill
    "Requires" explicitly), update `evoview.json` `requires` when the package
    needs a newer foundation / controls. Breaking config or API = major bump
    (`foundation` / `controls`: additive within a major). Commit: clients
-   install from git, never from the working tree.
+   install from git, never from the working tree. Tag the release commit
+   `<name>-<version>` (annotated) and push `master` + tags.
 3. Clients upgrade with `sync.sh plan → apply → verify` (`install.sh` applies
    clean plans only); client-owned files are never written, local patches are
    merged and recorded (`docs/SYNC.md`).

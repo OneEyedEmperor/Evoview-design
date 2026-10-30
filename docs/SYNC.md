@@ -34,7 +34,8 @@ Without packages: `plan` / `apply` take every installed package, `verify` checks
 
 Package code is `components/<name>/src` at the target commit, never the
 working tree: installs are reproducible and an uncommitted library edit
-never reaches a client.
+never reaches a client. Every release commit carries an annotated tag
+`<name>-<version>` (e.g. `dossier@dossier-1.12.0` pins a package to it).
 
 ## Package metadata: `components/<name>/evoview.json`
 
