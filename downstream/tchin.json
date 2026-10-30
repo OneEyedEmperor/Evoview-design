@@ -3,9 +3,33 @@
   "repo": "/root/.vibehub/projects/test",
   "branch": "booking-unification",
   "fork": { "tag": "evoview-library/fork-2026-10-27", "commit": "3eac948", "snapshot": "3eac948", "library": "b612349" },
-  "libraryReviewed": "143ae50",
-  "siteReviewed": "e851ac7",
+  "libraryReviewed": "499816c",
+  "siteReviewed": "93925d1",
   "items": [
+    {
+      "id": "attribution-pause",
+      "capability": "reservation",
+      "direction": "down",
+      "class": "C",
+      "source": ["foundation@1.14.0", "dossier@1.12.0", "reservation@2.13.0", "b45537a", "93925d1"],
+      "incorporatedIn": "reservation@2.13.0",
+      "status": "applied",
+      "reason": "The emperor 2026-10-30: deploy Tchin live with the Evoview links paused until evoview.be is running. Library-first: EvoviewMark href null (foundation 1.14.0), dossier attribution.href null (1.12.0), ReservationConfig.attribution (2.13.0). Tchin config: EVOVIEW_LIVE = false (dossier), attribution { href: null } (reservation). Relink = flip both once evoview.be is live.",
+      "evidence": ["Tchin b45537a sync (plan clean), 93925d1 config; sync.sh verify --typecheck clean", "Production resto-tchin.be (master 93925d1, live 2026-10-30 11:59 GMT): 0 evoview hrefs in /, /menu/, /reservation/, /karaoke/ HTML; browser 1440 / 390: 1 paused mark on the menu and reservation, 0 links, no console errors"],
+      "date": "2026-10-30"
+    },
+    {
+      "id": "site-merge-origin-master",
+      "capability": "chapter-footer",
+      "direction": "down",
+      "class": "X",
+      "source": ["d045564", "fd6eaa6"],
+      "incorporatedIn": null,
+      "status": "n/a",
+      "reason": "Site-only: origin/master Dockerfile Node pin merged before the deploy; CLAUDE.md dev-setup notes.",
+      "evidence": ["Tchin d045564 (merge be3c312), fd6eaa6"],
+      "date": "2026-10-30"
+    },
     {
       "id": "library-sync-167d919",
       "capability": "navbar",
