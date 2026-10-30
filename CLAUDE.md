@@ -108,4 +108,5 @@ Facts learned about this codebase, maintained by Vibehub. Everything from this h
 - agent-browser hides scrollbars by default (gap = 0), so scroll-lock gap compensation and fixed-chrome shift can't be verified there; check them in an own headless Chrome with classic 15px scrollbars on a production preview. <!--vh:82ccfc0b-->
 - The Evoview owner (the user here) is addressed and referred to as "the emperor" in this project; "founder" in older docs and records means him. Félix is not involved in Evoview projects. <!--vh:705a4f25-->
 - Dossier `tileMedia: "true-colour"` means no filter at rest or in any state, but the board's one-time Signature entrance (tiles converge with filter: blur 5px → 0) stays in both modes: the emperor's decision, 2026-10-29. <!--vh:1896e5fc-->
+- The library's only off-server copy is the private GitHub repo OneEyedEmperor/Evoview-design (origin, SSH alias github.com-evoview-library); after every merge push master and the release's annotated `<pkg>-<version>` tag (sync.sh accepts `pkg@<pkg>-<version>`). <!--vh:f782af84-->
 <!-- vibehub:knowledge:end -->
