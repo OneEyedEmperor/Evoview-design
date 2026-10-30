@@ -131,7 +131,8 @@ One linked `EvoviewMark` in the header strip, right side, before the close
 accessible name in the page language naming Evoview and the new tab). Never
 inside or next to the client's CTA (the payoff plate lives in the body). On
 by default (`attribution.enabled`); turning it off is the founder's call. No
-other marks.
+other marks. `attribution.href: null` pauses the link while evoview.be isn't
+live (the mark stays, unlinked); restore the URL to relink.
 
 ## Variations (select)
 

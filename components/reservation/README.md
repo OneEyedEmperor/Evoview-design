@@ -79,7 +79,8 @@ the surfaces to the client's palette or swap them for client equivalents
   pair), one question per step.
 - **Attribution**: the linked Evoview wordmark above the progress (approved
   placement, `https://evoview.be/`, new tab); `attribution: false` only with
-  Evoview's consent.
+  Evoview's consent. `{ href: null }` (application and flow) pauses the link
+  while evoview.be isn't live: the wordmark stays, unlinked.
 
 ## Variations (select)
 
