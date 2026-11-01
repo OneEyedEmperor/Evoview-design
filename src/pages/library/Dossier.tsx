@@ -4,7 +4,7 @@ import { ArrowRight, followRouteLink, pad, routeHrefs, useMediaQuery } from "../
 import { Dossier as DossierModal, buildDossierConfig, dossierRoutes, useDossierFeed, type DossierComposition, type DossierConfig, type DossierFeed, type DossierTileMedia, type DossierView } from "../../../components/dossier/src";
 import { buildDossierFeedConfig, buildDossierMenuConfig } from "../../../components/dossier/src/dossier.config";
 import { journalSource, JOURNAL_PAGE_SIZE, type JournalNetwork } from "./dossier/journal";
-import { newsSource } from "./dossier/newsroom";
+import { NEWSROOM_BRAND, NEWSROOM_LABEL, newsSource } from "./dossier/newsroom";
 import type { DossierFeedCards, DossierFeedSource } from "../../../components/dossier/src";
 import { topView } from "../../../components/dossier/src/routes";
 import "../../../components/dossier/showcase.css";
@@ -169,8 +169,8 @@ function Showcase() {
   const [specials, setSpecials] = useState<Specials>(SPECIALS_DEFAULT);
   /* The live feed: a fake paginated API (latency), live updates every 8 s while its first page is on screen. Test hooks
      (nothing visible): `?feed-cap=N`, batches appended in place before the next page's URL; `?feed-network=down` (every
-     call fails) or `down-from-2` (page 1 loads, later pages and single entries fail); `?feed-demo=newsroom`, a news
-     client's real-length headlines (Evoview Gaming's Latest, with importance tiers) instead of the journal, no live updates. */
+     call fails) or `down-from-2` (page 1 loads, later pages and single entries fail); `?feed-demo=newsroom`, a fictional
+     city paper's real-length headlines (sections, days, importance tiers) instead of the journal, no live updates. */
   const [hooks] = useState(() => {
     const query = typeof window === "undefined" ? null : new URLSearchParams(window.location.search);
     const network = query?.get("feed-network");
@@ -183,7 +183,7 @@ function Showcase() {
   const feedCap = hooks.cap;
   const source = useMemo(
     () =>
-      (hooks.newsroom ? newsSource() : journalSource(locale, { network: () => hooks.network })) as unknown as DossierFeedSource<object>,
+      (hooks.newsroom ? newsSource(locale) : journalSource(locale, { network: () => hooks.network })) as unknown as DossierFeedSource<object>,
     [locale, hooks],
   );
   const feed = useDossierFeed(source, { pageSize: JOURNAL_PAGE_SIZE, refreshMs: hooks.newsroom ? undefined : 8000, batchCap: feedCap });
@@ -214,7 +214,7 @@ function Showcase() {
   const journal = useMemo(() => {
     const config = buildDossierFeedConfig(locale, feed, { composition: journalComposition, feedCards: journalCards });
     if (!hooks.newsroom) return config;
-    return { ...config, tileMedia: "graded" as const, brand: { name: "Evoview Gaming" }, items: config.items.map((item) => ({ ...item, label: "Latest" })) };
+    return { ...config, tileMedia: "graded" as const, brand: { name: NEWSROOM_BRAND[locale] }, items: config.items.map((item) => ({ ...item, label: NEWSROOM_LABEL[locale] })) };
   }, [locale, feed, journalComposition, journalCards, hooks]);
   const configs = { multi, single, menu, journal };
 
@@ -326,17 +326,15 @@ function Showcase() {
           <div className="dsh-scene__copy">
             <h2 className="ev-t-section-feature">{tr(T.journal.title, locale)}</h2>
             <p className="ev-t-body dsh-scene__body">{tr(T.journal.body, locale)}</p>
-            {/* Composition only exists from 1024 (below it both are the same dossier): no desk at all under it. */}
-            {wide && (
-              <div className="dsh-scene__choice">
-                <SceneDesk className="dsh-desk">
-                  {compositionSetting(journalComposition, setJournalComposition)}
-                  <DeskSetting label={desk.cards.label}>
-                    <SegmentedControl block label={desk.cards.label} options={deskOptions(desk.cards.options)} value={journalCards} onChange={(v) => setJournalCards(v as DossierFeedCards)} />
-                  </DeskSetting>
-                </SceneDesk>
-              </div>
-            )}
+            {/* Composition only exists from 1024 (below it both are the same dossier); Cards change the board at every width. */}
+            <div className="dsh-scene__choice">
+              <SceneDesk className="dsh-desk">
+                {compositionSetting(journalComposition, setJournalComposition)}
+                <DeskSetting label={desk.cards.label}>
+                  <SegmentedControl block label={desk.cards.label} options={deskOptions(desk.cards.options)} value={journalCards} onChange={(v) => setJournalCards(v as DossierFeedCards)} />
+                </DeskSetting>
+              </SceneDesk>
+            </div>
           </div>
           <Launcher
             title={journal.items[0].label}

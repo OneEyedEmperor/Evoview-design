@@ -100,7 +100,9 @@ restyle them to the client's UI kit. Changing them is a library change
     frame at 68 % with a deep-accent shadow, an accent bloom (16 %) rising
     under the headline, headline × 1.16.
   Hover, focus and the neighbours' dimming stay the board's; no badge, label
-  or loop. With `true-colour` the grade step drops out; scrim, frame, bloom
+  or loop. The tier's frame yields to focus, and to hover only where the
+  board has a hover frame (`hover: hover`, from 1024): on touch a tap's
+  sticky `:hover` keeps it (1.16.1). With `true-colour` the grade step drops out; scrim, frame, bloom
   and type carry the tier. A top lead combines both (the type step multiplies
   the lead's); importance never reorders the feed nor picks the lead.
 - **Opening screen** (optional): the items as equal choice tiles, stacked
@@ -384,6 +386,12 @@ loader, spoken names. A feed among desks: `{ overview: "Latest",
 toastBack: "Back to Latest", dock: { item: "Latest" }, loader: {
 overviewKicker: () => "Latest" } }`. The reference journal carries its feed
 copy this way (`buildDossierFeedItem`). Without `item.copy` nothing changes.
+Labels that name **another** item take that item's words (1.16.1): the
+pager's previous / next, the items strip's tabs, the dock's previous / next,
+the end-of-story "next item", the empty panel's next link and the opening
+screen's tiles use the target's `previousItem` / `nextItem` /
+`itemLocation` / `openItem`. From a desk, Latest is spoken as Latest names
+itself, never "Desk 1 of 5: Latest".
 
 ### Live content
 

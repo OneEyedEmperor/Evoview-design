@@ -286,6 +286,9 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, clos
   const item: DossierItem | null = atOpening ? null : (items[itemIndex] ?? null);
   // The view's item speaks in its own words (`item.copy`) over the config's.
   const copy = fullCopy(itemCopy(config.copy, item), config.locale);
+  /* A label naming another item (pager, strip, dock, next / open item) is that item's words: "Latest", not "Desk 1 of 5:
+     Latest" from a desk's view. */
+  const copyOf = (target: DossierItem) => (target === item ? copy : fullCopy(itemCopy(config.copy, target), config.locale));
   const entries = item?.entries ?? [];
   const entryIndex = item && view.entry !== undefined ? entries.findIndex((e) => e.id === view.entry) : -1;
   const entry = entryIndex >= 0 ? entries[entryIndex] : null;
@@ -619,7 +622,7 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, clos
   const bodyBoard = body.kind === "opening" ? "choice" : bodyFeed ? "feed" : body.kind === "overview" ? boardLayout(bodyItem?.entries.length ?? 0) : undefined;
 
   const nextEntryLabel = !entry || !nextItem ? "" : entryIndex < entries.length - 1 ? (entries[entryIndex + 1].label ?? entries[entryIndex + 1].title) : itemCount > 1 ? nextItem.label : copy.overview;
-  const nextAria = !entry || !item || !nextItem ? "" : entryIndex < entries.length - 1 ? copy.nextEntry(nextEntryLabel) : itemCount > 1 ? copy.nextItem(nextItem.label) : copy.overviewOf(item.label);
+  const nextAria = !entry || !item || !nextItem ? "" : entryIndex < entries.length - 1 ? copy.nextEntry(nextEntryLabel) : itemCount > 1 ? copyOf(nextItem).nextItem(nextItem.label) : copy.overviewOf(item.label);
   // An overview under an opening screen: the strip names the way up and the items (the pager would repeat them).
   const itemsStrip = kind === "overview" && !!opening;
   // A feed's page view is a level below its first page: the dock leads back up to it.
@@ -698,7 +701,7 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, clos
 
               {itemCount > 1 && item && prevItem && nextItem && !itemsStrip && (
                 <nav className="evd-pager" aria-label={copy.itemsNav}>
-                  <PagerLink direction="prev" label={copy.previousItem(prevItem.label)} href={href(itemOverview(prevItem))} onFollow={() => switchItem(-1)} />
+                  <PagerLink direction="prev" label={copyOf(prevItem).previousItem(prevItem.label)} href={href(itemOverview(prevItem))} onFollow={() => switchItem(-1)} />
                   <div className="evd-pager__location" role="status" aria-label={copy.itemLocation(itemIndex + 1, itemCount, item.label)}>
                     <span className="evd-pager__label" aria-hidden="true">{item.label}</span>
                     <span className="evd-bars" aria-hidden="true" style={{ ["--evd-bars" as string]: itemCount }}>
@@ -707,7 +710,7 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, clos
                       ))}
                     </span>
                   </div>
-                  <PagerLink direction="next" label={copy.nextItem(nextItem.label)} href={href(itemOverview(nextItem))} onFollow={() => switchItem(1)} />
+                  <PagerLink direction="next" label={copyOf(nextItem).nextItem(nextItem.label)} href={href(itemOverview(nextItem))} onFollow={() => switchItem(1)} />
                 </nav>
               )}
 
@@ -780,7 +783,7 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, clos
                     key={it.id}
                     href={href(itemOverview(it))}
                     state={i === itemIndex ? "active" : undefined}
-                    label={copy.itemLocation(i + 1, itemCount, it.label)}
+                    label={copyOf(it).itemLocation(i + 1, itemCount, it.label)}
                     index={i}
                     onFollow={() => i !== itemIndex && go(itemOverview(it))}
                   >
@@ -827,7 +830,7 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, clos
                         revealed
                         onSelect={(i) => go(itemView(config, bodyItems[i].id))}
                         hrefFor={hrefFor ? (i) => href(itemView(config, bodyItems[i].id)) : undefined}
-                        openLabel={copy.openItem}
+                        openLabel={(i, n, title) => copyOf(bodyItems[i - 1]).openItem(i, n, title)}
                         registerTile={(i, el) => {
                           tileRefs.current[i] = el;
                         }}
@@ -882,7 +885,7 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, clos
                       ) : bodyItem.pending ? null : (
                         <EmptyBoard
                           {...(bodyItem.empty ?? copy.empty)}
-                          next={itemCount > 1 && nextItem && nextItem.id !== bodyItem.id ? { label: nextItem.label, aria: copy.nextItem(nextItem.label), href: href(itemOverview(nextItem)), onFollow: () => switchItem(1) } : null}
+                          next={itemCount > 1 && nextItem && nextItem.id !== bodyItem.id ? { label: nextItem.label, aria: copyOf(nextItem).nextItem(nextItem.label), href: href(itemOverview(nextItem)), onFollow: () => switchItem(1) } : null}
                         />
                       )}
                     </section>
@@ -932,7 +935,7 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, clos
                 ) : opening ? (
                   <DockButton side="start" label={upLabel} aria={copy.up(upLabel)} icon={<ArrowLeft />} href={href(openingView)} onClick={toOpening} />
                 ) : (
-                  prevItem && <DockButton side="start" label={copy.dock.previous} aria={copy.previousItem(prevItem.label)} icon={<ArrowLeft />} href={href(itemOverview(prevItem))} onClick={() => switchItem(-1)} />
+                  prevItem && <DockButton side="start" label={copy.dock.previous} aria={copyOf(prevItem).previousItem(prevItem.label)} icon={<ArrowLeft />} href={href(itemOverview(prevItem))} onClick={() => switchItem(-1)} />
                 )}
                 <div
                   className="evd-dock__location"
@@ -972,7 +975,7 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, clos
                   <DockButton
                     side="end"
                     label={copy.dock.next}
-                    aria={entry ? nextAria : copy.nextItem(nextItem.label)}
+                    aria={entry ? nextAria : copyOf(nextItem).nextItem(nextItem.label)}
                     icon={<ArrowRight />}
                     href={href(entry ? nextView : itemOverview(nextItem))}
                     onClick={entry ? goNextEntry : () => switchItem(1)}

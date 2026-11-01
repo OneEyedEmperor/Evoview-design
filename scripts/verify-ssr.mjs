@@ -116,6 +116,30 @@ const PACKAGES = [
         if (mine && v.entry === undefined) check(routes.head(c, v).title.includes(`${mark} ${target.label}`), "item-copy", `${locale} ${k}`, "the item's overviewTitle names its overview (h1 and head title)", routes.head(c, v).title);
         if (mine) await verify({ config: c, view: v, locale: `${locale}:item-copy`, key: k, element: h(m.Dossier, { config: c, view: v, onNavigate: noop, hrefFor }), head: routes.head(c, v) });
       }
+
+      /* Cross-item labels (1.16.1): a label naming another item (pager, items strip, dock, the next item, opening tiles) is
+         built from that item's own copy. With the target's cross-item words marked, every marked label names the target;
+         the views beside it (its pager / dock neighbours, the items strip, the opening screen) carry its words. */
+      if (config.items.length < 2) return;
+      const cross = "Xqz";
+      const crossCopy = { previousItem: (l) => `${cross} prev ${l}`, nextItem: (l) => `${cross} next ${l}`, itemLocation: (i, n, l) => `${cross} ${i}/${n} ${l}`, openItem: (i, n, l) => `${cross} open ${i}/${n} ${l}` };
+      const c2 = { ...config, items: config.items.map((i) => (i.id === target.id ? { ...i, copy: crossCopy } : i)) };
+      const at = c2.items.findIndex((i) => i.id === target.id);
+      const n = c2.items.length;
+      const neighbours = new Set([c2.items[(at - 1 + n) % n].id, c2.items[(at + 1) % n].id]);
+      const decode = (s) => s.replace(/&#x27;|&#39;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, "&");
+      for (const v of [null, ...routes.views(c2)].filter(Boolean)) {
+        const k = routes.key(v);
+        const subject = `${locale} ${k}`;
+        const out = await renderCaptured(h(m.Dossier, { config: c2, view: v, onNavigate: noop, hrefFor }));
+        if (!check(!out.error, "item-copy-cross", subject, `render threw: ${out.error?.message}`)) continue;
+        const labels = [...out.html.matchAll(/="([^"]*Xqz[^"]*)"/g), ...out.html.matchAll(/>([^<]*Xqz[^<]*)</g)].map((x) => decode(x[1]));
+        const stray = labels.filter((l) => !l.includes(target.label));
+        check(!stray.length, "item-copy-cross", subject, "an item's cross-item words only ever name that item", stray.slice(0, 2).join(" | "));
+        const beside = v.item !== undefined && v.item !== target.id && neighbours.has(v.item);
+        const opening = v.item === undefined && !!c2.opening;
+        if (beside || opening) check(labels.length > 0, "item-copy-cross", subject, opening ? "the opening screen names the item in its own words" : "a neighbour's pager / dock / strip names the item in its own words", `${labels.length} labels`);
+      }
     },
     /* What `parse` accepts beyond the data (§2, the §7.4 shell patterns follow it exactly): a feed's or a pending item's
        entry key is a lowercase slug, never the feed's `page` segment; a feed page number past a known last page (a cached

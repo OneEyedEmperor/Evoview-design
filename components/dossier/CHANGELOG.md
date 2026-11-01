@@ -1,5 +1,36 @@
 # dossier changelog
 
+## 1.16.1
+
+Fixes. No config or API change. Requires nothing new (foundation ≥ 1.16.0, controls ≥ 1.5.0). Configs without
+`item.copy` render byte-identical server HTML, head answers, view media and parse results against 1.16.0
+(`scripts/ssr-snapshot.mjs`, 2,326 renders, FR + EN, every view + closed).
+
+- **Cross-item labels speak the target item's words** (Evoview Gaming site review r6 N2). Some labels name another
+  item: the pager's previous / next, the items strip's tabs, the dock's previous / next, the end-of-story next item,
+  the empty panel's next link and the opening screen's tiles. They are now built from that item's own copy (`item.copy`,
+  1.15.0), not from the view's.
+  - From a desk, Latest was "Desk 1 of 5: Latest" / "Previous desk: Latest"; it is now spoken as Latest names itself.
+  - `verify:ssr` adds `item-copy-cross` on every multi-item reference config. With the target's cross-item words
+    marked, every marked label must name the target, and the views beside it (pager / dock neighbours, items strip,
+    opening screen) must carry its words. With the fix reverted, 64 checks fail.
+- **A top / major story's frame holds on touch** (1.16.0 review N1). The tier frame was dropped under any `:hover`. On
+  `hover: none` a tap's sticky `:hover` took a top card from 68 % back to the standard 30 % until navigation. The frame
+  now yields to focus, and to hover only under `(hover: hover) and (min-width: 1024px)`, where the board has its hover
+  frame. Checked in Chrome with the pointer over a top card:
+  - hover-none: 68 % at rest and under `:hover`;
+  - hover-capable: 68 % at rest, the full signal on hover.
+- Showcase (review N3, N4):
+  - `?feed-demo=newsroom` is now a fictional city paper (FR + EN), not a client's real-world headlines (RULES §10). It
+    keeps the same shape: 16 stories, headlines of 40–75 characters, sections, days, one top and two majors on page 1,
+    and a top lead on page 2.
+  - The journal's "Cards" desk now shows at every width (Composition stays from 1024). At 390, Editions shows the sheet,
+    the 4:5 lead with its dek and `Section · day` (0 readouts over titles); Tiles shows equal tiles with the readout
+    over each title (9).
+- Known, not changed: a text brand longer than the header's `8.5em` brand box (`.evd-header__brand`: `nowrap`, overflow
+  visible) runs into the item readout. A 20-character name overlapped "Latest" by about 25px at 1440. Logos and short
+  names (Maison Ardoise) are unaffected. The demo paper's name is short for that reason. Reported for a later release.
+
 ## 1.16.0
 
 Additive. Requires nothing new (foundation ≥ 1.16.0, controls ≥ 1.5.0). Configs without `feedCards` (or with
