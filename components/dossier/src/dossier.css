@@ -470,7 +470,9 @@ html:has(.ev-dossier[data-rest-lock][data-phase="open"]) { overflow: hidden; }
   inset: 0;
   width: 100%;
   height: 100%;
-  filter: grayscale(1) saturate(0) contrast(1.08) brightness(0.68);
+  /* Every graded state of the picture is written as one list (grayscale saturate sepia contrast brightness): a filter
+     interpolates only between matching lists, so this 260ms runs instead of flipping (identity values fill the gaps). */
+  filter: grayscale(1) saturate(0) sepia(0) contrast(1.08) brightness(0.68);
   transform: scale(1.001);
   transition: filter 260ms var(--ev-ease), transform 260ms var(--ev-ease-cinematic);
   user-select: none;
@@ -542,7 +544,7 @@ html:has(.ev-dossier[data-rest-lock][data-phase="open"]) { overflow: hidden; }
 }
 .evd-tile:focus-visible { outline: 2px solid var(--dossier-signal); outline-offset: 3px; }
 .evd-tile:focus-visible .evd-tile__media,
-.evd-board[data-cycle] .evd-tile[data-cycle-focus] .evd-tile__media { filter: saturate(0.85) sepia(0.08) contrast(1.08) brightness(0.92); transform: scale(1.018); }
+.evd-board[data-cycle] .evd-tile[data-cycle-focus] .evd-tile__media { filter: grayscale(0) saturate(0.85) sepia(0.08) contrast(1.08) brightness(0.92); transform: scale(1.018); }
 .evd-tile:focus-visible .evd-tile__grade,
 .evd-board[data-cycle] .evd-tile[data-cycle-focus] .evd-tile__grade { opacity: 0.72; }
 .evd-tile:focus-visible .evd-tile__scrim,
@@ -568,10 +570,10 @@ html:has(.ev-dossier[data-rest-lock][data-phase="open"]) { overflow: hidden; }
 a.evd-tile { -webkit-user-drag: none; -webkit-touch-callout: none; }
 
 @media (hover: hover) and (min-width: 1024px) {
-  .evd-tile__media { filter: grayscale(0.62) saturate(0.46) contrast(1.08) brightness(0.68); }
-  .evd-board:has(.evd-tile:hover) .evd-tile:not(:hover) .evd-tile__media { filter: grayscale(0.78) saturate(0.28) contrast(1.06) brightness(0.52); }
+  .evd-tile__media { filter: grayscale(0.62) saturate(0.46) sepia(0) contrast(1.08) brightness(0.68); }
+  .evd-board:has(.evd-tile:hover) .evd-tile:not(:hover) .evd-tile__media { filter: grayscale(0.78) saturate(0.28) sepia(0) contrast(1.06) brightness(0.52); }
   .evd-tile:hover { border-color: var(--dossier-signal); box-shadow: 0 10px 32px rgb(0 0 0 / 0.32), inset 0 0 0 1px color-mix(in oklab, var(--dossier-signal) 72%, transparent); }
-  .evd-tile:hover .evd-tile__media { filter: saturate(0.85) sepia(0.08) contrast(1.08) brightness(0.92); transform: scale(1.018); }
+  .evd-tile:hover .evd-tile__media { filter: grayscale(0) saturate(0.85) sepia(0.08) contrast(1.08) brightness(0.92); transform: scale(1.018); }
   .evd-tile:hover .evd-tile__grade { opacity: 0.72; }
   .evd-tile:hover .evd-tile__scrim { opacity: 0.88; }
   .evd-tile:hover .evd-tile__edge { transform: scaleX(1); }
@@ -1042,11 +1044,12 @@ a.evd-tile { -webkit-user-drag: none; -webkit-touch-callout: none; }
 .evd-rows__media { position: absolute; inset: 0 auto 0 0; width: var(--evd-row-media); background: var(--ev-well); }
 .evd-rows__media img { display: block; width: 100%; height: 100%; }
 .evd-rows[data-media="graded"] .evd-rows__media img {
-  filter: grayscale(0.62) saturate(0.46) contrast(1.08) brightness(0.68);
+  /* One list for rest and hover, so the 420ms runs (see `.evd-tile__media`). */
+  filter: grayscale(0.62) saturate(0.46) sepia(0) contrast(1.08) brightness(0.68);
   transition: filter 420ms var(--ev-ease);
 }
 @media (hover: hover) {
-  .evd-rows[data-media="graded"] .evd-rows__row:hover .evd-rows__media img { filter: saturate(0.85) sepia(0.08) contrast(1.08) brightness(0.92); }
+  .evd-rows[data-media="graded"] .evd-rows__row:hover .evd-rows__media img { filter: grayscale(0) saturate(0.85) sepia(0.08) contrast(1.08) brightness(0.92); }
 }
 .evd-rows__marks {
   display: inline-flex;
@@ -1358,14 +1361,13 @@ a.evd-tile { -webkit-user-drag: none; -webkit-touch-callout: none; }
 .evd-board[data-cards="editions"][data-tile-media="graded"] .evd-tile[data-importance="major"]:not(:focus-visible) .evd-tile__media { filter: grayscale(0.55) saturate(0.5) sepia(0) contrast(1.08) brightness(0.76); }
 .evd-board[data-cards="editions"][data-tile-media="graded"] .evd-tile[data-importance="top"]:not(:focus-visible) .evd-tile__media { filter: grayscale(0) saturate(0.8) sepia(0.06) contrast(1.08) brightness(0.86); }
 .evd-board[data-cards="editions"][data-tile-media="graded"] .evd-tile[data-importance]:focus-visible .evd-tile__media { filter: grayscale(0) saturate(0.85) sepia(0.08) contrast(1.08) brightness(0.92); }
-/* A tier card leaving its colour because another card is pointed (and taking it back) is ambient, not its own state:
-   it pours in-out over the reveal duration, so a large card never reads as cut; its own hover keeps the board's 260ms. */
-.evd-board[data-cards="editions"][data-tile-media="graded"] .evd-tile[data-importance]:not(:focus-visible) .evd-tile__media { transition: filter var(--ev-dur-reveal) cubic-bezier(0.65, 0, 0.35, 1), transform 260ms var(--ev-ease-cinematic); }
 @media (hover: hover) and (min-width: 1024px) {
-  .evd-board[data-cards="editions"][data-tile-media="graded"] .evd-tile[data-importance]:hover .evd-tile__media { transition: filter 260ms var(--ev-ease), transform 260ms var(--ev-ease-cinematic); }
   .evd-board[data-cards="editions"][data-tile-media="graded"] .evd-tile[data-importance="major"]:not(:hover, :focus-visible) .evd-tile__media { filter: grayscale(0.3) saturate(0.66) sepia(0) contrast(1.08) brightness(0.8); }
   .evd-board[data-cards="editions"][data-tile-media="graded"] .evd-tile[data-importance]:hover .evd-tile__media { filter: grayscale(0) saturate(0.85) sepia(0.08) contrast(1.08) brightness(0.92); }
-  .evd-board[data-cards="editions"][data-tile-media="graded"]:has(.evd-tile:hover) .evd-tile[data-importance]:not(:hover) .evd-tile__media { filter: grayscale(0.78) saturate(0.28) sepia(0) contrast(1.06) brightness(0.52); }
+  /* A tier card dimming because another card is pointed is ambient, not its own state: it pours in-out over the reveal
+     duration, so a large card never reads as cut. The curve sits on the dimmed state only, so it governs going into the
+     dim; its own hover release and the return from the dim keep the board's 260ms. */
+  .evd-board[data-cards="editions"][data-tile-media="graded"]:has(.evd-tile:hover) .evd-tile[data-importance]:not(:hover) .evd-tile__media { filter: grayscale(0.78) saturate(0.28) sepia(0) contrast(1.06) brightness(0.52); transition: filter var(--ev-dur-reveal) cubic-bezier(0.65, 0, 0.35, 1), transform 260ms var(--ev-ease-cinematic); }
 }
 /* An appended edition: the bloom pours in with its picture. */
 .evd-tile[data-enter="batch"] > .evd-tile__bloom { animation: evd-fade-in 600ms var(--ev-ease) calc((var(--evd-n, 1) - 1) * 80ms) backwards; }

@@ -110,9 +110,9 @@ restyle them to the client's UI kit. Changing them is a library change
   or loop. The tier's frame yields to focus, and to hover only where the
   board has a hover frame (`hover: hover`, from 1024): on touch a tap's
   sticky `:hover` keeps it (1.16.1). When another card is pointed, a tier
-  card dims with its neighbours, pouring in-out over 600ms (and back), never
-  a cut: every state of its picture shares one filter list, so it interpolates
-  (1.16.3). With `true-colour` the grade step drops out; scrim, frame, bloom
+  card dims with its neighbours, pouring in-out over 600ms, never a cut
+  (1.16.3); its own hover release and the return from the dim keep the
+  board's 260ms (1.16.4). With `true-colour` the grade step drops out; scrim, frame, bloom
   and type carry the tier. A top lead combines both (the type step multiplies
   the lead's); importance never reorders the feed nor picks the lead.
 - **Opening screen** (optional): the items as equal choice tiles, stacked
@@ -168,6 +168,12 @@ restyle them to the client's UI kit. Changing them is a library change
   chapter above that line reveals too, so jumps never leave one hidden);
   item switch = 260 ms dark cut at the moment the board changes. Entrances
   fill backwards only: if an animation does not run, the content is visible.
+  Graded media ease between every state (board tiles: 260 ms hover, focus
+  and neighbour dim, 700 ms touch cycle; row thumbnails: 420 ms): each
+  state's `filter` is written as one list (`grayscale saturate sepia contrast
+  brightness`, identity values where a step is unused), because CSS blends
+  filters only between matching lists and flips at once otherwise (1.16.4).
+  Keep that list when adapting a grade. True colour stays `filter: none`.
   Not the CRT power-on, channel OSD or scan grid (Evoview's own art
   direction).
 - **Accent roles**: strip underline and tab chip, tile border / edge /
