@@ -126,8 +126,12 @@ re-render in a transition, outside the opening frame. Use
 `useBackgroundSuspended` where the flag must change in the same commit
 (chrome that hides with the modal).
 
-`useMediaReady` sources: URLs or `{ src, type }` (type guessed from the
-extension). Decoded sources are remembered for the session, so a cached
+`useMediaReady` sources: URLs or `{ src, type, srcSet?, sizes? }` (type
+guessed from the extension). An image with a `srcSet` is fetched as an
+`<img>` with the same `srcset` / `sizes` would fetch it (pass exactly the
+attributes the element renders with), never as its bare `src`: the gate
+and `preloadMedia` download the file the page shows, once. Decoded sources
+are remembered for the session (keyed by `src` + `srcSet` + `sizes`), so a cached
 switch never flashes the loader. Show the loader while `slow`, the failure
 state + `retry` when `failed`, reveal on `ready` (`ready` is false the
 moment `open` turns false). Images count as ready on load + `decode()`

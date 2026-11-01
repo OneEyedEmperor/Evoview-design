@@ -1,5 +1,21 @@
 # foundation changelog
 
+## 1.16.0
+
+Additive. No config change. Requires nothing new.
+
+- `MediaSource` objects take `srcSet?` / `sizes?` (images). The media gate
+  (`useMediaReady`, probe and element modes) and `preloadMedia` set
+  `sizes` and `srcset` on the probe before `src`, so they fetch the
+  candidate an `<img>` with the same attributes picks, not the bare `src`
+  (the largest file, and a second download when the page's `<img srcset>`
+  picks another).
+- Decode memory, in-flight sharing and gate signatures are keyed by
+  `src` + `srcSet` + `sizes`. A source without `srcSet` keeps the `src` key:
+  behaviour unchanged for callers that never pass one.
+- Pass exactly the `srcSet` / `sizes` the element renders with (another
+  `sizes` can pick another file).
+
 ## 1.15.0
 
 Signature change: the emperor, 2026-11-01: boxed REC dots removed

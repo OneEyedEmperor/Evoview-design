@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useHydrated } from "./hydration";
 import { mediaGate } from "./tokens";
 
-export type MediaSource = string | { src: string; type?: "image" | "video" } | null | undefined | false;
+/** `srcSet` / `sizes` (images): the gate and `preloadMedia` fetch the candidate an `<img>` with the same attributes picks, never `src` on its own. */
+export type MediaSource = string | { src: string; type?: "image" | "video"; srcSet?: string; sizes?: string } | null | undefined | false;
 
 /** Element mode: the gate owns a mounted player instead of probing a detached copy. */
 export type MediaElementGate = {
@@ -58,16 +59,27 @@ const decoded = new Set<string>();
 const DECODE_CAP_MS = 1500;
 const METADATA_FALLBACK_MS = 1200;
 
-const normalise = (sources: MediaSource[]) =>
-  sources
-    .filter((s): s is string | { src: string; type?: "image" | "video" } => !!s)
-    .map((s) => (typeof s === "string" ? { src: s, type: VIDEO_RE.test(s) ? ("video" as const) : ("image" as const) } : { src: s.src, type: s.type ?? (VIDEO_RE.test(s.src) ? "video" : "image") }));
+type Item = { src: string; type: "image" | "video"; srcSet?: string; sizes?: string; key: string };
 
-function load(item: { src: string; type: "image" | "video" }, videoEvent: "loadeddata" | "canplaythrough", priority?: "low"): { promise: Promise<void>; abort: () => void } {
+/* `key`: the decode memory's identity. With a `srcSet` the fetched file depends on it and `sizes`. */
+const normalise = (sources: MediaSource[]): Item[] =>
+  sources
+    .filter((s): s is Exclude<MediaSource, null | undefined | false> => !!s)
+    .map((s) => {
+      if (typeof s === "string") return { src: s, type: VIDEO_RE.test(s) ? ("video" as const) : ("image" as const), key: s };
+      const type = s.type ?? (VIDEO_RE.test(s.src) ? "video" : "image");
+      if (type === "video" || !s.srcSet) return { src: s.src, type, key: s.src };
+      return { src: s.src, type, srcSet: s.srcSet, sizes: s.sizes, key: `${s.src}|${s.srcSet}|${s.sizes ?? ""}` };
+    });
+
+function load(item: Item, videoEvent: "loadeddata" | "canplaythrough", priority?: "low"): { promise: Promise<void>; abort: () => void } {
   if (item.type === "image") {
     const img = new Image();
     img.decoding = "async";
     if (priority) (img as HTMLImageElement & { fetchPriority?: string }).fetchPriority = priority;
+    // Before `src`: the candidate is chosen once, from the final attributes.
+    if (item.sizes) img.sizes = item.sizes;
+    if (item.srcSet) img.srcset = item.srcSet;
     const promise = new Promise<void>((resolve, reject) => {
       img.onload = () => {
         if (typeof img.decode !== "function") return resolve();
@@ -116,16 +128,16 @@ const inflight = new Map<string, Promise<void>>();
  */
 export function preloadMedia(sources: MediaSource[], video: "loadeddata" | "canplaythrough" = "loadeddata"): Promise<void> {
   const pending = normalise(sources)
-    .filter((item) => !decoded.has(item.src))
+    .filter((item) => !decoded.has(item.key))
     .map((item) => {
-      const known = inflight.get(item.src);
+      const known = inflight.get(item.key);
       if (known) return known;
       const promise = load(item, video, "low")
         .promise.then(() => {
-          decoded.add(item.src);
+          decoded.add(item.key);
         }, () => undefined)
-        .finally(() => inflight.delete(item.src));
-      inflight.set(item.src, promise);
+        .finally(() => inflight.delete(item.key));
+      inflight.set(item.key, promise);
       return promise;
     });
   return Promise.all(pending).then(() => undefined);
@@ -188,12 +200,12 @@ function useProbeGate(open: boolean, sources: MediaSource[], options: MediaReady
   const { graceMs = mediaGate.graceMs, minVisibleMs = mediaGate.minVisibleMs, timeoutMs = mediaGate.timeoutMs, video = "loadeddata" } = options;
   const hydrated = useHydrated();
   const list = normalise(sources);
-  const signature = list.map((s) => `${s.type}:${s.src}`).join("|");
+  const signature = list.map((s) => `${s.type}:${s.key}`).join("|");
   // Stable across renders for the same sources (callers pass fresh arrays).
   const items = useMemo(() => list, [signature]);
   // The session cache is client state: reading it while hydrating would
   // disagree with the server HTML.
-  const allCached = hydrated && items.every((s) => decoded.has(s.src));
+  const allCached = hydrated && items.every((s) => decoded.has(s.key));
 
   const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState({ signature: "", ready: false, slow: false, failed: false, loaded: 0 });
@@ -203,7 +215,7 @@ function useProbeGate(open: boolean, sources: MediaSource[], options: MediaReady
       setState({ signature, ready: false, slow: false, failed: false, loaded: 0 });
       return;
     }
-    if (items.every((s) => decoded.has(s.src))) {
+    if (items.every((s) => decoded.has(s.key))) {
       setState({ signature, ready: true, slow: false, failed: false, loaded: items.length });
       return;
     }
@@ -229,7 +241,7 @@ function useProbeGate(open: boolean, sources: MediaSource[], options: MediaReady
       const l = load(item, video);
       l.promise.then(
         () => {
-          decoded.add(item.src);
+          decoded.add(item.key);
           if (cancelled) return;
           loaded += 1;
           setState((s) => ({ ...s, loaded }));
@@ -290,8 +302,8 @@ function useElementGate(open: boolean, sources: MediaSource[], options: MediaRea
   const hasPlayer = video !== undefined;
   const fullSrc = hasPlayer && buffer === "full" && src ? src : null;
   const full = fullSrc !== null;
-  const list = normalise(sources).filter((item, i, all) => all.findIndex((other) => other.src === item.src) === i);
-  const signature = list.map((s) => `${s.type}:${s.src}`).join("|");
+  const list = normalise(sources).filter((item, i, all) => all.findIndex((other) => other.key === item.key) === i);
+  const signature = list.map((s) => `${s.type}:${s.key}`).join("|");
   const items = useMemo(() => list, [signature]);
   const empty = !items.length && !hasPlayer;
 
@@ -346,14 +358,14 @@ function useElementGate(open: boolean, sources: MediaSource[], options: MediaRea
     if (!key || !items.length) return;
     let disposed = false;
     const settle = (done: string[]) => update(key, (c) => ({ loaded: new Set([...c.loaded, ...done]) }));
-    const cached = items.filter((item) => decoded.has(item.src)).map((item) => item.src);
+    const cached = items.filter((item) => decoded.has(item.key)).map((item) => item.key);
     if (cached.length) settle(cached);
-    const loads = items.filter((item) => !decoded.has(item.src)).map((item) => {
+    const loads = items.filter((item) => !decoded.has(item.key)).map((item) => {
       const l = load(item, videoEvent);
       l.promise.then(
         () => {
-          decoded.add(item.src);
-          if (!disposed) settle([item.src]);
+          decoded.add(item.key);
+          if (!disposed) settle([item.key]);
         },
         () => { if (!disposed) update(key, () => ({ failed: true })); },
       );
