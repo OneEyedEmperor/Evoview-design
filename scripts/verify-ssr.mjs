@@ -35,24 +35,44 @@ const PACKAGES = [
     component: "Dossier",
     routes: "dossierRoutes",
     config: (m, locale) => m.buildDossierConfig(locale),
-    // Universes (panorama); the menu behind an opening screen (sheet, odd board); the same on a day without specials (panorama, empty item).
+    // Universes (panorama); the menu behind an opening screen (sheet, odd board); the same on a day without specials (panorama, empty item);
+    // a live feed (the journal, four pages of build-time data: page views, their entries).
     async configs(m, locale) {
       const reference = await vite.ssrLoadModule("/components/dossier/src/dossier.config.tsx");
+      const journal = await vite.ssrLoadModule("/src/pages/library/dossier/journal.ts");
+      const feed = m.dossierFeed(journal.journalSnapshot([1, 2, 3, 4]), (r) => journal.journalEntry(r, locale), { pageSize: journal.JOURNAL_PAGE_SIZE });
       return [
         { name: "", config: m.buildDossierConfig(locale) },
         { name: "menu", config: reference.buildDossierMenuConfig(locale) },
         { name: "menu-empty", config: reference.buildDossierMenuConfig(locale, { specials: 0, composition: "panorama" }) },
+        { name: "feed", config: reference.buildDossierFeedConfig(locale, feed) },
       ];
     },
+    // A feed: overview (page 1) and its entries, then per page from 2 its view and entries (README "Feed").
     views: (c) => [
       ...(c.opening ? [{ opening: c.opening.id }] : []),
-      ...c.items.flatMap((item) => [{ item: item.id }, ...item.entries.map((entry) => ({ item: item.id, entry: entry.id }))]),
+      ...c.items.flatMap((item) =>
+        item.feed
+          ? [
+              { item: item.id },
+              ...item.feed.pages.flatMap((p) => [...(p.page >= 2 ? [{ item: item.id, page: p.page }] : []), ...p.ids.map((id) => ({ item: item.id, entry: id, ...(p.page >= 2 ? { page: p.page } : {}) }))]),
+            ]
+          : [{ item: item.id }, ...item.entries.map((entry) => ({ item: item.id, entry: entry.id }))],
+      ),
     ],
-    key: (v) => (v.item === undefined ? v.opening : v.entry ? `${v.item}/${v.entry}` : v.item),
+    key: (v) => (v.item === undefined ? v.opening : v.entry ? `${v.item}/${v.entry}` : v.page >= 2 ? `${v.item}/page/${v.page}` : v.item),
+    /* Siblings are of one kind (entries, pages, overviews); a paginated level links its first page only, each page its
+       neighbours (the chain reaches every page). */
+    group: (v) => (v.entry ? "entry" : v.page >= 2 ? "page" : "view"),
+    chained: ["page"],
     async copy(c, v, { blocks }) {
       if (v.item === undefined) return c.items.flatMap((i) => [i.label, i.kicker]);
       const item = c.items.find((i) => i.id === v.item);
       if (!item) return [];
+      if (item.feed && !v.entry) {
+        const ids = item.feed.pages.find((p) => p.page === (v.page ?? 1))?.ids ?? [];
+        return [item.label, ...ids.flatMap((id) => [item.entries.find((e) => e.id === id)?.title, item.entries.find((e) => e.id === id)?.kicker])];
+      }
       if (!v.entry && !item.entries.length) {
         const empty = item.empty ?? c.copy.empty ?? {};
         return [item.label, empty.title, empty.body];
@@ -138,7 +158,8 @@ const PACKAGES = [
         ...c,
         items: c.items.map((item) => ({
           ...item,
-          entries: item.entries.map((e) => ({
+          // Entries that already render their h1 (a feed's `feedEntry` default) are checked as they are.
+          entries: item.entries.map((e) => e.heading === "content" ? e : ({
             ...e,
             heading: "content",
             content: (ctx) => h(React.Fragment, null, h(m.ChapterHead, { level: "title", as: "h1", id: ctx.headingId, title: e.title }), e.content(ctx)),
@@ -171,10 +192,103 @@ const PACKAGES = [
           [!tiles.some((t) => "disabled" in t.attrs || t.attrs["aria-disabled"] === "true"), "board tiles are enabled (the view is interactive once hydrated)"],
         ];
       },
-      pending: (c) => {
+      // A feed waits on its page instead: one not brought yet (no build-time data for it).
+      pending: (c, m) => {
         const at = c.items.findIndex(Boolean);
-        return at < 0 ? null : { config: { ...c, items: c.items.map((item, i) => (i === at ? { ...item, pending: true, entries: [] } : item)) }, view: { item: c.items[at].id, ...(c.opening ? { opening: c.opening.id } : {}) } };
+        const wait = (item) => (item.feed ? { ...item, feed: m.dossierFeed({ pages: [] }, () => null), entries: [] } : { ...item, pending: true, entries: [] });
+        return at < 0 ? null : { config: { ...c, items: c.items.map((item, i) => (i === at ? wait(item) : item)) }, view: { item: c.items[at].id, ...(c.opening ? { opening: c.opening.id } : {}) } };
       },
+    },
+    /* Feed board server HTML (README "Feed"): the view's page only, real links to the newer / older page, the first
+       batch eager, no client-only state (placeholders, held tiles, error); an entry not brought yet keeps the held path. */
+    async feed({ config, locale, views, make, hrefFor, routes, check, read, renderCaptured }) {
+      const item = config.items.find((i) => i.feed);
+      if (!item) return;
+      for (const p of item.feed.pages) {
+        const view = p.page >= 2 ? { item: item.id, page: p.page } : { item: item.id };
+        const subject = `${locale} ${routes.key(view)}`;
+        const out = await renderCaptured(make(view));
+        if (!check(!out.error, "feed", subject, `render threw: ${out.error?.message}`)) continue;
+        const r = read(out.html);
+        const hrefs = new Set(r.tags.filter((t) => t.name === "a").map((t) => t.attrs.href));
+        const board = r.tags.find((t) => t.attrs["data-layout"] === "feed");
+        const tiles = r.tags.filter((t) => t.name === "a" && /(^|\s)evd-tile(\s|$)/.test(t.attrs.class ?? ""));
+        check(!!board, "feed", subject, "the overview carries the feed board (data-layout=feed)");
+        check(tiles.length === p.ids.length && p.ids.every((id) => hrefs.has(hrefFor({ item: item.id, entry: id, ...(p.page >= 2 ? { page: p.page } : {}) }))), "feed", subject, "the page view renders its own page's tiles, each a link to its entry", `${tiles.length} tiles, page holds ${p.ids.length}`);
+        const imgs = r.tags.filter((t) => t.name === "img" && /(^|\s)evd-tile__media(\s|$)/.test(t.attrs.class ?? ""));
+        check(imgs.length === p.ids.length && imgs.every((t) => t.attrs.loading !== "lazy"), "feed", subject, "the view's first batch is eager (no loading=lazy)");
+        if (p.next !== null) check(hrefs.has(hrefFor({ item: item.id, page: p.page + 1 })), "feed", subject, "a page with more links the next page's URL (crawlers, no script)", hrefFor({ item: item.id, page: p.page + 1 }));
+        else check(r.blocks.some((b) => b.type === "p" && norm(b.text) === norm(config.copy.feed?.end ?? (config.locale === "fr" ? "C'est tout pour le moment." : "That's everything for now."))), "feed", subject, "the last page ends on the end panel");
+        if (p.page >= 2) check(hrefs.has(hrefFor(p.page === 2 ? { item: item.id } : { item: item.id, page: p.page - 1 })), "feed", subject, "a page view links the newer page");
+        const clientOnly = r.tags.filter((t) => /evd-feed__ghost|evd-feed__fresh/.test(t.attrs.class ?? "") || "data-held" in t.attrs || t.attrs.role === "alert");
+        check(!clientOnly.length, "feed", subject, "no client-only feed state in server HTML (placeholders, held tiles, live control, error)", `${clientOnly.length}×`);
+        const h1 = r.blocks.find((b) => b.type === "h1")?.text ?? "";
+        if (p.page >= 2) check(norm(h1).includes(norm(`page ${p.page}`)), "feed", subject, "a page view's h1 names its page", h1);
+      }
+      const view = { item: item.id, entry: "not-loaded-yet" };
+      const parsed = routes.parse(config, `${item.id}/not-loaded-yet`);
+      check(parsed && parsed.entry === "not-loaded-yet", "feed", `${locale} deep link`, "parse accepts an entry key the feed has not brought (fetchEntry)");
+      const out = await renderCaptured(make(view, { ...config, directLoad: "at-rest" }));
+      if (check(!out.error, "feed", `${locale} deep link`, `render threw: ${out.error?.message}`)) {
+        const r = read(out.html);
+        const root = r.tags.find((t) => "data-ev-route-layer" in t.attrs);
+        check(root && !("data-rest" in root.attrs) && r.tags.some((t) => "data-ev-held" in t.attrs), "feed", `${locale} deep link`, "an entry not brought yet keeps the held, gated path (never at rest)");
+      }
+      check(routes.parse(config, `${item.id}/page/1`) === null, "feed", `${locale} page/1`, "page 1 has the overview's URL only (`<item>/page/1` names nothing)");
+
+      /* `head` answers every view `parse` accepts (contract §2, "Live content"): an entry not brought, a page not
+         loaded, a loaded page whose entries all came earlier. */
+      const last = item.feed.pages[item.feed.pages.length - 1];
+      const dupPage = last.page + 1;
+      const dupConfig = {
+        ...config,
+        items: config.items.map((i) => {
+          if (i !== item) return i;
+          const feed = { ...i.feed, pages: [...i.feed.pages.map((p) => (p === last ? { ...p, next: String(dupPage) } : p)), { page: dupPage, ids: [], next: null }], pageStatus: (n) => (n === dupPage ? "ready" : i.feed.pageStatus(n)) };
+          return { ...i, feed };
+        }),
+      };
+      for (const [label, c, key] of [
+        ["unknown entry slug", config, `${item.id}/not-loaded-yet`],
+        ["page past the known ones", config, `${item.id}/page/99`],
+        ["page of duplicates only", dupConfig, `${item.id}/page/${dupPage}`],
+      ]) {
+        const view = routes.parse(c, key);
+        if (!check(!!view, "feed", `${locale} ${label}`, "parse accepts it", key)) continue;
+        let head = null;
+        try {
+          head = routes.head(c, view);
+        } catch (error) {
+          check(false, "feed", `${locale} ${label}`, `head throws on a view parse accepts: ${error.message}`);
+          continue;
+        }
+        const level = (() => {
+          let n = 0;
+          for (let v = view; v && n < 8; v = routes.parent(v)) n += 1;
+          return n;
+        })();
+        check(head.title && head.description && head.breadcrumb.length === level, "feed", `${locale} ${label}`, "head answers with a title, a description and one crumb per level", JSON.stringify(head));
+        const out = await renderCaptured(make(view, c));
+        if (check(!out.error, "feed", `${locale} ${label}`, `render threw: ${out.error?.message}`)) {
+          const h1 = read(out.html).blocks.find((b) => b.type === "h1")?.text ?? "";
+          check(norm(head.title).includes(norm(h1)), "feed", `${locale} ${label}`, "the h1 rendered meanwhile is contained in head.title", `h1 "${h1}", title "${head.title}"`);
+        }
+      }
+
+      /* No numerals on a feed's strip tabs (a deep-linked page-4 entry would read "01"); tile positions continue
+         across pages (page n's first tile is (n − 1) × pageSize + 1). */
+      const entryView = views.find((v) => v.entry !== undefined && v.item === item.id);
+      if (entryView) {
+        const out = await renderCaptured(make(entryView));
+        if (!out.error) check(!/evd-strip__num/.test(out.html), "feed", `${locale} ${routes.key(entryView)}`, "a feed detail's strip tabs carry no numerals");
+      }
+      const later = item.feed.pages.find((p) => p.page >= 2 && p.ids.length);
+      if (later) {
+        const out = await renderCaptured(make({ item: item.id, page: later.page }));
+        const first = read(out.html).tags.find((t) => t.name === "a" && /(^|\s)evd-tile(\s|$)/.test(t.attrs.class ?? ""));
+        const expected = String((later.page - 1) * item.feed.pageSize + 1);
+        check(new RegExp(`\\b${expected}\\b`).test(first?.attrs["aria-label"] ?? ""), "feed", `${locale} page/${later.page}`, "a page view's tiles continue the feed's positions", `"${first?.attrs["aria-label"]}" lacks ${expected}`);
+      }
     },
   },
   {
@@ -561,12 +675,16 @@ async function verifyPackage(spec, foundation) {
       }
     }
 
+    const group = spec.group ?? (() => "");
+    const chained = new Set(spec.chained ?? []);
     for (const view of views) {
       const k = key(view);
       const p = routes.parent(view);
-      const siblings = views.filter((o) => parentKey(o) === parentKey(view));
+      const siblings = views.filter((o) => parentKey(o) === parentKey(view) && group(o) === group(view));
       const at = siblings.findIndex((o) => key(o) === k);
-      const neighbours = [p, ...views.filter((o) => parentKey(o) === k), siblings[at - 1], siblings[at + 1]].filter(Boolean);
+      // Children: all of them, except a chained kind (pages), of which only the first.
+      const children = views.filter((o) => parentKey(o) === k).filter((o, i, all) => !chained.has(group(o)) || all.findIndex((x) => group(x) === group(o)) === i);
+      const neighbours = [p, ...children, siblings[at - 1], siblings[at + 1]].filter(Boolean);
       let head = null;
       try {
         head = routes.head(config, view);
@@ -600,6 +718,10 @@ async function verifyPackage(spec, foundation) {
       }
     }
 
+    if (spec.feed) {
+      await spec.feed({ config, locale, views, make, hrefFor, routes, read, renderCaptured, check: (ok, rule, subject, message, detail) => check(ok, pkg, rule, subject, message, detail) });
+    }
+
     /* Direct load at rest: the same contract per view, plus the at-rest markup. */
     if (spec.atRest) {
       const restConfig = spec.atRest.config(config);
@@ -618,7 +740,7 @@ async function verifyPackage(spec, foundation) {
         const r = read(out.html);
         for (const [ok, message, detail = ""] of spec.atRest.expect(r)) check(ok, pkg, "at-rest", `${locale}:at-rest ${k}`, message, detail);
       }
-      const pending = spec.atRest.pending(restConfig);
+      const pending = spec.atRest.pending(restConfig, m);
       if (pending) {
         const out = await renderCaptured(makeRest(pending.view, pending.config));
         if (check(!out.error, pkg, "at-rest", `${locale}:at-rest pending`, `render threw: ${out.error?.message}`)) {

@@ -17,7 +17,7 @@ chain). Fixed shapes (the harness and clients rely on them):
 
 | Package | View | `key` | Level / parent |
 | --- | --- | --- | --- |
-| `dossier` | `type DossierView = { item: string; entry?: string; opening?: string } \| { opening: string }` | `item`, `item/entry`; `opening` (its id) with `config.opening` | overview 1 → `null`; entry 2 → its item's overview. With an opening screen (≥ 1.8.0): opening 1 → `null`, overview 2 → the opening, entry 3 → its overview |
+| `dossier` | `type DossierView = { item: string; entry?: string; opening?: string; page?: number } \| { opening: string }` | `item`, `item/entry`; `opening` (its id) with `config.opening`; feed pages `item/page/<n>` (n ≥ 2, ≥ 1.14.0) | overview 1 → `null`; entry 2 → its item's overview. With an opening screen (≥ 1.8.0): opening 1 → `null`, overview 2 → the opening, entry 3 → its overview. Feed (≥ 1.14.0): page n 2 → the overview (page 1); its entries carry `page` (not in the key) and sit under it, 3; siblings are of one kind and pages link as a chain (each its newer / older page) |
 | `process-sequence` | `type ProcessSequenceView = { step: string }` | `step` | 1 → `null`; only steps with `detail` |
 
 Shapes only grow additively: a config that does not use a new level keeps
@@ -59,9 +59,15 @@ export type ProcessSequenceProps = Partial<RouteViewProps<ProcessSequenceView>> 
   uncontrolled when `view` is `undefined` and keep working without URLs.
 - `view === null` renders no modal markup.
 - Live content: `parse` returns `null` for a key that names nothing; it may
-  accept keys of content still loading (dossier `item.pending`). A view
+  accept keys of content still loading (dossier `item.pending`; a dossier
+  feed accepts any entry slug and any page number, fetched on demand). A view
   whose content disappears settles on its nearest existing ancestor and is
-  reported through `onNavigate`.
+  reported through `onNavigate`. `head` answers every view `parse` accepts,
+  an awaited one included (the item-level answer of what it shows meanwhile).
+  Server rule: a URL whose key `parse` rejects is a real 404 (§7.2); a URL
+  `parse` accepts but the build has no data for (an entry or page newer than
+  the build) is served the page shell with `noindex`, and the client brings
+  the view; every prerendered view is indexable as usual.
 - Without `hrefFor` the package works as before (buttons, history entries on
   the current URL). Legacy props may stay for one minor version, mapped onto
   `view`; list them in the CHANGELOG.

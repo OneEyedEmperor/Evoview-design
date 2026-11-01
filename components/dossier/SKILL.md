@@ -1,6 +1,6 @@
 ---
 name: evoview-dossier
-description: Evoview portal modal (dossier) for client sites — panorama or sheet composition, optional opening screen, live entry counts, header strip with the approved Evoview mark, selection board, open chapters with a reading-progress chapter strip, glass capsule + dock on phones, media-gated loader, full modal contract (focus, Escape one level, history Back), every view a crawlable, prerenderable URL (dossierRoutes). Use when a client page needs to present a multi-part offer (services, projects, menus, rooms) as an Evoview dossier. Triggers on "evoview dossier", "portal modal", "selection board", "service dossier", "dossier modal".
+description: Evoview portal modal (dossier) for client sites — panorama or sheet composition, optional opening screen, live entry counts, live feed board (batches of fetched entries, page URLs, deep links, live updates), header strip with the approved Evoview mark, selection board, open chapters with a reading-progress chapter strip, glass capsule + dock on phones, media-gated loader, full modal contract (focus, Escape one level, history Back), every view a crawlable, prerenderable URL (dossierRoutes). Use when a client page needs to present a multi-part offer (services, projects, menus, rooms) as an Evoview dossier. Triggers on "evoview dossier", "portal modal", "selection board", "service dossier", "dossier modal".
 ---
 
 # Evoview dossier
@@ -28,7 +28,10 @@ tokens and the pause model.
   `imagesizes` when media carry a `srcSet`; in-page opens keep the entrance);
   where a detail's h1 sits (entry `heading`: the header, default, or the
   content when the detail shows its title itself, e.g. an article
-  headline); an opening screen or not; one or several universes; the chapter kit,
+  headline; `feedEntry` defaults to content); the board per item
+  (`DOSSIER_ITEM_BOARDS`: `selection` default, `feed` for content that keeps
+  growing, news / journal / posts: README "Feed"); an opening screen or not;
+  one or several universes; the chapter kit,
   `DOSSIER_CHAPTER_VARIANTS`, `CHAPTER_ROWS_SURFACES`. Nothing else.
 - **Invent** (README "Expression"): brand, opening title / label, items
   (cover, readout, empty-day sentence), entries, copy, media, accent (per
@@ -47,7 +50,16 @@ tokens and the pause model.
    one item. Four entries make the panorama's mosaic; other counts take the
    symmetric grid, so do not pad an item to four. Content the client edits
    live (promotions, specials) is an item built from fetched data
-   (README "Live content": `pending`, `empty`, stable entry ids).
+   (README "Live content": `pending`, `empty`, stable entry ids). A list that
+   keeps growing (news, a journal, posts) is a feed item instead (README
+   "Feed"): write one `DossierFeedSource` for the client's API
+   (`fetchPage(page, cursor)` → `{ items, next }`, `fetchEntry(id)` for deep
+   links, `toEntry` with `feedEntry` or your own chapters), call
+   `useDossierFeed(source, { initial, refreshMs })`, set the item to
+   `{ board: "feed", feed, entries: feed.entries }`; prerender the
+   build-time pages with `dossierFeed(snapshot, toEntry)` and pass the same
+   snapshot as `initial`. Keep the page size (9) unless the client's API
+   cannot.
 3. Install: `sync.sh plan /root/.vibehub/projects/<client> dossier`, then
    `apply`, then `verify` (library root, `docs/SYNC.md`); resolve conflicts,
    fill patch reasons. Client tokens go in `dossier.theme.css`.
@@ -84,7 +96,12 @@ tokens and the pause model.
    open; prerender `[null, ...dossierRoutes.views(config)]` with
    `dossierRoutes.head` (title, description, canonical, hreflang, JSON-LD)
    and the `ROUTE_LAYER_NOSCRIPT_CSS` noscript sheet; sitemap / llms list
-   the views; verify the built HTML without JavaScript.
+   the views; verify the built HTML without JavaScript. A feed adds
+   `<item>/page/<n>/` views (one per build-time page) and entry URLs that
+   resolve client-side when newer than the build. Server rule (contract §2,
+   "Live content"): a key `parse` rejects is a real 404; a key it accepts but
+   the build has no data for (an entry slug or page under the feed item) gets
+   the page shell with `noindex`, so `fetchEntry` / the page fetch can open it.
 7. Keep `attribution.enabled = true`, `href` = `https://evoview.be/`; never
    move the mark next to the client CTA or add other marks.
 8. Verify with the README checklist at 1440 / 1024 / 390 (URLs, Back /

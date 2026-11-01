@@ -20,6 +20,61 @@ export type DossierTileMedia = (typeof DOSSIER_TILE_MEDIA)[number];
 export const DOSSIER_DIRECT_LOADS = ["entrance", "at-rest"] as const;
 export type DossierDirectLoad = (typeof DOSSIER_DIRECT_LOADS)[number];
 
+/** selection: the board of the item's entries (mosaic for four, the symmetric grid otherwise).
+    feed: a live feed in batches (one page each, 3 × 3 by default), 3 columns in the panorama, 2 from 600, 1 below,
+    appended as the visitor reaches the end; each page also has its own URL. */
+export const DOSSIER_ITEM_BOARDS = ["selection", "feed"] as const;
+export type DossierItemBoard = (typeof DOSSIER_ITEM_BOARDS)[number];
+
+export type DossierFeedStatus = "idle" | "loading" | "ready" | "error" | "missing";
+
+/** A feed item's pages and load states (`useDossierFeed`, or `dossierFeed` for data known up front). */
+export type DossierFeed = {
+  /** Entries per page (the batch). */
+  pageSize: number;
+  /** Batches one board view appends in place before linking the next page's URL. */
+  batchCap: number;
+  refreshMs?: number;
+  /** Loaded pages in order: the ids each adds (an entry already on an earlier page is left out) and the next cursor (null: last page). */
+  pages: { page: number; ids: string[]; next: string | null }[];
+  /** Every loaded entry: the pages in order, then entries fetched one by one. The item's `entries`. */
+  entries: DossierEntry[];
+  pageStatus: (page: number) => DossierFeedStatus;
+  entryStatus: (id: string) => DossierFeedStatus;
+  /** Fetch a page; one in error is fetched again only with `retry` true (an explicit retry, never a render). */
+  loadPage: (page: number, retry?: boolean) => void;
+  loadEntry: (id: string, retry?: boolean) => void;
+  /** New entries found on page 1 (live updates), waiting for the visitor. */
+  fresh: number;
+  checkFresh?: () => void;
+  showFresh: () => void;
+};
+
+export type DossierFeedCopy = {
+  /** Link to the previous (newer) page, on a page view. */
+  newer: string;
+  /** Link to the next (older) page: loads it in place, or opens its URL past the batch cap. */
+  older: string;
+  loading: string;
+  /** Spoken once a batch is in. */
+  loaded: (count: number) => string;
+  /** A next batch that failed (in the board). */
+  failed: string;
+  /** What a view waits on failed to load: its page on a cold open or a page URL, or a deep-linked entry (the loader). */
+  unavailable: string;
+  retry: string;
+  /** Below the last page. */
+  end: string;
+  /** The live-updates control. */
+  fresh: (count: number) => string;
+  freshAria: (count: number) => string;
+  /** A page's name ("Page 2"): header title, head title, breadcrumb. */
+  page: (page: number) => string;
+  /** Spoken position without a total (the feed's length is open). */
+  location: (index: number, label: string) => string;
+  open: (index: number, title: string) => string;
+};
+
 export type DossierMedia = {
   src: string;
   /** "video" plays muted, looped, inline. Guessed from the extension when omitted. */
@@ -93,6 +148,10 @@ export type DossierItem = {
   /** Opening screen tile: media (default: the first entry's) and a one-line readout over the label. */
   cover?: DossierMedia;
   kicker?: string;
+  /** Variation (RULES §13), from `DOSSIER_ITEM_BOARDS`. Default "selection", "feed" when `feed` is set. */
+  board?: DossierItemBoard;
+  /** The live source of a feed board; set `entries` to `feed.entries`. */
+  feed?: DossierFeed;
 };
 
 /** An optional level above the items: a symmetric choice between them, with its own view and URL. */
@@ -150,6 +209,8 @@ export type DossierCopy = {
   up?: (label: string) => string;
   /** Board of an item without entries; `item.empty` overrides it. */
   empty?: { title: string; body?: string };
+  /** Feed boards (1.14.0). Defaults per `config.locale`, key by key. */
+  feed?: Partial<DossierFeedCopy>;
 };
 
 export type DossierConfig = {

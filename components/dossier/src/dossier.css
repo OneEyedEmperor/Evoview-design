@@ -1125,3 +1125,125 @@ a.evd-tile { -webkit-user-drag: none; -webkit-touch-callout: none; }
 @media (min-width: 1024px) {
   @container evd-body (min-width: 900px) { .evd-payoff { grid-template-columns: 1.2fr 0.8fr; column-gap: 4em; align-items: end; } }
 }
+
+/* ── Feed board (`item.board: "feed"`): one continuous grid of fixed-ratio tiles, so a batch appended below never
+   moves a tile above it. Columns follow the body's width: 1 under 600px, 2 from 600 (tablet, the sheet), 3 from 900
+   (the panorama). Rows are as tall as the ratio makes them; the body scrolls. */
+.ev-dossier[data-board="feed"] .evd-body { display: flex; flex-direction: column; }
+.ev-dossier[data-board="feed"] .evd-overview { height: auto; flex: 1 0 auto; }
+.evd-feed { position: relative; display: flex; flex-direction: column; gap: 12px; }
+.evd-board[data-layout="feed"] {
+  --evd-feed-ratio: 16 / 10;
+  height: auto;
+  min-height: 0;
+  flex: none;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: none;
+  grid-auto-rows: auto;
+  gap: 8px;
+}
+@container evd-body (min-width: 600px) {
+  .evd-board[data-layout="feed"] { --evd-feed-ratio: 4 / 3; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+}
+@container evd-body (min-width: 900px) {
+  .evd-board[data-layout="feed"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.evd-board[data-layout="feed"] > :is(.evd-tile, .evd-feed__ghost) { grid-column: auto; aspect-ratio: var(--evd-feed-ratio); }
+/* Long titles (headlines): the card title scale, three lines at most. */
+.evd-board[data-layout="feed"] .evd-tile .evd-tile__title {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: max(16px, 1.3em);
+  letter-spacing: -0.015em;
+  line-height: 0.98;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+@container evd-body (max-width: 599px) {
+  .evd-board[data-layout="feed"] .evd-tile .evd-tile__title { font-size: 18px; -webkit-line-clamp: 2; }
+}
+
+/* Entrances. The view's own page takes the board's Signature convergence; an appended batch never re-runs it: its
+   cells were placeholders, then held tiles (the same frame), and only their content pours in (opacity and transform,
+   stagger 80). */
+.evd-board[data-layout="feed"][data-revealed] .evd-tile:not([data-enter="board"]) { animation: none; }
+.evd-tile[data-held] { border-color: color-mix(in oklab, var(--dossier-signal) 12%, transparent); }
+.evd-tile[data-held] > * { opacity: 0; }
+.evd-tile[data-enter="batch"] > :is(.evd-tile__media, .evd-tile__scrim) { animation: evd-fade-in 600ms var(--ev-ease) calc((var(--evd-n, 1) - 1) * 80ms) backwards; }
+.evd-tile[data-enter="batch"] > .evd-tile__caption { animation: evd-feed-rise 600ms var(--ev-ease-cinematic) calc((var(--evd-n, 1) - 1) * 80ms + 60ms) backwards; }
+@keyframes evd-feed-rise { from { opacity: 0; transform: translate3d(0, 14px, 0); } }
+
+/* Placeholders: the cells a batch will take, a tonal well; the sweep starts after the loader's 350 ms grace. */
+.evd-feed__ghost,
+.evd-tile[data-held] {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--ev-radius-surface);
+  background: var(--ev-surface-list, #141416);
+}
+.evd-feed__ghost { border: 1px solid color-mix(in oklab, var(--dossier-signal) 12%, transparent); }
+.evd-feed__ghost::after,
+.evd-tile[data-held]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.5;
+  background: linear-gradient(110deg, transparent 30%, rgb(255 255 255 / 0.06) 50%, transparent 70%);
+  transform: translate3d(-120%, 0, 0);
+  animation: evd-sweep 1.4s var(--ev-ease) 350ms infinite;
+  pointer-events: none;
+}
+
+/* Below the board: the next page's link (centred), the error / end panels on a tonal surface (RULES §3). */
+.evd-feed__foot { display: flex; flex-direction: column; align-items: center; gap: 12px; padding-top: 12px; }
+.evd-feed__newer { align-self: flex-start; }
+.evd-feed__older[aria-busy="true"] { opacity: 0.55; cursor: progress; }
+.evd-feed__state {
+  display: grid;
+  width: 100%;
+  justify-items: center;
+  gap: 14px;
+  padding: 1.75em 1.5em;
+  border-radius: var(--ev-radius-surface);
+  background: var(--ev-surface-list, #141416);
+  color: var(--ev-fg-65);
+  text-align: center;
+}
+
+/* Live updates: a glass control pinned over the top of the board (zero height: it never pushes a tile). */
+.evd-feed__fresh { position: sticky; z-index: 20; top: 76px; display: flex; height: 0; justify-content: center; }
+@media (min-width: 1024px) {
+  .ev-dossier[data-composition="panorama"] .evd-feed__fresh { top: 16px; }
+}
+.evd-feed__fresh-pill {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 18px 0 14px;
+  border: 1px solid rgb(255 255 255 / 0.18);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.13), rgb(255 255 255 / 0.055)), var(--dossier-glass);
+  box-shadow: 0 12px 30px rgb(0 0 0 / 0.32), inset 0 1px 0 rgb(255 255 255 / 0.24), 0 10px 30px -18px var(--dossier-deep);
+  -webkit-backdrop-filter: blur(28px) saturate(1.6);
+  backdrop-filter: blur(28px) saturate(1.6);
+  color: #fff;
+  font-family: var(--ev-font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: border-color 200ms var(--ev-ease);
+  animation: evd-toast-in 420ms var(--ev-ease-cinematic) both;
+}
+.ev-dossier .evd-feed__fresh-pill { cursor: pointer; }
+.evd-feed__fresh-pill svg { width: 14px; height: 14px; color: var(--dossier-signal); transform: rotate(-90deg); }
+.evd-feed__fresh-pill:focus-visible { outline: 2px solid var(--dossier-signal); outline-offset: 3px; }
+@media (hover: hover) { .evd-feed__fresh-pill:hover { border-color: color-mix(in oklab, var(--dossier-signal) 60%, rgb(255 255 255 / 0.2)); } }
+
+/* The default article detail (`feedEntry`): the text in the reading column. */
+.evd-prose { display: grid; max-width: 42em; gap: 1em; color: var(--ev-fg-90); }
+.evd-prose > p { margin: 0; text-wrap: pretty; }
+@media (min-width: 1024px) {
+  @container evd-body (min-width: 900px) { .evd-prose { margin-left: calc(0.72 / 2 * 100%); } }
+}

@@ -26,3 +26,16 @@ export { buildDossierConfig, dossierCopy } from "./dossier.config";
 export type { DossierConfig, DossierItem, DossierEntry, DossierEntryContext, DossierMedia, DossierCopy, DossierOpening, DossierComposition, DossierTileMedia, DossierDirectLoad, Locale } from "./types";
 export { DOSSIER_COMPOSITIONS, DOSSIER_TILE_MEDIA, DOSSIER_DIRECT_LOADS } from "./types";
 export { DOSSIER_CHAPTER_VARIANTS, CHAPTER_ROWS_SURFACES, type DossierChapterVariant, type ChapterRowsSurface } from "./Chapters";
+export {
+  useDossierFeed,
+  dossierFeed,
+  FEED_PAGE_SIZE,
+  FEED_BATCH_CAP,
+  type DossierFeedSource,
+  type DossierFeedSnapshot,
+  type DossierFeedOptions,
+  type DossierFeedPageData,
+} from "./feed";
+export { feedEntry, type DossierFeedArticle } from "./FeedBoard";
+export type { DossierFeed, DossierFeedCopy, DossierFeedStatus, DossierItemBoard } from "./types";
+export { DOSSIER_ITEM_BOARDS } from "./types";

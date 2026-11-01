@@ -12,18 +12,23 @@ and `controls`.
 Two compositions (Variation): **panorama**, the wide desktop shell below,
 and **sheet**, the phone / tablet composition at every width (a narrow
 portrait shell from 1024) for quick-glance content such as a menu. An
-optional **opening screen** chooses between the items.
+optional **opening screen** chooses between the items. An item can show a
+**live feed** (news, posts) on the feed board instead of the selection board.
 
 Showcase: `https://evoview-library.said.bet/components/dossier` (Maison
 Ardoise, a fictional restaurant: three universes behind a pager with a deep
 link and the per-universe accent switch; a single-universe dossier launched
 from a light page; its menu behind an opening screen, the menu or the day's
-specials (0 / 3 / 5 posted); desks pick the composition (from 1024), the
-tiles' photos (graded | true colour) and the specials count; FR/EN, live
-palette). Every view has a URL:
+specials (0 / 3 / 5 posted); its journal, a live feed behind a fake paginated
+API; desks pick the composition (from 1024), the tiles' photos (graded | true
+colour) and the specials count; FR/EN, live palette). Every view has a URL:
 `/components/dossier/<key>/` addresses the three-universe dossier
 (`table/tasting`), `/components/dossier/single/<key>/` the single one,
-`/components/dossier/opening/<key>/` the menu (`choose`, `specials/amber`).
+`/components/dossier/opening/<key>/` the menu (`choose`, `specials/amber`),
+`/components/dossier/journal/<key>/` the feed (`journal`, `journal/page/3`,
+`journal/huile-olive`). Test hooks (URL only, nothing visible): `?feed-cap=N`
+lowers the batch cap; `?feed-network=down` fails every fetch, `down-from-2`
+serves page 1 and fails later pages and single entries.
 
 ```
 panorama ≥ 1024 (shell 92.5em × min(57.5em, 100vh − 2em), radius shell)
@@ -62,6 +67,17 @@ restyle them to the client's UI kit. Changing them is a library change
   Variation, `tileMedia`); either way accent border + bottom edge + numeral,
   shine sweep, slight scale, caption scrim, title bottom-left. Numerals in
   the display face (not Gaegu).
+- **Feed board** (`board: "feed"`): the board tile (frame, accent border and
+  bottom edge, shine, scale, caption scrim, display title bottom-left, kicker
+  in the state voice) in one grid of equal peers, 3 columns in the panorama,
+  2 from 600 and in the sheet, 1 below, at a fixed ratio (4:3, 16:10 under
+  600) so the grid only ever grows at the bottom. No numerals (the order is
+  chronological, not a sequence). The view's first batch takes the board's
+  one-time convergence; later batches are **append-only**: placeholder wells
+  take their cells, their tiles are held until decoded (media-gated reveal
+  per batch), then only their content pours in. Nothing placed moves,
+  re-enters or waits. Error and end on a tonal panel; the live-updates
+  control is glass chrome laid over the board, never pushing it.
 - **Opening screen** (optional): the items as equal choice tiles, stacked
   one per row on phones, then one row from 600 (up to 3, 4 in the panorama
   ≥ 1024, then the grid's rule), the board tile without numeral, a larger title, the item's
@@ -167,6 +183,12 @@ live (the mark stays, unlinked); restore the URL to relink.
     hydrates in place, for dossiers that are a page of their own (a menu
     reached from search). For details see "Direct load at rest" below.
     In-page opens and every later view keep the full entrance.
+- **Board** (`item.board`, `DOSSIER_ITEM_BOARDS`), per item:
+  - `selection` (default): the mosaic / symmetric grid of the item's entries.
+  - `feed` (the default when `item.feed` is set): a live feed in batches, one
+    page each, page URLs, deep links to entries not loaded yet, optional live
+    updates (README "Feed"). For news, journals, social posts. A feed board
+    without `feed` shows its static entries as one batch.
 - **Opening screen** (`config.opening`): an optional top level choosing
   between the items (Tchin: `Carte | Promotions`); selecting opens that
   item's overview, Escape / Back / `‹ <label>` return to it. Its own view
@@ -204,7 +226,8 @@ live (the mark stays, unlinked); restore the URL to relink.
 Config only: brand (logo node or name), opening (title, label),
 items (label, accent, cover and readout for the opening tile, empty-day
 sentence), entries (title, short label, kicker, media, detail chapters'
-content), all copy, attribution label. Accent = the client's: the host `--primary` /
+content), a feed's source and records (the fetcher, `toEntry`, page size,
+refresh period), all copy (`copy.feed` included), attribution label. Accent = the client's: the host `--primary` /
 `--primary-foreground`; an item may set its own (`item.accent`), applied as
 `--primary` on the dossier while that item is shown.
 
@@ -216,6 +239,8 @@ content), all copy, attribution label. Accent = the client's: the host `--primar
 | `src/Dossier.tsx` | Modal, header strip, pager, chapter strip, toast, dock, history, focus, gate, live content | no |
 | `src/routes.ts` | `dossierRoutes` (views, keys, parents, head data), `DossierView` | no |
 | `src/Board.tsx` | `SelectionBoard` (mosaic, grid, choice, grade, touch cycle) | no |
+| `src/feed.ts` | `useDossierFeed`, `dossierFeed`, feed source contract, cache and load states | no |
+| `src/FeedBoard.tsx` | `FeedBoard` (batches, placeholders, sentinel, page links, error / end, live control), `feedEntry` | no |
 | `src/copy.ts` | Defaults for the 1.8.0 copy keys (configs that predate them) | no |
 | `src/Loader.tsx` | `DossierLoader` | no |
 | `src/Chapters.tsx` | `DossierChapter`, `ChapterHead`, `ChapterFigure`, `ChapterSplit`, `ChapterRows`, `ChapterSpecimen`, `ChapterPayoff` | no |
@@ -274,6 +299,8 @@ type DossierConfig = {
     cover?: DossierMedia; kicker?: string;         // opening tile (default media: first entry's)
     empty?: { title: string; body?: string };      // board without entries (default copy.empty)
     pending?: boolean;                             // live content still loading
+    board?: "selection" | "feed";                  // DOSSIER_ITEM_BOARDS; default "selection" ("feed" with `feed`)
+    feed?: DossierFeed;                            // useDossierFeed / dossierFeed; then entries: feed.entries
     entries: {                                     // 4 = mosaic; any other count, 0..n = symmetric grid
       id: string; title: string;                   // title: the view's h1 and head title
       label?: string;                              // short name: tabs, dock, phone header readout (default: title)
@@ -287,7 +314,7 @@ type DossierConfig = {
     }[];
   }[];
   attribution: { enabled: boolean; href: string; label: string };
-  copy: DossierCopy;                               // dossierCopy(locale) gives the FR/EN defaults
+  copy: DossierCopy;                               // dossierCopy(locale) gives the FR/EN defaults; copy.feed? (1.14.0) partial, per-locale defaults
 };
 ```
 
@@ -333,6 +360,106 @@ const config = useMemo(() => buildConfig(locale, promos), [locale, promos]);
   stable across fetches (they are URLs).
 - Prerender the views of the data available at build time; entries added
   later render client-side (their URLs work once the data has them).
+
+### Feed (`board: "feed"`, 1.14.0)
+
+For content that keeps growing (news, a journal, social posts): pages of
+entries from any fetcher, shown in batches, each page also a URL.
+
+```ts
+type DossierFeedSource<T extends object> = {
+  fetchPage(page: number, cursor: string | null, signal: AbortSignal): Promise<{ items: T[]; next: string | null }>;
+  fetchEntry?(id: string, signal: AbortSignal): Promise<T | null>;   // deep links to entries not in a loaded page
+  toEntry(record: T): DossierEntry;                                  // id = stable URL slug
+};
+useDossierFeed(source, { initial?: DossierFeedSnapshot<T>, pageSize = 9, batchCap = 8, refreshMs? }): DossierFeed;
+dossierFeed(snapshot, toEntry, { pageSize, batchCap }): DossierFeed;   // data only: build time, prerender
+feedEntry({ id, title, label?, kicker?, media, excerpt?, body?: string[], content?, closing? }): DossierEntry;
+```
+
+- **Source.** `page` is 1-based; `cursor` is the previous page's `next` when
+  known, null for a page requested directly (a page URL): a cursor-only API
+  (Instagram) walks from page 1 inside `fetchPage`. `next: null` = last page;
+  past the end resolve `{ items: [] }`; reject on failure (retry offered).
+  Records stay the source's own shape, serialisable for the snapshot;
+  `toEntry` maps them (rebuild the source on a locale change, memoise it).
+  `feedEntry` gives a default article detail: title and lead over the hero
+  picture, then the text in the reading column; pass `content` (with its
+  `sources`, as rendered) for your own chapters, `closing` for the story's one
+  exit CTA. Its h1 is the intro title (`heading: "content"`, the default:
+  headlines run long); `heading: "header"` puts it in the bar and the intro
+  opens on the excerpt, so one heading carries the title either way. A
+  `srcSet` media is listed in `sources` as the hero renders it.
+- **Media.** Feed tiles render at the feed grid's `sizes` (1 / 2 / 3
+  columns) unless the media sets its own; the overview gate, each batch's
+  gate, the idle preload, `dossierViewImages` and a detail without `sources`
+  (a deep-linked entry included) fetch that same candidate.
+- **State** (package side, `DossierFeed`): cached pages (an entry already on
+  an earlier page is left out of a later one: boundaries move when entries
+  are published), single entries, `pageStatus(n)` / `entryStatus(id)`
+  (`idle | loading | ready | error | missing`), loaders, live updates. A
+  failed page or entry is fetched again only on an explicit retry
+  (`loadPage(n, true)`: the board's and the loader's retry, appending past it);
+  renders never re-fetch it. The cache belongs to one `source` object: a new
+  one (another locale's API) empties it and aborts what is in flight, and
+  `initial` seeds the first source only, so memoise the source on what it
+  depends on.
+- **Wiring:**
+  ```tsx
+  const source = useMemo(() => newsSource(locale), [locale]);         // fetchPage / fetchEntry / toEntry
+  const feed = useDossierFeed(source, { initial: snapshot, refreshMs: 60_000 });
+  const config = useMemo(() => buildConfig(locale, feed), [locale, feed]);
+  // item: { id: "news", label, board: "feed", feed, entries: feed.entries, empty }
+  ```
+  Routing and launchers as for any dossier; `viewFromPath` resolves page and
+  entry URLs (`/news/page/3/`, `/news/<slug>/`).
+- **Views.** `{ item }` is page 1; `{ item, page: n }` (n ≥ 2) is
+  `<item>/page/<n>/`, one level below page 1 (h1 and head title carry
+  "Page n"); entries opened from a page view carry its `page` (not in the
+  key), so Escape / Back return to that board. `<item>/page/1` names nothing.
+  `parse` accepts any entry slug of a feed (fetched by `fetchEntry`; one it
+  cannot find settles on its page) and any page number (fetched; past the
+  end it settles on page 1). `views` lists page 1, each loaded page from 2
+  (one whose entries all came on earlier pages too, with no tiles) and their
+  entries; single entries fetched later are not listed. `head` answers every
+  parsed view: an awaited entry or page gets its board's answer (page title,
+  item description and picture). **Server rule:** a key `parse` rejects is a
+  real 404; a parsed key the build has no data for gets the page shell with
+  `noindex` and the client brings the view (contract §2, "Live content").
+- **Server HTML** of a page view: that page's batch only (eager images), a
+  link to the newer page (n ≥ 2) and to the older one (or the end panel). No
+  placeholders, held tiles, live control or error state.
+- **Prerender** with the build-time pages: `dossierFeed(snapshot, toEntry)`
+  in the config, `[null, ...dossierRoutes.views(config)]` as usual, the
+  snapshot serialised into the HTML and passed as `initial` so hydration
+  matches. Pages and entries newer than the build render client-side.
+- **Board, client side.** The view's page is its first batch, gated with the
+  overview. Reaching the end (a sentinel in the modal's own scroll body, 600px
+  ahead, or a plain click on the older link) appends the next page: its
+  placeholders, then its tiles held until decoded (their own gate, never the
+  board's), then revealed. After `batchCap` batches the older link opens the
+  next page's view instead. A board keeps its batches and scroll through a
+  detail and back while the dossier is open.
+- **DOM growth: a cap, not a window.** One board view holds at most
+  `batchCap` × `pageSize` tiles (8 × 9 = 72; measured ≈ 12 nodes per tile, so
+  ≈ 900 nodes plus chrome, under the 2,100 measured on the site home,
+  `animations/SKILL.md` §3). Beyond it the visitor continues on the next
+  page's URL (a fresh board). Windowing or recycling would move or rebuild
+  tiles under the reader, break find-in-page and the tile refocus, and add
+  scroll-time work; the cap adds none. Images past the first batch are
+  `loading="lazy"`, decoded per batch; the idle preload warms page 1 only.
+- **Detail.** Strip tabs (no numerals, as the board) and dock bars show a
+  window of four entries around the open one; positions are spoken without a
+  total and continue across pages (page 3's first entry is 19 with nine a
+  page; `copy.feed.location`, tiles `copy.feed.open`);
+  the dock count reads `n / loaded+` while more pages exist. From the last
+  loaded entry the next page is fetched, so the next link has somewhere to go.
+- **Live updates** (`refreshMs`): page 1 is re-fetched on a clock that runs
+  only while the feed's first page is on screen and the document visible
+  (pause model, resumes with the remaining time). New entries wait behind a
+  glass "N new" control laid over the board; nothing reflows until the
+  visitor taps it, which makes the fresh page 1 the start (older pages are
+  dropped, boundaries moved) and returns to the top.
 
 `<Dossier>` props: `config`, `view` (`DossierView | null`, null = closed),
 `onNavigate(view | null)` (every navigation the dossier asks for and every
@@ -409,7 +536,8 @@ is its §7. What the package gives:
   inverse (unknown keys → null, a pending item's entry keys accepted);
   `parent` of an entry is its overview, of an overview the opening screen
   (item and entry views carry `opening`; `parse` and the dossier add it, a
-  host may pass `{ item }` alone). Without an opening: as in 1.7.
+  host may pass `{ item }` alone). Without an opening: as in 1.7. A feed
+  item adds page views `item/page/<n>` (README "Feed").
 - **Server HTML** of `<Dossier view={v} … />` (`react-dom/static`
   `prerender`): the modal root with `data-ev-route-layer`, one h1 (the
   header title), the view's full copy (board titles and kickers; the
@@ -566,3 +694,14 @@ is suspended while open.
     no hover pointer: test hover with
     `--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4`
     and without touch emulation.
+12. Feed (showcase journal, production preview): 3 / 2 / 1 columns at 1440
+    (panorama) / sheet and 768–1023 / 390; scrolling to the end appends a
+    batch with no existing tile moving (sample every tile's rect per frame);
+    placeholders, then the batch's reveal; `?feed-network=down-from-2`:
+    error panel + retry, and `node scripts/feed-fetch-check.mjs <preview url>`
+    (a failed page is fetched once, never again without a retry); end panel after the last page; a detail opened from a late batch
+    and Escape return to the same scroll and refocus the tile; cold
+    `journal/page/3/` and `journal/<entry of an unloaded page>/` open, Back
+    steps out level by level; `?feed-cap=2`: the older link opens
+    `page/3/`; the "N new" control appears ~8 s after opening (not while the
+    document is hidden) and taps back to the top. `pnpm verify:ssr dossier`.

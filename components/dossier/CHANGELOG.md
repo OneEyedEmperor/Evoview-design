@@ -1,5 +1,91 @@
 # dossier changelog
 
+## 1.14.0
+
+Additive. Requires nothing new (foundation ≥ 1.16.0, controls ≥ 1.5.0, as
+1.13.x). Existing configs render byte-identical server HTML against 1.13.1
+(1,298 renders of the reference configs, every view, at rest, without URLs,
+legacy API, head and preload data: before / after diff, `node
+scripts/ssr-snapshot.mjs`).
+
+**Feed board** (README "Feed"): an item can show a live feed of entries
+(news, posts) instead of the selection board.
+
+API (all new)
+- `DOSSIER_ITEM_BOARDS` (`"selection" | "feed"`), `DossierItemBoard`.
+- `useDossierFeed(source, options)` → `DossierFeed`; `dossierFeed(snapshot,
+  toEntry, options)` for data known up front (build time, prerender).
+- `DossierFeedSource<T>`: `fetchPage(page, cursor, signal)` → `{ items, next }`,
+  optional `fetchEntry(id, signal)`, `toEntry(record)`. Records are the
+  source's own; one fetcher per site, any shape (articles, posts).
+- `DossierFeedSnapshot<T>`, `DossierFeedOptions<T>` (`initial`, `pageSize` 9,
+  `batchCap` 8, `refreshMs`), `DossierFeedPageData<T>`, `DossierFeed`,
+  `DossierFeedStatus`, `DossierFeedCopy`, `FEED_PAGE_SIZE`, `FEED_BATCH_CAP`.
+- `feedEntry(article)` / `DossierFeedArticle`: a normalised record (title,
+  label, kicker, media, excerpt, body paragraphs, `heading`, optional own
+  chapters + `sources` / closing) as an entry with a default article detail.
+  The detail's h1 is the intro title by default (`heading: "content"`,
+  headlines run long); with `"header"` the bar carries it and the intro opens
+  on the excerpt (one heading per title). A `srcSet` media is listed in
+  `sources` as the hero renders it.
+- `DossierView` gains `page?: number`: feed page views `<item>/page/<n>/`
+  (n ≥ 2) and the entries opened from them. Keys of other views unchanged.
+
+Config changes (additive)
+- `item.board?` (default `"selection"`, `"feed"` when `item.feed` is set),
+  `item.feed?` (set `entries: feed.entries`).
+- `copy.feed?` (partial `DossierFeedCopy`, defaults per locale).
+- Template (client-owned `dossier.config.tsx`, not synced to existing
+  clients): `buildDossierFeedConfig(locale, feed, { composition })`.
+
+Behaviour (feed items only)
+- Board: batches of one page each in one grid, 3 columns from a 900px body
+  (panorama), 2 from 600 (tablet, sheet), 1 below; fixed-ratio tiles (4:3,
+  16:10 under 600), no numerals, three-line titles. Append-only: placeholders
+  take the next batch's cells, its tiles are held until their media decode,
+  then their content pours in; existing tiles never move, re-enter or wait.
+  The overview's media gate covers its first batch only.
+- Next batch: a sentinel in the modal body (600px ahead) and a real link to
+  the next page's URL (loads in place on a plain click). Past `batchCap`
+  batches the link opens the next page's view. Error panel with retry, end
+  panel. Page views link the newer page.
+- Deep links: unknown entry keys are accepted and fetched (`fetchEntry`); a
+  missing one settles on its page. Unloaded page views fetch their page.
+  While an entry is fetched nothing is decoded for the overview standing in.
+- `head` answers every view `parse` accepts: an awaited entry or page gets
+  its board's answer. Server rule (CRAWLABLE-MODALS §2, "Live content"): a
+  key `parse` rejects is a real 404, a parsed key the build has no data for
+  gets the page shell with `noindex`.
+- A failed page or entry is fetched again only on an explicit retry
+  (`loadPage(n, true)` / `loadEntry(id, true)`: the board's and the loader's
+  retry, appending past it); renders and effects never re-fetch it.
+- The cache belongs to one `source`: a new source object (another locale's
+  API) empties it and aborts what is in flight; `initial` seeds the first
+  source only. Memoise the source.
+- Detail: strip tabs (no numerals) and dock bars show a window of four
+  entries; positions spoken without a total and continued across pages (tiles
+  too); dock count `n / loaded+` while more pages exist; from the last loaded
+  entry the next page is fetched when idle.
+- Copy: `copy.feed.unavailable` for a view whose page or entry failed to load
+  (the loader); the reference feed config names the item in the live region.
+- A board view keeps its batches and scroll through a detail and back.
+- Live updates (`refreshMs`): page 1 checked on a clock under the pause model;
+  new entries wait behind a glass "N new" control (zero layout height).
+- Idle preload warms a feed's first page only.
+- Media (1.13.x model): feed tiles render at the feed grid's `sizes`; the
+  overview gate, the per-batch gates, the idle preload, `dossierViewImages`
+  and a detail without `sources` (a deep-linked single entry included) all
+  fetch that same candidate.
+
+`verify:ssr`: feed reference config (4 pages): page views, page links, first
+batch eager, no client-only state, deep link held; sibling / chain link rules
+per kind (`group`, `chained`); the `heading: "content"` pass keeps entries
+that already render their h1; `head` on parsed-but-unknown views (unknown
+slug, page past the known ones, a page of duplicates only); no tab numerals;
+positions continued on page views. `node scripts/feed-fetch-check.mjs
+<preview>`: a failed page is fetched once, never again without a retry
+(showcase test hook `?feed-network=down | down-from-2`).
+
 ## 1.13.1
 
 Fix. No config change, no API change. Requires nothing new (foundation ≥ 1.16.0).

@@ -39,7 +39,9 @@ import {
 import { GhostAction, GlassClose, PagerOrb } from "../controls";
 import { SelectionBoard, type SelectionBoardLayout, type SelectionTile } from "./Board";
 import { ChapterMediaContext, ChapterRevealContext, type ChapterReveal } from "./Chapters";
-import { fullCopy } from "./copy";
+import { feedCopy, fullCopy } from "./copy";
+import { feedAwaits, feedFailed, feedHasMore, feedOf, feedPageEntries, feedPageOf, feedPosition, feedRequest, feedSources, feedWindow, isFeedItem, pageNumber } from "./feed";
+import { FeedBoard, type FeedMemory } from "./FeedBoard";
 import { DossierLoader } from "./Loader";
 import { DESKTOP_QUERY } from "./hooks";
 import { boardSizesFor, detailSources, dossierRoutes, entryHeading, itemCover, itemView, openingLabel, openingSources, overviewSources, topView, type DossierView } from "./routes";
@@ -83,6 +85,7 @@ function canonicalView(config: DossierConfig, requested: DossierView): DossierVi
   if (requested.item === undefined) return config.opening && requested.opening === config.opening.id ? { opening: config.opening.id } : topView(config);
   const item = config.items.find((i) => i.id === requested.item);
   if (!item) return topView(config);
+  if (isFeedItem(item)) return feedCanonicalView(config, item, requested);
   if (requested.entry === undefined) return itemView(config, item.id);
   if (item.pending || item.entries.some((e) => e.id === requested.entry)) return itemView(config, item.id, requested.entry);
   return itemView(config, item.id);
@@ -92,7 +95,19 @@ function canonicalView(config: DossierConfig, requested: DossierView): DossierVi
 function awaitsLiveContent(config: DossierConfig, view: DossierView): boolean {
   if (view.item === undefined) return false;
   const item = config.items.find((i) => i.id === view.item);
+  if (item && isFeedItem(item)) return feedAwaits(item, view.page, view.entry);
   return !!item?.pending && !item.entries.some((e) => e.id === view.entry);
+}
+
+/** A feed keeps a page or an entry it may still bring (a deep link); one it cannot bring settles a level up. */
+function feedCanonicalView(config: DossierConfig, item: DossierItem, requested: DossierView & { item: string }): DossierView {
+  const feed = feedOf(item);
+  const page = pageNumber(requested.page);
+  if (requested.entry !== undefined) {
+    if (feed.entryStatus(requested.entry) !== "missing") return itemView(config, item.id, requested.entry, page);
+    return itemView(config, item.id, undefined, feed.pageStatus(page) === "missing" ? 1 : page);
+  }
+  return itemView(config, item.id, undefined, feed.pageStatus(page) === "missing" ? 1 : page);
 }
 
 const pathOf = (href: string) => {
@@ -200,9 +215,18 @@ const KEEP_INTERACTIVE = "data-ev-keep-interactive";
 type Kind = "opening" | "overview" | "detail";
 
 /** A view resolved in a list of items: what the body draws and what its media gate waits for. */
-type Scene = { kind: Kind; item: DossierItem | null; itemIndex: number; entry: DossierEntry | null; entryIndex: number; sig: string };
+type Scene = { kind: Kind; item: DossierItem | null; itemIndex: number; entry: DossierEntry | null; entryIndex: number; sig: string; page?: number };
 
-function describe(items: DossierItem[], kind: Kind, itemId: string | null, entryId: string | null): Scene | null {
+function describe(items: DossierItem[], kind: Kind, itemId: string | null, entryId: string | null, page?: number): Scene | null {
+  // A feed overview is its first batch: appended batches never change what the view waits on.
+  if (kind === "overview") {
+    const at = items.findIndex((i) => i.id === itemId);
+    const feedItem = items[at];
+    if (isFeedItem(feedItem)) {
+      const p = pageNumber(page);
+      return { kind, item: feedItem, itemIndex: at, entry: null, entryIndex: -1, page: p, sig: `v|${feedItem.id}|p${p}|${feedPageEntries(feedItem, p).map((e) => `${e.id}:${e.media.src}`).join(",")}` };
+    }
+  }
   if (kind === "opening") return { kind, item: null, itemIndex: -1, entry: null, entryIndex: -1, sig: `o|${items.map((i) => `${i.id}:${itemCover(i)?.src ?? ""}`).join(",")}` };
   const itemIndex = items.findIndex((i) => i.id === itemId);
   const item = items[itemIndex];
@@ -218,14 +242,15 @@ const sourceSrc = (s: MediaSource) => (typeof s === "string" ? s : s ? s.src : "
 
 function sourcesOf(scene: Scene, items: DossierItem[], boardSizes: string | undefined): MediaSource[] {
   if (scene.kind === "opening") return openingSources(items, boardSizes);
+  if (scene.kind === "overview" && scene.item && isFeedItem(scene.item)) return feedSources(scene.item, pageNumber(scene.page));
   if (scene.kind === "overview") return overviewSources(scene.item?.entries ?? [], boardSizes);
-  return scene.entry && scene.item ? detailSources(scene.entry, scene.item.entries, boardSizes) : [];
+  return scene.entry && scene.item ? detailSources(scene.entry, scene.item.entries, boardSizes, isFeedItem(scene.item)) : [];
 }
 
 /** The board an overview draws: the mosaic for four entries, the symmetric grid for other counts, a panel for none. */
 const boardLayout = (count: number): SelectionBoardLayout | "empty" => (count === 4 ? "mosaic" : count === 0 ? "empty" : "grid");
 
-type Shown = { kind: Kind; item: string | null; entry: string | null; sig: string; items: DossierItem[] };
+type Shown = { kind: Kind; item: string | null; entry: string | null; sig: string; items: DossierItem[]; page?: number };
 
 type DossierLayerProps = {
   config: DossierConfig;
@@ -239,7 +264,7 @@ type DossierLayerProps = {
   onExited: () => void;
 };
 
-const sceneKey = (s: { kind: Kind; item: string | null; entry: string | null }) => `${s.kind}:${s.item}:${s.entry}`;
+const sceneKey = (s: { kind: Kind; item: string | null; entry: string | null; page?: number }) => `${s.kind}:${s.item}:${s.entry}${s.page && s.page > 1 ? `:${s.page}` : ""}`;
 
 function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, closing, onExited }: DossierLayerProps) {
   const { items, opening } = config;
@@ -264,9 +289,13 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, clos
   const entryIndex = item && view.entry !== undefined ? entries.findIndex((e) => e.id === view.entry) : -1;
   const entry = entryIndex >= 0 ? entries[entryIndex] : null;
   const kind: Kind = atOpening || !item ? "opening" : entry ? "detail" : "overview";
-  const target = describe(items, kind, item?.id ?? null, entry?.id ?? null) as Scene;
+  // A feed's page view (and the entries opened from it) carries its page; page 1 is the overview.
+  const feedItem = item && isFeedItem(item) ? item : null;
+  const isFeed = feedItem !== null;
+  const viewPage = isFeed && view.item !== undefined ? view.page : undefined;
+  const target = describe(items, kind, item?.id ?? null, entry?.id ?? null, viewPage) as Scene;
   // A pending item's overview, or an entry its live content has not brought yet, waits behind the loader.
-  const awaiting = !!item?.pending && !entry;
+  const awaiting = feedItem ? feedAwaits(feedItem, viewPage, view.entry) : !!item?.pending && !entry;
   const itemCount = items.length;
   const prevItem = itemIndex >= 0 ? items[(itemIndex - 1 + itemCount) % itemCount] : null;
   const nextItem = itemIndex >= 0 ? items[(itemIndex + 1) % itemCount] : null;
@@ -277,28 +306,30 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, clos
      live, settled and unheld at once and hydration keeps the server DOM. Its own elements carry `data-rest` (no
      entrance); the next view the visitor opens takes the usual gate and entrance. */
   const [shown, setShown] = useState<Shown | null>(() =>
-    rest ? { kind: target.kind, item: target.item?.id ?? null, entry: target.entry?.id ?? null, sig: target.sig, items } : null,
+    rest ? { kind: target.kind, item: target.item?.id ?? null, entry: target.entry?.id ?? null, sig: target.sig, items, page: target.page } : null,
   );
-  const [restKey] = useState(() => (rest ? sceneKey({ kind: target.kind, item: target.item?.id ?? null, entry: target.entry?.id ?? null }) : null));
+  const [restKey] = useState(() => (rest ? sceneKey({ kind: target.kind, item: target.item?.id ?? null, entry: target.entry?.id ?? null, page: target.page }) : null));
   const restView = restKey !== null && shown !== null && sceneKey(shown) === restKey;
-  const restTarget = restKey !== null && sceneKey({ kind, item: item?.id ?? null, entry: entry?.id ?? null }) === restKey;
+  const restTarget = restKey !== null && sceneKey({ kind, item: item?.id ?? null, entry: entry?.id ?? null, page: target.page }) === restKey;
   const [cut, setCut] = useState(0);
 
   /* ── Media gate on the target. The layer exists only while open, so the gate stays open through
      the exit animation and the content does not vanish while the shell leaves. */
   const boardSizes = boardSizesFor(composition);
-  const sources = useMemo(() => sourcesOf(target, items, boardSizes), [target.sig, boardSizes]); // eslint-disable-line react-hooks/exhaustive-deps
+  // A feed entry still being fetched (a deep link): the target stands in as the overview, but nothing is decoded for it.
+  const awaitingEntry = isFeed && view.entry !== undefined && !entry;
+  const sources = useMemo(() => (awaitingEntry ? [] : sourcesOf(target, items, boardSizes)), [target.sig, boardSizes, awaitingEntry]); // eslint-disable-line react-hooks/exhaustive-deps
   const gate = useMediaReady(true, sources);
   const ready = gate.ready && !awaiting;
   const settled = shown !== null && shown.kind === target.kind && shown.item === (target.item?.id ?? null) && shown.entry === (target.entry?.id ?? null) && shown.sig === target.sig;
   if (ready && !settled) {
     if (shown?.item && target.item && shown.item !== target.item.id) setCut((n) => n + 1);
-    setShown({ kind: target.kind, item: target.item?.id ?? null, entry: target.entry?.id ?? null, sig: target.sig, items });
+    setShown({ kind: target.kind, item: target.item?.id ?? null, entry: target.entry?.id ?? null, sig: target.sig, items, page: target.page });
   }
   /* What the body carries: the shown view (from the live config while its content is unchanged, else as it was
      when shown, until the target is ready), or before anything is shown the target held. */
-  const liveShown = shown ? describe(items, shown.kind, shown.item, shown.entry) : null;
-  const body: Scene = shown ? ((liveShown && liveShown.sig === shown.sig ? liveShown : describe(shown.items, shown.kind, shown.item, shown.entry)) ?? target) : target;
+  const liveShown = shown ? describe(items, shown.kind, shown.item, shown.entry, shown.page) : null;
+  const body: Scene = shown ? ((liveShown && liveShown.sig === shown.sig ? liveShown : describe(shown.items, shown.kind, shown.item, shown.entry, shown.page)) ?? target) : target;
   const bodyItems = shown && !(liveShown && liveShown.sig === shown.sig) ? shown.items : items;
   const openingReady = settled && kind === "opening";
   const overviewReady = settled && kind === "overview";
@@ -333,6 +364,25 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, clos
     const timer = window.setTimeout(() => setAwaitSlow(true), mediaGate.graceMs);
     return () => window.clearTimeout(timer);
   }, [awaiting]);
+
+  /* ── Feed: ask for what the view waits on (its page, a deep-linked entry); from the last loaded entry, the next
+     page, so the dock's next has somewhere to go. Each board view remembers its batches and scroll while open. */
+  const feedFailure = !!feedItem && feedFailed(feedItem, viewPage, view.entry);
+  useEffect(() => {
+    if (!feedItem) return;
+    feedRequest(feedItem, viewPage, view.entry);
+    const feed = feedOf(feedItem);
+    const lastPage = feed.pages[feed.pages.length - 1];
+    // Only an entry of the last loaded page (one fetched on its own belongs to none, and would pull every page).
+    // Idle only: this effect runs on every render, so a page in error must wait for an explicit retry (no fetch loop).
+    if (entry && lastPage && lastPage.next !== null && lastPage.ids[lastPage.ids.length - 1] === entry.id && feed.pageStatus(lastPage.page + 1) === "idle") feed.loadPage(lastPage.page + 1);
+  });
+  const feedMemory = useRef(new Map<string, FeedMemory>());
+  const memoryFor = (key: string) => {
+    let memory = feedMemory.current.get(key);
+    if (!memory) feedMemory.current.set(key, (memory = {}));
+    return memory;
+  };
 
   /* ── Page behind: suspended (pause model), inert, scroll-locked while open. Released as soon as the
      exit starts (focus back on the launcher, page clickable), not when the animation ends. */
@@ -384,8 +434,16 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, clos
   const go = useCallback((next: DossierView | null) => navigateRef.current(next), []);
 
   const openingView: DossierView | null = opening ? { opening: opening.id } : null;
-  const overviewView: DossierView | null = item ? itemView(config, item.id) : null;
-  const entryView = (i: number): DossierView => itemView(config, (item as DossierItem).id, entries[i].id);
+  const overviewView: DossierView | null = item ? itemView(config, item.id, undefined, viewPage) : null;
+  const entryView = (i: number): DossierView => itemView(config, (item as DossierItem).id, entries[i].id, viewPage);
+  // A feed's length is open: positions are spoken without a total.
+  const fcopy = feedCopy(config.copy, config.locale);
+  // A feed entry is placed by its page (page 3 continues at 19), never by its index among the loaded ones; one fetched on its own has no place.
+  const entryLocation = (i: number, n: number, label: string, id?: string) => {
+    if (!feedItem) return copy.entryLocation(i, n, label);
+    const at = feedPosition(feedItem, id ?? label);
+    return at === null ? label : fcopy.location(at, label);
+  };
   const itemOverview = (it: DossierItem): DossierView => itemView(config, it.id);
   // The toast and the dock's next: next entry, else the next item's overview, else back to this overview.
   const nextView: DossierView | null =
@@ -417,17 +475,18 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, clos
     setChromeHidden(false);
     setComplete(false);
     if (kind === "opening") setLive(opening?.title ?? "");
-    else if (entry) setLive(copy.entryLocation(entryIndex + 1, entries.length, entry.title));
+    else if (entry) setLive(entryLocation(entryIndex + 1, entries.length, entry.title, entry.id));
     else if (previous.kind === "detail" && item) setLive(copy.backTo(item.label));
-    else if (item) setLive(copy.itemLocation(itemIndex + 1, itemCount, item.label));
-  }, [kind, entryIndex, itemIndex]); // eslint-disable-line react-hooks/exhaustive-deps
+    else if (item) setLive(`${copy.itemLocation(itemIndex + 1, itemCount, item.label)}${viewPage ? ` · ${fcopy.page(viewPage)}` : ""}`);
+  }, [kind, entryIndex, itemIndex, viewPage]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── Shown view changes: the new view starts at the top (before paint, before chapters measure). */
-  const shownKey = shown ? `${shown.kind}:${shown.item}:${shown.entry}` : "";
+  /* ── Shown view changes: the new view starts at the top (before paint, before chapters measure); a feed board the
+     visitor comes back to, where they left it. */
+  const shownKey = shown ? sceneKey(shown) : "";
   useLayoutEffect(() => {
     lastScrollRef.current = 0;
-    if (bodyRef.current) bodyRef.current.scrollTop = 0;
-  }, [shownKey]);
+    if (bodyRef.current) bodyRef.current.scrollTop = (shown?.kind === "overview" && feedMemory.current.get(shownKey)?.scroll) || 0;
+  }, [shownKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const reveal = useChapterReveal(bodyRef);
 
@@ -554,14 +613,17 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, clos
   const bodyItem = body.item;
   const bodyEntry = body.entry;
   const bodyCtx: DossierEntryContext | null =
-    bodyItem && bodyEntry ? { item: bodyItem, entry: bodyEntry, index: body.entryIndex, total: bodyItem.entries.length, close: closeAll, toOverview: () => go(itemView(config, bodyItem.id)), headingId: detailHeadingId } : null;
-  const bodyBoard = body.kind === "opening" ? "choice" : body.kind === "overview" ? boardLayout(bodyItem?.entries.length ?? 0) : undefined;
+    bodyItem && bodyEntry ? { item: bodyItem, entry: bodyEntry, index: body.entryIndex, total: bodyItem.entries.length, close: closeAll, toOverview: () => go(itemView(config, bodyItem.id, undefined, viewPage)), headingId: detailHeadingId } : null;
+  const bodyFeed = body.kind === "overview" && !!bodyItem && isFeedItem(bodyItem) && bodyItem.entries.length > 0;
+  const bodyBoard = body.kind === "opening" ? "choice" : bodyFeed ? "feed" : body.kind === "overview" ? boardLayout(bodyItem?.entries.length ?? 0) : undefined;
 
   const nextEntryLabel = !entry || !nextItem ? "" : entryIndex < entries.length - 1 ? (entries[entryIndex + 1].label ?? entries[entryIndex + 1].title) : itemCount > 1 ? nextItem.label : copy.overview;
   const nextAria = !entry || !item || !nextItem ? "" : entryIndex < entries.length - 1 ? copy.nextEntry(nextEntryLabel) : itemCount > 1 ? copy.nextItem(nextItem.label) : copy.overviewOf(item.label);
   // An overview under an opening screen: the strip names the way up and the items (the pager would repeat them).
   const itemsStrip = kind === "overview" && !!opening;
-  const dockShown = kind === "detail" || (kind === "overview" && (itemCount > 1 || !!opening));
+  // A feed's page view is a level below its first page: the dock leads back up to it.
+  const feedPageView = kind === "overview" && viewPage !== undefined && viewPage >= 2;
+  const dockShown = kind === "detail" || feedPageView || (kind === "overview" && (itemCount > 1 || !!opening));
   const hideChrome = kind === "detail" && chromeHidden && !wide;
   const upLabel = opening ? openingLabel(opening) : "";
 
@@ -571,6 +633,8 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, clos
   // A detail's item, no longer shown above its title, stays spoken: in the dialog's name and right after the h1.
   const itemNameId = `${uid}-item`;
   const shortLabel = entry?.label && entry.label !== entry.title ? entry.label : null;
+  // Strip tabs and dock bars: every entry, or for a feed a window around the open one.
+  const tabs = isFeed ? feedWindow(entryIndex, entries.length) : entries.map((_, i) => i);
   const headerTitle =
     kind === "detail" && entry ? (
       entry.heading === "content" ? (
@@ -586,7 +650,7 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, clos
       )
     ) : (
       <>
-        <h1 id={titleId} className="evd-header__title evd-header__title-full">{kind === "opening" ? opening?.title : copy.overviewTitle(itemIndex + 1, item?.label ?? "")}</h1>
+        <h1 id={titleId} className="evd-header__title evd-header__title-full">{kind === "opening" ? opening?.title : copy.overviewTitle(itemIndex + 1, item?.label ?? "")}{feedPageView && ` · ${fcopy.page(viewPage)}`}</h1>
         <span className="evd-header__title evd-header__title-short" aria-hidden="true">{kind === "opening" ? upLabel : item?.label}</span>
       </>
     );
@@ -654,31 +718,35 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, clos
           </header>
 
           {entry && item && overviewView && (
-            <nav ref={stripRef} className="evd-strip" aria-label={copy.entriesNav} style={{ ["--evd-tabs" as string]: entries.length }}>
+            <nav ref={stripRef} className="evd-strip" aria-label={copy.entriesNav} style={{ ["--evd-tabs" as string]: tabs.length }}>
               <RouteLink className="evd-strip__overview" href={href(overviewView)} onFollow={toOverview} aria-label={copy.overviewOf(item.label)}>
                 <TextFill hoverWithin=".evd-strip__overview" hoverInk="#fff" withFocus={false}><ArrowLeft /></TextFill>
                 <TextFill hoverWithin=".evd-strip__overview" hoverInk="#fff" withFocus={false}>{copy.overview}</TextFill>
               </RouteLink>
               <div className="evd-strip__tabs">
-                {entries.map((e, i) => (
+                {tabs.map((i) => entries[i]).map((e, t) => {
+                  const i = tabs[t];
+                  return (
                   <StripTab
                     key={e.id}
                     href={href(entryView(i))}
                     state={i === entryIndex ? "active" : i < entryIndex ? "past" : undefined}
-                    label={copy.entryLocation(i + 1, entries.length, e.title)}
+                    label={entryLocation(i + 1, entries.length, e.title, e.id)}
                     index={i}
+                    numbered={!isFeed}
                     onFollow={() => i !== entryIndex && openEntry(i)}
                   >
                     {e.label ?? e.title}
                   </StripTab>
-                ))}
+                  );
+                })}
               </div>
               {complete && detailReady && (
                 <div
                   className="evd-toast"
                   role="status"
                   data-anchor={entryIndex < entries.length - 1 ? "next" : "end"}
-                  style={entryIndex < entries.length - 1 ? { left: `calc(var(--evd-strip-overview) + (100% - var(--evd-strip-overview)) * ${(entryIndex + 1) / entries.length} + 16px)` } : undefined}
+                  style={entryIndex < entries.length - 1 ? { left: `calc(var(--evd-strip-overview) + (100% - var(--evd-strip-overview)) * ${(tabs.indexOf(entryIndex) + 1) / tabs.length} + 16px)` } : undefined}
                 >
                   <RouteLink className="evd-toast__action" data-ev-jelly="" href={href(nextView)} onFollow={goNextEntry} aria-label={nextAria}>
                     <span>
@@ -778,7 +846,25 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, clos
                       <h2 id={boardHeadingId} ref={boardHeadingRef} tabIndex={-1} className="ev-sr">
                         {copy.boardHeading(bodyItem.label)}
                       </h2>
-                      {bodyItem.entries.length > 0 ? (
+                      {bodyFeed ? (
+                        <FeedBoard
+                          key={`feed-${pageNumber(body.page)}`}
+                          item={bodyItem}
+                          start={pageNumber(body.page)}
+                          memory={memoryFor(sceneKey({ kind: "overview", item: bodyItem.id, entry: null, page: body.page }))}
+                          scrollRoot={bodyRef}
+                          label={copy.boardHeading(bodyItem.label)}
+                          copy={fcopy}
+                          tileMedia={tileMedia}
+                          entryHref={(id) => (hrefFor ? href(itemView(config, bodyItem.id, id, body.page)) : undefined)}
+                          pageHref={(p) => (hrefFor ? href(itemView(config, bodyItem.id, undefined, p)) : undefined)}
+                          onEntry={(id) => go(itemView(config, bodyItem.id, id, body.page))}
+                          onPage={(p) => go(itemView(config, bodyItem.id, undefined, p))}
+                          registerTile={(i, el) => {
+                            tileRefs.current[i] = el;
+                          }}
+                        />
+                      ) : bodyItem.entries.length > 0 ? (
                         <SelectionBoard
                           entries={bodyItem.entries}
                           label={copy.boardHeading(bodyItem.label)}
@@ -827,10 +913,10 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, clos
                 loaded={awaiting ? 0 : gate.loaded}
                 total={awaiting ? 1 : gate.total}
                 spoken={awaiting ? copy.pendingStatus : copy.loader.spoken(gate.loaded, gate.total)}
-                failed={!awaiting && gate.failed}
-                failedText={copy.loader.failed}
+                failed={(!awaiting && gate.failed) || feedFailure}
+                failedText={feedFailure ? fcopy.unavailable : copy.loader.failed}
                 retryLabel={copy.loader.retry}
-                onRetry={gate.retry}
+                onRetry={feedFailure && item ? () => feedRequest(item, viewPage, view.entry, true) : gate.retry}
               />
             )}
           </div>
@@ -840,6 +926,8 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, clos
               <div className="evd-dock__glass">
                 {entry ? (
                   <DockButton side="start" label={copy.dock.home} aria={copy.overviewOf(item.label)} icon={<HomeIcon />} href={href(overviewView)} onClick={toOverview} />
+                ) : feedPageView ? (
+                  <DockButton side="start" label={copy.dock.home} aria={copy.overviewOf(item.label)} icon={<HomeIcon />} href={href(itemView(config, item.id))} onClick={() => go(itemView(config, item.id))} />
                 ) : opening ? (
                   <DockButton side="start" label={upLabel} aria={copy.up(upLabel)} icon={<ArrowLeft />} href={href(openingView)} onClick={toOpening} />
                 ) : (
@@ -848,21 +936,38 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, clos
                 <div
                   className="evd-dock__location"
                   role="status"
-                  aria-label={entry ? copy.entryLocation(entryIndex + 1, entries.length, entry.title) : copy.itemLocation(itemIndex + 1, itemCount, item.label)}
+                  aria-label={entry ? entryLocation(entryIndex + 1, entries.length, entry.title, entry.id) : feedPageView ? `${item.label} · ${fcopy.page(viewPage)}` : copy.itemLocation(itemIndex + 1, itemCount, item.label)}
                 >
-                  <span className="evd-dock__kicker" aria-hidden="true">{entry ? item.label : copy.dock.item}</span>
-                  <span key={entry ? `e${entryIndex}` : `i${itemIndex}`} className="evd-dock__count" aria-hidden="true" data-rest={restTarget || undefined}>
-                    {pad((entry ? entryIndex : itemIndex) + 1)}
-                    <span>/</span>
-                    {pad(entry ? entries.length : itemCount)}
-                  </span>
+                  <span className="evd-dock__kicker" aria-hidden="true">{entry || feedPageView ? item.label : copy.dock.item}</span>
+                  {feedPageView ? (
+                    <span key={`p${viewPage}`} className="evd-dock__count" aria-hidden="true">
+                      {fcopy.page(viewPage)}
+                    </span>
+                  ) : entry && feedItem && !feedPageOf(feedItem, entry.id) ? null : (
+                    <span key={entry ? `e${entryIndex}` : `i${itemIndex}`} className="evd-dock__count" aria-hidden="true" data-rest={restTarget || undefined}>
+                      {pad((entry ? entryIndex : itemIndex) + 1)}
+                      <span>/</span>
+                      {pad(entry ? entries.length : itemCount)}
+                      {entry && isFeed && feedHasMore(item) && "+"}
+                    </span>
+                  )}
                   <span className="evd-bars evd-bars--dock" aria-hidden="true">
-                    {(entry ? entries : items).map((x, i) => (
-                      <span key={x.id} data-current={i === (entry ? entryIndex : itemIndex) || undefined} />
+                    {(entry ? tabs.map((i) => entries[i]) : items).map((x, i) => (
+                      <span key={x.id} data-current={(entry ? x.id === entry.id : i === itemIndex) || undefined} />
                     ))}
                   </span>
                 </div>
-                {(entry || itemCount > 1) && nextItem && (
+                {feedPageView && feedOf(item).pageStatus(viewPage + 1) !== "missing" && (
+                  <DockButton
+                    side="end"
+                    label={copy.dock.next}
+                    aria={fcopy.older}
+                    icon={<ArrowRight />}
+                    href={href(itemView(config, item.id, undefined, viewPage + 1))}
+                    onClick={() => go(itemView(config, item.id, undefined, viewPage + 1))}
+                  />
+                )}
+                {!feedPageView && (entry || itemCount > 1) && nextItem && (
                   <DockButton
                     side="end"
                     label={copy.dock.next}
@@ -882,10 +987,10 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, clos
 }
 
 /** A strip cell: an entry of the item (detail) or an item under the opening screen (overview). */
-function StripTab({ href, state, label, index, onFollow, children }: { href?: string; state?: "active" | "past"; label: string; index: number; onFollow: () => void; children: ReactNode }) {
+function StripTab({ href, state, label, index, numbered = true, onFollow, children }: { href?: string; state?: "active" | "past"; label: string; index: number; numbered?: boolean; onFollow: () => void; children: ReactNode }) {
   return (
     <RouteLink className="evd-strip__tab" href={href} data-state={state} aria-current={state === "active" ? "page" : undefined} aria-label={label} onFollow={onFollow}>
-      <span className="evd-strip__num">{pad(index + 1)}</span>
+      {numbered && <span className="evd-strip__num">{pad(index + 1)}</span>}
       <span className="evd-strip__label">
         <TextFill
           truncate
@@ -981,7 +1086,8 @@ function useIdlePreload(config: DossierConfig | null) {
     const boardSizes = boardSizesFor(config.composition ?? "panorama");
     const images = (sources: MediaSource[]) => sources.filter((s): s is { src: string; type: "image"; srcSet?: string; sizes?: string } => !!s && typeof s === "object" && s.type === "image");
     const covers = config.opening ? images(openingSources(config.items, boardSizes)) : [];
-    const rows = config.items.map((item) => images(overviewSources(item.entries, boardSizes)));
+    // A feed warms its first page only: the rest is fetched, and decoded, batch by batch.
+    const rows = config.items.map((item) => images(isFeedItem(item) ? feedSources(item, 1) : overviewSources(item.entries, boardSizes)));
     const ordered = [...covers];
     for (let i = 0; rows.some((r) => i < r.length); i++) for (const r of rows) if (i < r.length) ordered.push(r[i]);
     return ordered;

@@ -2,13 +2,13 @@
    and attribution. Reference content: "Maison Ardoise", a fictional
    restaurant: three universes × four experiences (`buildDossierConfig`), and
    its menu behind an opening screen, the menu and the day's specials, a live
-   list (`buildDossierMenuConfig`). Replace the content, keep the shape. Media
+   list (`buildDossierMenuConfig`); its journal, a live feed (`buildDossierFeedConfig`). Replace the content, keep the shape. Media
    paths point at the library's public placeholders. */
 
 import { EVOVIEW_URL } from "../foundation";
 import { PrimaryPlate } from "../controls";
 import { ChapterFigure, ChapterHead, ChapterPayoff, ChapterRows, ChapterSpecimen, ChapterSplit, DossierChapter } from "./Chapters";
-import type { DossierComposition, DossierConfig, DossierCopy, DossierItem, Locale } from "./types";
+import type { DossierComposition, DossierConfig, DossierCopy, DossierFeed, DossierItem, Locale } from "./types";
 
 type L = Record<Locale, string>;
 type Rows = Record<Locale, [string, string][]>;
@@ -899,6 +899,60 @@ function specialsItem(locale: Locale, count: number): DossierItem {
         </>
       ),
     })),
+  };
+}
+
+const FEED_COPY: Record<Locale, Partial<DossierCopy>> = {
+  fr: {
+    entriesNav: "Publications",
+    itemLocation: (_i, _n, label) => label,
+    nextEntry: (label) => `Publication suivante : ${label}`,
+    boardHeading: (item) => `${item} — toutes les publications`,
+    overviewTitle: (_i, label) => label,
+    toastNext: "Publication suivante",
+    toastBack: "Retour au journal",
+    loader: { ...COPY.fr.loader, overviewKicker: () => "Journal", detailKicker: () => "Publication" },
+  },
+  en: {
+    entriesNav: "Entries",
+    itemLocation: (_i, _n, label) => label,
+    nextEntry: (label) => `Next entry: ${label}`,
+    boardHeading: (item) => `${item} — every entry`,
+    overviewTitle: (_i, label) => label,
+    toastNext: "Next entry",
+    toastBack: "Back to the journal",
+    loader: { ...COPY.en.loader, overviewKicker: () => "Journal", detailKicker: () => "Entry" },
+  },
+};
+
+/**
+ * Reference for a live feed (`board: "feed"`): the house's journal, fetched page by page. The feed comes from
+ * `useDossierFeed(source, { initial })` (a client: its fetcher; build time: `dossierFeed(snapshot, toEntry)`); records
+ * become entries through the source's `toEntry` (`feedEntry` gives the default article detail).
+ */
+export function buildDossierFeedConfig(locale: Locale, feed: DossierFeed, options: { composition?: DossierComposition } = {}): DossierConfig {
+  const { composition = "panorama" } = options;
+  return {
+    locale,
+    composition,
+    tileMedia: "true-colour",
+    brand: { name: "Maison Ardoise" },
+    items: [
+      {
+        id: "journal",
+        label: locale === "fr" ? "Le journal" : "The journal",
+        description:
+          locale === "fr"
+            ? "Le journal de Maison Ardoise : producteurs, carte, cave, équipe et rendez-vous de la maison."
+            : "The Maison Ardoise journal: producers, menu, cellar, team and the house's events.",
+        board: "feed",
+        feed,
+        entries: feed.entries,
+        empty: locale === "fr" ? { title: "Le journal est vide pour le moment.", body: "Revenez bientôt." } : { title: "The journal is empty for now.", body: "Come back soon." },
+      },
+    ],
+    attribution: { enabled: true, href: EVOVIEW_URL, label: T.attribution[locale] },
+    copy: { ...COPY[locale], ...FEED_COPY[locale] },
   };
 }
 

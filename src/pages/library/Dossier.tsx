@@ -1,8 +1,9 @@
 import { useMemo, useState, type MouseEvent } from "react";
 import { ControlsProvider, GhostAction, SegmentedControl, Switch, buildControlsConfig } from "../../../components/controls/src";
 import { ArrowRight, followRouteLink, pad, routeHrefs, useMediaQuery } from "../../../components/foundation/src";
-import { Dossier as DossierModal, buildDossierConfig, dossierRoutes, type DossierComposition, type DossierConfig, type DossierTileMedia, type DossierView } from "../../../components/dossier/src";
-import { buildDossierMenuConfig } from "../../../components/dossier/src/dossier.config";
+import { Dossier as DossierModal, buildDossierConfig, dossierRoutes, useDossierFeed, type DossierComposition, type DossierConfig, type DossierFeed, type DossierTileMedia, type DossierView } from "../../../components/dossier/src";
+import { buildDossierFeedConfig, buildDossierMenuConfig } from "../../../components/dossier/src/dossier.config";
+import { journalSource, JOURNAL_PAGE_SIZE, type JournalNetwork } from "./dossier/journal";
 import { topView } from "../../../components/dossier/src/routes";
 import "../../../components/dossier/showcase.css";
 import ShowcasePage, { ShowcaseVariant, useShowcaseViewOpen } from "../../library/ShowcasePage";
@@ -77,6 +78,18 @@ const T = {
       en: "The seasonal menu on one side, today's specials on the other. On a day without specials, the dossier says so and points to the menu.",
     },
   },
+  journal: {
+    name: { fr: "Dossier · fil en direct", en: "Dossier · live feed" },
+    when: {
+      fr: "Un fil qui s'allonge : actualités, publications, journal. Les entrées arrivent par lots de neuf au fil de la lecture, chaque page a sa propre adresse, les nouveautés attendent qu'on les demande.",
+      en: "A feed that keeps growing: news, posts, a journal. Entries arrive in batches of nine as the visitor reads, every page has its own address, new entries wait to be asked for.",
+    },
+    title: { fr: "Le journal de la maison.", en: "The house's journal." },
+    body: {
+      fr: "Producteurs, carte, cave, équipe et rendez-vous : le restaurant publie, le dossier suit, sans jamais déplacer ce qu'on est en train de lire.",
+      en: "Producers, menu, cellar, team and events: the restaurant posts, the dossier follows, never moving what the visitor is reading.",
+    },
+  },
   explore: { fr: "Découvrir", en: "Explore" },
   openAria: (label: string, l: Locale) => (l === "fr" ? `Découvrir : ${label}` : `Explore: ${label}`),
 } satisfies Record<string, unknown>;
@@ -106,10 +119,11 @@ const COVERS: Record<string, string> = {
 };
 const SINGLE_COVER = "/library/dossier/salon-reception.webp";
 const MENU_COVER = "/library/dossier/table-market.webp";
+const JOURNAL_COVER = "/library/dossier/table-chef.webp";
 
-type Set = "multi" | "single" | "menu";
-/** The one-universe variant's views live under `<page>/single/`, the menu's under `<page>/opening/`. */
-const SEGMENTS = { single: "single", menu: "opening" } as const;
+type Set = "multi" | "single" | "menu" | "journal";
+/** The one-universe variant's views live under `<page>/single/`, the menu's under `<page>/opening/`, the feed's under `<page>/journal/`. */
+const SEGMENTS = { single: "single", menu: "opening", journal: "journal" } as const;
 const SPECIALS_DEFAULT: Specials = "3";
 
 const singleOnly = (config: DossierConfig): DossierConfig => ({ ...config, items: config.items.filter((item) => item.id === "salons") });
@@ -126,8 +140,10 @@ function nearestView(config: DossierConfig, key: string): DossierView | null {
 }
 
 /** The view a page sub-path names, and the variant it belongs to. */
-function viewFromSubpath(path: string, locale: Locale): { set: Set; view: DossierView | null } {
+function viewFromSubpath(path: string, locale: Locale, feed: DossierFeed): { set: Set; view: DossierView | null } {
   const config = buildDossierConfig(locale);
+  const journal = under(path, SEGMENTS.journal);
+  if (journal !== null) return { set: "journal", view: journal ? nearestView(buildDossierFeedConfig(locale, feed), journal) : null };
   const single = under(path, SEGMENTS.single);
   if (single !== null) return { set: "single", view: single ? nearestView(singleOnly(config), single) : null };
   const menu = under(path, SEGMENTS.menu);
@@ -147,8 +163,23 @@ function Showcase() {
   const [tileMedia, setTileMedia] = useState<DossierTileMedia>("graded");
   const [menuTileMedia, setMenuTileMedia] = useState<DossierTileMedia>("graded");
   const [specials, setSpecials] = useState<Specials>(SPECIALS_DEFAULT);
+  /* The live feed: a fake paginated API (latency), live updates every 8 s while its first page is on screen. Test hooks
+     (nothing visible): `?feed-cap=N`, batches appended in place before the next page's URL; `?feed-network=down` (every
+     call fails) or `down-from-2` (page 1 loads, later pages and single entries fail). */
+  const [hooks] = useState(() => {
+    const query = typeof window === "undefined" ? null : new URLSearchParams(window.location.search);
+    const network = query?.get("feed-network");
+    return {
+      cap: Number(query?.get("feed-cap")) || undefined,
+      network: (network === "down" || network === "down-from-2" ? network : "normal") as JournalNetwork,
+    };
+  });
+  const feedCap = hooks.cap;
+  const source = useMemo(() => journalSource(locale, { network: () => hooks.network }), [locale, hooks]);
+  const feed = useDossierFeed(source, { pageSize: JOURNAL_PAGE_SIZE, refreshMs: 8000, batchCap: feedCap });
+  const [journalComposition, setJournalComposition] = useState<DossierComposition>("panorama");
   // Seeded once from the URL; the modal keeps the URL in step from there. `set` is kept through the exit animation.
-  const [state, setState] = useState(() => viewFromSubpath(path, locale));
+  const [state, setState] = useState(() => viewFromSubpath(path, locale, feed));
   const { set, view } = state;
   // An open view owns the page's h1 (the page title renders as h2 meanwhile).
   useShowcaseViewOpen(view !== null);
@@ -169,14 +200,15 @@ function Showcase() {
     () => ({ ...buildDossierMenuConfig(locale, { specials: Number(specials), composition: menuComposition }), tileMedia: menuTileMedia, directLoad: "at-rest" }),
     [locale, specials, menuComposition, menuTileMedia],
   );
-  const configs = { multi, single, menu };
+  const journal = useMemo(() => buildDossierFeedConfig(locale, feed, { composition: journalComposition }), [locale, feed, journalComposition]);
+  const configs = { multi, single, menu, journal };
 
   const hrefs = useMemo(() => {
     const nested = (segment: string) => {
       const views = routeHrefs(`${base}/${segment}`, dossierRoutes.key);
       return (v: DossierView | null) => (v === null ? base : views(v));
     };
-    return { multi: routeHrefs(base, dossierRoutes.key), single: nested(SEGMENTS.single), menu: nested(SEGMENTS.menu) };
+    return { multi: routeHrefs(base, dossierRoutes.key), single: nested(SEGMENTS.single), menu: nested(SEGMENTS.menu), journal: nested(SEGMENTS.journal) };
   }, [base]);
 
   const launch = (nextSet: Set, next: DossierView) => setState({ set: nextSet, view: next });
@@ -270,6 +302,29 @@ function Showcase() {
             locale={locale}
             wide
             {...launcher("menu", { opening: "choose" })}
+          />
+        </div>
+      </ShowcaseVariant>
+
+      <ShowcaseVariant name={tr(T.journal.name, locale)} when={tr(T.journal.when, locale)} tone="light" rhythm="standard">
+        <div className="ev-root ev-chapter lib-rail dsh-scene">
+          <div className="dsh-scene__copy">
+            <h2 className="ev-t-section-feature">{tr(T.journal.title, locale)}</h2>
+            <p className="ev-t-body dsh-scene__body">{tr(T.journal.body, locale)}</p>
+            {/* Composition only exists from 1024 (below it both are the same dossier): no desk at all under it. */}
+            {wide && (
+              <div className="dsh-scene__choice">
+                <SceneDesk className="dsh-desk">{compositionSetting(journalComposition, setJournalComposition)}</SceneDesk>
+              </div>
+            )}
+          </div>
+          <Launcher
+            title={journal.items[0].label}
+            meta={journal.items[0].description ?? ""}
+            cover={JOURNAL_COVER}
+            locale={locale}
+            wide
+            {...launcher("journal", { item: "journal" })}
           />
         </div>
       </ShowcaseVariant>
