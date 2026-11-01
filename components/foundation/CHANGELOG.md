@@ -1,5 +1,19 @@
 # foundation changelog
 
+## 1.15.0
+
+Signature change: the emperor, 2026-11-01: boxed REC dots removed
+(evoview.be's motif, RULES §8). Free dots and dots that carry a state stay.
+
+Config changes: none. Requires nothing new.
+
+- Deprecated: `SectionMarker` (the 20px marker box with the accent dot)
+  still accepts `live` / `className` but renders nothing. It stays exported
+  for 1.x.
+- CSS removed: `.ev-marker`, its `::after` dot, the `[data-live]` pulse and
+  `@keyframes ev-pulse` (only the marker used them). `.ev-ambient` and the
+  pause model are unchanged.
+
 ## 1.14.0
 
 Additive. `EvoviewMark` `href: null` pauses the attribution link while its

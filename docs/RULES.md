@@ -245,6 +245,11 @@ scanlines/phosphor/grain, viewfinder brackets, Gaegu numerals, `méthode`
 wordmark, `EVV` prefixes, red reset. Replace by role (see
 `extraction/method.md` §8 table). One exception: the channel switch (§6),
 whose signal lines exist only while a preview screen switches, never at rest.
+The boxed REC dot (a dot inside its own square / rectangle frame, the former
+heading marker) is evoview.be's motif and stays out of every package (the
+emperor, 2026-11-01). Allowed: free dots with no enclosing shape (ticker,
+pager), and dots that carry a state wherever they sit (open / closed, today,
+current page, live, draft / sent).
 
 ## 9. Attribution
 

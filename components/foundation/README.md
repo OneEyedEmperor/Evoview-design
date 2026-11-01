@@ -226,8 +226,9 @@ never held and never remounted, so hydration keeps the server DOM, and
 Primitives: `<Readout size?>`, `<Index current total srLabel? size?>`,
 `<StepGauge current total srLabel?>` (stacked-list position as a vertical
 battery filled from the bottom; the norm for list rows, RULES §1; colour =
-`currentColor`), `<SectionMarker live?>`, `<EvoviewMark label href?>`,
-`<EvoviewLogo>`.
+`currentColor`), `<EvoviewMark label href?>`, `<EvoviewLogo>`.
+`<SectionMarker>` is deprecated and renders nothing (1.15.0): the boxed
+REC dot is evoview.be's motif (RULES §8); don't rebuild it in a client.
 `<OrbFill on? hoverWithin? withFocus? withPress? controller? lit?>` — the
 only way an orb changes colour (RULES §1): the new colour rises as liquid
 with a wave surface, the content turning to the new ink, and drains on

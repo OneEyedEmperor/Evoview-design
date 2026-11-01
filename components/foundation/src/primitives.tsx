@@ -65,9 +65,12 @@ export function StepGauge({ current, total, srLabel, className }: StepGaugeProps
   );
 }
 
-/** 20px heading marker with the accent dot. `live` adds a slow ambient pulse (pauses with the page). */
-export function SectionMarker({ live = false, className }: { live?: boolean; className?: string }) {
-  return <span className={cn("ev-marker", live && "ev-ambient", className)} data-live={live || undefined} aria-hidden="true" />;
+/**
+ * @deprecated Renders nothing since foundation 1.15.0: the boxed REC dot is
+ * evoview.be's motif (RULES §8). Kept exported so 1.x imports still build.
+ */
+export function SectionMarker(_props: { live?: boolean; className?: string }) {
+  return null;
 }
 
 type EvoviewMarkProps = {
