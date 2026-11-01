@@ -1,5 +1,31 @@
 # dossier changelog
 
+## 1.16.3
+
+Fix. No config, API or markup change (CSS only). Requires nothing new (foundation ≥ 1.16.0, controls ≥ 1.5.0).
+
+- **A top / major card no longer snaps grey when another card is pointed** (the emperor, on the editions board: "the
+  immediate change of overlays on the bigger card gives it an illusion of clipping").
+  - The cause: CSS interpolates `filter` only between lists of the same functions in the same order.
+    - The top tier's rest (`saturate sepia contrast brightness`) and the neighbours' dim (`grayscale saturate contrast
+      brightness`) didn't match, so the change was discrete.
+    - Sampled every ~25ms in Chrome while the pointer moved onto another card: the top card was already fully dimmed in
+      the first sample, 6ms in. The major card, whose lists matched, eased.
+  - The fix:
+    - Every state of a tier card's picture (major / top rest, hover, focus, dimmed) is written as `grayscale saturate
+      sepia contrast brightness`, so each change interpolates.
+    - The dim caused by another card, and its return, is ambient: it pours in-out (`cubic-bezier(.65, 0, .35, 1)`) over
+      the reveal duration (600ms). The card's own hover keeps the board's 260ms.
+  - Measured after the fix:
+    - the top lead passes 21 intermediate values on its way to the dim, over about 450ms;
+    - its own hover eases in 260ms;
+    - frame strip at 10× slowed playback: `dossier-1.16.3/strip-after.png`.
+- Known, not changed (the board's Signature, every graded board, selection boards included): a tile's own hover
+  release also crosses mismatched lists (rest `grayscale saturate contrast brightness`, hover `saturate sepia contrast
+  brightness`), so it flips at once rather than easing over its 260ms. Sampled on the editions board: 1 value in 18
+  samples. The same one-list fix would make it pour; it changes the hover feel of every client, so it waits for the
+  emperor's call.
+
 ## 1.16.2
 
 Fix. No config, API or markup change (CSS only). Requires nothing new (foundation ≥ 1.16.0, controls ≥ 1.5.0). Server

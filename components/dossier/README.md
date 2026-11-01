@@ -109,7 +109,10 @@ restyle them to the client's UI kit. Changing them is a library change
   Hover, focus and the neighbours' dimming stay the board's; no badge, label
   or loop. The tier's frame yields to focus, and to hover only where the
   board has a hover frame (`hover: hover`, from 1024): on touch a tap's
-  sticky `:hover` keeps it (1.16.1). With `true-colour` the grade step drops out; scrim, frame, bloom
+  sticky `:hover` keeps it (1.16.1). When another card is pointed, a tier
+  card dims with its neighbours, pouring in-out over 600ms (and back), never
+  a cut: every state of its picture shares one filter list, so it interpolates
+  (1.16.3). With `true-colour` the grade step drops out; scrim, frame, bloom
   and type carry the tier. A top lead combines both (the type step multiplies
   the lead's); importance never reorders the feed nor picks the lead.
 - **Opening screen** (optional): the items as equal choice tiles, stacked
