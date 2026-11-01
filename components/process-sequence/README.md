@@ -220,7 +220,7 @@ whose server HTML carries the step's full copy.
 - **Pause model**: the clock runs only while the section is on screen (12 %),
   revealed, the tab visible, no modal open, and the active step's media
   decoded (`useInViewPause` + `useSequenceClock` + `useMediaReady`); resumes
-  with the remainder. The marker pulse carries `.ev-ambient`.
+  with the remainder.
 - **Motion policy**: no `prefers-reduced-motion` branch (architecture skill).
   Stable states instead: every step reachable by click (instrument, index,
   dossier), the dossier is static once revealed, `autoplay={false}` gives a

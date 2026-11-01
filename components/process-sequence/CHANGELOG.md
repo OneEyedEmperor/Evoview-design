@@ -1,5 +1,13 @@
 # process-sequence changelog
 
+## 1.8.1
+
+Docs only. No code, config or visual change. Requires nothing new.
+
+- README: drop the stale "marker pulse carries `.ev-ambient`" line (the
+  package renders no marker; the boxed REC dot is evoview.be's motif and
+  left the library, the emperor, 2026-11-01).
+
 ## 1.8.0
 
 Additive. Requires `foundation` ≥ 1.14.0 (paused `EvoviewMark`).

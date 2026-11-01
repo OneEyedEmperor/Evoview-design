@@ -53,7 +53,7 @@ liquid fill as reference): `animations/SKILL.md` (skill
 | `controls` — plate, ghost, glass close/pager, chips, rows, fields, switch, segmented control/progress, view links (`/components/controls`) | 1.6.0 | `evoview-controls` |
 | `chapter` — section shell, headings, tone cuts; story, FAQ and contact chapters; footer bar / panel with attribution (`/layouts/chapter`) | 1.7.0 | `evoview-chapter` |
 | `card` — media card in three compositions: scroll-scrubbed track, dealt category deck, timed video sequence, per-item `href` (`/layouts/card`; was `card-track`) | 2.4.0 | `evoview-card` |
-| `process-sequence` — timed step board + step dossier, crawlable step views (`/layouts/process-sequence`) | 1.8.0 | `evoview-process-sequence` |
+| `process-sequence` — timed step board + step dossier, crawlable step views (`/layouts/process-sequence`) | 1.8.1 | `evoview-process-sequence` |
 | `story-blocks` — intro split, indexed sequence, proof collage, payoff (`/layouts/story-blocks`) | 2.6.0 | `evoview-story-blocks` |
 | `dossier` — portal modal, selection board, chapter strip, mobile dock, crawlable views; panorama / sheet compositions, optional opening screen, live entry counts, rows with media, direct load at rest, optional header kicker (`/components/dossier`) | 1.12.0 | `evoview-dossier` |
 | `selector-stage` — selector ↔ stage, before/after, atlas (`/components/selector-stage`) | 1.6.0 | `evoview-selector-stage` |
