@@ -63,7 +63,7 @@ export type ProcessSequenceCopy = {
     failed: string;
     retry: string;
   };
-  /** Accessible name of the Evoview mark (names Evoview and the new tab). */
+  /** Accessible name of the Evoview mark (names Evoview and the new tab). Unused while paused (the unlinked mark is named "Evoview"). */
   attributionLabel: string;
 };
 
@@ -79,8 +79,8 @@ export type ProcessSequenceConfig = {
   copy: ProcessSequenceCopy;
   /** Replaces "next" on the dossier's last step: the client's main action. */
   cta?: ProcessSequenceCta;
-  /** Approved Evoview mark in the dossier's stage strip. On by default. */
-  attribution?: { enabled: boolean; href?: string };
+  /** Approved Evoview mark in the dossier's stage strip. On by default. `href: null` pauses the link (destination not live yet); the mark stays. */
+  attribution?: { enabled: boolean; href?: string | null };
 };
 
 export type StepState = "idle" | "active" | "complete";

@@ -64,7 +64,9 @@ media well), `https://evoview.be/`, new tab, accessible name from
 `copy.attributionLabel`; far from the footer CTA. The board itself carries
 no mark (it has no chassis strip). `attribution.enabled` is on by default;
 turning it off is the founder's call. If the host uses `onOpen` instead of the
-built-in dossier, the package shows no mark.
+built-in dossier, the package shows no mark. `attribution.href: null` pauses
+the link while evoview.be isn't live (the mark stays, unlinked, named
+"Evoview" instead of `attributionLabel`); restore the URL to relink.
 
 ## Variations (select)
 
@@ -147,7 +149,7 @@ type ProcessSequenceConfig = {
           stepOf(c, t); openHint; dossier: { label; close; previous; next; progress; objective; loading; failed; retry };
           attributionLabel };
   cta?: { label; href?; onClick? };   // last dossier step
-  attribution?: { enabled: boolean; href? };
+  attribution?: { enabled: boolean; href?: string | null };   // null = paused link
 };
 ```
 

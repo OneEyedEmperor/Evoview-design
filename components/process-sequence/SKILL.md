@@ -38,7 +38,8 @@ choreography + the approved mark in the dossier stage). Keep both.
    completion marks (client icons as stroke SVG, or `check` / `numeral`),
    the CTA destination (verified, the site's main action), FR / EN copy.
    Keep `durations` at 4 / 4 / 4 / 6 s unless the client asks; keep
-   `attribution.enabled: true`.
+   `attribution.enabled: true` (`href: null` only when the emperor pauses
+   the link; the mark stays, unlinked).
 4. Mount `<ProcessSequence config={…} tone="dark" | "light" />` as its own
    chapter (it pads itself; `chapter={false}` inside a padded section). Check
    the host `--primary` / `--primary-foreground`; fix tokens rather than

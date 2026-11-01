@@ -1,5 +1,5 @@
 {
-  "requires": { "foundation": ">=1.12.1 <2", "controls": ">=1.5.0 <2" },
+  "requires": { "foundation": ">=1.14.0 <2", "controls": ">=1.5.0 <2" },
   "clientOwned": ["process-sequence.config.tsx", "process-sequence.theme.css"],
   "hostDeps": { "react": ">=19" }
 }

@@ -1,5 +1,15 @@
 # process-sequence changelog
 
+## 1.8.0
+
+Additive. Requires `foundation` ≥ 1.14.0 (paused `EvoviewMark`).
+
+Config changes: `attribution.href` accepts `null` to pause the step
+dossier's stage-strip mark while evoview.be isn't live (foundation
+`EvoviewMark` paused state); the mark stays, named "Evoview" instead of
+`copy.attributionLabel` (no "new tab" announced). Omitted `href` still links
+`https://evoview.be/`. Existing configs render unchanged (same server HTML).
+
 ## 1.7.2
 
 Fix. No config change, no visual change. Requires `foundation` ≥ 1.12.1
