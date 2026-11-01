@@ -300,6 +300,11 @@ the h1, `<ChapterHead level="title" as="h1" id={ctx.headingId} title={entry.titl
 and the header keeps the `label` as a readout. Never render the title twice
 as headings.
 
+In `heading: "header"` mode the desktop header's visible h1 is the **full
+title** (one line, cut with an ellipsis past the bar's width, about 300px at
+1440). Long titles (headlines) take `heading: "content"`; otherwise keep
+header-mode titles to the bar's width.
+
 Ids (opening, items, entries) are URL slugs: `[a-z0-9-]`. Copy keys added in
 1.8.0 are optional (`openItem`, `chooseItem`, `up`, `empty`,
 `loader.pending`); omitted, they take the locale's defaults.

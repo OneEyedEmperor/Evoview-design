@@ -16,6 +16,12 @@ Fix. No config change, no API change. Requires nothing new (foundation ≥ 1.16.
   - Clients whose detail shows `media` itself: nothing changes (no `srcSet`), or
     list it in `sources` as rendered.
   - `verify:ssr` checks it on a srcset copy of the reference configs.
+- Docs (no code change): in `heading: "header"` mode (the default) a detail's
+  visible desktop h1 is the full title on one line, cut with an ellipsis past
+  the bar's width (since 1.13.0; it was the `label` before). Long titles take
+  `heading: "content"`; otherwise keep header-mode titles to the bar's width.
+  Clients that set a distinct `label` on header-mode entries: check the header
+  at 1366 / 1440 when syncing.
 
 ## 1.13.0
 

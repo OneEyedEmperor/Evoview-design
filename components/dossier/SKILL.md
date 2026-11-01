@@ -54,7 +54,10 @@ tokens and the pause model.
 4. Edit only `src/components/dossier/dossier.config.tsx`: brand (client logo
    node), no header kicker by default (RULES §1; `kicker` is optional, omit
    it rather than set `""`), items (labels, optional per-item accent), entries (title,
-   short label, kicker, the client's own media), detail chapters built from
+   short label, kicker, the client's own media; in the default
+   `heading: "header"` the desktop header shows the full title as the h1 on
+   one line, so long titles take `heading: "content"`, otherwise keep them to
+   the bar's width), detail chapters built from
    `DossierChapter` + `ChapterHead` / `ChapterFigure` / `ChapterSplit` /
    `ChapterRows` / `ChapterSpecimen` / `ChapterPayoff` (or story-blocks), one
    exit CTA per story (the client's action, `PrimaryPlate`), copy FR/EN from
