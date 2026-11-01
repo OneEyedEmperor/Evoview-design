@@ -27,7 +27,7 @@ export type CardTrackProps = {
   tone?: "dark" | "light" | "paper";
   /** Block padding of the stage (foundation chapter rhythm). Default "standard". */
   rhythm?: "standard" | "compact" | "cinematic";
-  /** Card activation (open a dossier, navigate…). Without it cards are not buttons. */
+  /** Card activation (open a dossier, navigate…). Without it, only cards with an `href` are open targets (plain links). */
   onOpen?: (item: CardTrackItem, index: number) => void;
   /** Card title level. Default 3 (the chapter heading is the h2). */
   cardHeadingLevel?: CardHeadingLevel;
@@ -63,7 +63,7 @@ export function CardTrack({ track, copy, heading, tone, rhythm = "standard", onO
   const viewportRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const fillRef = useRef<HTMLSpanElement>(null);
-  const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const openRefs = useRef<(HTMLElement | null)[]>([]);
   const geoRef = useRef<Geometry>({ range: 0, maxX: 0, pin: 0, top: 0 });
   const resyncRef = useRef<() => void>(() => undefined);
   const pendingRef = useRef<{ index: number; at: number } | null>(null);
@@ -102,8 +102,8 @@ export function CardTrack({ track, copy, heading, tone, rhythm = "standard", onO
         open: () => onOpenRef.current?.(item, i),
         hover: (h: boolean) => setHoverIdx((prev) => (h ? i : prev === i ? null : prev)),
         focus: () => setFocusIdx(i),
-        ref: (el: HTMLButtonElement | null) => {
-          buttonRefs.current[i] = el;
+        ref: (el: HTMLElement | null) => {
+          openRefs.current[i] = el;
         },
       })),
     [items],
@@ -284,7 +284,7 @@ export function CardTrack({ track, copy, heading, tone, rhythm = "standard", onO
         }
       }
       setFocusIdx(next);
-      buttonRefs.current[next]?.focus({ preventScroll: true });
+      openRefs.current[next]?.focus({ preventScroll: true });
     },
     [mode, n, phone],
   );
@@ -325,7 +325,7 @@ export function CardTrack({ track, copy, heading, tone, rhythm = "standard", onO
           aria-roledescription={copy.carousel}
           aria-label={track.label}
           aria-describedby={instructionsId}
-          tabIndex={onOpen ? undefined : 0}
+          tabIndex={onOpen || items.every((item) => item.href) ? undefined : 0}
           onKeyDown={onKeyDown}
         >
           <p id={instructionsId} className="ev-sr">
@@ -360,6 +360,7 @@ export function CardTrack({ track, copy, heading, tone, rhythm = "standard", onO
                     onHover={fine ? handlers[i]?.hover : undefined}
                     onFocusCard={handlers[i]?.focus}
                     buttonRef={handlers[i]?.ref}
+                    linkRef={handlers[i]?.ref}
                   />
                 );
               })}

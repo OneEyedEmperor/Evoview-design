@@ -1,5 +1,30 @@
 # card changelog
 
+## 2.4.0
+
+- API (additive): `CardTrackItem.href?` / `external?`, for `CardTrack` and
+  `CardDeck` cards (as `CardSequenceClip`). With `href` the card's open
+  target is `<a href>` (in server HTML): a plain click runs `onOpen` via
+  foundation `followRouteLink`; modified / middle / new-tab clicks stay
+  native; without `onOpen` the link navigates; `external` → new tab,
+  `rel="noopener noreferrer"`, `copy.newTab` appended to the name, never
+  intercepted by `onOpen`. Kept from the button: name `copy.open(title)`,
+  roving tab stop, tap slop (a swipe `preventDefault`s the click),
+  affordances; `draggable={false}`. A track whose every card has an `href`
+  no longer makes its region a tab stop without `onOpen`. Launchers into
+  crawlable views should pass `href` (`docs/CRAWLABLE-MODALS.md` §7.1).
+- Without `href`: unchanged (server HTML byte-identical to 2.3.0).
+- `MediaCard`: new optional `linkRef` (the anchor); `buttonRef` unchanged.
+- Config (optional, additive): `CardTrackCopy.newTab?` (also `CardDeckCopy`);
+  the reference `card.config.tsx` sets "(nouvel onglet)" / "(new tab)".
+  Clients: nothing to change; add `newTab` to your copy before using
+  `external` cards.
+- Requires: unchanged (`followRouteLink` is in foundation since 1.6.0;
+  floor stays `>=1.8.0`).
+- Showcase: the portfolio track and the deck cards carry fictional `#id`
+  hrefs (a plain click still opens in place); the services track stays on
+  the button path. Nothing visible changes.
+
 ## 2.3.0
 
 - Sync (`docs/SYNC.md`): `evoview.json` (`requires` foundation `>=1.8.0 <2`,

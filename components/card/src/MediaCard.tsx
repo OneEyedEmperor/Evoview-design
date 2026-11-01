@@ -1,6 +1,6 @@
-import { memo, useEffect, useRef, useState, type CSSProperties, type Ref } from "react";
+import { memo, useEffect, useRef, useState, type CSSProperties, type PointerEvent, type Ref } from "react";
 import { GhostAction } from "../controls";
-import { Readout, cn, useMediaReady } from "../foundation";
+import { Readout, cn, followRouteLink, useMediaReady } from "../foundation";
 import type { CardHeadingLevel, CardTrackCopy, CardTrackItem, CardTrackMedia, CardTrackVariant } from "./types";
 
 /* A rapid scrub must not start a media load per card it passes. */
@@ -29,10 +29,13 @@ export type MediaCardProps = {
   showIndex?: boolean;
   /** Level of the card title. Default 3 (under the host's h2 section heading). */
   headingLevel?: CardHeadingLevel;
+  /** In-page open. With `item.href` it runs on a plain click of the link (modified clicks and external cards stay native). */
   onOpen?: () => void;
   onHover?: (hovering: boolean) => void;
   onFocusCard?: () => void;
   buttonRef?: Ref<HTMLButtonElement>;
+  /** The open target when `item.href` is set. */
+  linkRef?: Ref<HTMLAnchorElement>;
   className?: string;
   style?: CSSProperties;
 };
@@ -54,6 +57,7 @@ export const MediaCard = memo(function MediaCard({
   onHover,
   onFocusCard,
   buttonRef,
+  linkRef,
   className,
   style,
 }: MediaCardProps) {
@@ -62,6 +66,20 @@ export const MediaCard = memo(function MediaCard({
   const label = copy.position(index + 1, total, item.title);
   const portrait = variant === "portrait";
   const Title = `h${headingLevel}` as const;
+  const openable = !!onOpen || !!item.href;
+
+  const onPointerDown = (e: PointerEvent<HTMLElement>) => {
+    start.current = e.pointerType === "mouse" ? null : { x: e.clientX, y: e.clientY, moved: false };
+  };
+  const onPointerMove = (e: PointerEvent<HTMLElement>) => {
+    const s = start.current;
+    if (s && !s.moved && (Math.abs(e.clientX - s.x) > TAP_SLOP_PX || Math.abs(e.clientY - s.y) > TAP_SLOP_PX)) s.moved = true;
+  };
+  const swiped = () => {
+    const moved = !!start.current?.moved;
+    start.current = null;
+    return moved;
+  };
 
   return (
     <article
@@ -100,12 +118,12 @@ export const MediaCard = memo(function MediaCard({
             </div>
           )}
           {portrait && <span className="ctc__scrim" aria-hidden="true" />}
-          {!portrait && onOpen && <Affordance copy={copy} className="ctc__affordance--center" />}
+          {!portrait && openable && <Affordance copy={copy} className="ctc__affordance--center" />}
         </div>
 
         {portrait ? (
           <div className="ctc__identity">
-            {onOpen && (
+            {openable && (
               <div className="ctc__readout">
                 <Affordance copy={copy} className="ctc__affordance--inline" />
               </div>
@@ -123,27 +141,40 @@ export const MediaCard = memo(function MediaCard({
           </div>
         )}
 
-        {onOpen && (
-          <button
-            ref={buttonRef}
-            type="button"
+        {item.href ? (
+          <a
+            ref={linkRef}
             className="ctc__open"
-            aria-label={copy.open(item.title)}
+            href={item.href}
+            target={item.external ? "_blank" : undefined}
+            rel={item.external ? "noopener noreferrer" : undefined}
+            aria-label={item.external && copy.newTab ? `${copy.open(item.title)} ${copy.newTab}` : copy.open(item.title)}
             tabIndex={tabbable ? 0 : -1}
+            draggable={false}
             onFocus={onFocusCard}
-            onPointerDown={(e) => {
-              start.current = e.pointerType === "mouse" ? null : { x: e.clientX, y: e.clientY, moved: false };
-            }}
-            onPointerMove={(e) => {
-              const s = start.current;
-              if (s && !s.moved && (Math.abs(e.clientX - s.x) > TAP_SLOP_PX || Math.abs(e.clientY - s.y) > TAP_SLOP_PX)) s.moved = true;
-            }}
-            onClick={() => {
-              const swiped = start.current?.moved;
-              start.current = null;
-              if (!swiped) onOpen();
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onClick={(e) => {
+              if (swiped()) e.preventDefault();
+              else if (onOpen && !item.external) followRouteLink(e, onOpen);
             }}
           />
+        ) : (
+          onOpen && (
+            <button
+              ref={buttonRef}
+              type="button"
+              className="ctc__open"
+              aria-label={copy.open(item.title)}
+              tabIndex={tabbable ? 0 : -1}
+              onFocus={onFocusCard}
+              onPointerDown={onPointerDown}
+              onPointerMove={onPointerMove}
+              onClick={() => {
+                if (!swiped()) onOpen();
+              }}
+            />
+          )
         )}
       </div>
     </article>

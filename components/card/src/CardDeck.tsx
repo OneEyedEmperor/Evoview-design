@@ -34,7 +34,7 @@ export type CardDeckProps = {
   heading?: ReactNode;
   /** Card title level. Default 3 (the chapter heading is the h2). */
   cardHeadingLevel?: CardHeadingLevel;
-  /** Card activation (the host's detail view). Without it cards are not buttons. */
+  /** Card activation (the host's detail view). Without it, only cards with an `href` are open targets (plain links). */
   onOpen?: (item: CardTrackItem, category: CardDeckCategory) => void;
   /** Plain click on the `more` link; leave the default to follow its href. */
   onMore?: (event: MouseEvent<HTMLAnchorElement>) => void;

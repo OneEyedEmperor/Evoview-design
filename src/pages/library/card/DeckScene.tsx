@@ -26,14 +26,18 @@ const T = {
   },
 } satisfies Localized<unknown>;
 
-/* Cards are only buttons, with their open affordance, when the deck gets
-   an `onOpen`: the demo keeps that anatomy, its destinations are fictional. */
+/* The cards are links (fictional destinations) with an `onOpen`: a plain
+   click keeps the page, a modified click follows the link. */
 const keepPage = () => {};
 
 export default function DeckScene() {
   const { locale } = useLibraryLocale();
   const t = T[locale];
-  const config = useMemo(() => buildCardDeckConfig(locale), [locale]);
+  const config = useMemo(() => {
+    const built = buildCardDeckConfig(locale);
+    const categories = built.deck.categories.map((c) => ({ ...c, items: c.items.map((item) => ({ ...item, href: `#${item.id}` })) }));
+    return { ...built, deck: { ...built.deck, categories } };
+  }, [locale]);
   const [anatomy, setAnatomy] = useState<Anatomy>("portrait");
   const [rows, setRows] = useState<Rows>("two");
 

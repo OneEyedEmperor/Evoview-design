@@ -33,6 +33,10 @@ export type CardTrackItem = {
   /** Ribbon: square tab overlapping the ribbon's top edge (status, novelty). */
   tab?: string;
   media: CardTrackMedia;
+  /** The card's destination: the open target becomes a real link (crawlable view, page). A plain click still runs `onOpen` when given. */
+  href?: string;
+  /** Opens `href` in a new tab (external page). */
+  external?: boolean;
 };
 
 export type CardTrackDefinition = {
@@ -55,6 +59,8 @@ export type CardTrackCopy = {
   position: (current: number, total: number, title: string) => string;
   /** Spoken name of the card's open action. */
   open: (title: string) => string;
+  /** Appended to an external card's accessible name, e.g. "(nouvel onglet)". */
+  newTab?: string;
   /** Glass affordance label: fine pointer vs touch. */
   affordance: { pointer: string; touch: string };
   loading: string;

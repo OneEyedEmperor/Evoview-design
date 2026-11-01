@@ -64,9 +64,18 @@ const OPENED: Localized<(title: string) => string> = {
   en: (t) => `Opened: ${t}`,
 };
 
+/* Fictional destinations: the portfolio's cards are links (a plain click
+   still opens in place), the services' stay buttons. */
+const withDemoHrefs = (items: CardTrackItem[]): CardTrackItem[] => items.map((item) => ({ ...item, href: `#${item.id}` }));
+
 function Demo() {
   const { locale } = useLibraryLocale();
-  const config = useMemo(() => buildCardTrackConfig(locale), [locale]);
+  const config = useMemo(() => {
+    const built = buildCardTrackConfig(locale);
+    const portfolio = built.tracks.portfolio as CardTrackDefinition;
+    const tracks: Record<string, CardTrackDefinition> = { ...built.tracks, portfolio: { ...portfolio, items: withDemoHrefs(portfolio.items) } };
+    return { ...built, tracks };
+  }, [locale]);
   const [opened, setOpened] = useState<Partial<Record<Chapter["key"], string>>>({});
 
   return (

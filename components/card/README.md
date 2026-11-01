@@ -232,11 +232,26 @@ type CardTrackDefinition = {
     meta?: string;                       // portrait, one line
     tab?: string;                        // ribbon, square tab
     media: { src: string; alt?: string; video?: string; playbackRate?: number; fit?: "cover" | "contain"; position?: string };
+    href?: string;                       // the card's destination: the open target becomes <a href>
+    external?: boolean;                  // href in a new tab (rel="noopener noreferrer", copy.newTab spoken)
   }[];
 };
 type CardTrackCopy = { carousel; slide; instructions; position(current, total, title); open(title);
+  newTab?;                               // appended to an external card's name, e.g. "(nouvel onglet)"
   affordance: { pointer; touch }; loading; failed; retry };
 ```
+
+**Open target** (`CardTrack` and `CardDeck`, per item): with `href` the
+card's open target is a real link (`<a href>`, in server HTML). A plain
+click runs `onOpen` instead of loading the URL (`followRouteLink`);
+modified, middle and new-tab clicks stay native; without `onOpen` the link
+simply navigates; `external` cards always open natively in a new tab
+(`onOpen` is not called). Without `href` it is the `<button>` it always was
+(only with `onOpen`). Either way: accessible name `copy.open(title)`,
+roving tab stop, a touch swipe never activates (6px slop), affordance shown,
+no native link drag. **Cards that open a crawlable view** (a dossier entry,
+a step view: `docs/CRAWLABLE-MODALS.md` §7.1) **pass that view's URL as
+`href`** and open it in place through `onOpen`.
 
 `MediaCard` is exported for a single card outside a track (same props the
 track passes; `headingLevel` sets its title level, default 3). Its accent
@@ -264,7 +279,8 @@ to that frame. No `srcSet` (the media gate decodes `src`).
 Keyboard: one tab stop (the current card); ←/→ / Home / End move it (desktop
 scrub scrolls the page to that card's position, snap scrolls the strip) and
 focus follows; presses during that smooth scroll chain from its target.
-Enter / Space open. Without `onOpen` the region itself is the tab stop. Live
+Enter / Space open (Enter only on an `href` card: it is a link). Without
+`onOpen` and without an `href` on every card the region itself is the tab stop. Live
 region announces "2 sur 4 : Title".
 
 Reveal: cards y 30 → 0 + fade, 600ms cinematic, 80ms stagger, once.
@@ -302,6 +318,9 @@ scrub.
    ring, bloom readable on light and dark chapters.
 5. Keyboard: Tab lands on the current card, arrows / Home / End move (three
    quick presses move three cards), Enter calls `onOpen`.
+   With `href` cards: a plain click opens in place, Ctrl / middle click
+   opens the `href` in a new tab, a phone swipe on the strip never follows
+   the link, and the server HTML carries the `<a href>`.
 6. Video: plays only on the current portrait card / hovered ribbon card;
    pauses when scrolled away or the tab is hidden; starting a loop never
    jumps (poster = first frame).
@@ -330,7 +349,7 @@ const { deck, copy } = buildCardDeckConfig(locale);
   tone="dark" rhythm="standard" // chapter paint and padding
   heading={<MyChapterHeading />}
   cardHeadingLevel={3}          // card titles; one below the chapter heading (default 3)
-  onOpen={(item, category) => openDetail(item.id)}  // omit: cards are not buttons
+  onOpen={(item, category) => openDetail(item.id)}  // omit: only `href` cards open (plain links)
   onMore={(e) => …}             // optional; the link follows deck.more.href by default
 />
 ```
@@ -347,7 +366,8 @@ type CardDeckCopy = CardTrackCopy & { showing(category, count): string };
 ```
 
 Items are `CardTrackItem`: `portrait` shows `title` + `meta` (one line),
-`ribbon` shows `title` + `body` (3 lines). Labels: one or two short words,
+`ribbon` shows `title` + `body` (3 lines); `href` / `external` as in
+`CardTrack` ("Open target"). Labels: one or two short words,
 four categories fit a 390 phone. Each category should fill the hand (3 or
 6 items). Stills ~860px wide webp; optional short muted loops with their
 first frame as poster (as `CardTrack`).

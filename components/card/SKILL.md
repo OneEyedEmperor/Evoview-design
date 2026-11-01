@@ -46,7 +46,11 @@ and the pause model.
    `rhythm`; pass the chapter heading as `heading` so it stays in the sticky
    stage, and `cardHeadingLevel` one below it (default 3 under an h2).
    Wire `onOpen` to the client's real destination (dossier, page);
-   omit it if cards open nothing.
+   omit it if cards open nothing. When a card has a URL (a crawlable
+   dossier / step view, a page) give the item its `href` (`external` for
+   another site): the card becomes a real link, crawlable and
+   Ctrl-clickable, and `onOpen` still opens it in place on a plain click
+   (`docs/CRAWLABLE-MODALS.md` §7.1).
 6. Check the host `--primary` / `--primary-foreground`; fix tokens rather than
    restyling the cards. Make sure no ancestor is a scroll container.
 7. Verify with the README checklist at 1440, 1024, 390, then log an activity
@@ -81,7 +85,8 @@ README "Signature" / "CardDeck" hold its choreography and the API.
 3. Mount `<CardDeck deck copy tone rhythm heading onOpen />` in the
    section; `heading` takes the client's chapter heading (`cardHeadingLevel`
    one below it). Wire `onOpen` to the client's detail view; never to a
-   booking CTA inside the card.
+   booking CTA inside the card. Items with a URL take `href` (as in the
+   track, step 5).
 4. Do not retime the deal or the switch sequence (founder-approved, zero
    dead time) and do not add a counting readout, watermarks or a reduced
    motion branch. Verify with the README CardDeck checklist at 1440, 1024,
