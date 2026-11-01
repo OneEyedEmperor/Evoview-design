@@ -77,6 +77,39 @@ const PACKAGES = [
       return { expected: (own.match(/class="evd-rows__media"/g) ?? []).length, required: Boolean(c.opening) && item.id === "menu" };
     },
     legacy: (m, c, v) => h(m.Dossier, { config: c, open: true, onClose: noop, initialItemId: v.item, initialEntryId: v.entry, preload: false }),
+    /* §4 on details: the h1 is the entry's `title` (never its short `label`), the dialog is labelled by it, and no
+       other heading repeats it (no hidden duplicate). With `heading: "content"` the content renders that h1 and the
+       header bar has none: checked on every entry of a copy of the config whose content leads with it. */
+    heading: {
+      expect(c, v, r) {
+        if (v.entry === undefined) return [];
+        const entry = c.items.find((i) => i.id === v.item)?.entries.find((e) => e.id === v.entry);
+        if (!entry) return [];
+        const h1 = r.blocks.find((b) => b.type === "h1");
+        const same = r.blocks.filter((b) => /^h[1-6]$/.test(b.type) && norm(b.text) === norm(entry.title));
+        const dialog = r.tags.find((t) => t.attrs.role === "dialog");
+        const first = (dialog?.attrs["aria-labelledby"] ?? "").split(/\s+/)[0];
+        const named = r.tags.find((t) => first && t.attrs.id === first);
+        const headerH1 = r.tags.some((t) => t.name === "h1" && /(^|\s)evd-header__title(\s|$)/.test(t.attrs.class ?? ""));
+        return [
+          [h1 && norm(h1.text) === norm(entry.title), "a detail's h1 is the entry's title, not its short label — §4", `h1 "${h1?.text}", title "${entry.title}"`],
+          [same.length === 1, "exactly one heading carries the entry's title (no hidden duplicate) — §4", `${same.length}× ${same.map((b) => b.type).join(", ")}`],
+          [named?.name === "h1", "the dialog is labelled by the view's h1 — §4", `aria-labelledby → ${named?.name ?? "nothing"}`],
+          [headerH1 === (entry.heading !== "content"), entry.heading === "content" ? "heading: content — the header bar carries no h1" : "the header bar carries the h1"],
+        ];
+      },
+      content: (m, c) => ({
+        ...c,
+        items: c.items.map((item) => ({
+          ...item,
+          entries: item.entries.map((e) => ({
+            ...e,
+            heading: "content",
+            content: (ctx) => h(React.Fragment, null, h(m.ChapterHead, { level: "title", as: "h1", id: ctx.headingId, title: e.title }), e.content(ctx)),
+          })),
+        })),
+      }),
+    },
     /* Header kicker (RULES §1): optional on the opening / overviews, a node only when it has text (an empty one
        off-centres the title); never on a detail, whose item stays in the dialog's accessible name. */
     headerKicker: {
@@ -514,6 +547,21 @@ async function verifyPackage(spec, foundation) {
       if (routes.parent(v) && !linked.has(key(v))) check(false, pkg, "links", `${locale} ${key(v)}`, "no rendered view links to this view: unreachable for crawlers");
     }
 
+    /* Entries whose content renders the view's h1 (`heading: "content"`): the same contract on every detail. */
+    if (spec.heading?.content) {
+      const contentConfig = spec.heading.content(m, config);
+      for (const view of views.filter((v) => v.entry !== undefined)) {
+        let head = null;
+        try {
+          head = routes.head(contentConfig, view);
+        } catch {
+          /* reported above */
+        }
+        const element = h(m[spec.component], { config: contentConfig, view, onNavigate: noop, hrefFor });
+        await verifyView({ pkg, spec, m, config: contentConfig, view, locale: `${locale}:content-heading`, key: key(view), element, ctx, head });
+      }
+    }
+
     /* Direct load at rest: the same contract per view, plus the at-rest markup. */
     if (spec.atRest) {
       const restConfig = spec.atRest.config(config);
@@ -564,6 +612,7 @@ async function verifyView({ pkg, spec, config, view, locale, key, element, ctx, 
   check(h1s.length === 1, pkg, "h1", subject, `exactly one h1 per view (found ${h1s.length}) — §4`, h1s.map((b) => `"${b.text}"`).join(", "));
   if (h1s.length === 1 && head?.title) check(norm(head.title).includes(norm(h1s[0].text)), pkg, "h1", subject, "the h1 text must be contained in head.title — §4", `h1 "${h1s[0].text}", title "${head.title}"`);
   if (h1s.length === 1) check(!h1s[0].hidden, pkg, "h1", subject, `the h1 is hidden by markup — §3.3`, h1s[0].hidden);
+  if (spec.heading) for (const [ok, message, detail = ""] of spec.heading.expect(config, view, r)) check(ok, pkg, "h1", subject, message, detail);
   const inert = r.tags.filter((t) => "inert" in t.attrs);
   check(!inert.length, pkg, "inert", subject, "server HTML carries inert — §3.3", `${inert.length}× on ${[...new Set(inert.map((t) => t.attrs.class?.split(" ")[0] || t.name))].join(", ")}`);
 

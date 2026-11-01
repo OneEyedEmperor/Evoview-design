@@ -4,7 +4,7 @@ import "./dossier.css";
 import "./dossier.theme.css";
 
 export { Dossier, type DossierProps, type DossierRouteProps, type DossierLegacyProps } from "./Dossier";
-export { dossierRoutes, dossierViewMedia, type DossierView } from "./routes";
+export { dossierRoutes, dossierViewImages, dossierViewMedia, type DossierView, type DossierViewImage } from "./routes";
 export { SelectionBoard, SELECTION_BOARD_LAYOUTS, type SelectionBoardProps, type SelectionBoardLayout, type SelectionTile } from "./Board";
 export { DossierLoader, type DossierLoaderProps } from "./Loader";
 export {

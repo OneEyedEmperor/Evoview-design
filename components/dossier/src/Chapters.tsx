@@ -53,14 +53,16 @@ export type ChapterHeadProps = {
   body?: ReactNode;
   /** "title" once per story (intro), "heading" per chapter. */
   level?: "title" | "heading";
-  as?: "h2" | "h3";
+  /** "h1": the detail's title as the view's h1 (entry `heading: "content"`, with `id` = `ctx.headingId`). */
+  as?: "h1" | "h2" | "h3";
+  id?: string;
 };
 
 /** Title / copy split, .72 / 1.28; copy bottom-aligned. */
-export function ChapterHead({ title, lead, body, level = "heading", as: Tag = level === "title" ? "h2" : "h3" }: ChapterHeadProps) {
+export function ChapterHead({ title, lead, body, level = "heading", as: Tag = level === "title" ? "h2" : "h3", id }: ChapterHeadProps) {
   return (
     <div className={cn("evd-head", !lead && !body && "evd-head--solo")}>
-      <Tag className={level === "title" ? "ev-t-title" : "ev-t-heading"}>{title}</Tag>
+      <Tag id={id} className={level === "title" ? "ev-t-title" : "ev-t-heading"}>{title}</Tag>
       {(lead || body) && (
         <div className="evd-head__copy">
           {lead && <p className="ev-t-lead evd-head__lead">{lead}</p>}
@@ -75,7 +77,8 @@ export type ChapterFigureProps = {
   media: DossierMedia & { alt: string };
   /** "hero" 16:10 → 4:5 phone, "stage" 4:3, or a number (w / h). */
   ratio?: "hero" | "stage" | number;
-  caption?: { kicker: string; title: string };
+  /** `kicker` optional: without text, no kicker element (RULES §1: no small label over a title). */
+  caption?: { kicker?: string; title: string };
   className?: string;
 };
 
@@ -95,7 +98,7 @@ export function ChapterFigure({ media, ratio = "stage", caption, className }: Ch
       )}
       {caption && (
         <figcaption className="evd-figure__caption">
-          <span className="ev-t-readout evd-figure__kicker">{caption.kicker}</span>
+          {caption.kicker?.trim() && <span className="ev-t-readout evd-figure__kicker">{caption.kicker}</span>}
           <span className="evd-figure__title">{caption.title}</span>
           <span className="evd-figure__dot" aria-hidden="true" />
         </figcaption>

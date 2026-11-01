@@ -44,14 +44,22 @@ export type DossierEntryContext = {
   /** Closes the whole dossier (use for the one exit CTA). */
   close: () => void;
   toOverview: () => void;
+  /** With `heading: "content"`: the id of the view's h1, which the content renders (`<ChapterHead level="title" as="h1" id={headingId} …>`). */
+  headingId: string;
 };
 
 export type DossierEntry = {
   id: string;
   /** Tile title and spoken name. */
   title: string;
-  /** Short tab / dock label. Default: title. */
+  /** Short tab / dock label, and the phone header's readout. Default: title. */
   label?: string;
+  /**
+   * Where the view's h1 (`title`) is. "header" (default): the dossier header (desktop shows `title`, phones `label`).
+   * "content": the detail shows its title itself and renders it as the h1 with `ctx.headingId`; the header keeps
+   * `label` as a readout.
+   */
+  heading?: "header" | "content";
   /** Optional readout above the tile title ("7 services · 78 €"). */
   kicker?: string;
   /** Tile media; also decoded before the detail opens. */

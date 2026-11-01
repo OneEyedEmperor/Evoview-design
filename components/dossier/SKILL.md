@@ -24,8 +24,11 @@ tokens and the pause model.
   (`DOSSIER_DIRECT_LOADS`: `entrance` default, `at-rest` when the dossier is a
   page of its own reached from search, e.g. a menu: its URL paints the
   settled view and hydrates in place; preload `dossierViewMedia(config, view)`
-  in the prerendered head; in-page opens keep the entrance); an opening
-  screen or not; one or several universes; the chapter kit,
+  in the prerendered head, `dossierViewImages` with `imagesrcset` /
+  `imagesizes` when media carry a `srcSet`; in-page opens keep the entrance);
+  where a detail's h1 sits (entry `heading`: the header, default, or the
+  content when the detail shows its title itself, e.g. an article
+  headline); an opening screen or not; one or several universes; the chapter kit,
   `DOSSIER_CHAPTER_VARIANTS`, `CHAPTER_ROWS_SURFACES`. Nothing else.
 - **Invent** (README "Expression"): brand, opening title / label, items
   (cover, readout, empty-day sentence), entries, copy, media, accent (per

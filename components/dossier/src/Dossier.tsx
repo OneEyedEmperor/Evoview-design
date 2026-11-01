@@ -41,8 +41,8 @@ import { SelectionBoard, type SelectionBoardLayout, type SelectionTile } from ".
 import { ChapterMediaContext, ChapterRevealContext, type ChapterReveal } from "./Chapters";
 import { fullCopy } from "./copy";
 import { DossierLoader } from "./Loader";
-import { DESKTOP_QUERY, isVideo, toSource } from "./hooks";
-import { dossierRoutes, entryHeading, itemCover, itemView, openingLabel, topView, type DossierView } from "./routes";
+import { DESKTOP_QUERY, toSource } from "./hooks";
+import { boardSizesFor, dossierRoutes, entryHeading, itemCover, itemView, openingLabel, openingSources, overviewSources, topView, type DossierView } from "./routes";
 import type { DossierConfig, DossierEntry, DossierEntryContext, DossierItem } from "./types";
 
 type DossierBaseProps = {
@@ -216,9 +216,9 @@ function describe(items: DossierItem[], kind: Kind, itemId: string | null, entry
 
 const sourceSrc = (s: MediaSource) => (typeof s === "string" ? s : s ? s.src : "");
 
-function sourcesOf(scene: Scene, items: DossierItem[]): MediaSource[] {
-  if (scene.kind === "opening") return items.map((i) => itemCover(i)).filter((m) => m !== undefined).map(toSource);
-  if (scene.kind === "overview") return (scene.item?.entries ?? []).map((e) => toSource(e.media));
+function sourcesOf(scene: Scene, items: DossierItem[], boardSizes: string | undefined): MediaSource[] {
+  if (scene.kind === "opening") return openingSources(items, boardSizes);
+  if (scene.kind === "overview") return overviewSources(scene.item?.entries ?? [], boardSizes);
   return scene.entry ? [toSource(scene.entry.media), ...(scene.entry.sources ?? [])] : [];
 }
 
@@ -286,7 +286,8 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, clos
 
   /* ── Media gate on the target. The layer exists only while open, so the gate stays open through
      the exit animation and the content does not vanish while the shell leaves. */
-  const sources = useMemo(() => sourcesOf(target, items), [target.sig]); // eslint-disable-line react-hooks/exhaustive-deps
+  const boardSizes = boardSizesFor(composition);
+  const sources = useMemo(() => sourcesOf(target, items, boardSizes), [target.sig, boardSizes]); // eslint-disable-line react-hooks/exhaustive-deps
   const gate = useMediaReady(true, sources);
   const ready = gate.ready && !awaiting;
   const settled = shown !== null && shown.kind === target.kind && shown.item === (target.item?.id ?? null) && shown.entry === (target.entry?.id ?? null) && shown.sig === target.sig;
@@ -368,8 +369,12 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, clos
     return () => window.clearTimeout(timer);
   }, [closing]);
 
+  /* Focus moves in on open. A page loaded on a view URL has had no input yet: programmatic focus there would match
+     `:focus-visible` and keep Close ringed for the whole read, so the dialog itself (no outline) takes it; the first
+     Tab reaches the controls with their ring. */
   useEffect(() => {
-    closeRef.current?.focus({ preventScroll: true });
+    const coldLoad = typeof navigator !== "undefined" && navigator.userActivation?.hasBeenActive === false;
+    (coldLoad ? dialogRef.current : closeRef.current)?.focus({ preventScroll: true });
   }, []);
 
   /* ── Navigation: the modal never sets its own view. Every control asks the host (`onNavigate`); browser
@@ -549,9 +554,8 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, clos
   const bodyItem = body.item;
   const bodyEntry = body.entry;
   const bodyCtx: DossierEntryContext | null =
-    bodyItem && bodyEntry ? { item: bodyItem, entry: bodyEntry, index: body.entryIndex, total: bodyItem.entries.length, close: closeAll, toOverview: () => go(itemView(config, bodyItem.id)) } : null;
+    bodyItem && bodyEntry ? { item: bodyItem, entry: bodyEntry, index: body.entryIndex, total: bodyItem.entries.length, close: closeAll, toOverview: () => go(itemView(config, bodyItem.id)), headingId: detailHeadingId } : null;
   const bodyBoard = body.kind === "opening" ? "choice" : body.kind === "overview" ? boardLayout(bodyItem?.entries.length ?? 0) : undefined;
-  const boardSizes = composition === "sheet" ? "(max-width: 599px) 100vw, (max-width: 1023px) 50vw, 360px" : undefined;
 
   const nextEntryLabel = !entry || !nextItem ? "" : entryIndex < entries.length - 1 ? (entries[entryIndex + 1].label ?? entries[entryIndex + 1].title) : itemCount > 1 ? nextItem.label : copy.overview;
   const nextAria = !entry || !item || !nextItem ? "" : entryIndex < entries.length - 1 ? copy.nextEntry(nextEntryLabel) : itemCount > 1 ? copy.nextItem(nextItem.label) : copy.overviewOf(item.label);
@@ -566,9 +570,20 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, clos
   const headerKicker = kind === "detail" ? undefined : config.kicker?.trim();
   // A detail's item, no longer shown above its title, stays spoken: in the dialog's name and right after the h1.
   const itemNameId = `${uid}-item`;
+  const shortLabel = entry?.label && entry.label !== entry.title ? entry.label : null;
   const headerTitle =
     kind === "detail" && entry ? (
-      <h1 id={titleId} className="evd-header__title">{entryHeading(entry)}</h1>
+      entry.heading === "content" ? (
+        // The content renders the view's h1 (`ctx.headingId`); the bar keeps the short name as a readout.
+        <span className="evd-header__title" aria-hidden="true">{entryHeading(entry)}</span>
+      ) : shortLabel ? (
+        <>
+          <h1 id={titleId} className="evd-header__title evd-header__title-full">{entry.title}</h1>
+          <span className="evd-header__title evd-header__title-short" aria-hidden="true">{shortLabel}</span>
+        </>
+      ) : (
+        <h1 id={titleId} className="evd-header__title">{entry.title}</h1>
+      )
     ) : (
       <>
         <h1 id={titleId} className="evd-header__title evd-header__title-full">{kind === "opening" ? opening?.title : copy.overviewTitle(itemIndex + 1, item?.label ?? "")}</h1>
@@ -597,7 +612,7 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, clos
           if (closing && e.target === e.currentTarget) onExited();
         }}
       >
-        <div ref={dialogRef} className="evd-dialog" role="dialog" aria-modal="true" aria-labelledby={kind === "detail" && item ? `${titleId} ${itemNameId}` : titleId} tabIndex={-1} data-ev-modal="">
+        <div ref={dialogRef} className="evd-dialog" role="dialog" aria-modal="true" aria-labelledby={kind === "detail" && item ? `${entry?.heading === "content" ? detailHeadingId : titleId} ${itemNameId}` : titleId} tabIndex={-1} data-ev-modal="">
           <span className="ev-sr" aria-live="polite" aria-atomic="true">{live}</span>
 
           <header className="evd-header" data-hidden={hideChrome || undefined} onFocusCapture={() => setChromeHidden(false)}>
@@ -791,13 +806,12 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, clos
                       ref={detailRef}
                       className="evd-detail"
                       tabIndex={-1}
-                      aria-labelledby={detailHeadingId}
+                      aria-labelledby={bodyEntry.heading === "content" ? detailHeadingId : titleId}
                       inert={hydrated && !detailReady}
                       aria-hidden={waiting || undefined}
                       data-waiting={waiting || undefined}
                       data-rest={restView || undefined}
                     >
-                      <h2 id={detailHeadingId} className="ev-sr">{bodyEntry.title}</h2>
                       {bodyEntry.content(bodyCtx)}
                     </div>
                   )}
@@ -964,17 +978,18 @@ function useChapterReveal(bodyRef: RefObject<HTMLDivElement | null>): ChapterRev
 function useIdlePreload(config: DossierConfig | null) {
   const list = useMemo(() => {
     if (!config) return [];
-    const image = (m: DossierEntry["media"] | undefined) => (m && !isVideo(m) ? [m.src] : []);
-    const covers = config.opening ? config.items.flatMap((item) => image(itemCover(item))) : [];
-    const rows = config.items.map((item) => item.entries.flatMap((e) => image(e.media)));
-    const ordered: string[] = [...covers];
+    const boardSizes = boardSizesFor(config.composition ?? "panorama");
+    const images = (sources: MediaSource[]) => sources.filter((s): s is { src: string; type: "image"; srcSet?: string; sizes?: string } => !!s && typeof s === "object" && s.type === "image");
+    const covers = config.opening ? images(openingSources(config.items, boardSizes)) : [];
+    const rows = config.items.map((item) => images(overviewSources(item.entries, boardSizes)));
+    const ordered = [...covers];
     for (let i = 0; rows.some((r) => i < r.length); i++) for (const r of rows) if (i < r.length) ordered.push(r[i]);
-    return Array.from(new Set(ordered));
+    return ordered;
   }, [config]);
-  const signature = list.join("|");
+  const signature = JSON.stringify(list);
   useEffect(() => {
-    if (!signature) return;
-    const sources = signature.split("|").map((src) => ({ src, type: "image" as const }));
+    if (signature === "[]") return;
+    const sources = JSON.parse(signature) as MediaSource[];
     const run = () => void preloadMedia(sources);
     const hasIdle = typeof window.requestIdleCallback === "function";
     const handle = hasIdle ? window.requestIdleCallback(run, { timeout: 2500 }) : window.setTimeout(run, 1200);

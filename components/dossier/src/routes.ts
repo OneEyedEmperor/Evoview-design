@@ -1,7 +1,8 @@
 import type { MediaSource, ModalRoutes, ViewHead } from "../foundation";
+import { tileSizes } from "./Board";
 import { fullCopy } from "./copy";
-import { isVideo } from "./hooks";
-import type { DossierConfig, DossierEntry, DossierItem, DossierMedia, DossierOpening } from "./types";
+import { isVideo, toSource } from "./hooks";
+import type { DossierComposition, DossierConfig, DossierEntry, DossierItem, DossierMedia, DossierOpening } from "./types";
 
 /**
  * A dossier view: an item's overview `{ item }`, one of its entries `{ item, entry }`, or the opening screen
@@ -13,8 +14,6 @@ export type DossierView = { item: string; entry?: string; opening?: string } | {
 const DESCRIPTION_MAX = 160;
 const SLUG = /^[a-z0-9][a-z0-9-]*$/i;
 const VIDEO_FILE = /\.(mp4|webm|mov|m4v|ogv)(\?|#|$)/i;
-
-const fold = (s: string) => s.replace(/\s+/g, " ").trim().toLowerCase();
 
 /** ≤ 160 characters, cut on a word. */
 function clip(text: string, max = DESCRIPTION_MAX): string {
@@ -57,11 +56,22 @@ export function resolveView(config: DossierConfig, view: DossierView): Resolved 
   return entry ? { item, itemIndex, entry, entryIndex } : null;
 }
 
-/** The dossier header's h1 for an entry: its short label (the title when there is none). */
+/** An entry's short name (header readout, tabs): its label, else its title. The view's h1 is always its title. */
 export const entryHeading = (entry: DossierEntry) => entry.label ?? entry.title;
 
 /** An item's picture on the opening screen: its cover, else its first entry's media. */
 export const itemCover = (item: DossierItem): DossierMedia | undefined => item.cover ?? item.entries[0]?.media;
+
+/** The board's own `sizes`: the sheet's fixed column; the panorama takes each layout's default. */
+export const boardSizesFor = (composition: DossierComposition) => (composition === "sheet" ? "(max-width: 599px) 100vw, (max-width: 1023px) 50vw, 360px" : undefined);
+
+const boardShape = (count: number) => (count === 4 ? "mosaic" : "grid");
+
+/* Board media as the tiles render them (`tileSizes`): the gate and the preloads fetch the tile's own candidate. */
+export const openingSources = (items: DossierItem[], boardSizes: string | undefined) =>
+  items.map((i) => itemCover(i)).filter((m) => m !== undefined).map((m) => toSource(m, tileSizes(m, "choice", items.length, boardSizes)));
+export const overviewSources = (entries: DossierEntry[], boardSizes: string | undefined) =>
+  entries.map((e) => toSource(e.media, tileSizes(e.media, boardShape(entries.length), entries.length, boardSizes)));
 
 function headImage(media: DossierMedia | undefined, alt: string): ViewHead["image"] {
   if (!media) return undefined;
@@ -90,6 +100,40 @@ export function dossierViewMedia(config: DossierConfig, view: DossierView): stri
       ? found.item.entries.map((e) => still(e.media))
       : [still(found.entry.media), ...(found.entry.sources ?? []).map(source).filter((src) => src && !VIDEO_FILE.test(src))];
   return Array.from(new Set(list.filter((s): s is string => !!s)));
+}
+
+export type DossierViewImage = { src: string; srcSet?: string; sizes?: string };
+
+/**
+ * `dossierViewMedia` with each image's `srcSet` and the `sizes` its tile / figure renders at: preload with
+ * `<link rel="preload" as="image" href={src} imagesrcset={srcSet} imagesizes={sizes}>`, so the head fetches the
+ * candidate the page shows (a bare `href` beside a `srcSet` downloads the image twice). Pure, server-safe.
+ */
+export function dossierViewImages(config: DossierConfig, view: DossierView): DossierViewImage[] {
+  const found = resolveView(config, view);
+  if (!found) return [];
+  const boardSizes = boardSizesFor(config.composition ?? "panorama");
+  const image = (s: MediaSource): DossierViewImage[] => {
+    if (!s) return [];
+    if (typeof s === "string") return VIDEO_FILE.test(s) ? [] : [{ src: s }];
+    if (s.type === "video" || (!s.type && VIDEO_FILE.test(s.src))) return [];
+    return [s.srcSet ? { src: s.src, srcSet: s.srcSet, sizes: s.sizes } : { src: s.src }];
+  };
+  const shown = (m: DossierMedia | undefined, sizes?: string): DossierViewImage[] =>
+    !m ? [] : isVideo(m) ? (m.poster ? [{ src: m.poster }] : []) : image(toSource(m, sizes ?? m.sizes));
+  const list = !found.item
+    ? config.items.flatMap((item) => {
+        const m = itemCover(item);
+        return m ? shown(m, tileSizes(m, "choice", config.items.length, boardSizes)) : [];
+      })
+    : !found.entry
+      ? found.item.entries.flatMap((e, _, all) => shown(e.media, tileSizes(e.media, boardShape(all.length), all.length, boardSizes)))
+      : [...shown(found.entry.media), ...(found.entry.sources ?? []).flatMap(image)];
+  const seen = new Set<string>();
+  return list.filter((i) => {
+    const key = `${i.src}|${i.srcSet ?? ""}|${i.sizes ?? ""}`;
+    return !seen.has(key) && !!seen.add(key);
+  });
 }
 
 /**
@@ -142,10 +186,8 @@ export const dossierRoutes: ModalRoutes<DossierConfig, DossierView> = {
         image: itemImage(item),
       };
     }
-    const heading = entryHeading(entry);
-    const name = fold(entry.title).includes(fold(heading)) ? entry.title : `${heading} · ${entry.title}`;
     return {
-      title: `${name} — ${item.label}`,
+      title: `${entry.title} — ${item.label}`,
       description: clip(entry.description ?? `${entry.title}${entry.kicker ? ` — ${entry.kicker}` : ""}. ${item.label}.`),
       breadcrumb: [...above, item.label, entry.title],
       image: headImage(entry.media, entry.title),

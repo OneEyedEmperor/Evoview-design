@@ -977,6 +977,7 @@ a.evd-tile { -webkit-user-drag: none; -webkit-touch-callout: none; }
 .evd-figure__kicker { grid-column: 1; color: var(--dossier-signal); }
 .evd-figure__title { grid-column: 1; color: #fff; font-family: var(--ev-font-body); font-size: max(0.875em, 13px); font-weight: 600; line-height: 1.35; }
 .evd-figure__dot { grid-column: 2; grid-row: 1 / span 2; width: 10px; height: 10px; align-self: center; border-radius: 50%; background: var(--dossier-signal); box-shadow: 0 0 16px var(--dossier-deep), 0 0 0 4px color-mix(in oklab, var(--dossier-accent) 18%, transparent); }
+.evd-figure__caption:not(:has(.evd-figure__kicker)) .evd-figure__dot { grid-row: 1; }
 @media (min-width: 1024px) {
   @container evd-body (min-width: 900px) { .evd-figure__caption { padding: 4em 1.75em 1.5em; } }
 }

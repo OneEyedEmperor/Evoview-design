@@ -184,7 +184,10 @@ live (the mark stays, unlinked); restore the URL to relink.
   (`surface` from `CHAPTER_ROWS_SURFACES`: `rows` for info sheets and
   programmes, default · `tiles` for peers; `numbered` only for a real
   sequence; per row optional `media` and `marks`, below), `ChapterSpecimen`,
-  `ChapterPayoff`.
+  `ChapterPayoff`. `ChapterHead` `as` takes `"h1"` and an `id` for an entry
+  whose content renders the view's h1 (`heading: "content"`, below);
+  `ChapterFigure` `caption.kicker` is optional (omitted or empty: no kicker
+  element, RULES §1).
 - **Rows with media** (a menu, a product list): `{ label, detail, media?,
   marks? }`. `media` is a `DossierMedia` image (a video shows its `poster`),
   decorative unless `alt` is set; `srcSet` / `sizes` honoured (default sizes
@@ -272,17 +275,29 @@ type DossierConfig = {
     empty?: { title: string; body?: string };      // board without entries (default copy.empty)
     pending?: boolean;                             // live content still loading
     entries: {                                     // 4 = mosaic; any other count, 0..n = symmetric grid
-      id: string; title: string; label?: string; kicker?: string;
+      id: string; title: string;                   // title: the view's h1 and head title
+      label?: string;                              // short name: tabs, dock, phone header readout (default: title)
+      heading?: "header" | "content";              // where the h1 is (default header; content: the detail renders it)
+      kicker?: string;
       media: { src; type?: "image" | "video"; poster?; srcSet?; sizes?; position?; fit?; alt? };  // alt: head image only
-      sources?: MediaSource[];                     // further detail media to decode first
+      sources?: MediaSource[];                     // further detail media to decode first ({ src, srcSet?, sizes? } as rendered)
       description?: string;                        // entry meta description, from its own copy
-      content: (ctx: { item, entry, index, total, close, toOverview }) => ReactNode;
+      content: (ctx: { item, entry, index, total, close, toOverview, headingId }) => ReactNode;
     }[];
   }[];
   attribution: { enabled: boolean; href: string; label: string };
   copy: DossierCopy;                               // dossierCopy(locale) gives the FR/EN defaults
 };
 ```
+
+**A detail's h1 is its entry `title`** (CRAWLABLE-MODALS §4). Default
+(`heading: "header"`): the h1 is in the header; with a distinct `label`,
+desktop shows the title and phones the label (the h1 stays spoken there,
+as on the opening and overviews). `heading: "content"`, for a detail that
+shows its title itself (an article's headline): the content renders it as
+the h1, `<ChapterHead level="title" as="h1" id={ctx.headingId} title={entry.title} …>`,
+and the header keeps the `label` as a readout. Never render the title twice
+as headings.
 
 Ids (opening, items, entries) are URL slugs: `[a-z0-9-]`. Copy keys added in
 1.8.0 are optional (`openItem`, `chooseItem`, `up`, `empty`,
@@ -320,7 +335,10 @@ null = the page; without it no URLs and controls stay buttons), `history?`
 (default true; false when a host router owns history), `preload?` (default
 `true`: once the page is idle, decode every item's board images with
 foundation `preloadMedia`, first tile of each item first, so a preloaded
-open or switch is ready on the gate's first render), `className?`. Keep
+open or switch is ready on the gate's first render; with a `srcSet` it and
+the gate fetch the candidate the tile renders, at the tile's `sizes`: give
+board media the `sizes` of the board, or none for the default),
+`className?`. Keep
 `<Dossier>` mounted while closed (preload, Forward after a close). Every
 open mounts a fresh layer, so reopening during the exit animation starts
 from the new view. Deprecated until 2.0: `open` / `onClose` /
@@ -346,7 +364,9 @@ to cover this and the `process-sequence` step dossier.
   the inert walk (stay clickable; stack them above `--dossier-z`). They are
   outside the Tab trap, so pointer only while open. For host dev/showcase
   tools (the library's floating accent palette); client sites never render it.
-- Focus to the close on open; Tab trapped; a view swap that removes the
+- Focus to the close on open (a page loaded on a view URL, before any input:
+  to the dialog itself, so no focus ring sits on Close through the read; the
+  first Tab reaches the controls, ringed); Tab trapped; a view swap that removes the
   focused control returns focus to the dialog; returning up a level (overview,
   opening screen) focuses the tile you came from; entering an item from the
   opening screen focuses its board.
@@ -393,7 +413,7 @@ is its §7. What the package gives:
 - **Head data**: `dossierRoutes.head(config, view)` → `{ title, description,
   breadcrumb, image }` (data only). Opening title = `opening.title`;
   overview title = `copy.overviewTitle`; entry title = `<entry title> —
-  <item label>` (contains the h1); the breadcrumb starts with the opening's
+  <item label>` (contains the h1, the entry title); the breadcrumb starts with the opening's
   label when there is one; set `description` on the opening, items and
   entries from their own copy.
 
@@ -448,7 +468,10 @@ overview, or an entry not brought yet) keeps the held path.
 
 The images load like any page's, so the client must:
 - preload them in the head: `dossierViewMedia(config, view)` lists them in
-  order, with `fetchpriority="high"` on the first ones;
+  order, with `fetchpriority="high"` on the first ones. Media with a
+  `srcSet`: use `dossierViewImages(config, view)` (`{ src, srcSet?, sizes? }`,
+  same order) and `imagesrcset` / `imagesizes` on the `<link rel="preload">`;
+  a bare `href` beside an `<img srcset>` downloads the image twice;
 - render the first client view from the same live state as the server, e.g.
   a fetched list seeded from a snapshot in the HTML. A `pending` flag that
   differs at hydration changes the markup.
@@ -501,7 +524,8 @@ is suspended while open.
 3. Palette: indigo, yellow, off-white — strip underline, tab chip, tile
    border/edge, bars, loader modules, caption dot all readable. Per-item
    accent switch recolours per universe.
-4. Keyboard: open → focus on close; Tab cycles inside; Enter on a tile opens
+4. Keyboard: open → focus on close (a cold view URL: no ring until the
+   first Tab); Tab cycles inside; Enter on a tile opens
    the detail (focus moves into it); Escape → overview (tile refocused) →
    closed (launcher refocused).
 5. URLs and history: each open / tile / tab / pager / dock step shows the

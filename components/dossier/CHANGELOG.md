@@ -1,5 +1,50 @@
 # dossier changelog
 
+## 1.13.0
+
+Additive API, visible header change on details. Requires `foundation` ≥ 1.16.0.
+
+Config changes, all optional: entry `heading?: "header" | "content"`;
+`ChapterFigure` `caption.kicker` optional. Existing configs render unchanged
+except the detail header below.
+
+- **A detail's h1 is its entry `title`** (CRAWLABLE-MODALS §4); it was the
+  short `label`.
+  - With a distinct `label`: desktop's header shows the title, and phones show
+    the label with the h1 spoken, as on the opening and overviews.
+  - The duplicate sr-only `<h2>` with the title in the detail is gone; the
+    detail is labelled by the h1.
+  - Entry `head.title` = `<title> — <item label>`. It was `<label> · <title> — …`
+    when the title didn't contain the label.
+  - New `heading: "content"`, for details that show their title themselves:
+    the content renders the h1 with `ChapterHead as="h1" id={ctx.headingId}`
+    (new `DossierEntryContext.headingId`; `ChapterHead` takes `as: "h1"` and
+    `id`), and the header keeps the label as an `aria-hidden` readout.
+  - `verify:ssr` checks on every reference detail:
+    - the h1 is the title;
+    - exactly one heading carries it;
+    - the dialog is labelled by it;
+    - the `heading: "content"` variant passes the full contract.
+- **Board images fetched once, at the tile's size.**
+  - The media gate and the idle preload decoded each board image's bare `src`
+    (the largest file). They now pass the tile's `srcSet` and `sizes`
+    (foundation 1.16.0), so they fetch the candidate the tile shows.
+  - `SelectionBoard`'s `sizes` logic moved into `tileSizes`, shared by the
+    tile, the gate and the preloads. The rendered `sizes` are unchanged.
+  - New `dossierViewImages(config, view)` → `{ src, srcSet?, sizes? }[]`, for
+    head preloads with `imagesrcset` / `imagesizes`. `dossierViewMedia` is
+    unchanged.
+- **Cold view URL: no focus ring on Close.**
+  - Focus on open goes to the dialog itself (no outline) when the page has had
+    no input yet (`navigator.userActivation.hasBeenActive` false).
+  - The first Tab reaches the controls with their ring.
+  - In-page opens still focus Close: no ring after a mouse open, a ring after
+    a keyboard open.
+  - Chrome 144 ignores `focus({ focusVisible: false })`, hence the dialog.
+- `ChapterFigure` `caption.kicker` optional. Omitted or empty: no kicker
+  element (an empty span before); the dot centres on the title. Set kickers
+  render as before.
+
 ## 1.12.0
 
 Additive. Requires `foundation` ≥ 1.14.0.

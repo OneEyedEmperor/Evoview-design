@@ -50,6 +50,15 @@ function columns(layout: SelectionBoardLayout, n: number) {
   return { s: 1, m: Math.max(m, 1), l: Math.max(l, 1), span: span || undefined };
 }
 
+/** The `sizes` a tile's `<img>` renders with: the media's own, else the board's (`sizes` prop, else the layout's default). */
+export function tileSizes(media: DossierMedia, shape: SelectionBoardLayout, count: number, boardSizes?: string): string {
+  if (media.sizes) return media.sizes;
+  if (boardSizes) return boardSizes;
+  if (shape === "mosaic") return "(max-width: 599px) 100vw, (max-width: 1023px) 50vw, 58vw";
+  const cols = columns(shape, count);
+  return `(max-width: 599px) ${cols.s > 1 ? "50vw" : "100vw"}, (max-width: 1023px) ${cols.m > 1 ? "50vw" : "100vw"}, 46vw`;
+}
+
 /** Entrance offsets of a grid tile: from its side of the board, a short stagger capped so long boards don't drag. */
 function arrival(i: number, n: number, cols: number, span: boolean): CSSProperties {
   const lead = span ? 1 : 0;
@@ -83,8 +92,6 @@ export function SelectionBoard({ entries, label, revealed, onSelect, hrefFor, op
   const active = count ? cursor % count : 0;
   const clock = useSequenceClock(active, pause.active, dwellMs, () => setCursor((i) => (i % Math.max(count, 1) + 1) % Math.max(count, 1)));
   const release = () => setHeld(false);
-  const imageSizes =
-    sizes ?? (shape === "mosaic" ? "(max-width: 599px) 100vw, (max-width: 1023px) 50vw, 58vw" : `(max-width: 599px) ${cols.s > 1 ? "50vw" : "100vw"}, (max-width: 1023px) ${cols.m > 1 ? "50vw" : "100vw"}, 46vw`);
 
   return (
     <div
@@ -117,7 +124,7 @@ export function SelectionBoard({ entries, label, revealed, onSelect, hrefFor, op
           aria-label={openLabel(i + 1, count, entry.title)}
           style={shape === "mosaic" ? undefined : arrival(i, count, cols.m, i === 0 && !!cols.span)}
         >
-          {entry.media ? <TileMedia media={entry.media} sizes={imageSizes} /> : <span className="evd-tile__media evd-tile__media--none" aria-hidden="true" />}
+          {entry.media ? <TileMedia media={entry.media} sizes={tileSizes(entry.media, shape, count, sizes)} /> : <span className="evd-tile__media evd-tile__media--none" aria-hidden="true" />}
           <span className="evd-tile__grade" aria-hidden="true" />
           <span className="evd-tile__scrim" aria-hidden="true" />
           <span className="evd-tile__shine" aria-hidden="true" />
@@ -156,5 +163,5 @@ function TileMedia({ media, sizes }: { media: DossierMedia; sizes: string }) {
   if (isVideo(media)) {
     return <video className="evd-tile__media" src={videoSrc} poster={media.poster} muted loop autoPlay playsInline preload="auto" aria-hidden="true" style={style} />;
   }
-  return <img className="evd-tile__media" src={media.src} srcSet={media.srcSet} sizes={media.sizes ?? sizes} alt="" decoding="async" draggable={false} style={style} />;
+  return <img className="evd-tile__media" src={media.src} srcSet={media.srcSet} sizes={sizes} alt="" decoding="async" draggable={false} style={style} />;
 }
