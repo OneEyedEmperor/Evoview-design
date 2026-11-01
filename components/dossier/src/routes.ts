@@ -15,7 +15,8 @@ export type DossierView =
   | { opening: string; item?: undefined; entry?: undefined; page?: undefined };
 
 const DESCRIPTION_MAX = 160;
-const SLUG = /^[a-z0-9][a-z0-9-]*$/i;
+/** An id not known yet (a feed's or a pending item's entry): a lowercase URL slug, as every id must be. */
+const SLUG = /^[a-z0-9][a-z0-9-]*$/;
 const VIDEO_FILE = /\.(mp4|webm|mov|m4v|ogv)(\?|#|$)/i;
 
 /** ≤ 160 characters, cut on a word. */
@@ -261,8 +262,9 @@ export const dossierRoutes: ModalRoutes<DossierConfig, DossierView> = {
     const item = config.items.find((i) => i.id === first);
     if (!item) return null;
     if (entry === undefined) return itemView(config, item.id);
-    // A feed's entries: any slug, loaded or not (a deep link fetches it, `fetchEntry`), tagged with its cached page.
-    if (isFeedItem(item)) return SLUG.test(entry) && feedOf(item).entryStatus(entry) !== "missing" ? itemView(config, item.id, entry, feedPageOf(item, entry)) : null;
+    // A feed's entries: any slug but `page` (its page URLs' segment), loaded or not (a deep link fetches it, `fetchEntry`), tagged with its cached page.
+    if (isFeedItem(item))
+      return SLUG.test(entry) && entry !== PAGE_SEGMENT && feedOf(item).entryStatus(entry) !== "missing" ? itemView(config, item.id, entry, feedPageOf(item, entry)) : null;
     // A pending item's entries are not known yet: its entry keys wait for them (the dossier settles once they arrive).
     return item.entries.some((e) => e.id === entry) || (item.pending && SLUG.test(entry)) ? itemView(config, item.id, entry) : null;
   },

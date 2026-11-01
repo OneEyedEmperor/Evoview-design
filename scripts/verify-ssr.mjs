@@ -116,6 +116,37 @@ const PACKAGES = [
         if (mine) await verify({ config: c, view: v, locale: `${locale}:item-copy`, key: k, element: h(m.Dossier, { config: c, view: v, onNavigate: noop, hrefFor }), head: routes.head(c, v) });
       }
     },
+    /* What `parse` accepts beyond the data (§2, the §7.4 shell patterns follow it exactly): a feed's or a pending item's
+       entry key is a lowercase slug, never the feed's `page` segment; a feed page number past a known last page (a cached
+       page with no `next`) names nothing; with no known last page, page numbers stay open (fetched on demand). */
+    async rejected({ m, config, locale, routes, check }) {
+      const isFeed = (i) => i.board === "feed" || (i.board === undefined && !!i.feed);
+      const probe = (c, key, accepted, why) => check(accepted ? routes.parse(c, key) !== null : routes.parse(c, key) === null, "parse", `${locale} ${key}`, `parse ${accepted ? "accepts" : "rejects"} ${why}`);
+      for (const item of config.items) {
+        const c = isFeed(item) ? config : { ...config, items: config.items.map((i) => (i.id === item.id ? { ...i, pending: true } : i)) };
+        const kind = isFeed(item) ? "a feed" : "a pending item";
+        probe(c, `${item.id}/brand-new`, true, `a lowercase entry slug of ${kind}`);
+        probe(c, `${item.id}/Brand-New`, false, `an uppercase entry slug of ${kind}`);
+        probe(c, `${item.id}/-bad`, false, `a slug starting with "-" (${kind})`);
+        if (!isFeed(item)) continue;
+        probe(c, `${item.id}/page`, false, "the entry slug `page` on a feed (its page URLs' segment)");
+        for (const k of ["page/1", "PAGE/2", "page/02", "page/2/x"]) probe(c, `${item.id}/${k}`, false, `\`${k}\` on a feed`);
+        const pages = item.feed?.pages ?? [];
+        const last = pages.find((p) => p.next === null)?.page;
+        if (last !== undefined) {
+          if (last >= 2) probe(c, `${item.id}/page/${last}`, true, "the known last page");
+          for (const n of [last + 1, last + 2, 99]) probe(c, `${item.id}/page/${n}`, false, `page ${n}, past the known last page ${last}`);
+        }
+      }
+      // A feed whose last page isn't known yet (only page 1 at build): later page numbers stay open.
+      const journal = await vite.ssrLoadModule("/src/pages/library/dossier/journal.ts");
+      const feedItem = config.items.find(isFeed);
+      if (feedItem) {
+        const open = m.dossierFeed(journal.journalSnapshot([1]), (r) => journal.journalEntry(r, "en"), { pageSize: journal.JOURNAL_PAGE_SIZE });
+        const c = { ...config, items: config.items.map((i) => (i.id === feedItem.id ? { ...i, feed: open, entries: open.entries } : i)) };
+        probe(c, `${feedItem.id}/page/99`, true, "a page number of a feed whose last page is not known (open end)");
+      }
+    },
     /* §2 "head answers every view parse accepts": a pending (non-feed) item's entry key its data has not brought. The
        dossier shows the item's board behind the loader meanwhile, so head gives the board's answer (one crumb a level). */
     async awaited({ m, config, locale, routes, hrefFor, level, read, renderCaptured, check }) {
@@ -290,9 +321,16 @@ const PACKAGES = [
           return { ...i, feed };
         }),
       };
+      // A feed whose end is not known yet (its last cached page has a `next`): later page numbers stay open.
+      const openConfig = {
+        ...config,
+        items: config.items.map((i) =>
+          i !== item ? i : { ...i, feed: { ...i.feed, pages: i.feed.pages.map((p) => (p === last ? { ...p, next: String(dupPage) } : p)), pageStatus: (n) => (n > last.page ? "idle" : i.feed.pageStatus(n)) } },
+        ),
+      };
       for (const [label, c, key] of [
         ["unknown entry slug", config, `${item.id}/not-loaded-yet`],
-        ["page past the known ones", config, `${item.id}/page/99`],
+        ["page past the known ones, end not known", openConfig, `${item.id}/page/99`],
         ["page of duplicates only", dupConfig, `${item.id}/page/${dupPage}`],
       ]) {
         const view = routes.parse(c, key);
@@ -763,7 +801,7 @@ async function verifyPackage(spec, foundation) {
     if (spec.feed) {
       await spec.feed({ config, locale, views, make, hrefFor, routes, read, renderCaptured, check: (ok, rule, subject, message, detail) => check(ok, pkg, rule, subject, message, detail) });
     }
-    for (const hook of [spec.itemCopy, spec.awaited].filter(Boolean)) {
+    for (const hook of [spec.itemCopy, spec.awaited, spec.rejected].filter(Boolean)) {
       await hook({
         m,
         config,

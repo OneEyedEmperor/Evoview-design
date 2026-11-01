@@ -363,7 +363,8 @@ const config = useMemo(() => buildConfig(locale, promos), [locale, promos]);
 ```
 
 - `pending: true` while loading: the item's views wait behind the loader
-  (status `loader.pending`) and `parse` accepts its entry keys, so a deep
+  (status `loader.pending`) and `parse` accepts its entry keys (any
+  lowercase slug, `[a-z0-9][a-z0-9-]*`), so a deep
   link (`/menu/promotions/<id>/`) seeds a view that opens once the entry
   arrives; `head` answers such a key with its item board's data (served as
   a `noindex` shell, CRAWLABLE-MODALS §7.4). Set it false once the data is
@@ -420,13 +421,16 @@ feedEntry({ id, title, label?, kicker?, media, excerpt?, body?: string[], conten
 - **Cache owner** (1.15.0). With `key` (e.g. the locale) the cache belongs
   to it: a new `key` empties it and aborts what is in flight, and the source
   may be an inline literal rebuilt on every render (the latest is always
-  called; its `toEntry` is taken when the cache resets). Without `key` the
-  cache belongs to the source's functions (`fetchPage`, `fetchEntry`,
-  `toEntry`): keep them stable (module functions, `useMemo` /
+  called). Its `toEntry` is captured when the cache resets: one that reads
+  anything besides the key (a label, copy) takes the new value at the next
+  `key` change only, so put what it reads in the key or keep it stable.
+  Without `key` the cache belongs to the source's functions (`fetchPage`,
+  `fetchEntry`, `toEntry`): keep them stable (module functions, `useMemo` /
   `useCallback`), a change resets as above. Functions rebuilt on every
-  render without a `key` no longer loop ("Too many re-renders", 1.14.0): the
-  cache stays as is and a console warning names the fix. `initial` seeds the
-  first owner only.
+  render without a `key` no longer loop ("Too many re-renders", 1.14.0):
+  the cache is pinned for the hook's lifetime (it never resets again, so a
+  locale switch keeps the first locale's entries) and a console warning
+  names the fix, `key`. `initial` seeds the first owner only.
 - **Wiring:**
   ```tsx
   const source = useMemo(() => newsSource(locale), [locale]);         // fetchPage / fetchEntry / toEntry
@@ -440,9 +444,13 @@ feedEntry({ id, title, label?, kicker?, media, excerpt?, body?: string[], conten
   `<item>/page/<n>/`, one level below page 1 (h1 and head title carry
   "Page n"); entries opened from a page view carry its `page` (not in the
   key), so Escape / Back return to that board. `<item>/page/1` names nothing.
-  `parse` accepts any entry slug of a feed (fetched by `fetchEntry`; one it
-  cannot find settles on its page) and any page number (fetched; past the
-  end it settles on page 1). `views` lists page 1, each loaded page from 2
+  `parse` accepts any lowercase entry slug of a feed (`[a-z0-9][a-z0-9-]*`,
+  never `page`, reserved for page URLs; fetched by `fetchEntry`; one it
+  cannot find settles on its page) and any page number from 2 (`[1-9]\d*`)
+  up to the last page when it is known (a cached page with `next: null`;
+  past it `parse` rejects: a 404), any one while the end is not known
+  (fetched; past the end it settles on page 1). Feed entry ids are
+  lowercase slugs other than `page`. `views` lists page 1, each loaded page from 2
   (one whose entries all came on earlier pages too, with no tiles) and their
   entries; single entries fetched later are not listed. `head` answers every
   parsed view: an awaited entry or page gets its board's answer (page title,

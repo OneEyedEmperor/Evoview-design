@@ -1,5 +1,32 @@
 # dossier changelog
 
+## 1.15.1
+
+Fix. No config or API change. Requires nothing new (foundation ≥ 1.16.0). Server HTML, head titles and view media of
+the reference configs are byte-identical to 1.15.0.
+
+- **`parse` accepts exactly the keys that can name a view** (review F1; CRAWLABLE-MODALS §2, §7.4), so a host's shell
+  patterns and 404s can follow it:
+  - feed and `pending` entry slugs are lowercase only (`[a-z0-9][a-z0-9-]*`): every id is a lowercase slug, and an
+    uppercase key (`journal/Brand-New`) is now rejected, not fetched;
+  - `page` is reserved on feed items (it is the page URLs' segment): `journal/page` is rejected;
+  - a page number past a known last page (any cached page with `next: null`, not only the last + 1) is `missing`, so
+    `parse` rejects it: a 404, as on Evoview Gaming (`d24e476`). While a feed's end is not known (its last cached
+    page has a `next`) page numbers stay open, fetched on demand (§2's shell rule, unchanged).
+  - `pageStatus` and `loadPage` use the same rule, so nothing past a known end is ever requested.
+  - `verify:ssr` rejects the forms on every reference config (uppercase, `-bad`, `page`, `page/1`, `PAGE/2`,
+    `page/02`, `page/2/x`, last + 1, last + 2, `page/99`) and accepts lowercase slugs, the last page and an open
+    end's `page/99`. The 1.14.0 check that a page past the known ones is accepted now runs on a feed whose end is
+    open.
+  - Patch: it only narrows forms that could name no view under the id contract (ids are lowercase slugs; past the
+    last page nothing exists), which §7.4 already promised hosts. A client deep link of such a form now resolves
+    to nothing (the host's 404 or its page) instead of settling on page 1.
+- Docs:
+  - an un-keyed inline source stays pinned for the hook's lifetime (a locale switch keeps the first locale's
+    entries; review F2);
+  - with `key`, `toEntry` is captured when the cache resets (review F3);
+  - §2 / §7.4 and README "Feed" state what `parse` accepts, with the site's shell pattern.
+
 ## 1.15.0
 
 Additive. Requires nothing new (foundation ≥ 1.16.0, controls ≥ 1.5.0).

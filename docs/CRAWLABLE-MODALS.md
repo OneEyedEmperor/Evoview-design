@@ -59,8 +59,10 @@ export type ProcessSequenceProps = Partial<RouteViewProps<ProcessSequenceView>> 
   uncontrolled when `view` is `undefined` and keep working without URLs.
 - `view === null` renders no modal markup.
 - Live content: `parse` returns `null` for a key that names nothing; it may
-  accept keys of content still loading (dossier `item.pending`; a dossier
-  feed accepts any entry slug and any page number, fetched on demand). A view
+  accept keys of content still loading (dossier `item.pending`: any
+  lowercase entry slug; a dossier feed: any lowercase entry slug but `page`,
+  and page numbers up to its last page when known, any while its end is
+  not, fetched on demand). A view
   whose content disappears settles on its nearest existing ancestor and is
   reported through `onNavigate`. `head` answers every view `parse` accepts,
   an awaited one included (a feed's entry or page, a pending item's entry:
@@ -226,8 +228,12 @@ from config facts, its own domain node (Evoview: `Service` +
      its head from `routes.head` of an awaited view of that shape (it
      answers, §2), `noindex`, no canonical, no `og:url`. It also writes
      `dist/_shells.json`, `[{ pattern, file }]`: one anchored regex
-     per accepted-but-unbuilt key shape (`^/stories/latest/[a-z0-9][a-z0-9-]*/$`),
-     matching exactly what `parse` accepts, never what it rejects.
+     per accepted-but-unbuilt key shape, matching exactly what `parse`
+     accepts, never what it rejects: case-sensitive, lowercase slugs, the
+     page segment excluded (`^/stories/latest/(?!page/)[a-z0-9][a-z0-9-]*/$`).
+     Page URLs need no shell when the build holds the last page (`parse`
+     rejects every page past it: 404); a feed built without its end needs
+     a page shell too (`^/<item>/page/[1-9]\d*/$`).
    - The server answers in order: an existing file or `<path>/index.html`;
      else the first shell whose pattern matches the pathname, **200** with
      the shell's HTML (`Cache-Control: no-cache`); a matching URL without its

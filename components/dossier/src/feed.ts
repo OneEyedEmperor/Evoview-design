@@ -118,8 +118,7 @@ function build<T extends object>(state: State<T>, toEntry: (record: T) => Dossie
       const status = state.pageStatus[page];
       if (status) return status;
       if (page < 1 || !Number.isInteger(page)) return "missing";
-      const before = state.pages[page - 1];
-      return before && before.next === null ? "missing" : "idle";
+      return pastEnd(state.pages, page) ? "missing" : "idle";
     },
     entryStatus: (id) => (seen.has(id) ? "ready" : (state.singleStatus[id] ?? "idle")),
     fresh: freshIds.length,
@@ -210,7 +209,7 @@ export function useDossierFeed<T extends object>(source: DossierFeedSource<T>, o
       const status = s.pageStatus[page];
       if (!Number.isInteger(page) || page < 1 || s.pages[page] || status === "loading" || status === "missing" || (status === "error" && !retry)) return;
       const before = s.pages[page - 1];
-      if (before && before.next === null) return;
+      if (pastEnd(s.pages, page)) return;
       setState((x) => ({ ...x, pageStatus: { ...x.pageStatus, [page]: "loading" } }));
       run(
         `p${page}`,
@@ -289,6 +288,12 @@ export function useDossierFeed<T extends object>(source: DossierFeedSource<T>, o
 type Owner<T> = { id: readonly unknown[]; generation: number; before: State<T> | null; pinned: boolean; toEntry: (record: T) => DossierEntry };
 let warned = false;
 const sameIdentity = (a: readonly unknown[], b: readonly unknown[]) => a.length === b.length && a.every((v, i) => Object.is(v, b[i]));
+
+/** `page` lies past a known end: a cached page before it has no next (the last page), so it names nothing. */
+function pastEnd(pages: Record<number, { next: string | null }>, page: number): boolean {
+  for (const n of Object.keys(pages).map(Number)) if (n < page && pages[n].next === null) return true;
+  return false;
+}
 
 /* ─── Package side: what the dossier reads from a feed item ─── */
 
