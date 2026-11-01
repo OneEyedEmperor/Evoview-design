@@ -53,9 +53,15 @@ const renders = {};
 try {
   const m = await vite.ssrLoadModule("/components/dossier/src/index.ts");
   const ref = await vite.ssrLoadModule("/components/dossier/src/dossier.config.tsx");
+  const journal = await vite.ssrLoadModule("/src/pages/library/dossier/journal.ts");
   for (const locale of ["fr", "en"]) {
     const base = ref.buildDossierConfig(locale);
+    // A feed board, four pages of build-time data; `feedCards: "tiles"` spelled out must render as the default.
+    const feed = m.dossierFeed(journal.journalSnapshot([1, 2, 3, 4]), (r) => journal.journalEntry(r, locale), { pageSize: journal.JOURNAL_PAGE_SIZE });
+    const feedConfig = ref.buildDossierFeedConfig(locale, feed);
     const configs = {
+      feed: feedConfig,
+      "feed-tiles": { ...feedConfig, items: feedConfig.items.map((i) => ({ ...i, feedCards: "tiles" })) },
       universes: base,
       "universes-sheet-true": { ...base, composition: "sheet", tileMedia: "true-colour" },
       "universes-kicker": { ...base, kicker: "Kicker probe" },

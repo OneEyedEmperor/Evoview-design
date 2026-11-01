@@ -78,6 +78,31 @@ restyle them to the client's UI kit. Changing them is a library change
   per batch), then only their content pours in. Nothing placed moves,
   re-enters or waits. Error and end on a tonal panel; the live-updates
   control is glass chrome laid over the board, never pushing it.
+- **Feed editions** (`feedCards: "editions"`, 1.16.0; a news feed): each
+  batch is an **edition**, its own tonal sheet (`--ev-surface-list`, then a
+  step lighter, alternating; padding 8 → 12px, radius surface + padding),
+  editions parted by space. The edition's first story is its **lead**
+  (recency, never an editorial pick): double scale (2 × 2 from 900, the full
+  row 600–899, 4:5 on phones), display title × 1.7, its dek complete under
+  it, a deeper scrim; the lead changes side from one edition to the next
+  (left, then right). Every card: the board tile's frame, scrim, shine, edge
+  and grade; the complete headline (no clamp at any width) then `Section ·
+  day` in the body voice (a `<time datetime>`, the tile's description), never
+  a label above the headline, never a counter or a line. **Ratios are
+  minimums** (16:10 phones, 4:3 from 600): a card grows for its headline and
+  its row grows with it; a new edition only adds rows below. **Importance**
+  (`entry.importance`) is a surface shift at rest only, in the tile's own
+  language, independent of the lead:
+  - `standard` (default): the tile as is;
+  - `major`: the grade half released, a shallower scrim, the frame at 46 %
+    of the signal, headline × 1.08;
+  - `top`: the picture released as on hover, a deeper scrim at the foot, the
+    frame at 68 % with a deep-accent shadow, an accent bloom (16 %) rising
+    under the headline, headline × 1.16.
+  Hover, focus and the neighbours' dimming stay the board's; no badge, label
+  or loop. With `true-colour` the grade step drops out; scrim, frame, bloom
+  and type carry the tier. A top lead combines both (the type step multiplies
+  the lead's); importance never reorders the feed nor picks the lead.
 - **Opening screen** (optional): the items as equal choice tiles, stacked
   one per row on phones, then one row from 600 (up to 3, 4 in the panorama
   ≥ 1024, then the grid's rule), the board tile without numeral, a larger title, the item's
@@ -189,6 +214,15 @@ live (the mark stays, unlinked); restore the URL to relink.
     page each, page URLs, deep links to entries not loaded yet, optional live
     updates (README "Feed"). For news, journals, social posts. A feed board
     without `feed` shows its static entries as one batch.
+- **Feed cards** (`item.feedCards`, `DOSSIER_FEED_CARDS`, 1.16.0), on a feed
+  board:
+  - `tiles` (default): one continuous grid of equal picture tiles at a fixed
+    ratio, the title on the picture (three lines at most), the entry's
+    `kicker` above it. For journals and posts.
+  - `editions`: each batch an edition on its own sheet, opened by its lead;
+    every story with its complete headline, then section · day; importance
+    tiers (Signature "Feed editions"). For news, where the eye must find
+    where a story and a batch start, what it is and how recent.
 - **Opening screen** (`config.opening`): an optional top level choosing
   between the items (Tchin: `Carte | Promotions`); selecting opens that
   item's overview, Escape / Back / `‹ <label>` return to it. Its own view
@@ -229,7 +263,8 @@ live (the mark stays, unlinked); restore the URL to relink.
 Config only: brand (logo node or name), opening (title, label),
 items (label, accent, cover and readout for the opening tile, empty-day
 sentence), entries (title, short label, kicker, media, detail chapters'
-content), a feed's source and records (the fetcher, `toEntry`, page size,
+content; on an editions feed `section`, `published` and `importance`, the
+client's editorial call), a feed's source and records (the fetcher, `toEntry`, page size,
 refresh period), all copy (`copy.feed` included), attribution label. Accent = the client's: the host `--primary` /
 `--primary-foreground`; an item may set its own (`item.accent`), applied as
 `--primary` on the dossier while that item is shown.
@@ -391,8 +426,24 @@ type DossierFeedSource<T extends object> = {
 };
 useDossierFeed(source, { initial?: DossierFeedSnapshot<T>, pageSize = 9, batchCap = 8, refreshMs?, key? }): DossierFeed;
 dossierFeed(snapshot, toEntry, { pageSize, batchCap }): DossierFeed;   // data only: build time, prerender
-feedEntry({ id, title, label?, kicker?, media, excerpt?, body?: string[], content?, closing? }): DossierEntry;
+feedEntry({ id, title, label?, kicker?, section?, published?, importance?, media, excerpt?, body?: string[], content?, closing? }): DossierEntry;
 ```
+
+- **Ids.** `toEntry`'s `id` is the entry's URL slug: a lowercase slug
+  (`[a-z0-9][a-z0-9-]*`), stable across fetches, never `page` (reserved on
+  feeds: it is the page URLs' segment). `parse` rejects any other form
+  (1.15.1), so such an entry would have no working URL; `dossierRoutes.views`
+  names each one once in a console warning (1.16.0).
+- **Editions** (`item.feedCards: "editions"`, 1.16.0; Signature "Feed
+  editions"). Per entry, all optional: `section` ("News"), `published`
+  (`{ iso: "2026-10-30", label: "30 Oct" }`: format the label yourself, no
+  Intl, so server and browsers agree), `importance` (`DOSSIER_IMPORTANCE`:
+  `standard` default, `major`, `top`), and the dek from `description`
+  (`feedEntry`'s `excerpt`), shown on the lead. Importance is the client's
+  editorial call, set in its data; deriving it (recency, traffic) is a later
+  task. Use few: about one `top` and two `major` a page. The tiles board
+  ignores the three fields (its `kicker` stays the readout over the title);
+  the editions board ignores `kicker` (no label above a headline).
 
 - **Source.** `page` is 1-based; `cursor` is the previous page's `next` when
   known, null for a page requested directly (a page URL): a cursor-only API
@@ -461,7 +512,10 @@ feedEntry({ id, title, label?, kicker?, media, excerpt?, body?: string[], conten
   keeps the `page` reported with an entry opened from a page view (§7.1).
 - **Server HTML** of a page view: that page's batch only (eager images), a
   link to the newer page (n ≥ 2) and to the older one (or the end panel). No
-  placeholders, held tiles, live control or error state.
+  placeholders, held tiles, live control or error state. An editions board
+  renders the page as its edition: the sheet, the lead first with its dek,
+  each tile's complete headline, `Section · <time datetime>` and
+  `data-importance`.
 - **Prerender** with the build-time pages: `dossierFeed(snapshot, toEntry)`
   in the config, `[null, ...dossierRoutes.views(config)]` as usual, the
   snapshot serialised into the HTML and passed as `initial` so hydration
@@ -740,3 +794,15 @@ is suspended while open.
     steps out level by level; `?feed-cap=2`: the older link opens
     `page/3/`; the "N new" control appears ~8 s after opening (not while the
     document is hidden) and taps back to the top. `pnpm verify:ssr dossier`.
+13. Feed editions (showcase journal, desk "Cards: Editions"; real-length
+    headlines with `?feed-demo=newsroom`): `node scripts/feed-editions-check.mjs
+    <feed board URL> [--widths 1440,1024,768,390,320]` (any client) checks per
+    width: headlines and the lead's dek complete (no clamp, nothing clipped),
+    captions inside their cards, cards at least their ratio, no overlap, the
+    lead first, sheets alternating, and the first edition unmoved when the next
+    lands. By eye at 1440 and 390: the lead's side alternates; `top` /
+    `major` / `standard` tiers read as quiet steps (released picture, bloom,
+    frame, type) with the palette's yellow and off-white too; hover releases
+    every tier the same way. Configs without `feedCards` render byte-identical
+    server HTML (`node scripts/ssr-snapshot.mjs <base tree> a.json`, then this
+    tree, then `--diff`).

@@ -4,6 +4,8 @@ import { ArrowRight, followRouteLink, pad, routeHrefs, useMediaQuery } from "../
 import { Dossier as DossierModal, buildDossierConfig, dossierRoutes, useDossierFeed, type DossierComposition, type DossierConfig, type DossierFeed, type DossierTileMedia, type DossierView } from "../../../components/dossier/src";
 import { buildDossierFeedConfig, buildDossierMenuConfig } from "../../../components/dossier/src/dossier.config";
 import { journalSource, JOURNAL_PAGE_SIZE, type JournalNetwork } from "./dossier/journal";
+import { newsSource } from "./dossier/newsroom";
+import type { DossierFeedCards, DossierFeedSource } from "../../../components/dossier/src";
 import { topView } from "../../../components/dossier/src/routes";
 import "../../../components/dossier/showcase.css";
 import ShowcasePage, { ShowcaseVariant, useShowcaseViewOpen } from "../../library/ShowcasePage";
@@ -99,11 +101,13 @@ const DESK = {
   fr: {
     composition: { label: "Composition", options: { panorama: "Panorama", sheet: "Feuillet" } },
     tiles: { label: "Photos", options: { graded: "Gradées", "true-colour": "Couleur" } },
+    cards: { label: "Cartes", options: { editions: "Éditions", tiles: "Vignettes" } },
     specials: { label: "Suggestions du jour", options: { "0": "Aucune", "3": "Trois", "5": "Cinq" } },
   },
   en: {
     composition: { label: "Composition", options: { panorama: "Panorama", sheet: "Sheet" } },
     tiles: { label: "Photos", options: { graded: "Graded", "true-colour": "True colour" } },
+    cards: { label: "Cards", options: { editions: "Editions", tiles: "Tiles" } },
     specials: { label: "Today's specials", options: { "0": "None", "3": "Three", "5": "Five" } },
   },
 } satisfies Localized<unknown>;
@@ -165,19 +169,26 @@ function Showcase() {
   const [specials, setSpecials] = useState<Specials>(SPECIALS_DEFAULT);
   /* The live feed: a fake paginated API (latency), live updates every 8 s while its first page is on screen. Test hooks
      (nothing visible): `?feed-cap=N`, batches appended in place before the next page's URL; `?feed-network=down` (every
-     call fails) or `down-from-2` (page 1 loads, later pages and single entries fail). */
+     call fails) or `down-from-2` (page 1 loads, later pages and single entries fail); `?feed-demo=newsroom`, a news
+     client's real-length headlines (Evoview Gaming's Latest, with importance tiers) instead of the journal, no live updates. */
   const [hooks] = useState(() => {
     const query = typeof window === "undefined" ? null : new URLSearchParams(window.location.search);
     const network = query?.get("feed-network");
     return {
       cap: Number(query?.get("feed-cap")) || undefined,
       network: (network === "down" || network === "down-from-2" ? network : "normal") as JournalNetwork,
+      newsroom: query?.get("feed-demo") === "newsroom",
     };
   });
   const feedCap = hooks.cap;
-  const source = useMemo(() => journalSource(locale, { network: () => hooks.network }), [locale, hooks]);
-  const feed = useDossierFeed(source, { pageSize: JOURNAL_PAGE_SIZE, refreshMs: 8000, batchCap: feedCap });
+  const source = useMemo(
+    () =>
+      (hooks.newsroom ? newsSource() : journalSource(locale, { network: () => hooks.network })) as unknown as DossierFeedSource<object>,
+    [locale, hooks],
+  );
+  const feed = useDossierFeed(source, { pageSize: JOURNAL_PAGE_SIZE, refreshMs: hooks.newsroom ? undefined : 8000, batchCap: feedCap });
   const [journalComposition, setJournalComposition] = useState<DossierComposition>("panorama");
+  const [journalCards, setJournalCards] = useState<DossierFeedCards>("editions");
   // Seeded once from the URL; the modal keeps the URL in step from there. `set` is kept through the exit animation.
   const [state, setState] = useState(() => viewFromSubpath(path, locale, feed));
   const { set, view } = state;
@@ -200,7 +211,11 @@ function Showcase() {
     () => ({ ...buildDossierMenuConfig(locale, { specials: Number(specials), composition: menuComposition }), tileMedia: menuTileMedia, directLoad: "at-rest" }),
     [locale, specials, menuComposition, menuTileMedia],
   );
-  const journal = useMemo(() => buildDossierFeedConfig(locale, feed, { composition: journalComposition }), [locale, feed, journalComposition]);
+  const journal = useMemo(() => {
+    const config = buildDossierFeedConfig(locale, feed, { composition: journalComposition, feedCards: journalCards });
+    if (!hooks.newsroom) return config;
+    return { ...config, tileMedia: "graded" as const, brand: { name: "Evoview Gaming" }, items: config.items.map((item) => ({ ...item, label: "Latest" })) };
+  }, [locale, feed, journalComposition, journalCards, hooks]);
   const configs = { multi, single, menu, journal };
 
   const hrefs = useMemo(() => {
@@ -314,7 +329,12 @@ function Showcase() {
             {/* Composition only exists from 1024 (below it both are the same dossier): no desk at all under it. */}
             {wide && (
               <div className="dsh-scene__choice">
-                <SceneDesk className="dsh-desk">{compositionSetting(journalComposition, setJournalComposition)}</SceneDesk>
+                <SceneDesk className="dsh-desk">
+                  {compositionSetting(journalComposition, setJournalComposition)}
+                  <DeskSetting label={desk.cards.label}>
+                    <SegmentedControl block label={desk.cards.label} options={deskOptions(desk.cards.options)} value={journalCards} onChange={(v) => setJournalCards(v as DossierFeedCards)} />
+                  </DeskSetting>
+                </SceneDesk>
               </div>
             )}
           </div>

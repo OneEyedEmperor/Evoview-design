@@ -8,7 +8,7 @@
 import { EVOVIEW_URL } from "../foundation";
 import { PrimaryPlate } from "../controls";
 import { ChapterFigure, ChapterHead, ChapterPayoff, ChapterRows, ChapterSpecimen, ChapterSplit, DossierChapter } from "./Chapters";
-import type { DossierComposition, DossierConfig, DossierCopy, DossierFeed, DossierItem, DossierItemCopy, Locale } from "./types";
+import type { DossierComposition, DossierConfig, DossierCopy, DossierFeed, DossierFeedCards, DossierItem, DossierItemCopy, Locale } from "./types";
 
 type L = Record<Locale, string>;
 type Rows = Record<Locale, [string, string][]>;
@@ -933,14 +933,16 @@ const FEED_COPY: Record<Locale, DossierItemCopy> = {
  * `useDossierFeed(source, { initial })` (a client: its fetcher; build time: `dossierFeed(snapshot, toEntry)`); records
  * become entries through the source's `toEntry` (`feedEntry` gives the default article detail).
  */
-export function buildDossierFeedConfig(locale: Locale, feed: DossierFeed, options: { composition?: DossierComposition } = {}): DossierConfig {
-  const { composition = "panorama" } = options;
+export function buildDossierFeedConfig(locale: Locale, feed: DossierFeed, options: { composition?: DossierComposition; feedCards?: DossierFeedCards } = {}): DossierConfig {
+  const { composition = "panorama", feedCards } = options;
+  const item = buildDossierFeedItem(locale, feed);
   return {
     locale,
     composition,
     tileMedia: "true-colour",
     brand: { name: "Maison Ardoise" },
-    items: [buildDossierFeedItem(locale, feed)],
+    /* A news feed: `feedCards: "editions"` (sheets, leads, section · day, importance). */
+    items: [feedCards ? { ...item, feedCards } : item],
     attribution: { enabled: true, href: EVOVIEW_URL, label: T.attribution[locale] },
     copy: COPY[locale],
   };

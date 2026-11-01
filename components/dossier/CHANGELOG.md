@@ -1,5 +1,63 @@
 # dossier changelog
 
+## 1.16.0
+
+Additive. Requires nothing new (foundation ≥ 1.16.0, controls ≥ 1.5.0). Configs without `feedCards` (or with
+`feedCards: "tiles"`) render byte-identical server HTML, head answers, view media and parse results against 1.15.1
+(`scripts/ssr-snapshot.mjs`, now with the reference feed: 2,326 renders, FR + EN, every view + closed).
+
+Config changes, all optional:
+
+- `item.feedCards`: `DOSSIER_FEED_CARDS` (`"tiles"` default, `"editions"`), exported type `DossierFeedCards`.
+- Entry fields `section`, `published: { iso, label }`, `importance`: `DOSSIER_IMPORTANCE` (`"standard"` default,
+  `"major"`, `"top"`), exported type `DossierImportance`. All three are also on `DossierFeedArticle` and passed through
+  by `feedEntry`.
+- Reference template (client-owned `dossier.config.tsx`): `buildDossierFeedConfig(locale, feed, { feedCards })`. It is
+  output-identical without the option; clients apply the template diff by hand if they want it.
+
+Changes:
+
+- **Feed editions** (`feedCards: "editions"`): a news layout of the feed board. The Evoview Gaming review asked for
+  visual segmentation; the emperor picked variation B of three.
+  - Each batch is an edition on its own tonal sheet, two steps alternating.
+  - The edition's first story leads at double scale with its complete dek. The lead switches side from one edition to
+    the next.
+  - Every story shows its complete headline, then `Section · <time datetime>` (the tile's `aria-describedby`). There is
+    never a label above a headline, and no counter or line.
+  - Headlines have no clamp at any width (site review r5 N2). Ratios are minimums (a ratio spacer shares the card's
+    grid cell with the caption), so a card grows for its headline and its row grows with it. Append-only holds: a new
+    edition only adds rows below.
+  - The tiles board is unchanged.
+- **Importance tiers** (editions only): a surface shift at rest, in the tile's own language.
+  - `major`: grade half released, shallower scrim, frame 46 %, type × 1.08.
+  - `top`: picture released, deeper scrim at the foot, frame 68 % plus deep-accent shadow, a 16 % accent bloom
+    (`.evd-tile__bloom`), type × 1.16.
+  - Hover, focus and the neighbours' dimming are unchanged. No badge, label or animation loop.
+  - Independent of the lead (recency): importance never reorders the feed or picks the lead.
+  - Set by the client's data. Automatic importance is a later task.
+- **Fix (both feed boards, since 1.14.0): the live-updates control no longer pushes the board.** Its zero-height
+  wrapper still took `.evd-feed`'s 12px flex gap, so every tile moved 12px down when "N new" appeared, against "nothing
+  reflows until the visitor taps it". The wrapper now takes the gap back (`margin-bottom: calc(-1 * var(--evd-feed-gap))`).
+  CSS only, so server HTML is unchanged. Found by `feed-editions-check` on the showcase journal (all first-edition cards:
+  dy 12.0 with the control shown; 0 after the fix, 3 of 3 runs at 320 and 390).
+- **Feed entry ids** (docs; 1.15.1 reviewer note): ids are lowercase slugs (`[a-z0-9][a-z0-9-]*`) and `page` is
+  reserved on feeds. `dossierRoutes.views` now names each feed entry id that `parse` would reject, once, in a console
+  warning.
+- Showcase:
+  - the journal desk has "Cards: Editions | Tiles", editions by default;
+  - the journal carries sections, days and importance;
+  - test hook `?feed-demo=newsroom`: Evoview Gaming's real-length headlines with importance tiers, no live updates.
+- Checks:
+  - `verify:ssr` has a `feed-editions` reference config. It checks, on every page view: the edition sheet, the single
+    lead with its complete dek, each tile's complete headline, section, `<time datetime>` after the headline, its
+    description link and `data-importance`; and that a tiles board renders none of it. A mutation (no `<time>`, no
+    importance) fails 74 checks.
+  - New `scripts/feed-editions-check.mjs <URL> [--widths]` (client-agnostic, headless Chrome) checks the rendered board.
+  - `ssr-snapshot.mjs` adds the reference feed, with and without `feedCards: "tiles"`.
+- Known, not changed (pre-existing in 1.15.1's tiles board): at 768 × 5000 in headless Chrome, a single jump of the
+  body's scroll to its end doesn't append the next batch; a second scroll event does. Found while writing the editions
+  check, which then appends through the older link.
+
 ## 1.15.1
 
 Fix. No config or API change. Requires nothing new (foundation ≥ 1.16.0). Server HTML, head titles and view media of

@@ -25,6 +25,18 @@ export type DossierDirectLoad = (typeof DOSSIER_DIRECT_LOADS)[number];
     appended as the visitor reaches the end; each page also has its own URL. */
 export const DOSSIER_ITEM_BOARDS = ["selection", "feed"] as const;
 export type DossierItemBoard = (typeof DOSSIER_ITEM_BOARDS)[number];
+/** How a feed board cards its stories (`item.feedCards`).
+    tiles: one continuous grid of picture tiles, the title on the picture (1.14).
+    editions: each batch is an edition on its own tonal sheet (two steps, alternating), opened by its first story as the
+    lead at double scale with its dek, the lead changing side from one edition to the next; every story shows its section
+    and day after the headline, headlines and deks complete at every width, ratios as minimums. */
+export const DOSSIER_FEED_CARDS = ["tiles", "editions"] as const;
+export type DossierFeedCards = (typeof DOSSIER_FEED_CARDS)[number];
+
+/** A feed story's weight on an editions board (`entry.importance`): standard, major (grade half released, shallower scrim,
+    a type step), top (picture released, accent bloom and frame, a second type step). */
+export const DOSSIER_IMPORTANCE = ["standard", "major", "top"] as const;
+export type DossierImportance = (typeof DOSSIER_IMPORTANCE)[number];
 
 export type DossierFeedStatus = "idle" | "loading" | "ready" | "error" | "missing";
 
@@ -117,6 +129,14 @@ export type DossierEntry = {
   heading?: "header" | "content";
   /** Optional readout above the tile title ("7 services · 78 €"). */
   kicker?: string;
+  /** Feed editions: the entry's section ("News"), on the tile after the title (never above it). */
+  section?: string;
+  /** Feed editions: publication day, `iso` (YYYY-MM-DD, the tile's `<time datetime>`) and its display `label` ("30 Oct"),
+      formatted by the client (no Intl: the server and every browser render the same string). */
+  published?: { iso: string; label: string };
+  /** Feed editions: how much the story weighs, from `DOSSIER_IMPORTANCE` (default "standard"), set by the client. A surface
+      shift only (grade, scrim, bloom, frame, type step): it never reorders the feed nor makes a story the lead. */
+  importance?: DossierImportance;
   /** Tile media; also what the detail waits on (at the tile's `sizes`) when it lists no `sources`. */
   media: DossierMedia;
   /** The detail's own media as rendered (`{ src, srcSet?, sizes? }`): when given, the detail waits on these instead of `media`. */
@@ -152,6 +172,8 @@ export type DossierItem = {
   board?: DossierItemBoard;
   /** The live source of a feed board; set `entries` to `feed.entries`. */
   feed?: DossierFeed;
+  /** Variation (RULES §13), from `DOSSIER_FEED_CARDS`: how a feed board's stories are carded. Default "tiles". */
+  feedCards?: DossierFeedCards;
   /** This item's views in its own words, over `config.copy` (`dock`, `loader`, `feed` key by key): e.g. a feed among
       desks reads "‹ Latest", not "‹ Desk". Omitted: the config's copy. */
   copy?: DossierItemCopy;

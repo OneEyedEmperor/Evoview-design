@@ -37,5 +37,5 @@ export {
   type DossierFeedPageData,
 } from "./feed";
 export { feedEntry, type DossierFeedArticle } from "./FeedBoard";
-export type { DossierFeed, DossierFeedCopy, DossierFeedStatus, DossierItemBoard } from "./types";
-export { DOSSIER_ITEM_BOARDS } from "./types";
+export type { DossierFeed, DossierFeedCopy, DossierFeedStatus, DossierItemBoard, DossierFeedCards, DossierImportance } from "./types";
+export { DOSSIER_ITEM_BOARDS, DOSSIER_FEED_CARDS, DOSSIER_IMPORTANCE } from "./types";

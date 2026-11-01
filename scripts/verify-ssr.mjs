@@ -46,6 +46,7 @@ const PACKAGES = [
         { name: "menu", config: reference.buildDossierMenuConfig(locale) },
         { name: "menu-empty", config: reference.buildDossierMenuConfig(locale, { specials: 0, composition: "panorama" }) },
         { name: "feed", config: reference.buildDossierFeedConfig(locale, feed) },
+        { name: "feed-editions", config: reference.buildDossierFeedConfig(locale, feed, { feedCards: "editions" }) },
       ];
     },
     // A feed: overview (page 1) and its entries, then per page from 2 its view and entries (README "Feed").
@@ -297,6 +298,38 @@ const PACKAGES = [
         check(!clientOnly.length, "feed", subject, "no client-only feed state in server HTML (placeholders, held tiles, live control, error)", `${clientOnly.length}×`);
         const h1 = r.blocks.find((b) => b.type === "h1")?.text ?? "";
         if (p.page >= 2) check(norm(h1).includes(norm(`page ${p.page}`)), "feed", subject, "a page view's h1 names its page", h1);
+
+        /* Editions (`feedCards: "editions"`): the page is one edition (its sheet, its lead first with its dek); each tile
+           carries its complete headline, then section · day with a machine-readable `<time>`, described by it; importance
+           is the tile's `data-importance` (absent for standard). The tiles board renders none of it. */
+        const entries = p.ids.map((id) => item.entries.find((e) => e.id === id));
+        const editionTags = r.tags.filter((t) => /(^|\s)evd-feed__batch(\s|$)/.test(t.attrs.class ?? ""));
+        if (item.feedCards !== "editions") {
+          check(!editionTags.length && !tiles.some((t) => "data-lead" in t.attrs || "data-importance" in t.attrs) && !/evd-ed__/.test(out.html), "feed-editions", subject, "a tiles board renders no edition markup (sheet, lead, meta, importance)");
+          continue;
+        }
+        check(editionTags.length === 1 && editionTags[0].attrs["data-parity"] === "odd", "feed-editions", subject, "the view's page is one edition on its own sheet (the first: odd)", `${editionTags.length} sheets`);
+        check(tiles.length > 0 && "data-lead" in tiles[0].attrs && tiles.filter((t) => "data-lead" in t.attrs).length === 1, "feed-editions", subject, "the edition's first story, and only it, is the lead");
+        const tileHtml = out.html.split(/<a [^>]*class="evd-tile"/).slice(1);
+        entries.forEach((entry, i) => {
+          const html = tileHtml[i] ?? "";
+          const label = `${subject} #${i + 1}`;
+          const text = norm(html.replace(/<[^>]+>/g, " ").replace(/&#x27;|&#39;/g, "'").replace(/&amp;/g, "&"));
+          check(text.includes(norm(entry.title)), "feed-editions", label, "the tile carries its complete headline", entry.title);
+          if (i === 0 && entry.description) check(/class="evd-ed__dek"/.test(html) && text.includes(norm(entry.description)), "feed-editions", label, "the lead carries its complete dek");
+          if (i > 0) check(!/class="evd-ed__dek"/.test(html), "feed-editions", label, "only the lead carries a dek");
+          if (entry.published) {
+            const time = html.match(/<time dateTime="([^"]+)">([^<]+)<\/time>/i) ?? html.match(/<time datetime="([^"]+)">([^<]+)<\/time>/i);
+            check(time && time[1] === entry.published.iso && norm(time[2]) === norm(entry.published.label), "feed-editions", label, "the day is a <time datetime> after the headline", time ? `${time[1]} ${time[2]}` : "no <time>");
+            check(html.indexOf("evd-tile__title") < html.indexOf("evd-ed__meta"), "feed-editions", label, "section · day come after the headline, never above it");
+          }
+          if (entry.section) check(text.includes(norm(entry.section)), "feed-editions", label, "the tile names its section", entry.section);
+          const metaId = tiles[i]?.attrs["aria-describedby"];
+          if (entry.section || entry.published) check(!!metaId && r.tags.some((t) => t.attrs.id === metaId && /evd-ed__meta/.test(t.attrs.class ?? "")), "feed-editions", label, "the tile is described by its section · day", metaId);
+          const want = entry.importance && entry.importance !== "standard" ? entry.importance : undefined;
+          check(tiles[i]?.attrs["data-importance"] === want, "feed-editions", label, "importance is the tile's data-importance (absent for standard)", `${tiles[i]?.attrs["data-importance"]} vs ${want}`);
+        });
+        check(!/evd-tile__kicker/.test(out.html), "feed-editions", subject, "no readout over a headline (the entry kicker is not rendered)");
       }
       const view = { item: item.id, entry: "not-loaded-yet" };
       const parsed = routes.parse(config, `${item.id}/not-loaded-yet`);

@@ -1,4 +1,4 @@
-import { feedEntry, type DossierEntry, type DossierFeedSnapshot, type DossierFeedSource, type Locale } from "../../../../components/dossier/src";
+import { feedEntry, type DossierEntry, type DossierFeedSnapshot, type DossierFeedSource, type DossierImportance, type Locale } from "../../../../components/dossier/src";
 
 /* The showcase's live feed: Maison Ardoise's journal (the library's fictional
    restaurant), served by a fake paginated API with latency and a failure
@@ -144,12 +144,20 @@ const day = (iso: string, locale: Locale) => {
   return locale === "fr" ? `${d} ${MONTHS.fr[m - 1]}` : `${MONTHS.en[m - 1]} ${d}`;
 };
 
+/* The house's own weighting (a client's editorial call, set in its data): one top story and a few majors. Page 1's top
+   story is not its lead (lead = first by recency); page 2's lead is also its top story. */
+const IMPORTANCE: Record<string, DossierImportance> = { "cheffe-patissiere": "top", "marche-du-samedi": "major", "vin-orange": "major", "menu-dejeuner": "top", "soiree-jazz": "major" };
+
 export function journalEntry(record: JournalRecord, locale: Locale): DossierEntry {
   const section = SECTION[record.section];
   return feedEntry({
     id: record.id,
     title: record.title[locale],
+    /* Tiles board: the readout over the title. Editions board: section and day after it, and the story's weight. */
     kicker: `${section.label[locale]} · ${day(record.date, locale)}`,
+    section: section.label[locale],
+    published: { iso: record.date, label: day(record.date, locale) },
+    importance: IMPORTANCE[record.id],
     media: { src: MEDIA + record.image, position: record.position, alt: record.title[locale] },
     excerpt: record.excerpt[locale],
     body: section.body[locale],

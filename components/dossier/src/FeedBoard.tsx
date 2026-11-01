@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -52,6 +52,8 @@ const SENTINEL_MARGIN = 600;
  */
 export function FeedBoard({ item, start, memory, scrollRoot, label, copy, tileMedia, entryHref, pageHref, onEntry, onPage, registerTile }: FeedBoardProps) {
   const feed = feedOf(item);
+  const editions = item.feedCards === "editions";
+  const cards = editions ? "editions" : undefined;
   const hydrated = useHydrated();
   const tileHover = useMediaQuery(TILE_HOVER_QUERY, true);
   const [through, setThroughState] = useState(() => Math.max(start, memory.through ?? start));
@@ -153,7 +155,7 @@ export function FeedBoard({ item, start, memory, scrollRoot, label, copy, tileMe
   };
 
   return (
-    <div className="evd-feed" data-tile-media={tileMedia}>
+    <div className="evd-feed" data-tile-media={tileMedia} data-cards={cards}>
       {feed.fresh > 0 && start === 1 && (
         <div className="evd-feed__fresh">
           <button type="button" className="evd-feed__fresh-pill" data-ev-jelly="" aria-label={copy.freshAria(feed.fresh)} onClick={showFresh}>
@@ -167,14 +169,24 @@ export function FeedBoard({ item, start, memory, scrollRoot, label, copy, tileMe
           {copy.newer}
         </FeedLink>
       )}
-      <div ref={boardRef} className="evd-board" role="group" aria-label={label} data-layout="feed" data-tile-media={tileMedia} data-revealed="">
-        {batches.map((batch) => {
+      <div ref={boardRef} className="evd-board" role="group" aria-label={label} data-layout="feed" data-tile-media={tileMedia} data-cards={cards} data-revealed="">
+        {batches.map((batch, b) => {
+          const parity = b % 2 === 0 ? "odd" : "even";
           if (!batch.entries) {
-            return Array.from({ length: feed.pageSize }, (_, i) => <span key={`ghost-${batch.page}-${i}`} className="evd-feed__ghost" aria-hidden="true" />);
+            const ghosts = Array.from({ length: feed.pageSize }, (_, i) => <span key={`ghost-${batch.page}-${i}`} className="evd-feed__ghost" aria-hidden="true" />);
+            return editions ? (
+              <div key={`ghosts-${batch.page}`} className="evd-feed__batch" data-parity={parity} data-ghosts="">
+                {ghosts}
+              </div>
+            ) : (
+              ghosts
+            );
           }
           return (
             <FeedBatch
               key={`batch-${batch.page}`}
+              editions={editions}
+              parity={parity}
               page={batch.page}
               entries={batch.entries}
               first={batch.page === start}
@@ -224,6 +236,10 @@ export function FeedBoard({ item, start, memory, scrollRoot, label, copy, tileMe
 }
 
 type FeedBatchProps = {
+  /** `feedCards: "editions"`: the batch is an edition (its own sheet, its lead). */
+  editions: boolean;
+  /** Place of the edition on the board: sheet tone and lead side alternate. */
+  parity: "odd" | "even";
   page: number;
   entries: DossierEntry[];
   /** The view's own page: revealed with the overview (its gate and the board's Signature entrance). */
@@ -240,7 +256,7 @@ type FeedBatchProps = {
 };
 
 /** An appended batch waits on its own media (decoded, or failed: the tile keeps its well), never on another's. */
-function FeedBatch({ entries, first, offset, offsets, tileHover, copy, entryHref, onEntry, registerTile, onRevealed }: FeedBatchProps) {
+function FeedBatch({ editions, parity, entries, first, offset, offsets, tileHover, copy, entryHref, onEntry, registerTile, onRevealed }: FeedBatchProps) {
   const sources = useMemo(() => entries.map((e) => feedTileSource(e.media)), [entries]);
   const gate = useMediaReady(!first, sources);
   const shown = first || gate.ready || gate.failed;
@@ -249,7 +265,12 @@ function FeedBatch({ entries, first, offset, offsets, tileHover, copy, entryHref
   useEffect(() => {
     if (shown) onRevealedRef.current();
   }, [shown]);
-  return entries.map((entry, i) => (
+  const metaBase = useId();
+  const tile = (entry: DossierEntry, i: number) => {
+    const metaId = `${metaBase}-${i}`;
+    const hasMeta = !!(entry.section || entry.published);
+    const importance = entry.importance && entry.importance !== "standard" ? entry.importance : undefined;
+    return (
     <RouteLink
       key={entry.id}
       ref={(el) => registerTile(i, el)}
@@ -258,28 +279,70 @@ function FeedBatch({ entries, first, offset, offsets, tileHover, copy, entryHref
       className="evd-tile"
       data-enter={first ? "board" : shown ? "batch" : undefined}
       data-held={!shown || undefined}
+      data-lead={(editions && i === 0) || undefined}
+      data-importance={(editions && importance) || undefined}
       disabled={!shown}
       draggable={false}
       aria-label={copy.open(offset + i + 1, entry.title)}
+      aria-describedby={editions && hasMeta ? metaId : undefined}
       style={first ? offsets(i) : ({ ["--evd-n" as string]: Math.min(i, 5) + 1 } as CSSProperties)}
     >
-      <FeedMedia media={entry.media} lazy={!first} />
+      {editions ? (
+        <EditionCard entry={entry} lazy={!first} lead={i === 0} metaId={metaId} />
+      ) : (
+        <>
+          <FeedMedia media={entry.media} lazy={!first} />
+          <span className="evd-tile__grade" aria-hidden="true" />
+          <span className="evd-tile__scrim" aria-hidden="true" />
+          <span className="evd-tile__shine" aria-hidden="true" />
+          <span className="evd-tile__edge" aria-hidden="true" />
+          <span className="evd-tile__caption">
+            {entry.kicker && (
+              <span className="ev-t-readout evd-tile__kicker">
+                <TextFill hoverWithin={tileHover ? ".evd-tile" : undefined} hoverInk={SIGNAL} withFocus={false}>
+                  {entry.kicker}
+                </TextFill>
+              </span>
+            )}
+            <span className="evd-tile__title">{entry.title}</span>
+          </span>
+        </>
+      )}
+    </RouteLink>
+    );
+  };
+  if (!editions) return entries.map(tile);
+  return (
+    <div className="evd-feed__batch" data-parity={parity}>
+      {entries.map(tile)}
+    </div>
+  );
+}
+
+/** An editions card: the picture, the headline, the lead's dek, then section · day (never above the headline). */
+function EditionCard({ entry, lazy, lead, metaId }: { entry: DossierEntry; lazy: boolean; lead: boolean; metaId: string }) {
+  const { section, published, description } = entry;
+  return (
+    <>
+      <FeedMedia media={entry.media} lazy={lazy} />
       <span className="evd-tile__grade" aria-hidden="true" />
       <span className="evd-tile__scrim" aria-hidden="true" />
+      <span className="evd-tile__bloom" aria-hidden="true" />
       <span className="evd-tile__shine" aria-hidden="true" />
       <span className="evd-tile__edge" aria-hidden="true" />
       <span className="evd-tile__caption">
-        {entry.kicker && (
-          <span className="ev-t-readout evd-tile__kicker">
-            <TextFill hoverWithin={tileHover ? ".evd-tile" : undefined} hoverInk={SIGNAL} withFocus={false}>
-              {entry.kicker}
-            </TextFill>
+        <span className="evd-tile__title">{entry.title}</span>
+        {lead && description && <span className="evd-ed__dek">{description}</span>}
+        {(section || published) && (
+          <span id={metaId} className="evd-ed__meta">
+            {section}
+            {section && published && " · "}
+            {published && <time dateTime={published.iso}>{published.label}</time>}
           </span>
         )}
-        <span className="evd-tile__title">{entry.title}</span>
       </span>
-    </RouteLink>
-  ));
+    </>
+  );
 }
 
 function FeedMedia({ media, lazy }: { media: DossierMedia; lazy: boolean }) {
@@ -325,6 +388,10 @@ export type DossierFeedArticle = {
   label?: string;
   /** The tile's readout: section, date ("Cave · 28 oct."). */
   kicker?: string;
+  /** Editions boards (`feedCards: "editions"`): section and publication day after the headline, and the story's weight. */
+  section?: string;
+  published?: DossierEntry["published"];
+  importance?: DossierEntry["importance"];
   media: DossierMedia;
   /** One or two sentences: the lead, and the view's meta description. */
   excerpt?: string;
@@ -347,12 +414,15 @@ export type DossierFeedArticle = {
  * detail waits on, and a direct load preloads, the candidate the hero shows, never the tile's.
  */
 export function feedEntry(article: DossierFeedArticle): DossierEntry {
-  const { id, title, label, kicker, media, excerpt, body, heading = "content", content, sources, closing } = article;
+  const { id, title, label, kicker, section, published, importance, media, excerpt, body, heading = "content", content, sources, closing } = article;
   return {
     id,
     title,
     label,
     kicker,
+    section,
+    published,
+    importance,
     media,
     heading,
     description: excerpt,

@@ -159,8 +159,17 @@ export function dossierViewImages(config: DossierConfig, view: DossierView): Dos
   });
 }
 
-/** A feed page's key segment: `<item>/page/<n>` (n ≥ 2; an entry key has two segments, so an entry may be called "page"). */
+/** A feed page's key segment: `<item>/page/<n>` (n ≥ 2). Reserved on feeds: no feed entry may be called "page". */
 const PAGE_SEGMENT = "page";
+
+/* Feed entry ids `parse` would reject (not a lowercase slug, or "page"): their views are listed but their URLs never
+   resolve. Named once per id. */
+const unroutable = new Set<string>();
+function warnUnroutable(item: DossierItem, id: string) {
+  if ((SLUG.test(id) && id !== PAGE_SEGMENT) || unroutable.has(`${item.id}/${id}`)) return;
+  unroutable.add(`${item.id}/${id}`);
+  console.warn(`dossier: feed entry id "${id}" (item "${item.id}") is not routable: entry ids are lowercase slugs ([a-z0-9-]) and "page" is reserved on feeds.`);
+}
 
 /** A feed item's views: its overview (page 1) and page 1's entries, then per loaded page from 2 its view and entries.
     Entries fetched on their own (deep links) are left out: no page links them. */
@@ -169,7 +178,10 @@ function feedViews(config: DossierConfig, item: DossierItem): DossierView[] {
   const out: DossierView[] = [itemView(config, item.id)];
   for (const p of feed.pages) {
     if (p.page >= 2) out.push(itemView(config, item.id, undefined, p.page));
-    for (const id of p.ids) out.push(itemView(config, item.id, id, p.page));
+    for (const id of p.ids) {
+      warnUnroutable(item, id);
+      out.push(itemView(config, item.id, id, p.page));
+    }
   }
   return out;
 }

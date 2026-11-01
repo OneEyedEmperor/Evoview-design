@@ -30,7 +30,10 @@ tokens and the pause model.
   content when the detail shows its title itself, e.g. an article
   headline; `feedEntry` defaults to content); the board per item
   (`DOSSIER_ITEM_BOARDS`: `selection` default, `feed` for content that keeps
-  growing, news / journal / posts: README "Feed"); an opening screen or not;
+  growing, news / journal / posts: README "Feed"); a feed's cards
+  (`DOSSIER_FEED_CARDS`: `tiles` default for journals and posts, `editions`
+  for news: sheets per batch, a lead, section · day, importance tiers);
+  an opening screen or not;
   one or several universes; the chapter kit,
   `DOSSIER_CHAPTER_VARIANTS`, `CHAPTER_ROWS_SURFACES`. Nothing else.
 - **Invent** (README "Expression"): brand, opening title / label, items
@@ -59,7 +62,12 @@ tokens and the pause model.
    `{ board: "feed", feed, entries: feed.entries }`; prerender the
    build-time pages with `dossierFeed(snapshot, toEntry)` and pass the same
    snapshot as `initial`. Keep the page size (9) unless the client's API
-   cannot. An item of another kind than the rest (a feed among desks) keeps
+   cannot. Entry ids are lowercase slugs, never `page` (a console warning
+   names any that `parse` would reject). For news set `feedCards: "editions"`
+   and give each entry `section`, `published` ({ iso, label }, formatted
+   without Intl) and, sparingly, `importance` (about one `top`, two `major` a
+   page; the client's editorial call, never derived here); check it with
+   `node <library>/scripts/feed-editions-check.mjs <feed board URL>`. An item of another kind than the rest (a feed among desks) keeps
    its own words with `item.copy` ("‹ Latest", not "‹ Desk"; README "Item
    copy"). Five items on an opening screen: the leading one first (a full-row
    lead tile over a 2×2). Check the feed with `node <library>/scripts/feed-fetch-check.mjs

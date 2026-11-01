@@ -1131,7 +1131,7 @@ a.evd-tile { -webkit-user-drag: none; -webkit-touch-callout: none; }
    (the panorama). Rows are as tall as the ratio makes them; the body scrolls. */
 .ev-dossier[data-board="feed"] .evd-body { display: flex; flex-direction: column; }
 .ev-dossier[data-board="feed"] .evd-overview { height: auto; flex: 1 0 auto; }
-.evd-feed { position: relative; display: flex; flex-direction: column; gap: 12px; }
+.evd-feed { --evd-feed-gap: 12px; position: relative; display: flex; flex-direction: column; gap: var(--evd-feed-gap); }
 .evd-board[data-layout="feed"] {
   --evd-feed-ratio: 16 / 10;
   height: auto;
@@ -1210,8 +1210,9 @@ a.evd-tile { -webkit-user-drag: none; -webkit-touch-callout: none; }
   text-align: center;
 }
 
-/* Live updates: a glass control pinned over the top of the board (zero height: it never pushes a tile). */
-.evd-feed__fresh { position: sticky; z-index: 20; top: 76px; display: flex; height: 0; justify-content: center; }
+/* Live updates: a glass control pinned over the top of the board (zero height, and its flex gap taken back: it never
+   pushes a tile). */
+.evd-feed__fresh { position: sticky; z-index: 20; top: 76px; display: flex; height: 0; justify-content: center; margin-bottom: calc(-1 * var(--evd-feed-gap)); }
 @media (min-width: 1024px) {
   .ev-dossier[data-composition="panorama"] .evd-feed__fresh { top: 16px; }
 }
@@ -1247,3 +1248,105 @@ a.evd-tile { -webkit-user-drag: none; -webkit-touch-callout: none; }
 @media (min-width: 1024px) {
   @container evd-body (min-width: 900px) { .evd-prose { margin-left: calc(0.72 / 2 * 100%); } }
 }
+
+/* ── Feed editions (`item.feedCards: "editions"`): each batch is an edition, its own tonal sheet (two steps a few % off
+   the shell, alternating), opened by its first story as the lead at double scale with its dek; the lead changes side
+   from one edition to the next. Segmentation by tone and scale only (RULES §3): no line, no label over a headline.
+   Ratios are minimums: a card grows for its headline (complete at every width) and its row grows with it; an appended
+   edition only adds rows below. */
+.evd-feed[data-cards="editions"] {
+  --evd-edition: var(--ev-surface-list, #141416);
+  --evd-edition-alt: color-mix(in oklab, #fff 10%, var(--dossier-shell, #0c0c0d));
+  --evd-ed-ratio: 62.5%;
+  --evd-ed-lead-ratio: 125%;
+}
+.evd-board[data-layout="feed"][data-cards="editions"] { display: flex; flex-direction: column; gap: 1em; }
+.evd-feed__batch {
+  display: grid;
+  grid-auto-flow: dense;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  padding: 8px;
+  border-radius: calc(var(--ev-radius-surface) + 8px);
+  background: var(--evd-edition);
+}
+.evd-feed__batch[data-parity="even"] { background: var(--evd-edition-alt); }
+@container evd-body (min-width: 600px) {
+  .evd-feed[data-cards="editions"] { --evd-ed-ratio: 75%; --evd-ed-lead-ratio: 56.25%; }
+  .evd-board[data-layout="feed"][data-cards="editions"] { gap: 1.25em; }
+  .evd-feed__batch { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 12px; border-radius: calc(var(--ev-radius-surface) + 12px); }
+  .evd-feed__batch > :is([data-lead], .evd-feed__ghost:first-child) { grid-column: 1 / -1; }
+}
+@container evd-body (min-width: 900px) {
+  /* The lead's height comes from the two rows it spans (each at least 4:3 wide). */
+  .evd-feed[data-cards="editions"] { --evd-ed-lead-ratio: 0%; }
+  .evd-feed__batch { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .evd-feed__batch > :is([data-lead], .evd-feed__ghost:first-child) { grid-column: 1 / span 2; grid-row: 1 / span 2; }
+  .evd-feed__batch[data-parity="even"] > :is([data-lead], .evd-feed__ghost:first-child) { grid-column: 2 / span 2; }
+}
+
+/* A card: the ratio is a spacer in the card's one grid cell, the caption shares the cell from the bottom, so the
+   taller of the two sets the height. Picture layers stay absolute behind. */
+.evd-feed__batch > .evd-tile { display: grid; }
+.evd-feed__batch > .evd-tile::before { content: ""; grid-area: 1 / 1; padding-top: var(--evd-ed-ratio); }
+.evd-feed__batch > .evd-tile[data-lead]::before { padding-top: var(--evd-ed-lead-ratio); }
+.evd-feed__batch > .evd-feed__ghost { aspect-ratio: 16 / 10; }
+.evd-feed__batch > .evd-feed__ghost:first-child { aspect-ratio: 4 / 5; }
+@container evd-body (min-width: 600px) {
+  .evd-feed__batch > .evd-feed__ghost { aspect-ratio: 4 / 3; }
+  .evd-feed__batch > .evd-feed__ghost:first-child { aspect-ratio: 16 / 9; }
+}
+@container evd-body (min-width: 900px) { .evd-feed__batch > .evd-feed__ghost:first-child { aspect-ratio: auto; } }
+.evd-feed__batch > .evd-tile > .evd-tile__caption { position: relative; inset: auto; grid-area: 1 / 1; align-self: end; min-width: 0; gap: 0.6em; }
+
+/* Headlines and deks complete at every width; importance multiplies the type (below). */
+.evd-feed[data-cards="editions"] .evd-board .evd-tile .evd-tile__title {
+  display: block;
+  overflow: visible;
+  font-size: calc(max(16px, 1.3em) * var(--evd-ed-type, 1));
+  letter-spacing: -0.015em;
+  line-height: 0.98;
+  -webkit-line-clamp: unset;
+}
+@container evd-body (max-width: 599px) {
+  .evd-feed[data-cards="editions"] .evd-board .evd-tile .evd-tile__title { font-size: calc(18px * var(--evd-ed-type, 1)); }
+}
+.evd-ed__meta { color: rgb(255 255 255 / 0.62); font-family: var(--ev-font-body); font-size: max(13px, 0.8125em); font-weight: 500; line-height: 1.35; }
+.evd-ed__dek { max-width: 34em; color: rgb(255 255 255 / 0.84); font-family: var(--ev-font-body); font-size: max(14px, 1em); line-height: 1.5; text-wrap: pretty; }
+
+/* The lead: display scale and its dek over a deeper scrim. */
+.evd-feed[data-cards="editions"] .evd-board .evd-tile[data-lead] .evd-tile__title { font-size: calc(max(22px, 2.25em) * var(--evd-ed-type, 1)); letter-spacing: -0.025em; line-height: 0.94; }
+.evd-feed__batch > .evd-tile[data-lead] > .evd-tile__caption { gap: 0.8em; padding: 2em 2.25em 1.9em; }
+.evd-feed__batch > .evd-tile[data-lead] > .evd-tile__scrim { background: linear-gradient(to top, rgb(0 0 0 / 0.94) 0%, rgb(0 0 0 / 0.5) 45%, rgb(0 0 0 / 0.08) 78%); }
+@container evd-body (max-width: 599px) {
+  .evd-feed[data-cards="editions"] .evd-board .evd-tile[data-lead] .evd-tile__title { font-size: calc(26px * var(--evd-ed-type, 1)); }
+  .evd-feed__batch > .evd-tile[data-lead] > .evd-tile__caption { padding: 16px 16px 18px; }
+}
+
+/* Importance (`entry.importance`): a surface shift in the tile's own language, at rest only; hover, focus and the
+   neighbours' dimming stay the board's. Lead and importance are independent axes: the lead is the edition's first
+   story (scale, dek); importance is the surface (grade, scrim, bloom, frame, type step), so a standard lead stays
+   graded and a top story keeps its surface wherever it falls.
+   major: the grade half released, a shallower scrim (more picture), the frame one step up, type × 1.08.
+   top: the picture released as on hover, a low accent bloom under the headline (≤ 16 %, RULES §5), the frame two steps
+   up with a deep-accent shadow, type × 1.16. */
+.evd-tile__bloom { position: absolute; z-index: 3; inset: 0; opacity: 0; pointer-events: none; background: radial-gradient(120% 75% at 20% 100%, color-mix(in oklab, var(--dossier-accent) 16%, transparent), transparent 70%); transition: opacity 300ms var(--ev-ease); }
+.evd-tile[data-importance="major"] { --evd-ed-type: 1.08; }
+.evd-tile[data-importance="top"] { --evd-ed-type: 1.16; }
+.evd-tile[data-importance="major"]:not(:hover, :focus-visible) { border-color: color-mix(in oklab, var(--dossier-signal) 46%, transparent); }
+.evd-tile[data-importance="top"]:not(:hover, :focus-visible) {
+  border-color: color-mix(in oklab, var(--dossier-signal) 68%, transparent);
+  box-shadow: 0 18px 44px -26px var(--dossier-deep);
+}
+.evd-tile[data-importance="top"] > .evd-tile__bloom { opacity: 1; }
+.evd-feed__batch > .evd-tile[data-importance="major"] > .evd-tile__scrim { background: linear-gradient(to top, rgb(0 0 0 / 0.9) 0%, rgb(0 0 0 / 0.3) 40%, transparent 68%); }
+.evd-feed__batch > .evd-tile[data-importance="top"] > .evd-tile__scrim { background: linear-gradient(to top, rgb(0 0 0 / 0.94) 0%, rgb(0 0 0 / 0.46) 46%, rgb(0 0 0 / 0.06) 78%); }
+.evd-board[data-cards="editions"][data-tile-media="graded"] .evd-tile[data-importance="major"]:not(:focus-visible) .evd-tile__media { filter: grayscale(0.55) saturate(0.5) contrast(1.08) brightness(0.76); }
+.evd-board[data-cards="editions"][data-tile-media="graded"] .evd-tile[data-importance="top"]:not(:focus-visible) .evd-tile__media { filter: saturate(0.8) sepia(0.06) contrast(1.08) brightness(0.86); }
+@media (hover: hover) and (min-width: 1024px) {
+  .evd-board[data-cards="editions"][data-tile-media="graded"] .evd-tile[data-importance="major"]:not(:hover, :focus-visible) .evd-tile__media { filter: grayscale(0.3) saturate(0.66) contrast(1.08) brightness(0.8); }
+  .evd-board[data-cards="editions"][data-tile-media="graded"] .evd-tile[data-importance]:hover .evd-tile__media { filter: saturate(0.85) sepia(0.08) contrast(1.08) brightness(0.92); }
+  .evd-board[data-cards="editions"][data-tile-media="graded"]:has(.evd-tile:hover) .evd-tile[data-importance]:not(:hover) .evd-tile__media { filter: grayscale(0.78) saturate(0.28) contrast(1.06) brightness(0.52); }
+}
+/* An appended edition: the bloom pours in with its picture. */
+.evd-tile[data-enter="batch"] > .evd-tile__bloom { animation: evd-fade-in 600ms var(--ev-ease) calc((var(--evd-n, 1) - 1) * 80ms) backwards; }
