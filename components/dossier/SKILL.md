@@ -55,11 +55,15 @@ tokens and the pause model.
    "Feed"): write one `DossierFeedSource` for the client's API
    (`fetchPage(page, cursor)` → `{ items, next }`, `fetchEntry(id)` for deep
    links, `toEntry` with `feedEntry` or your own chapters), call
-   `useDossierFeed(source, { initial, refreshMs })`, set the item to
+   `useDossierFeed(source, { initial, refreshMs, key: locale })`, set the item to
    `{ board: "feed", feed, entries: feed.entries }`; prerender the
    build-time pages with `dossierFeed(snapshot, toEntry)` and pass the same
    snapshot as `initial`. Keep the page size (9) unless the client's API
-   cannot.
+   cannot. An item of another kind than the rest (a feed among desks) keeps
+   its own words with `item.copy` ("‹ Latest", not "‹ Desk"; README "Item
+   copy"). Five items on an opening screen: the leading one first (a full-row
+   lead tile over a 2×2). Check the feed with `node <library>/scripts/feed-fetch-check.mjs
+   <feed board URL> --page-request '<regex of the page requests>'`.
 3. Install: `sync.sh plan /root/.vibehub/projects/<client> dossier`, then
    `apply`, then `verify` (library root, `docs/SYNC.md`); resolve conflicts,
    fill patch reasons. Client tokens go in `dossier.theme.css`.
@@ -100,8 +104,11 @@ tokens and the pause model.
    `<item>/page/<n>/` views (one per build-time page) and entry URLs that
    resolve client-side when newer than the build. Server rule (contract §2,
    "Live content"): a key `parse` rejects is a real 404; a key it accepts but
-   the build has no data for (an entry slug or page under the feed item) gets
-   the page shell with `noindex`, so `fetchEntry` / the page fetch can open it.
+   the build has no data for (an entry slug or page under the feed item, a
+   pending item's entry) gets the page shell with `noindex`, so `fetchEntry` /
+   the page fetch can open it; on a static host, `_shells.json` + the server
+   rules of contract §7.4. A host that stores view keys keeps the `page` the
+   dossier reports with an entry opened from a feed page view (§7.1).
 7. Keep `attribution.enabled = true`, `href` = `https://evoview.be/`; never
    move the mark next to the client CTA or add other marks.
 8. Verify with the README checklist at 1440 / 1024 / 390 (URLs, Back /

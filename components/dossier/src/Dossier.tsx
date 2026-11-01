@@ -39,7 +39,7 @@ import {
 import { GhostAction, GlassClose, PagerOrb } from "../controls";
 import { SelectionBoard, type SelectionBoardLayout, type SelectionTile } from "./Board";
 import { ChapterMediaContext, ChapterRevealContext, type ChapterReveal } from "./Chapters";
-import { feedCopy, fullCopy } from "./copy";
+import { feedCopy, fullCopy, itemCopy } from "./copy";
 import { feedAwaits, feedFailed, feedHasMore, feedOf, feedPageEntries, feedPageOf, feedPosition, feedRequest, feedSources, feedWindow, isFeedItem, pageNumber } from "./feed";
 import { FeedBoard, type FeedMemory } from "./FeedBoard";
 import { DossierLoader } from "./Loader";
@@ -268,7 +268,6 @@ const sceneKey = (s: { kind: Kind; item: string | null; entry: string | null; pa
 
 function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, closing, onExited }: DossierLayerProps) {
   const { items, opening } = config;
-  const copy = fullCopy(config.copy, config.locale);
   const composition = config.composition ?? "panorama";
   const tileMedia = config.tileMedia ?? "graded";
   const uid = useId();
@@ -285,6 +284,8 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, clos
   const atOpening = view.item === undefined;
   const itemIndex = atOpening ? -1 : Math.max(0, items.findIndex((i) => i.id === view.item));
   const item: DossierItem | null = atOpening ? null : (items[itemIndex] ?? null);
+  // The view's item speaks in its own words (`item.copy`) over the config's.
+  const copy = fullCopy(itemCopy(config.copy, item), config.locale);
   const entries = item?.entries ?? [];
   const entryIndex = item && view.entry !== undefined ? entries.findIndex((e) => e.id === view.entry) : -1;
   const entry = entryIndex >= 0 ? entries[entryIndex] : null;
@@ -437,7 +438,7 @@ function DossierLayer({ config, view, hrefFor, onNavigate, className, rest, clos
   const overviewView: DossierView | null = item ? itemView(config, item.id, undefined, viewPage) : null;
   const entryView = (i: number): DossierView => itemView(config, (item as DossierItem).id, entries[i].id, viewPage);
   // A feed's length is open: positions are spoken without a total.
-  const fcopy = feedCopy(config.copy, config.locale);
+  const fcopy = feedCopy(itemCopy(config.copy, item), config.locale);
   // A feed entry is placed by its page (page 3 continues at 19), never by its index among the loaded ones; one fetched on its own has no place.
   const entryLocation = (i: number, n: number, label: string, id?: string) => {
     if (!feedItem) return copy.entryLocation(i, n, label);

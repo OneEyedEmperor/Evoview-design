@@ -152,6 +152,15 @@ export type DossierItem = {
   board?: DossierItemBoard;
   /** The live source of a feed board; set `entries` to `feed.entries`. */
   feed?: DossierFeed;
+  /** This item's views in its own words, over `config.copy` (`dock`, `loader`, `feed` key by key): e.g. a feed among
+      desks reads "‹ Latest", not "‹ Desk". Omitted: the config's copy. */
+  copy?: DossierItemCopy;
+};
+
+/** An item's copy override: any key of `DossierCopy`, nested groups partial. */
+export type DossierItemCopy = Partial<Omit<DossierCopy, "dock" | "loader">> & {
+  dock?: Partial<DossierCopy["dock"]>;
+  loader?: Partial<DossierCopy["loader"]>;
 };
 
 /** An optional level above the items: a symmetric choice between them, with its own view and URL. */

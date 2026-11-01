@@ -97,6 +97,48 @@ const PACKAGES = [
       return { expected: (own.match(/class="evd-rows__media"/g) ?? []).length, required: Boolean(c.opening) && item.id === "menu" };
     },
     legacy: (m, c, v) => h(m.Dossier, { config: c, open: true, onClose: noop, initialItemId: v.item, initialEntryId: v.entry, preload: false }),
+    /* Item copy (`item.copy`, 1.15.0): on a copy of the config with an override on its first item that has entries, the
+       override shows on every view of that item (header, strip, dock, loader, head title) and on no other view; that
+       item's views pass the whole contract with it. Configs without an override are the reference runs above. */
+    async itemCopy({ m, config, locale, routes, hrefFor, renderCaptured, check, verify }) {
+      const target = config.items.find((i) => i.entries.length > 0);
+      if (!target) return;
+      const mark = "Zqx";
+      const copy = { overview: `${mark} overview`, overviewTitle: (_i, label) => `${mark} ${label}`, overviewOf: (l) => `${mark} ${l}`, toastBack: `${mark} back`, dock: { home: `${mark} home` }, loader: { overviewKicker: () => `${mark} kicker` } };
+      const c = { ...config, items: config.items.map((i) => (i.id === target.id ? { ...i, copy } : i)) };
+      for (const v of routes.views(c)) {
+        const k = routes.key(v);
+        const out = await renderCaptured(h(m.Dossier, { config: c, view: v, onNavigate: noop, hrefFor }));
+        if (!check(!out.error, "item-copy", `${locale} ${k}`, `render threw: ${out.error?.message}`)) continue;
+        const mine = v.item === target.id;
+        check(out.html.includes(mark) === mine, "item-copy", `${locale} ${k}`, mine ? "an item's own copy shows on its views" : "an item's copy stays off the other items' views");
+        if (mine && v.entry === undefined) check(routes.head(c, v).title.includes(`${mark} ${target.label}`), "item-copy", `${locale} ${k}`, "the item's overviewTitle names its overview (h1 and head title)", routes.head(c, v).title);
+        if (mine) await verify({ config: c, view: v, locale: `${locale}:item-copy`, key: k, element: h(m.Dossier, { config: c, view: v, onNavigate: noop, hrefFor }), head: routes.head(c, v) });
+      }
+    },
+    /* §2 "head answers every view parse accepts": a pending (non-feed) item's entry key its data has not brought. The
+       dossier shows the item's board behind the loader meanwhile, so head gives the board's answer (one crumb a level). */
+    async awaited({ m, config, locale, routes, hrefFor, level, read, renderCaptured, check }) {
+      for (const item of config.items.filter((i) => !(i.board === "feed" || (i.board === undefined && i.feed)))) {
+        const c = { ...config, items: config.items.map((i) => (i.id === item.id ? { ...i, pending: true } : i)) };
+        const k = `${item.id}/not-brought-yet`;
+        const subject = `${locale} ${k} (pending)`;
+        const v = routes.parse(c, k);
+        if (!check(!!v, "awaited", subject, "parse accepts a pending item's unknown entry key")) continue;
+        let head = null;
+        try {
+          head = routes.head(c, v);
+        } catch (error) {
+          check(false, "awaited", subject, `head threw on a key parse accepts — ${DOC} §2`, error.message);
+          continue;
+        }
+        check(head.breadcrumb.length === level(v), "awaited", subject, "head.breadcrumb names each level", JSON.stringify(head.breadcrumb));
+        const out = await renderCaptured(h(m.Dossier, { config: c, view: v, onNavigate: noop, hrefFor }));
+        if (!check(!out.error, "awaited", subject, `render threw: ${out.error?.message}`)) continue;
+        const h1s = read(out.html).blocks.filter((b) => b.type === "h1");
+        check(h1s.length === 1 && norm(head.title).includes(norm(h1s[0].text)), "awaited", subject, "one h1, contained in head.title (§4)", `h1 ${JSON.stringify(h1s.map((b) => b.text))}, title "${head.title}"`);
+      }
+    },
     /* Head preloads (`dossierViewImages`, `dossierViewMedia`) on a copy of the config whose images carry a `srcSet`:
        every srcset image carries its `sizes` (never 100vw by omission); a detail lists its `sources` when it has
        them, else its media at the tile's `sizes` (the overview's), never the unshown tile at 100vw. */
@@ -720,6 +762,21 @@ async function verifyPackage(spec, foundation) {
 
     if (spec.feed) {
       await spec.feed({ config, locale, views, make, hrefFor, routes, read, renderCaptured, check: (ok, rule, subject, message, detail) => check(ok, pkg, rule, subject, message, detail) });
+    }
+    for (const hook of [spec.itemCopy, spec.awaited].filter(Boolean)) {
+      await hook({
+        m,
+        config,
+        locale,
+        routes,
+        hrefFor,
+        level,
+        ctx,
+        read,
+        renderCaptured,
+        verify: (args) => verifyView({ pkg, spec, m, ctx, ...args }),
+        check: (ok, rule, subject, message, detail) => check(ok, pkg, rule, subject, message, detail),
+      });
     }
 
     /* Direct load at rest: the same contract per view, plus the at-rest markup. */

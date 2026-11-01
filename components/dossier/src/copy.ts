@@ -1,4 +1,18 @@
-import type { DossierCopy, DossierFeedCopy, Locale } from "./types";
+import type { DossierCopy, DossierFeedCopy, DossierItem, Locale } from "./types";
+
+/** The copy of an item's views: the config's, with the item's own keys over it (`dock`, `loader`, `feed` key by key).
+    Without `item.copy` it is the config's copy itself. */
+export function itemCopy(copy: DossierCopy, item: DossierItem | null | undefined): DossierCopy {
+  const own = item?.copy;
+  if (!own) return copy;
+  return {
+    ...copy,
+    ...own,
+    dock: { ...copy.dock, ...own.dock },
+    loader: { ...copy.loader, ...own.loader },
+    ...(copy.feed || own.feed ? { feed: { ...copy.feed, ...own.feed } } : {}),
+  };
+}
 
 type Extra = Required<Pick<DossierCopy, "openItem" | "chooseItem" | "up" | "empty">> & { pending: string };
 

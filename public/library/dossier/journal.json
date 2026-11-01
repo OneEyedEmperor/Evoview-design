@@ -1,0 +1,1 @@
+{ "about": "Request target of the showcase journal's fake API (src/pages/library/dossier/journal.ts): one request per page, so scripts/feed-fetch-check.mjs can fail it by interception." }
