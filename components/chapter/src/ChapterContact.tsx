@@ -430,7 +430,6 @@ export function ChapterContact({ config, layout = "columns", hours = "today", id
   const heading = (
     <ChapterHeading
       level={level}
-      marker={false}
       layout={layout === "columns" ? "centered" : "split"}
       title={config.title}
       subtitle={config.lead}

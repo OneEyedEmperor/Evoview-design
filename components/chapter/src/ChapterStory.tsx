@@ -17,7 +17,7 @@ export type ChapterStoryMedia =
 export type ChapterStoryContent = {
   /** Overused 900 uppercase; one `<em>` = the accent word; a `<ChapterMark>` may replace a word. */
   title: ReactNode;
-  /** Client mark above the title (decorative, currentColor). Replaces the heading marker. */
+  /** Client mark above the title (decorative, currentColor). */
   emblem?: ReactNode;
   /** Paragraphs. */
   story: ReactNode[];
@@ -179,7 +179,6 @@ export function ChapterStory({
       <div className="ev-chapter-story__reveal" style={delay(80)}>
         <ChapterHeading
           level={level}
-          marker={!content.emblem}
           layout={centered ? "centered" : "split"}
           variant={headingVariant}
           title={content.title}

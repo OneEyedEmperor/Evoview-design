@@ -28,11 +28,6 @@
 
 .ev-chapter__title { color: var(--ev-fg); }
 .ev-chapter__title em { font-style: normal; color: var(--chapter-signal); }
-.ev-chapter__marker {
-  position: relative;
-  top: -0.06em;
-  margin-right: 0.42em;
-}
 
 .ev-chapter__mark {
   position: relative;

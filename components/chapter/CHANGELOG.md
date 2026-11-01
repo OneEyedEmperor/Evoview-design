@@ -1,5 +1,21 @@
 # chapter changelog
 
+## 1.7.0
+
+Signature change: the emperor, 2026-11-01: boxed REC dots removed
+(evoview.be's motif, RULES §8). The ticker dot and the state dots (contact
+open / closed, today mark) stay.
+
+Config changes: none. Requires nothing new (works on `foundation` ≥ 1.14.0;
+1.15.0 also drops the marker CSS).
+
+- `ChapterHeading` no longer renders the 20px marker box with the accent dot
+  before the title, nor its `live` pulse. The title starts where the marker
+  stood; centred titles re-centre. `ChapterStory` (with or without
+  `emblem`), `ChapterFaq` and `ChapterContact` headings follow.
+- Deprecated, accepted as no-ops for 1.x: `ChapterHeading` `marker`, `live`.
+- CSS removed: `.ev-chapter__marker`.
+
 ## 1.6.0
 
 Additive. Requires `foundation` ≥ 1.14.0 (paused `EvoviewMark`).

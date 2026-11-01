@@ -239,8 +239,6 @@ function Specimen({ t }: { t: Copy }) {
             )}
             <ChapterHeading
               level={3}
-              marker={false}
-              live={instrument === "ticker"}
               layout={heading === "split" ? "split" : "centered"}
               variant={heading === "feature" ? "feature" : "standard"}
               title={t.studio.title(titleWord)}

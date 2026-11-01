@@ -106,7 +106,6 @@ export function ChapterFaq({ config, layout, id = "faq", tone = "dark", rhythm =
   const heading = (
     <ChapterHeading
       level={level}
-      marker={false}
       layout={mode === "stacked" ? "centered" : "split"}
       title={config.title}
       subtitle={config.subtitle}

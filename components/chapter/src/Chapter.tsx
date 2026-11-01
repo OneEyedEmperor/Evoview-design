@@ -10,7 +10,7 @@ import {
   type HTMLAttributes,
   type ReactNode,
 } from "react";
-import { cn, inkFor, SectionMarker, useInViewPause } from "../foundation";
+import { cn, inkFor, useInViewPause } from "../foundation";
 
 export type ChapterTone = "light" | "paper" | "dark";
 export type ChapterRhythm = "standard" | "compact" | "cinematic";
@@ -104,25 +104,14 @@ export type ChapterHeadingProps = {
   variant?: ChapterHeadingVariant;
   /** The element only (never the voice or size). 1 = the page's title; 2 while a modal view's h1 is open (docs/CRAWLABLE-MODALS.md §4). Default 2. */
   level?: 1 | 2 | 3;
-  /** The 20px accent marker. Default true. */
+  /** @deprecated No effect since chapter 1.7.0: the boxed marker is gone (evoview.be's motif, RULES §8). */
   marker?: boolean;
-  /** Slow ambient pulse on the marker (pauses off-screen / hidden tab / modal). Use when the chapter hosts a running sequence. */
+  /** @deprecated No effect since chapter 1.7.0 (it pulsed the removed marker). */
   live?: boolean;
   className?: string;
 };
 
-export function ChapterHeading({
-  title,
-  subtitle,
-  support,
-  side,
-  layout = "centered",
-  variant = "standard",
-  level = 2,
-  marker = true,
-  live = false,
-  className,
-}: ChapterHeadingProps) {
+export function ChapterHeading({ title, subtitle, support, side, layout = "centered", variant = "standard", level = 2, className }: ChapterHeadingProps) {
   const slot = useContext(HeadingContext);
   const register = slot?.register;
   useLayoutEffect(() => register?.(), [register]);
@@ -134,7 +123,6 @@ export function ChapterHeading({
     >
       <div className="ev-chapter__main">
         <H id={slot?.id} className={cn("ev-chapter__title", variant === "feature" ? "ev-t-section-feature" : "ev-t-section")}>
-          {marker && <SectionMarker live={live} className="ev-chapter__marker" />}
           {title}
         </H>
         {subtitle && <p className="ev-chapter__subtitle">{subtitle}</p>}

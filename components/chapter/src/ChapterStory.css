@@ -1,7 +1,7 @@
 /* Evoview chapter story — the client's story with drifting lanes of its
    pictures. Scoped under .ev-chapter-story (on the Chapter root). Lanes are
    columns from 1024 (data-axis="y"), sideways rows below and in the `above`
-   layout (data-axis="x"). Accent: the heading marker / accent word only. */
+   layout (data-axis="x"). Accent: the accent word only. */
 
 .ev-chapter-story {
   --chapter-story-gap: max(0.75em, 10px);

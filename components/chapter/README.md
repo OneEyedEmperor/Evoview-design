@@ -34,18 +34,19 @@ them is a library change, never a client edit (RULES §13).
   continuation), `cinematic` 96–80 / 144–120 (dark entry); heading → content
   48 / 64 (authored, × `--ev-scale`). Never ad-hoc paddings.
 - **Rails.** `reading` 70em, `wide` 85em; never a third width.
-- **Heading anatomy.** The 20px marker carrying the accent dot, Overused 900
-  uppercase title with negative tracking (standard 22.6 → 29.2, feature 28 →
-  34.4), Montserrat subtitle at fg/.55 with measure 590 (centered) / 380
-  (split), optional support line, unboxed, no reveal. One feature heading per
-  page region; one accent word at most.
+- **Heading anatomy.** Overused 900 uppercase title with negative tracking
+  (standard 22.6 → 29.2, feature 28 → 34.4), Montserrat subtitle at fg/.55
+  with measure 590 (centered) / 380 (split), optional support line, unboxed,
+  no reveal. One feature heading per page region; one accent word at most.
+  No marker before the title: the boxed REC dot is evoview.be's motif
+  (RULES §8; removed in 1.7.0, the emperor's decision).
 - **Inline client mark** at 1.1em inside the title (replaces a word). This
   slot belongs to the **client** mark; the Evoview wordmark never goes there.
 - **Footer bar** (A10): on the wide rail, client logo left, legal + links
   right, Evoview credit at the end. No rule above it or between its groups
   (RULES §3 overrides the site's measured hairline): the tone cut or the
   chapter rhythm above separates it, spacing separates the credit.
-- **Accent roles:** the marker, ticker dot, the accent word, focus rings and
+- **Accent roles:** the ticker dot, the accent word, focus rings and
   whatever the chapter's children use as signal. Never backgrounds or body
   text. Light accents (yellow, off-white) read through `--chapter-signal`
   (pulled toward the tone foreground); state is never carried by colour alone.
@@ -205,7 +206,7 @@ const config = buildChapterConfig(locale);
 | Export | Props |
 | --- | --- |
 | `Chapter` | `id?`, `tone?: "light" \| "paper" \| "dark"` (light), `rhythm?: "standard" \| "compact" \| "cinematic"` (standard), `rail?: "reading" \| "wide" \| "none"` (reading; `none` = children place themselves, e.g. a track bleeding right with `.ev-track-gutters`), `accent?` (per-chapter `--primary` + auto ink), `navTone?` (true), `as?: "section" \| "article" \| "div"`, native attributes |
-| `ChapterHeading` | `title`, `subtitle?`, `support?`, `side?`, `layout?: "centered" \| "split"`, `variant?: "standard" \| "feature"`, `level?: 1 \| 2 \| 3` (2; see [Heading level](#heading-level)), `marker?` (true), `live?` (marker pulse) |
+| `ChapterHeading` | `title`, `subtitle?`, `support?`, `side?`, `layout?: "centered" \| "split"`, `variant?: "standard" \| "feature"`, `level?: 1 \| 2 \| 3` (2; see [Heading level](#heading-level)); `marker?`, `live?` deprecated, no effect |
 | `ChapterMark` | `label?` (the word it replaces; empty = decorative), `children` (svg / img, currentColor) |
 | `ChapterTicker` | `items`, `active?` (0-based; dot + ink + `aria-current`), `label`, `phone?: "hide" \| "show"` (hide) |
 | `ChapterFooter` | `config`, `tone?` (light), `layout?: "bar" \| "panel"` (bar) |
@@ -242,7 +243,7 @@ on the same tiles or alternating rows, never bare.
 
 Source: Tchin Tchin karaoke "Tout ce que vous devez savoir"
 (`docs/extraction/tchin-chapter-faq-footer.md`). A whole chapter: heading
-(`ChapterHeading`, no marker), the questions, optional JSON-LD.
+(`ChapterHeading`), the questions, optional JSON-LD.
 
 ```tsx
 <ChapterFaq config={buildChapterFaqConfig(locale)} layout="media" tone="dark" />
@@ -327,7 +328,7 @@ block `STORY` (`buildChapterStoryConfig(locale)`).
 
 Config (`ChapterStoryConfig`): `title` (one `<em>` accent word; a
 `<ChapterMark>` may replace a word), `emblem?` (client mark above the title,
-decorative, replaces the heading marker), `story[]` (paragraphs), `quote?
+decorative), `story[]` (paragraphs), `quote?
 { text, name, role? }`, `media[]` — `{ kind: "image", src, srcSet?, ratio }`
 or `{ kind: "video", src, poster, posterSrcSet?, ratio }` (`ratio` as CSS
 `"4 / 5"`). Media are dealt round-robin into the lanes; a short lane borrows
@@ -384,11 +385,11 @@ Footer social orbs and the mobile FAQ "more" button take foundation's press
 jelly (RULES §6); FAQ question headers and text links don't.
 
 No `prefers-reduced-motion` branch (architecture skill): one full-motion
-experience. Chapters and headings are static (no reveal, per the source). The
-only loop is the optional `live` marker pulse: it runs only while the chapter
-is on-screen, the document visible and no modal suspends the page
-(`useInViewPause` → `data-ev-paused`; `html[data-ev-suspended]`). Children
-with sequences use foundation's hooks themselves.
+experience. Chapters and headings are static (no reveal, per the source) and
+run no loop of their own. The shell marks itself paused while off-screen
+(`useInViewPause` → `data-ev-paused`; `html[data-ev-suspended]` under a
+modal) for `.ev-ambient` children; children with sequences use foundation's
+hooks themselves.
 
 ## Verification
 
@@ -400,12 +401,13 @@ with sequences use foundation's hooks themselves.
    (subtitle). Split heading in a narrow column: side wraps, title intact.
 3. Navbar: light over light / paper chapters, dark from the dark chapter's top
    edge, light again at the next light chapter.
-4. Palette: default, indigo, yellow, off-white — marker, ticker dot, accent
-   word, focus rings follow live; yellow / off-white still show state
+4. Palette: default, indigo, yellow, off-white — ticker dot, accent word,
+   focus rings follow live; yellow / off-white still show state
    (bar width, ink, dot).
 5. Keyboard: Tab reaches side controls, CTA, brand, footer links, Evoview
    mark; focus ring in the accent signal.
-6. `live` marker pauses off-screen / hidden tab / `suspendBackground()`.
+6. No marker before any title (no boxed REC dot, no empty slot): the title
+   starts at the heading's edge, centred titles stay centred.
 7. Footer: one linked Evoview mark, correct accessible name per locale, not
    adjacent to a client CTA — in both `bar` and `panel`.
 8. FAQ: each layout at 1440 / 1024 / 390 (media first on phones, 4 questions
