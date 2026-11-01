@@ -14,6 +14,12 @@
           "origin": { "ref": "f72e48d", "files": ["src/index.css", "src/lib/motion.ts", "src/data/sectionAccents.ts"] },
           "files": ["src/index.css", "src/lib/motion.ts", "src/data/sectionAccents.ts"],
           "note": "The site's root-scale model, radii and accents are its Expression (RULES §13); never aligned either way."
+        },
+        "evoviewgaming": {
+          "relation": "installed",
+          "version": "1.16.0",
+          "files": ["src/components/foundation/foundation.css", "src/components/foundation/tokens.ts"],
+          "note": "Installed via sync.sh 2026-11-01 (provenance in src/components/.evoview/foundation.json, 0 patches)."
         }
       }
     },
@@ -29,6 +35,12 @@
           "origin": { "ref": "f72e48d", "files": ["src/hooks/useSectionActive.ts", "src/components/useProcessPlayback.ts", "src/components/IntroSection.tsx", "src/components/FeaturesSection.tsx"] },
           "files": ["src/hooks/useSectionActive.ts", "src/components/useProcessPlayback.ts", "src/components/IntroSection.tsx", "src/components/FeaturesSection.tsx"],
           "note": "Site clocks are inline per section (user-approved choreography); only the semantics are shared."
+        },
+        "evoviewgaming": {
+          "relation": "installed",
+          "version": "1.16.0",
+          "files": ["src/components/foundation/useInViewPause.ts", "src/components/foundation/useSequenceClock.ts"],
+          "note": "Installed via sync.sh 2026-11-01 (provenance in src/components/.evoview/foundation.json, 0 patches)."
         }
       }
     },
@@ -44,6 +56,12 @@
           "origin": { "ref": "f72e48d", "files": ["src/context/BackgroundSuspensionContext.tsx"] },
           "files": ["src/context/BackgroundSuspensionContext.tsx"],
           "note": "Site ahead on timing: pre-paint flag, transition-priority consumers, body[data-background-suspended]."
+        },
+        "evoviewgaming": {
+          "relation": "installed",
+          "version": "1.16.0",
+          "files": ["src/components/foundation/suspension.ts"],
+          "note": "Installed via sync.sh 2026-11-01 (provenance in src/components/.evoview/foundation.json, 0 patches)."
         }
       }
     },
@@ -59,6 +77,12 @@
           "origin": { "ref": "f72e48d", "files": ["src/hooks/useContactMediaReady.ts", "src/hooks/useMethodModalMedia.ts", "src/lib/methodModalMedia.ts", "src/lib/dossierMedia.ts"] },
           "files": ["src/hooks/useContactMediaReady.ts", "src/hooks/useMethodModalMedia.ts", "src/lib/methodModalMedia.ts", "src/lib/dossierMedia.ts", "src/components/SmartVideo.tsx"],
           "note": "Site gates the real player element (full boomerang, blob URLs); library gates detached probes with session memory and WebKit fallbacks."
+        },
+        "evoviewgaming": {
+          "relation": "installed",
+          "version": "1.16.0",
+          "files": ["src/components/foundation/useMediaReady.ts"],
+          "note": "Installed via sync.sh 2026-11-01 (provenance in src/components/.evoview/foundation.json, 0 patches)."
         }
       }
     },
@@ -74,6 +98,12 @@
           "origin": { "ref": "9263f5a", "files": ["src/lib/routeHistory.ts", "src/data/routes.ts", "src/islands/RouteDossier.tsx", "src/entry-server.tsx", "scripts/prerender.mjs", "scripts/verify-crawlability.mjs"] },
           "files": ["src/lib/routeHistory.ts", "src/data/routes.ts", "src/islands/RouteDossier.tsx", "src/islands/boot.ts", "src/islands/HomeCopy.tsx", "src/entry-server.tsx", "scripts/prerender.mjs", "scripts/verify-crawlability.mjs"],
           "note": "Contract taken from the site (docs/CRAWLABLE-MODALS.md); the site keeps its own route model and islands."
+        },
+        "evoviewgaming": {
+          "relation": "installed",
+          "version": "1.16.0",
+          "files": ["src/components/foundation/routing.ts", "src/components/foundation/RouteLink.tsx", "src/components/foundation/HeldCopy.tsx", "scripts/prerender.ts", "src/entry-server.tsx", "src/site/head.ts"],
+          "note": "Installed via sync.sh 2026-11-01 (provenance in src/components/.evoview/foundation.json, 0 patches). Host glue listed after the package files."
         }
       }
     },
@@ -88,6 +118,12 @@
           "relation": "installed",
           "origin": { "ref": "b2d2567", "files": ["src/lib/routeHistory.ts"] },
           "files": ["src/components/foundation/hydration.ts"]
+        },
+        "evoviewgaming": {
+          "relation": "installed",
+          "version": "1.16.0",
+          "files": ["src/components/foundation/hydration.ts"],
+          "note": "Installed via sync.sh 2026-11-01 (provenance in src/components/.evoview/foundation.json, 0 patches)."
         }
       }
     },
@@ -102,6 +138,12 @@
           "relation": "counterpart",
           "files": ["src/hooks/useIsMobile.ts"],
           "note": "Site's useIsMobile predates it; the installed useMediaQuery is unused there."
+        },
+        "evoviewgaming": {
+          "relation": "installed",
+          "version": "1.16.0",
+          "files": ["src/components/foundation/useMediaQuery.ts"],
+          "note": "Installed via sync.sh 2026-11-01 (provenance in src/components/.evoview/foundation.json, 0 patches)."
         }
       }
     },
@@ -117,6 +159,12 @@
           "origin": { "ref": "ab01614", "files": ["src/lib/scrollLock.ts"] },
           "files": ["src/components/foundation/scrollLock.ts", "src/components/ServiceModal.tsx", "src/components/MethodStepModal.tsx", "src/components/PartnerWorkModal.tsx", "src/components/ContactQualificationSection.tsx", "src/components/nav/NavFinderMobile.tsx", "src/components/SiteHeader.tsx"],
           "note": "files = the package file plus every site lock consumer."
+        },
+        "evoviewgaming": {
+          "relation": "installed",
+          "version": "1.16.0",
+          "files": ["src/components/foundation/scrollLock.ts"],
+          "note": "Installed via sync.sh 2026-11-01 (provenance in src/components/.evoview/foundation.json, 0 patches)."
         }
       }
     },
@@ -130,6 +178,12 @@
         "evoview": {
           "relation": "installed",
           "files": ["src/components/foundation/liquid.ts", "src/components/foundation/OrbFill.tsx", "src/components/foundation/TextFill.tsx", "src/components/foundation/SurfaceFill.tsx", "src/components/detailFill.tsx", "src/components/dossierChromeFill.tsx"]
+        },
+        "evoviewgaming": {
+          "relation": "installed",
+          "version": "1.16.0",
+          "files": ["src/components/foundation/liquid.ts", "src/components/foundation/OrbFill.tsx", "src/components/foundation/TextFill.tsx", "src/components/foundation/SurfaceFill.tsx"],
+          "note": "Installed via sync.sh 2026-11-01 (provenance in src/components/.evoview/foundation.json, 0 patches)."
         }
       }
     },
@@ -145,6 +199,12 @@
           "origin": { "ref": "f72e48d", "files": ["src/components/ContactDossierScreen.tsx", "src/components/IntroSection.tsx"] },
           "files": ["src/components/ContactDossierScreen.tsx", "src/components/MethodStepModal.tsx"],
           "note": "Site framer versions are the origin (TV-channel switch, user-approved); foundation's is the Web Animations generalisation, installed but unused on the site."
+        },
+        "evoviewgaming": {
+          "relation": "installed",
+          "version": "1.16.0",
+          "files": ["src/components/foundation/ChannelSwitch.tsx"],
+          "note": "Installed via sync.sh 2026-11-01 (provenance in src/components/.evoview/foundation.json, 0 patches)."
         }
       }
     },
@@ -155,7 +215,13 @@
       "source": "library",
       "library": { "package": "foundation", "files": ["components/foundation/src/jelly.ts", "components/foundation/src/usePressJelly.ts"] },
       "downstream": {
-        "evoview": { "relation": "none", "files": [], "note": "Library-only (step-2 decision). A site rollout would be an explicit founder port, like the liquid fill." }
+        "evoview": { "relation": "none", "files": [], "note": "Library-only (step-2 decision). A site rollout would be an explicit founder port, like the liquid fill." },
+        "evoviewgaming": {
+          "relation": "installed",
+          "version": "1.16.0",
+          "files": ["src/components/foundation/jelly.ts", "src/components/foundation/usePressJelly.ts"],
+          "note": "Installed via sync.sh 2026-11-01 (provenance in src/components/.evoview/foundation.json, 0 patches)."
+        }
       }
     },
     {
@@ -165,7 +231,13 @@
       "source": "library",
       "library": { "package": "foundation", "files": ["components/foundation/src/primitives.tsx", "components/foundation/src/utils.ts"] },
       "downstream": {
-        "evoview": { "relation": "none", "files": [], "note": "Library neutral rules (RULES §1, §3); the site keeps its own (Gaegu numerals, counting lists)." }
+        "evoview": { "relation": "none", "files": [], "note": "Library neutral rules (RULES §1, §3); the site keeps its own (Gaegu numerals, counting lists)." },
+        "evoviewgaming": {
+          "relation": "installed",
+          "version": "1.16.0",
+          "files": ["src/components/foundation/primitives.tsx", "src/components/foundation/utils.ts"],
+          "note": "Installed via sync.sh 2026-11-01 (provenance in src/components/.evoview/foundation.json, 0 patches)."
+        }
       }
     },
     {
@@ -180,6 +252,12 @@
           "origin": { "ref": "f72e48d", "files": ["src/components/EvoviewLogo.tsx"] },
           "files": ["src/components/EvoviewLogo.tsx"],
           "note": "The site is Evoview: no attribution placement; only the wordmark artwork came from it."
+        },
+        "evoviewgaming": {
+          "relation": "installed",
+          "version": "1.16.0",
+          "files": ["src/components/foundation/brand/EvoviewLogo.tsx", "src/components/foundation/primitives.tsx"],
+          "note": "Installed via sync.sh 2026-11-01 (provenance in src/components/.evoview/foundation.json, 0 patches)."
         }
       }
     },
@@ -194,6 +272,12 @@
           "relation": "origin",
           "origin": { "ref": "f72e48d", "files": ["src/components/ContactApplication.tsx", "src/components/ContactJourney.tsx", "src/components/ServiceModal.tsx"] },
           "files": ["src/components/ContactApplication.tsx", "src/components/ContactJourney.tsx"]
+        },
+        "evoviewgaming": {
+          "relation": "installed",
+          "version": "1.6.0",
+          "files": ["src/components/controls/Commands.tsx", "src/components/controls/Choices.tsx", "src/components/controls/Fields.tsx", "src/components/controls/Progress.tsx", "src/components/controls/controls.css"],
+          "note": "Installed via sync.sh 2026-11-01 (provenance in src/components/.evoview/controls.json, 0 patches)."
         }
       }
     },
@@ -208,6 +292,12 @@
           "relation": "origin",
           "origin": { "ref": "f72e48d", "files": ["src/components/SectionHeading.tsx", "src/components/BelowFoldSection.tsx", "src/pages/Home.tsx"] },
           "files": ["src/components/SectionHeading.tsx", "src/components/BelowFoldSection.tsx", "src/pages/Home.tsx"]
+        },
+        "evoviewgaming": {
+          "relation": "installed",
+          "version": "1.7.0",
+          "files": ["src/components/chapter/Chapter.tsx", "src/components/chapter/chapter.css"],
+          "note": "Installed via sync.sh 2026-11-01 (provenance in src/components/.evoview/chapter.json, 0 patches)."
         }
       }
     },
@@ -229,6 +319,12 @@
           "relation": "origin",
           "origin": { "ref": "3eac948", "files": ["src/components/layout/Footer.tsx", "src/components/layout/Footer.css"] },
           "files": ["src/components/layout/Footer.tsx", "src/components/layout/Footer.css"]
+        },
+        "evoviewgaming": {
+          "relation": "installed",
+          "version": "1.7.0",
+          "files": ["src/components/chapter/ChapterFooter.tsx", "src/components/chapter/chapter-footer-panel.css"],
+          "note": "Installed via sync.sh 2026-11-01 (provenance in src/components/.evoview/chapter.json, 0 patches)."
         }
       }
     },
@@ -243,6 +339,12 @@
           "relation": "origin",
           "origin": { "ref": "3eac948", "files": ["src/components/sections/AboutSection.tsx", "src/components/sections/AboutSection.css", "src/components/sections/story-mosaic.ts"] },
           "files": ["src/components/sections/AboutSection.tsx", "src/components/sections/AboutSection.css", "src/components/sections/story-mosaic.ts"]
+        },
+        "evoviewgaming": {
+          "relation": "installed",
+          "version": "1.7.0",
+          "files": ["src/components/chapter/ChapterStory.tsx", "src/components/chapter/ChapterStory.css"],
+          "note": "Installed with its package (sync.sh, provenance in src/components/.evoview/), not rendered by the site."
         }
       }
     },
@@ -257,6 +359,12 @@
           "relation": "origin",
           "origin": { "ref": "3eac948", "files": ["src/components/karaoke/FaqSection.tsx", "src/components/karaoke/KaraokePoster.css", "src/data/karaoke-data.ts", "src/components/seo/JsonLd.tsx"] },
           "files": ["src/components/karaoke/FaqSection.tsx", "src/components/karaoke/KaraokePoster.css", "src/components/seo/JsonLd.tsx"]
+        },
+        "evoviewgaming": {
+          "relation": "installed",
+          "version": "1.7.0",
+          "files": ["src/components/chapter/ChapterFaq.tsx", "src/components/chapter/chapter-faq.css"],
+          "note": "Installed via sync.sh 2026-11-01 (provenance in src/components/.evoview/chapter.json, 0 patches)."
         }
       }
     },
@@ -271,6 +379,12 @@
           "relation": "origin",
           "origin": { "ref": "3eac948", "files": ["src/components/sections/ContactSection.tsx", "src/components/sections/ContactSection.css", "src/data/restaurant-info.ts"] },
           "files": ["src/components/sections/ContactSection.tsx", "src/components/sections/ContactSection.css", "src/data/restaurant-info.ts"]
+        },
+        "evoviewgaming": {
+          "relation": "installed",
+          "version": "1.7.0",
+          "files": ["src/components/chapter/ChapterContact.tsx", "src/components/chapter/chapter-contact.css"],
+          "note": "Installed with its package (sync.sh, provenance in src/components/.evoview/), not rendered by the site."
         }
       }
     },
@@ -285,6 +399,12 @@
           "relation": "counterpart",
           "origin": { "ref": "f72e48d", "files": ["src/components/VideoCardSlider.tsx", "src/components/PartnersSection.tsx", "src/components/PartnerCarousel.tsx", "src/components/PartnerCarousel.css"] },
           "files": ["src/components/VideoCardSlider.tsx", "src/components/PartnersSection.tsx", "src/components/PartnersSection.css", "src/components/PartnerCarousel.tsx", "src/components/PartnerCarousel.css"]
+        },
+        "evoviewgaming": {
+          "relation": "installed",
+          "version": "2.4.0",
+          "files": ["src/components/card/CardTrack.tsx", "src/components/card/MediaCard.tsx", "src/components/card/card-track.css", "src/components/card/strip.ts"],
+          "note": "Installed via sync.sh 2026-11-01 (provenance in src/components/.evoview/card.json, 0 patches)."
         }
       }
     },
@@ -299,6 +419,12 @@
           "relation": "origin",
           "origin": { "ref": "3eac948", "files": ["src/components/sections/MenuSection.tsx", "src/components/sections/MenuSection.css", "src/components/menu/SignatureCard.tsx", "src/components/menu/CategoryTabs.tsx", "src/components/menu/LogoCursor.tsx"] },
           "files": ["src/components/sections/MenuSection.tsx", "src/components/sections/MenuSection.css", "src/components/menu/SignatureCard.tsx", "src/components/menu/CategoryTabs.tsx", "src/components/menu/LogoCursor.tsx"]
+        },
+        "evoviewgaming": {
+          "relation": "installed",
+          "version": "2.4.0",
+          "files": ["src/components/card/CardDeck.tsx", "src/components/card/card-deck.css"],
+          "note": "Installed via sync.sh 2026-11-01 (provenance in src/components/.evoview/card.json, 0 patches)."
         }
       }
     },
@@ -313,6 +439,12 @@
           "relation": "origin",
           "origin": { "ref": "3eac948", "files": ["src/components/sections/KaraokeSection.tsx", "src/components/sections/KaraokeSection.css", "src/components/karaoke/VideoGallery.tsx", "src/components/karaoke/VideoGallery.css", "src/components/media/MediaWatermark.tsx", "src/components/media/MediaWatermark.css", "src/data/karaoke-data.ts"] },
           "files": ["src/components/sections/KaraokeSection.tsx", "src/components/sections/KaraokeSection.css", "src/components/karaoke/VideoGallery.tsx", "src/components/karaoke/VideoGallery.css", "src/components/media/MediaWatermark.tsx", "src/components/media/MediaWatermark.css", "src/data/karaoke-data.ts"]
+        },
+        "evoviewgaming": {
+          "relation": "installed",
+          "version": "2.4.0",
+          "files": ["src/components/card/CardSequence.tsx", "src/components/card/card-sequence.css"],
+          "note": "Installed with its package (sync.sh, provenance in src/components/.evoview/), not rendered by the site."
         }
       }
     },
@@ -328,6 +460,12 @@
           "origin": { "ref": "f72e48d", "files": ["src/components/IntroSection.tsx", "src/components/IntroSection.css", "src/components/MethodEye.tsx", "src/data/methodSteps.ts"] },
           "files": ["src/components/IntroSection.tsx", "src/components/IntroSection.css", "src/components/MethodEye.tsx", "src/data/methodSteps.ts"],
           "note": "La méthode artwork and choreography are user-protected (site Project knowledge)."
+        },
+        "evoviewgaming": {
+          "relation": "installed",
+          "version": "1.9.1",
+          "files": ["src/components/process-sequence/ProcessSequence.tsx", "src/components/process-sequence/StepCard.tsx", "src/components/process-sequence/process-sequence.css"],
+          "note": "Installed via sync.sh 2026-11-01 (provenance in src/components/.evoview/process-sequence.json, 0 patches)."
         }
       }
     },
@@ -343,6 +481,12 @@
           "origin": { "ref": "f72e48d", "files": ["src/components/IntroSection.tsx", "src/hooks/useMethodModalMedia.ts"] },
           "files": ["src/components/MethodStepModal.tsx", "src/hooks/useMethodModalMedia.ts"],
           "note": "Moved out of IntroSection.tsx into MethodStepModal.tsx in b2d2567."
+        },
+        "evoviewgaming": {
+          "relation": "installed",
+          "version": "1.9.1",
+          "files": ["src/components/process-sequence/StepDossier.tsx", "src/components/process-sequence/media.ts", "src/components/process-sequence/routes.ts", "src/pages/HowWeReport.tsx"],
+          "note": "Installed via sync.sh 2026-11-01 (provenance in src/components/.evoview/process-sequence.json, 0 patches). Host glue listed after the package files."
         }
       }
     },
@@ -357,6 +501,12 @@
           "relation": "origin",
           "origin": { "ref": "f72e48d", "files": ["src/components/DeliverableDetail.tsx", "src/components/PhotoCampaign.tsx", "src/components/PhotoCampaign.css"] },
           "files": ["src/components/DeliverableDetail.tsx", "src/components/PhotoCampaign.tsx", "src/components/PhotoCampaign.css"]
+        },
+        "evoviewgaming": {
+          "relation": "installed",
+          "version": "2.7.0",
+          "files": ["src/components/story-blocks/Story.tsx", "src/components/story-blocks/blocks.tsx", "src/components/story-blocks/parts.tsx", "src/components/story-blocks/story-blocks.css"],
+          "note": "Installed via sync.sh 2026-11-01 (provenance in src/components/.evoview/story-blocks.json, 0 patches)."
         }
       }
     },
@@ -378,6 +528,12 @@
           "version": "1.11.2",
           "files": ["src/components/dossier/Dossier.tsx", "src/components/dossier/Board.tsx", "src/components/dossier/Loader.tsx", "src/components/dossier/hooks.ts", "src/components/dossier/routes.ts", "src/components/dossier/copy.ts", "src/components/dossier/dossier.css", "src/components/dossier/dossier.config.tsx", "src/components/menu-dossier/MenuDossier.tsx", "src/components/layout/Layout.tsx"],
           "note": "Installed 2026-10-29 via sync.sh (provenance in src/components/.evoview/dossier.json): /menu as a sheet dossier, opening Carte | Promotions (live API), directLoad at-rest. Host glue: menu-dossier/ and Layout.tsx (history pin, backdrop)."
+        },
+        "evoviewgaming": {
+          "relation": "installed",
+          "version": "1.13.1",
+          "files": ["src/components/dossier/Dossier.tsx", "src/components/dossier/Board.tsx", "src/components/dossier/Loader.tsx", "src/components/dossier/hooks.ts", "src/components/dossier/routes.ts", "src/components/dossier/copy.ts", "src/components/dossier/dossier.css", "src/stories/StoriesDossier.tsx", "src/stories/state.tsx", "src/layout/Layout.tsx"],
+          "note": "Installed via sync.sh 2026-11-01 (provenance in src/components/.evoview/dossier.json, 0 patches). Host glue listed after the package files."
         }
       }
     },
@@ -393,6 +549,12 @@
           "origin": { "ref": "f72e48d", "files": ["src/components/DeliverableDetail.tsx", "src/components/VisualSystemDossier.tsx", "src/components/BrandAuditDetail.tsx"] },
           "files": ["src/components/VisualSystemDossier.tsx", "src/components/BrandAuditDetail.tsx"],
           "note": "Per-service art direction stays the site's (extraction/service-dossiers.md)."
+        },
+        "evoviewgaming": {
+          "relation": "installed",
+          "version": "1.13.1",
+          "files": ["src/components/dossier/Chapters.tsx", "src/stories/ArticleView.tsx"],
+          "note": "Installed via sync.sh 2026-11-01 (provenance in src/components/.evoview/dossier.json, 0 patches). Host glue listed after the package files."
         }
       }
     },
@@ -430,6 +592,12 @@
           "version": "2.10.3",
           "files": ["src/components/navbar/NavFinder.tsx", "src/components/navbar/NavFinderMobile.tsx", "src/components/navbar/finderShared.tsx", "src/components/navbar/navbar.css", "src/components/navbar/navbar.config.tsx", "src/components/navbar/.navbar-version"],
           "note": "sync.sh provenance since 2026-10-29 (adopted from the legacy 2.1.0 stamp). 2.0.0 took Tchin's refinements as the baseline."
+        },
+        "evoviewgaming": {
+          "relation": "installed",
+          "version": "2.10.3",
+          "files": ["src/components/navbar/NavFinder.tsx", "src/components/navbar/NavFinderMobile.tsx", "src/components/navbar/finderShared.tsx", "src/components/navbar/NavIcons.tsx", "src/components/navbar/useNavState.ts", "src/components/navbar/useNavTrays.ts", "src/components/navbar/useNavbarLinks.ts", "src/components/navbar/navbar.css", "src/layout/Layout.tsx"],
+          "note": "Installed via sync.sh 2026-11-01 (provenance in src/components/.evoview/navbar.json, 0 patches). Host glue listed after the package files."
         }
       }
     },

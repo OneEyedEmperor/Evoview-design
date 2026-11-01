@@ -13,8 +13,9 @@ Fix. No config change, no API change. Requires nothing new (foundation ≥ 1.16.
     detail shows.
   - Measured on a cold detail (srcset harness, hero listed in `sources`): two
     files → one at 1366 / 1440, one file at 390 either way.
-  - Clients whose detail shows `media` itself: nothing changes (no `srcSet`), or
-    list it in `sources` as rendered.
+  - Clients whose detail shows `media` itself: without `sources`, nothing
+    changes (no `srcSet`). With `sources`, the detail no longer waits for
+    `media`; add `media` to `sources` (as rendered) to keep waiting on it.
   - `verify:ssr` checks it on a srcset copy of the reference configs.
 - Docs (no code change): in `heading: "header"` mode (the default) a detail's
   visible desktop h1 is the full title on one line, cut with an ellipsis past
