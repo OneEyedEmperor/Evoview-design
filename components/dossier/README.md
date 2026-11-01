@@ -280,7 +280,8 @@ type DossierConfig = {
       heading?: "header" | "content";              // where the h1 is (default header; content: the detail renders it)
       kicker?: string;
       media: { src; type?: "image" | "video"; poster?; srcSet?; sizes?; position?; fit?; alt? };  // alt: head image only
-      sources?: MediaSource[];                     // further detail media to decode first ({ src, srcSet?, sizes? } as rendered)
+      sources?: MediaSource[];                     // the detail's media to decode first, as rendered ({ src, srcSet?, sizes? });
+                                                   // given: the detail waits on these, not on `media`; omitted: `media` at the tile's sizes
       description?: string;                        // entry meta description, from its own copy
       content: (ctx: { item, entry, index, total, close, toOverview, headingId }) => ReactNode;
     }[];

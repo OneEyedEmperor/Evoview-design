@@ -77,6 +77,42 @@ const PACKAGES = [
       return { expected: (own.match(/class="evd-rows__media"/g) ?? []).length, required: Boolean(c.opening) && item.id === "menu" };
     },
     legacy: (m, c, v) => h(m.Dossier, { config: c, open: true, onClose: noop, initialItemId: v.item, initialEntryId: v.entry, preload: false }),
+    /* Head preloads (`dossierViewImages`, `dossierViewMedia`) on a copy of the config whose images carry a `srcSet`:
+       every srcset image carries its `sizes` (never 100vw by omission); a detail lists its `sources` when it has
+       them, else its media at the tile's `sizes` (the overview's), never the unshown tile at 100vw. */
+    viewImages(m, c) {
+      const set = (md) => (md && !/\.(mp4|webm|mov|m4v|ogv)(\?|#|$)/i.test(md.src) ? { ...md, srcSet: `${md.src}?w=640 640w, ${md.src} 1200w` } : md);
+      const cfg = {
+        ...c,
+        items: c.items.map((item) => ({
+          ...item,
+          cover: item.cover && set(item.cover),
+          entries: item.entries.map((e, i) => ({
+            ...e,
+            media: set(e.media),
+            ...(i === 0 ? { sources: [{ src: `${e.media.src}?hero`, srcSet: `${e.media.src}?hero 1200w`, sizes: "80vw" }] } : {}),
+          })),
+        })),
+      };
+      const out = [];
+      for (const v of m.dossierRoutes.views(cfg)) {
+        const k = m.dossierRoutes.key(v);
+        const images = m.dossierViewImages(cfg, v);
+        const bare = images.filter((i) => i.srcSet && !i.sizes);
+        out.push([!bare.length, "every srcset image of a view preload carries its sizes", k, bare.map((i) => i.src).join(", ")]);
+        if (v.entry === undefined) continue;
+        const entry = cfg.items.find((i) => i.id === v.item)?.entries.find((e) => e.id === v.entry);
+        if (!entry) continue;
+        const media = m.dossierViewMedia(cfg, v);
+        if (entry.sources?.length) {
+          out.push([images.length === 1 && images[0].sizes === "80vw" && media.length === 1 && media[0] === entry.sources[0].src, "a detail with sources preloads its sources only (not the unshown tile media)", k, JSON.stringify(images)]);
+        } else {
+          const tile = m.dossierViewImages(cfg, { ...v, entry: undefined }).find((i) => i.src === entry.media.src);
+          out.push([images.length === 1 && !!tile && images[0].sizes === tile.sizes, "a detail without sources preloads its media at the tile's sizes", k, `${images[0]?.sizes} vs tile ${tile?.sizes}`]);
+        }
+      }
+      return out;
+    },
     /* §4 on details: the h1 is the entry's `title` (never its short `label`), the dialog is labelled by it, and no
        other heading repeats it (no hidden duplicate). With `heading: "content"` the content renders that h1 and the
        header bar has none: checked on every entry of a copy of the config whose content leads with it. */
@@ -546,6 +582,8 @@ async function verifyPackage(spec, foundation) {
     for (const v of views) {
       if (routes.parent(v) && !linked.has(key(v))) check(false, pkg, "links", `${locale} ${key(v)}`, "no rendered view links to this view: unreachable for crawlers");
     }
+
+    if (spec.viewImages) for (const [ok, message, subject, detail = ""] of spec.viewImages(m, config)) check(ok, pkg, "view-images", `${locale} ${subject}`, message, detail);
 
     /* Entries whose content renders the view's h1 (`heading: "content"`): the same contract on every detail. */
     if (spec.heading?.content) {

@@ -41,8 +41,8 @@ import { SelectionBoard, type SelectionBoardLayout, type SelectionTile } from ".
 import { ChapterMediaContext, ChapterRevealContext, type ChapterReveal } from "./Chapters";
 import { fullCopy } from "./copy";
 import { DossierLoader } from "./Loader";
-import { DESKTOP_QUERY, toSource } from "./hooks";
-import { boardSizesFor, dossierRoutes, entryHeading, itemCover, itemView, openingLabel, openingSources, overviewSources, topView, type DossierView } from "./routes";
+import { DESKTOP_QUERY } from "./hooks";
+import { boardSizesFor, detailSources, dossierRoutes, entryHeading, itemCover, itemView, openingLabel, openingSources, overviewSources, topView, type DossierView } from "./routes";
 import type { DossierConfig, DossierEntry, DossierEntryContext, DossierItem } from "./types";
 
 type DossierBaseProps = {
@@ -219,7 +219,7 @@ const sourceSrc = (s: MediaSource) => (typeof s === "string" ? s : s ? s.src : "
 function sourcesOf(scene: Scene, items: DossierItem[], boardSizes: string | undefined): MediaSource[] {
   if (scene.kind === "opening") return openingSources(items, boardSizes);
   if (scene.kind === "overview") return overviewSources(scene.item?.entries ?? [], boardSizes);
-  return scene.entry ? [toSource(scene.entry.media), ...(scene.entry.sources ?? [])] : [];
+  return scene.entry && scene.item ? detailSources(scene.entry, scene.item.entries, boardSizes) : [];
 }
 
 /** The board an overview draws: the mosaic for four entries, the symmetric grid for other counts, a panel for none. */

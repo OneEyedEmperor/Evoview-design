@@ -1,5 +1,22 @@
 # dossier changelog
 
+## 1.13.1
+
+Fix. No config change, no API change. Requires nothing new (foundation ≥ 1.16.0).
+
+- **A cold detail URL no longer fetches the unshown tile image at 100vw.**
+  - On a detail, the media gate, `dossierViewImages` and `dossierViewMedia` take
+    the entry's `sources` when it lists them; otherwise its `media` at the
+    tile's `sizes`.
+  - They used to take `media` at its own `sizes`, default 100vw, plus
+    `sources`. At 1280–1366 that fetched the 1600w file besides the 1120w the
+    detail shows.
+  - Measured on a cold detail (srcset harness, hero listed in `sources`): two
+    files → one at 1366 / 1440, one file at 390 either way.
+  - Clients whose detail shows `media` itself: nothing changes (no `srcSet`), or
+    list it in `sources` as rendered.
+  - `verify:ssr` checks it on a srcset copy of the reference configs.
+
 ## 1.13.0
 
 Additive API, visible header change on details. Requires `foundation` ≥ 1.16.0.

@@ -72,6 +72,10 @@ export const openingSources = (items: DossierItem[], boardSizes: string | undefi
   items.map((i) => itemCover(i)).filter((m) => m !== undefined).map((m) => toSource(m, tileSizes(m, "choice", items.length, boardSizes)));
 export const overviewSources = (entries: DossierEntry[], boardSizes: string | undefined) =>
   entries.map((e) => toSource(e.media, tileSizes(e.media, boardShape(entries.length), entries.length, boardSizes)));
+/* A detail waits on what it shows: its `sources` when it lists them, else its media as the tile renders it (never at
+   100vw: a detail that shows the media at another size lists it in `sources`, as rendered). */
+export const detailSources = (entry: DossierEntry, entries: DossierEntry[], boardSizes: string | undefined): MediaSource[] =>
+  entry.sources?.length ? entry.sources : [toSource(entry.media, tileSizes(entry.media, boardShape(entries.length), entries.length, boardSizes))];
 
 function headImage(media: DossierMedia | undefined, alt: string): ViewHead["image"] {
   if (!media) return undefined;
@@ -98,7 +102,9 @@ export function dossierViewMedia(config: DossierConfig, view: DossierView): stri
     ? config.items.map((item) => still(itemCover(item)))
     : !found.entry
       ? found.item.entries.map((e) => still(e.media))
-      : [still(found.entry.media), ...(found.entry.sources ?? []).map(source).filter((src) => src && !VIDEO_FILE.test(src))];
+      : found.entry.sources?.length
+        ? found.entry.sources.map(source).filter((src) => src && !VIDEO_FILE.test(src))
+        : [still(found.entry.media)];
   return Array.from(new Set(list.filter((s): s is string => !!s)));
 }
 
@@ -128,7 +134,9 @@ export function dossierViewImages(config: DossierConfig, view: DossierView): Dos
       })
     : !found.entry
       ? found.item.entries.flatMap((e, _, all) => shown(e.media, tileSizes(e.media, boardShape(all.length), all.length, boardSizes)))
-      : [...shown(found.entry.media), ...(found.entry.sources ?? []).flatMap(image)];
+      : found.entry.sources?.length
+        ? found.entry.sources.flatMap(image)
+        : shown(found.entry.media, tileSizes(found.entry.media, boardShape(found.item.entries.length), found.item.entries.length, boardSizes));
   const seen = new Set<string>();
   return list.filter((i) => {
     const key = `${i.src}|${i.srcSet ?? ""}|${i.sizes ?? ""}`;

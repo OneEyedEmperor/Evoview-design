@@ -62,9 +62,9 @@ export type DossierEntry = {
   heading?: "header" | "content";
   /** Optional readout above the tile title ("7 services · 78 €"). */
   kicker?: string;
-  /** Tile media; also decoded before the detail opens. */
+  /** Tile media; also what the detail waits on (at the tile's `sizes`) when it lists no `sources`. */
   media: DossierMedia;
-  /** Further detail media, decoded before the detail is revealed. */
+  /** The detail's own media as rendered (`{ src, srcSet?, sizes? }`): when given, the detail waits on these instead of `media`. */
   sources?: MediaSource[];
   /** One or two sentences from the detail's own copy: the view's meta description (`dossierRoutes.head`, cut to 160 characters). Default: title, kicker and item. */
   description?: string;
