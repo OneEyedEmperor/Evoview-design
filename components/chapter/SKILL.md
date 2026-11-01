@@ -37,9 +37,12 @@ Read `README.md` (Signature / Variations / Expression, API) and the library's
    fill patch reasons. Client tokens go in `chapter.theme.css`.
 4. Edit only `src/components/chapter/chapter.config.tsx`: client name, inline
    mark (currentColor SVG), footer logo, legal line, links (FR / EN). Leave
-   `attribution` as delivered (on, `https://evoview.be/`).
+   `attribution` as delivered (on, `https://evoview.be/`); `href: null` only
+   when the emperor pauses the link (the mark stays, unlinked).
 5. Wrap each section in `<Chapter id tone rhythm rail>` with one
-   `<ChapterHeading>`; put `<ChapterFooter config>` last. Remove any
+   `<ChapterHeading>`; put `<ChapterFooter config>` last. If the page opens
+   on a `ChapterHeading`, it is the page's h1: `level={1}` (`2` while a
+   modal view is open, README "Heading level"); never a hidden h1. Remove any
    `data-nav-tone="dark"` page wrapper; feed the navbar
    `sections: chapterNavSections(…, clientAccent)`.
    - FAQ: fill `buildChapterFaqConfig` (plain-text answers, optional

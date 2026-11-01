@@ -70,13 +70,13 @@ export type ChapterConfig = {
     socialsLabel?: string;
     contact?: ChapterFooterContact;
   };
-  /** The one linked Evoview wordmark of the page, in the footer chassis. */
+  /** The one linked Evoview wordmark of the page, in the footer chassis. `href: null` pauses the link (destination not live yet); the mark stays. */
   attribution: {
     enabled: boolean;
-    href: string;
+    href: string | null;
     /** Visible credit before the wordmark. */
     credit: string;
-    /** Accessible name: names Evoview and the new tab, in the page language. */
+    /** Accessible name: names Evoview and the new tab, in the page language. Unused while paused (the unlinked mark is named "Evoview"). */
     label: string;
   };
 };

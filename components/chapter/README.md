@@ -118,7 +118,8 @@ one linked mark per page and say so in the handoff. Chapters themselves
 (story, FAQ and contact included) carry no mark. Both footer layouts render
 the same credit: `bar` at the end of the row, `panel` centred under the meta
 row (it replaces the Tchin footer's unlinked logo image with the linked
-mark).
+mark). `attribution.href: null` pauses the link while evoview.be isn't live
+(the mark stays, unlinked); restore the URL to relink.
 
 ## Variations (select)
 
@@ -204,7 +205,7 @@ const config = buildChapterConfig(locale);
 | Export | Props |
 | --- | --- |
 | `Chapter` | `id?`, `tone?: "light" \| "paper" \| "dark"` (light), `rhythm?: "standard" \| "compact" \| "cinematic"` (standard), `rail?: "reading" \| "wide" \| "none"` (reading; `none` = children place themselves, e.g. a track bleeding right with `.ev-track-gutters`), `accent?` (per-chapter `--primary` + auto ink), `navTone?` (true), `as?: "section" \| "article" \| "div"`, native attributes |
-| `ChapterHeading` | `title`, `subtitle?`, `support?`, `side?`, `layout?: "centered" \| "split"`, `variant?: "standard" \| "feature"`, `level?: 2 \| 3`, `marker?` (true), `live?` (marker pulse) |
+| `ChapterHeading` | `title`, `subtitle?`, `support?`, `side?`, `layout?: "centered" \| "split"`, `variant?: "standard" \| "feature"`, `level?: 1 \| 2 \| 3` (2; see [Heading level](#heading-level)), `marker?` (true), `live?` (marker pulse) |
 | `ChapterMark` | `label?` (the word it replaces; empty = decorative), `children` (svg / img, currentColor) |
 | `ChapterTicker` | `items`, `active?` (0-based; dot + ink + `aria-current`), `label`, `phone?: "hide" \| "show"` (hide) |
 | `ChapterFooter` | `config`, `tone?` (light), `layout?: "bar" \| "panel"` (bar) |
@@ -220,6 +221,15 @@ phones, row `space-between` from 768 (side `flex: 0 0 auto`); the heading
 keeps ≥ 380 authored, so a side too wide for the container wraps under it.
 Centered: side goes under the support line. Footer links: `onSelect(event)`
 runs on click; `event.preventDefault()` keeps an `href` from navigating.
+
+### Heading level
+
+`level` changes the element only: voice, size and markup stay the same
+(the section stays `aria-labelledby` the heading). A page that opens on a
+`ChapterHeading` makes it its h1 with `level={1}`, one h1 per page. On a
+page that hosts a crawlable modal (`docs/CRAWLABLE-MODALS.md` §4) the host
+passes `1` on the page URL and `2` while a view is open (the view's title is
+the h1 then). `ChapterFaq`, `ChapterContact` and `ChapterStory` stay `2 | 3`.
 
 Text lists (RULES §3): `ChapterFaq` rows and the panel's page links sit on
 `--ev-surface-list` / `--ev-surface-list-alt` tiles. `ChapterTicker` is one

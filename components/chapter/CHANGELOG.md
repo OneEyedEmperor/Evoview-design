@@ -1,5 +1,24 @@
 # chapter changelog
 
+## 1.6.0
+
+Additive. Requires `foundation` ≥ 1.14.0 (paused `EvoviewMark`).
+
+Config changes: `ChapterConfig.attribution.href` accepts `null` to pause the
+footer mark's link while evoview.be isn't live (foundation `EvoviewMark`
+paused state, named "Evoview", not "new tab"); the mark and the credit stay.
+The type lives in the client-owned `chapter.config.tsx`, which sync never
+writes: take the widened `href: string | null` line from the template diff
+shown by `sync.sh plan`.
+
+API (additive): `ChapterHeading` `level?: 1 | 2 | 3` (was `2 | 3`, default
+2). `1` makes the page's opening heading its h1; the element changes, the
+voice, size and markup don't. On a page hosting a crawlable modal the host
+passes `1` on the page URL and `2` while a view is open
+(`docs/CRAWLABLE-MODALS.md` §4).
+
+Existing configs render unchanged (same server HTML).
+
 ## 1.5.0
 
 - Sync (`docs/SYNC.md`): `evoview.json` (`requires` foundation `>=1.9.0 <2`,

@@ -102,7 +102,8 @@ export type ChapterHeadingProps = {
   layout?: ChapterHeadingLayout;
   /** feature = one size up (28 → 34.4); one feature heading per page region. */
   variant?: ChapterHeadingVariant;
-  level?: 2 | 3;
+  /** The element only (never the voice or size). 1 = the page's title; 2 while a modal view's h1 is open (docs/CRAWLABLE-MODALS.md §4). Default 2. */
+  level?: 1 | 2 | 3;
   /** The 20px accent marker. Default true. */
   marker?: boolean;
   /** Slow ambient pulse on the marker (pauses off-screen / hidden tab / modal). Use when the chapter hosts a running sequence. */
