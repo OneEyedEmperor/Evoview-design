@@ -46,6 +46,9 @@ export type DossierFeedOptions<T> = {
   /** Check page 1 for new entries this often while the feed's first page is on screen (pause model); they wait behind
       an "N new" control. Omitted: no live updates. */
   refreshMs?: number;
+  /** What the cache belongs to (e.g. the locale): it empties when `key` changes, and the source may then be rebuilt
+      on every render (the latest is always used). Omitted: the cache belongs to the source's functions. */
+  key?: string | number;
 };
 
 type Page<T> = DossierFeedPageData<T>;
@@ -133,20 +136,40 @@ export function dossierFeed<T extends object>(snapshot: DossierFeedSnapshot<T>, 
  * The live feed: pages fetched on demand from `source`, the board's batches, single entries for deep links, live
  * updates waiting behind a control. Seed it with the server's `initial` snapshot so hydration matches. Put the result on
  * the item: `{ id, label, board: "feed", feed, entries: feed.entries }`.
- * The cache belongs to one source: a new `source` object (another locale's API) empties it and aborts what is in
- * flight; `initial` seeds the first source only. Memoise the source (`useMemo` on what it depends on, e.g. the locale),
- * or every render starts over.
+ * The cache belongs to `options.key` when given (e.g. the locale), else to the source's functions (`fetchPage`,
+ * `fetchEntry`, `toEntry`): when that changes (another locale's API) it empties and what is in flight is aborted;
+ * `initial` seeds the first one only. The latest `source` is always the one called, so with a `key` it may be an
+ * inline literal; without one, keep its functions stable (module functions, `useMemo` / `useCallback`). Functions
+ * rebuilt on every render without a `key` are detected: the cache then stays put (a console warning names the fix).
  */
 export function useDossierFeed<T extends object>(source: DossierFeedSource<T>, options: DossierFeedOptions<T> = {}): DossierFeed {
+  const identity: readonly unknown[] = options.key !== undefined ? ["key", options.key] : [source.fetchPage, source.fetchEntry, source.toEntry];
   const [state, setState] = useState<State<T>>(() => seed(options.initial, source.toEntry));
-  const [owner, setOwner] = useState(source);
+  const [owner, setOwner] = useState<Owner<T>>(() => ({ id: identity, generation: 0, before: null, pinned: false, toEntry: source.toEntry }));
   const inflight = useRef(new Map<string, AbortController>());
   let current = state;
-  if (owner !== source) {
-    // Another source: its records, not the previous one's. Reset during render, before anything reads the old cache.
-    current = seed<T>();
-    setOwner(source);
+  let own = owner;
+  /* Another owner: its records, not the previous one's. Reset during render, before anything reads the old cache.
+     `before` holds the previous cache until the reset commits: an identity that changes again within the same render
+     pass is rebuilt on every render, so the cache is restored and pinned instead of resetting forever. */
+  const changed = !owner.pinned && !sameIdentity(owner.id, identity);
+  if (changed && owner.before) {
+    own = { ...owner, id: identity, generation: owner.generation - 1, before: null, pinned: true };
+    current = owner.before;
+    setOwner(own);
     setState(current);
+    if (!warned) {
+      warned = true;
+      console.warn("useDossierFeed: the source's functions change on every render, so its cache is kept as is. Pass options.key (e.g. the locale) or keep fetchPage / fetchEntry / toEntry stable.");
+    }
+  } else if (changed) {
+    own = { id: identity, generation: owner.generation + 1, before: state, pinned: false, toEntry: source.toEntry };
+    current = seed<T>();
+    setOwner(own);
+    setState(current);
+  } else if (owner.before) {
+    own = { ...owner, before: null };
+    setOwner(own);
   }
   const live = useRef({ state: current, source });
   live.current = { state: current, source };
@@ -157,7 +180,7 @@ export function useDossierFeed<T extends object>(source: DossierFeedSource<T>, o
       for (const controller of running.values()) controller.abort();
       running.clear();
     };
-  }, [source]);
+  }, [own.generation]);
 
   const run = useCallback(<R,>(key: string, task: (signal: AbortSignal) => Promise<R>, done: (result: R) => void, failed: () => void) => {
     if (inflight.current.has(key)) return;
@@ -255,11 +278,17 @@ export function useDossierFeed<T extends object>(source: DossierFeedSource<T>, o
   }, []);
 
   const { pageSize, batchCap, refreshMs } = options;
+  // The owner's `toEntry` (taken when the cache was last reset): an inline one doesn't remap every entry on each render.
+  const toEntry = own.toEntry;
   return useMemo(
-    () => build(current, source.toEntry, { pageSize, batchCap, refreshMs }, { loadPage, loadEntry, showFresh, checkFresh: refreshMs ? checkFresh : undefined }),
-    [current, source.toEntry, pageSize, batchCap, refreshMs, loadPage, loadEntry, showFresh, checkFresh],
+    () => build(current, toEntry, { pageSize, batchCap, refreshMs }, { loadPage, loadEntry, showFresh, checkFresh: refreshMs ? checkFresh : undefined }),
+    [current, toEntry, pageSize, batchCap, refreshMs, loadPage, loadEntry, showFresh, checkFresh],
   );
 }
+
+type Owner<T> = { id: readonly unknown[]; generation: number; before: State<T> | null; pinned: boolean; toEntry: (record: T) => DossierEntry };
+let warned = false;
+const sameIdentity = (a: readonly unknown[], b: readonly unknown[]) => a.length === b.length && a.every((v, i) => Object.is(v, b[i]));
 
 /* ─── Package side: what the dossier reads from a feed item ─── */
 

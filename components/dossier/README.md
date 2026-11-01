@@ -192,7 +192,10 @@ live (the mark stays, unlinked); restore the URL to relink.
 - **Opening screen** (`config.opening`): an optional top level choosing
   between the items (Tchin: `Carte | Promotions`); selecting opens that
   item's overview, Escape / Back / `‹ <label>` return to it. Its own view
-  and URL (`opening.id`), h1 `opening.title`. Meant for 2–4 items.
+  and URL (`opening.id`), h1 `opening.title`. Meant for 2–5 items. Five
+  (approved on Evoview Gaming: Latest + four desks): a lead tile on a full
+  row over a 2×2 from 600, five rows on phones; put the item that leads
+  (a feed, the main one) first.
 - **Universes:** one item (no pager; the last entry's next returns to the
   overview) or several (pager in the header, dock steps through items).
 - **Entry counts:** four entries make the mosaic (panorama) / 2×2 (sheet);
@@ -301,6 +304,7 @@ type DossierConfig = {
     pending?: boolean;                             // live content still loading
     board?: "selection" | "feed";                  // DOSSIER_ITEM_BOARDS; default "selection" ("feed" with `feed`)
     feed?: DossierFeed;                            // useDossierFeed / dossierFeed; then entries: feed.entries
+    copy?: DossierItemCopy;                        // (1.15.0) this item's views in its own words, over `copy` (below)
     entries: {                                     // 4 = mosaic; any other count, 0..n = symmetric grid
       id: string; title: string;                   // title: the view's h1 and head title
       label?: string;                              // short name: tabs, dock, phone header readout (default: title)
@@ -336,6 +340,16 @@ Ids (opening, items, entries) are URL slugs: `[a-z0-9-]`. Copy keys added in
 1.8.0 are optional (`openItem`, `chooseItem`, `up`, `empty`,
 `loader.pending`); omitted, they take the locale's defaults.
 
+**Item copy** (`item.copy`, 1.15.0): `copy` names the items' shared kind
+("Desk", "Univers"); an item of another kind keeps its own words with
+`item.copy`, any `DossierCopy` key, `dock` / `loader` / `feed` key by key
+(`DossierItemCopy`). It applies to that item's views only: header (the
+overview's `overviewTitle` is its h1 and head title), strip, toast, dock,
+loader, spoken names. A feed among desks: `{ overview: "Latest",
+toastBack: "Back to Latest", dock: { item: "Latest" }, loader: {
+overviewKicker: () => "Latest" } }`. The reference journal carries its feed
+copy this way (`buildDossierFeedItem`). Without `item.copy` nothing changes.
+
 ### Live content
 
 A config is data: build an item's entries from fetched content (an
@@ -351,7 +365,9 @@ const config = useMemo(() => buildConfig(locale, promos), [locale, promos]);
 - `pending: true` while loading: the item's views wait behind the loader
   (status `loader.pending`) and `parse` accepts its entry keys, so a deep
   link (`/menu/promotions/<id>/`) seeds a view that opens once the entry
-  arrives. Set it false once the data is in, whatever it holds.
+  arrives; `head` answers such a key with its item board's data (served as
+  a `noindex` shell, CRAWLABLE-MODALS §7.4). Set it false once the data is
+  in, whatever it holds.
 - Entries may change while the dossier is open: the board re-lays out (the
   previous one stays until the new media are decoded); an open entry that
   disappears, or a pending key that never arrives, settles on its item's
@@ -372,7 +388,7 @@ type DossierFeedSource<T extends object> = {
   fetchEntry?(id: string, signal: AbortSignal): Promise<T | null>;   // deep links to entries not in a loaded page
   toEntry(record: T): DossierEntry;                                  // id = stable URL slug
 };
-useDossierFeed(source, { initial?: DossierFeedSnapshot<T>, pageSize = 9, batchCap = 8, refreshMs? }): DossierFeed;
+useDossierFeed(source, { initial?: DossierFeedSnapshot<T>, pageSize = 9, batchCap = 8, refreshMs?, key? }): DossierFeed;
 dossierFeed(snapshot, toEntry, { pageSize, batchCap }): DossierFeed;   // data only: build time, prerender
 feedEntry({ id, title, label?, kicker?, media, excerpt?, body?: string[], content?, closing? }): DossierEntry;
 ```
@@ -382,7 +398,7 @@ feedEntry({ id, title, label?, kicker?, media, excerpt?, body?: string[], conten
   (Instagram) walks from page 1 inside `fetchPage`. `next: null` = last page;
   past the end resolve `{ items: [] }`; reject on failure (retry offered).
   Records stay the source's own shape, serialisable for the snapshot;
-  `toEntry` maps them (rebuild the source on a locale change, memoise it).
+  `toEntry` maps them (a new locale needs a new cache: `key`, below).
   `feedEntry` gives a default article detail: title and lead over the hero
   picture, then the text in the reading column; pass `content` (with its
   `sources`, as rendered) for your own chapters, `closing` for the story's one
@@ -400,14 +416,21 @@ feedEntry({ id, title, label?, kicker?, media, excerpt?, body?: string[], conten
   (`idle | loading | ready | error | missing`), loaders, live updates. A
   failed page or entry is fetched again only on an explicit retry
   (`loadPage(n, true)`: the board's and the loader's retry, appending past it);
-  renders never re-fetch it. The cache belongs to one `source` object: a new
-  one (another locale's API) empties it and aborts what is in flight, and
-  `initial` seeds the first source only, so memoise the source on what it
-  depends on.
+  renders never re-fetch it.
+- **Cache owner** (1.15.0). With `key` (e.g. the locale) the cache belongs
+  to it: a new `key` empties it and aborts what is in flight, and the source
+  may be an inline literal rebuilt on every render (the latest is always
+  called; its `toEntry` is taken when the cache resets). Without `key` the
+  cache belongs to the source's functions (`fetchPage`, `fetchEntry`,
+  `toEntry`): keep them stable (module functions, `useMemo` /
+  `useCallback`), a change resets as above. Functions rebuilt on every
+  render without a `key` no longer loop ("Too many re-renders", 1.14.0): the
+  cache stays as is and a console warning names the fix. `initial` seeds the
+  first owner only.
 - **Wiring:**
   ```tsx
   const source = useMemo(() => newsSource(locale), [locale]);         // fetchPage / fetchEntry / toEntry
-  const feed = useDossierFeed(source, { initial: snapshot, refreshMs: 60_000 });
+  const feed = useDossierFeed(source, { initial: snapshot, refreshMs: 60_000, key: locale });
   const config = useMemo(() => buildConfig(locale, feed), [locale, feed]);
   // item: { id: "news", label, board: "feed", feed, entries: feed.entries, empty }
   ```
@@ -425,7 +448,9 @@ feedEntry({ id, title, label?, kicker?, media, excerpt?, body?: string[], conten
   parsed view: an awaited entry or page gets its board's answer (page title,
   item description and picture). **Server rule:** a key `parse` rejects is a
   real 404; a parsed key the build has no data for gets the page shell with
-  `noindex` and the client brings the view (contract §2, "Live content").
+  `noindex` and the client brings the view (contract §2, "Live content"; a
+  static host's recipe, `_shells.json`: §7.4). A host that stores view keys
+  keeps the `page` reported with an entry opened from a page view (§7.1).
 - **Server HTML** of a page view: that page's batch only (eager images), a
   link to the newer page (n ≥ 2) and to the older one (or the end panel). No
   placeholders, held tiles, live control or error state.
@@ -698,8 +723,10 @@ is suspended while open.
     (panorama) / sheet and 768–1023 / 390; scrolling to the end appends a
     batch with no existing tile moving (sample every tile's rect per frame);
     placeholders, then the batch's reveal; `?feed-network=down-from-2`:
-    error panel + retry, and `node scripts/feed-fetch-check.mjs <preview url>`
-    (a failed page is fetched once, never again without a retry); end panel after the last page; a detail opened from a late batch
+    error panel + retry, and `node scripts/feed-fetch-check.mjs <feed board URL>
+    [--page-request <regex>]` (any client, or the showcase journal by default:
+    it fails page ≥ 2 requests by interception and checks a failed page is
+    requested once, never again without a retry); end panel after the last page; a detail opened from a late batch
     and Escape return to the same scroll and refocus the tile; cold
     `journal/page/3/` and `journal/<entry of an unloaded page>/` open, Back
     steps out level by level; `?feed-cap=2`: the older link opens

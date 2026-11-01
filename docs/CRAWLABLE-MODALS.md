@@ -63,11 +63,13 @@ export type ProcessSequenceProps = Partial<RouteViewProps<ProcessSequenceView>> 
   feed accepts any entry slug and any page number, fetched on demand). A view
   whose content disappears settles on its nearest existing ancestor and is
   reported through `onNavigate`. `head` answers every view `parse` accepts,
-  an awaited one included (the item-level answer of what it shows meanwhile).
-  Server rule: a URL whose key `parse` rejects is a real 404 (§7.2); a URL
-  `parse` accepts but the build has no data for (an entry or page newer than
-  the build) is served the page shell with `noindex`, and the client brings
-  the view; every prerendered view is indexable as usual.
+  an awaited one included (a feed's entry or page, a pending item's entry:
+  the item-level answer of what it shows meanwhile); it throws only for a
+  view `parse` would reject. Server rule: a URL whose key `parse` rejects is
+  a real 404 (§7.2); a URL `parse` accepts but the build has no data for (an
+  entry or page newer than the build) is served the page shell with
+  `noindex`, and the client brings the view (static hosts: §7.4); every
+  prerendered view is indexable as usual.
 - Without `hrefFor` the package works as before (buttons, history entries on
   the current URL). Legacy props may stay for one minor version, mapped onto
   `view`; list them in the CHANGELOG.
@@ -183,6 +185,9 @@ from config facts, its own domain node (Evoview: `Service` +
    `<Dossier view={view} onNavigate={setView} hrefFor={routeHrefs(base, dossierRoutes.key)} />`
    whether open or not. Launchers are links:
    `<a href={hrefFor(v)} onClick={(e) => followRouteLink(e, () => setView(v))}>`.
+   A host that stores views as keys (state, storage, its router) keeps the
+   `page` the dossier reports with an entry opened from a feed page view:
+   the key drops it, and without it Escape / Back return to page 1.
 2. **Prerender** (`vite build --ssr src/entry-server.tsx` then a script;
    `react-dom/static` `prerender(node, { progressiveChunkSize:
    Number.MAX_SAFE_INTEGER })` so every boundary is inlined). For each page,
@@ -212,6 +217,27 @@ from config facts, its own domain node (Evoview: `Service` +
    llms list every indexable view. Templates: Evoview
    `scripts/verify-crawlability.mjs` (complete), Tchin Tchin
    `scripts/verify-crawlability.mjs` (minimal).
+4. **Shells on a static host** (§2: keys `parse` accepts beyond the build,
+   e.g. feed entries newer than it). Reference: Evoview Gaming
+   (`src/entry-server.tsx` `SHELLS`, `scripts/prerender.ts`,
+   `scripts/serve.mjs`).
+   - The prerender writes one shell per such route: the page document with
+     an empty root (the client renders the page and the view from the URL),
+     its head from `routes.head` of an awaited view of that shape (it
+     answers, §2), `noindex`, no canonical, no `og:url`. It also writes
+     `dist/_shells.json`, `[{ pattern, file }]`: one anchored regex
+     per accepted-but-unbuilt key shape (`^/stories/latest/[a-z0-9][a-z0-9-]*/$`),
+     matching exactly what `parse` accepts, never what it rejects.
+   - The server answers in order: an existing file or `<path>/index.html`;
+     else the first shell whose pattern matches the pathname, **200** with
+     the shell's HTML (`Cache-Control: no-cache`); a matching URL without its
+     trailing slash, 301 to it; anything else `404.html` with **404**.
+   - Hosts with rewrite rules express the same: a 200 rewrite (not a
+     redirect) from each pattern to its shell (Netlify `_redirects` `200`,
+     nginx `location ~ <pattern> { try_files $uri $uri/ /_shell/x.html; }`),
+     the 404 fallback otherwise, no SPA fallback.
+   - Verify: an unknown slug under each pattern returns 200 + `noindex`; a
+     key `parse` rejects returns 404.
 
 ## 8. `pnpm verify:ssr`
 

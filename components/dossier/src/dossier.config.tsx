@@ -8,7 +8,7 @@
 import { EVOVIEW_URL } from "../foundation";
 import { PrimaryPlate } from "../controls";
 import { ChapterFigure, ChapterHead, ChapterPayoff, ChapterRows, ChapterSpecimen, ChapterSplit, DossierChapter } from "./Chapters";
-import type { DossierComposition, DossierConfig, DossierCopy, DossierFeed, DossierItem, Locale } from "./types";
+import type { DossierComposition, DossierConfig, DossierCopy, DossierFeed, DossierItem, DossierItemCopy, Locale } from "./types";
 
 type L = Record<Locale, string>;
 type Rows = Record<Locale, [string, string][]>;
@@ -902,8 +902,10 @@ function specialsItem(locale: Locale, count: number): DossierItem {
   };
 }
 
-const FEED_COPY: Record<Locale, Partial<DossierCopy>> = {
+/* The journal's own words, on its item (`item.copy`): beside other items (universes, desks) its views keep them. */
+const FEED_COPY: Record<Locale, DossierItemCopy> = {
   fr: {
+    dock: { item: "Journal" },
     entriesNav: "Publications",
     itemLocation: (_i, _n, label) => label,
     nextEntry: (label) => `Publication suivante : ${label}`,
@@ -914,6 +916,7 @@ const FEED_COPY: Record<Locale, Partial<DossierCopy>> = {
     loader: { ...COPY.fr.loader, overviewKicker: () => "Journal", detailKicker: () => "Publication" },
   },
   en: {
+    dock: { item: "Journal" },
     entriesNav: "Entries",
     itemLocation: (_i, _n, label) => label,
     nextEntry: (label) => `Next entry: ${label}`,
@@ -937,22 +940,26 @@ export function buildDossierFeedConfig(locale: Locale, feed: DossierFeed, option
     composition,
     tileMedia: "true-colour",
     brand: { name: "Maison Ardoise" },
-    items: [
-      {
-        id: "journal",
-        label: locale === "fr" ? "Le journal" : "The journal",
-        description:
-          locale === "fr"
-            ? "Le journal de Maison Ardoise : producteurs, carte, cave, équipe et rendez-vous de la maison."
-            : "The Maison Ardoise journal: producers, menu, cellar, team and the house's events.",
-        board: "feed",
-        feed,
-        entries: feed.entries,
-        empty: locale === "fr" ? { title: "Le journal est vide pour le moment.", body: "Revenez bientôt." } : { title: "The journal is empty for now.", body: "Come back soon." },
-      },
-    ],
+    items: [buildDossierFeedItem(locale, feed)],
     attribution: { enabled: true, href: EVOVIEW_URL, label: T.attribution[locale] },
-    copy: { ...COPY[locale], ...FEED_COPY[locale] },
+    copy: COPY[locale],
+  };
+}
+
+/** The journal as an item, with its own copy: alone (`buildDossierFeedConfig`) or among other items (universes, desks). */
+export function buildDossierFeedItem(locale: Locale, feed: DossierFeed): DossierItem {
+  return {
+    id: "journal",
+    label: locale === "fr" ? "Le journal" : "The journal",
+    description:
+      locale === "fr"
+        ? "Le journal de Maison Ardoise : producteurs, carte, cave, équipe et rendez-vous de la maison."
+        : "The Maison Ardoise journal: producers, menu, cellar, team and the house's events.",
+    board: "feed",
+    feed,
+    entries: feed.entries,
+    empty: locale === "fr" ? { title: "Le journal est vide pour le moment.", body: "Revenez bientôt." } : { title: "The journal is empty for now.", body: "Come back soon." },
+    copy: FEED_COPY[locale],
   };
 }
 

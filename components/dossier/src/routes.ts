@@ -1,6 +1,6 @@
 import type { MediaSource, ModalRoutes, ViewHead } from "../foundation";
 import { tileSizes } from "./Board";
-import { feedCopy, fullCopy } from "./copy";
+import { feedCopy, fullCopy, itemCopy } from "./copy";
 import { feedOf, feedPageEntries, feedPageOf, feedTileSizes, feedTileSource, isFeedItem, pageNumber } from "./feed";
 import { isVideo, toSource } from "./hooks";
 import type { DossierComposition, DossierConfig, DossierEntry, DossierItem, DossierMedia, DossierOpening } from "./types";
@@ -174,16 +174,17 @@ function feedViews(config: DossierConfig, item: DossierItem): DossierView[] {
 }
 
 function feedHead(config: DossierConfig, view: DossierView, item: DossierItem, itemIndex: number, entry: DossierEntry | null, above: string[]): ViewHead {
-  const copy = feedCopy(config.copy, config.locale);
+  const own = itemCopy(config.copy, item);
+  const copy = feedCopy(own, config.locale);
   const page = pageNumber(view.page);
   const pageCrumb = page >= 2 ? [copy.page(page)] : [];
   if (!entry) {
     const shown = feedPageEntries(item, page);
-    const empty = item.empty ?? fullCopy(config.copy, config.locale).empty;
+    const empty = item.empty ?? fullCopy(own, config.locale).empty;
     const summary = shown.length ? shown.map((e) => e.title).join(", ") : empty.title.replace(/[.\s]+$/, "");
     const first = shown[0];
     return {
-      title: `${config.copy.overviewTitle(itemIndex + 1, item.label)}${page >= 2 ? ` · ${copy.page(page)}` : ""}`,
+      title: `${own.overviewTitle(itemIndex + 1, item.label)}${page >= 2 ? ` · ${copy.page(page)}` : ""}`,
       description: clip(page === 1 && item.description ? item.description : `${item.label}${page >= 2 ? ` · ${copy.page(page)}` : ""} — ${summary}.`),
       breadcrumb: [...above, item.label, ...pageCrumb],
       image: first ? headImage(first.media, first.title) : itemImage(item),
@@ -198,16 +199,22 @@ function feedHead(config: DossierConfig, view: DossierView, item: DossierItem, i
 }
 
 /**
- * Head data for a feed view `parse` accepts but the config cannot resolve yet: an entry not fetched (a deep link) or a
- * page not loaded. The dossier shows such a view as its page's board while it waits, so the answer is that board's:
- * the page's title (it contains the h1 rendered meanwhile), the item's description and picture, one crumb per level
- * (the awaited entry's crumb is the item, its title being unknown). Hosts serve these URLs with `noindex` (README "Feed").
+ * Head data for a view `parse` accepts but the config cannot resolve yet: a feed's entry not fetched (a deep link) or
+ * page not loaded, or a `pending` item's entry its live content has not brought. The dossier shows such a view as its
+ * board while it waits, so the answer is that board's: its title (it contains the h1 rendered meanwhile), the item's
+ * description and picture, one crumb per level (the awaited entry's crumb is the item, its title being unknown). Hosts
+ * serve these URLs with `noindex` (CRAWLABLE-MODALS §2).
  */
-function feedAwaitedHead(config: DossierConfig, view: DossierView, above: string[]): ViewHead | null {
+function awaitedHead(config: DossierConfig, view: DossierView, above: string[]): ViewHead | null {
   if (view.item === undefined) return null;
   const itemIndex = config.items.findIndex((i) => i.id === view.item);
   const item = config.items[itemIndex];
-  if (!item || !isFeedItem(item)) return null;
+  if (!item) return null;
+  if (!isFeedItem(item)) {
+    if (!item.pending || view.entry === undefined) return null;
+    const board = dossierRoutes.head(config, itemView(config, item.id));
+    return { ...board, breadcrumb: [...board.breadcrumb, item.label] };
+  }
   const board = feedHead(config, view.page !== undefined && view.page >= 2 ? { item: item.id, page: view.page } : { item: item.id }, item, itemIndex, null, above);
   return view.entry === undefined ? board : { ...board, breadcrumb: [...board.breadcrumb, item.label] };
 }
@@ -263,8 +270,8 @@ export const dossierRoutes: ModalRoutes<DossierConfig, DossierView> = {
     const found = resolveView(config, view);
     const above = config.opening ? [openingLabel(config.opening)] : [];
     if (!found) {
-      // A feed's awaited view (an entry or a page `parse` accepts but the data has not brought): an item-level answer.
-      const awaited = feedAwaitedHead(config, view, above);
+      // An awaited view (a feed's entry or page, a pending item's entry: `parse` accepts it, the data has not brought it): an item-level answer.
+      const awaited = awaitedHead(config, view, above);
       if (awaited) return awaited;
       throw new Error(`dossier: no view ${JSON.stringify(view)}`);
     }
@@ -281,10 +288,11 @@ export const dossierRoutes: ModalRoutes<DossierConfig, DossierView> = {
     const { item, itemIndex, entry } = found;
     if (isFeedItem(item)) return feedHead(config, view, item, itemIndex, entry, above);
     if (!entry) {
-      const empty = item.empty ?? fullCopy(config.copy, config.locale).empty;
+      const own = itemCopy(config.copy, item);
+      const empty = item.empty ?? fullCopy(own, config.locale).empty;
       const summary = item.entries.length ? item.entries.map((e) => e.title).join(", ") : empty.title.replace(/[.\s]+$/, "");
       return {
-        title: config.copy.overviewTitle(itemIndex + 1, item.label),
+        title: own.overviewTitle(itemIndex + 1, item.label),
         description: clip(item.description ?? `${item.label} — ${summary}.`),
         breadcrumb: [...above, item.label],
         image: itemImage(item),

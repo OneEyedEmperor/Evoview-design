@@ -23,7 +23,7 @@ export {
   type ChapterPayoffProps,
 } from "./Chapters";
 export { buildDossierConfig, dossierCopy } from "./dossier.config";
-export type { DossierConfig, DossierItem, DossierEntry, DossierEntryContext, DossierMedia, DossierCopy, DossierOpening, DossierComposition, DossierTileMedia, DossierDirectLoad, Locale } from "./types";
+export type { DossierConfig, DossierItem, DossierEntry, DossierEntryContext, DossierMedia, DossierCopy, DossierItemCopy, DossierOpening, DossierComposition, DossierTileMedia, DossierDirectLoad, Locale } from "./types";
 export { DOSSIER_COMPOSITIONS, DOSSIER_TILE_MEDIA, DOSSIER_DIRECT_LOADS } from "./types";
 export { DOSSIER_CHAPTER_VARIANTS, CHAPTER_ROWS_SURFACES, type DossierChapterVariant, type ChapterRowsSurface } from "./Chapters";
 export {

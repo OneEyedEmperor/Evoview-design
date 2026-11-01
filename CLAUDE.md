@@ -55,7 +55,7 @@ liquid fill as reference): `animations/SKILL.md` (skill
 | `card` — media card in three compositions: scroll-scrubbed track, dealt category deck, timed video sequence, per-item `href` (`/layouts/card`; was `card-track`) | 2.4.0 | `evoview-card` |
 | `process-sequence` — timed step board + step dossier, crawlable step views, bare-number orbs, wrapping step titles (`/layouts/process-sequence`) | 1.9.1 | `evoview-process-sequence` |
 | `story-blocks` — intro split, indexed sequence, proof collage, payoff; responsive media (`srcSet`, per-block `sizes`) (`/layouts/story-blocks`) | 2.7.0 | `evoview-story-blocks` |
-| `dossier` — portal modal, selection board, chapter strip, mobile dock, crawlable views; panorama / sheet compositions, optional opening screen, live entry counts, rows with media, direct load at rest, optional header kicker, entry h1 in header or content, feed board (live batches, page URLs, deep links, live updates) (`/components/dossier`) | 1.14.0 | `evoview-dossier` |
+| `dossier` — portal modal, selection board, chapter strip, mobile dock, crawlable views; panorama / sheet compositions, optional opening screen, live entry counts, rows with media, direct load at rest, optional header kicker, entry h1 in header or content, feed board (live batches, page URLs, deep links, live updates), per-item copy (`/components/dossier`) | 1.15.0 | `evoview-dossier` |
 | `selector-stage` — selector ↔ stage, before/after, atlas (`/components/selector-stage`) | 1.6.0 | `evoview-selector-stage` |
 | `navbar` — finder capsule, desktop + mobile, cover-card trays (`/navbar`) | 2.10.3 | `evoview-navbar` |
 | `reservation` — Evoview booking application + short paper flow, client accent (`/components/reservation`) | 2.13.0 | `evoview-reservation` |

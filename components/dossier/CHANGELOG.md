@@ -1,5 +1,63 @@
 # dossier changelog
 
+## 1.15.0
+
+Additive. Requires nothing new (foundation ≥ 1.16.0, controls ≥ 1.5.0).
+Configs without the new options render byte-identical server HTML, head
+titles and view media against 1.14.0 (reference, sheet, menu, menu at rest,
+feed, pending menu; FR + EN; every view + closed).
+
+Config changes, all optional: `item.copy`; `useDossierFeed` option `key`.
+
+- **Item copy** (`item.copy?: DossierItemCopy`, exported type). The item's
+  own words over `config.copy` on its views only: header, strip, toast,
+  dock, loader, spoken names and `dossierRoutes.head`. `dock`, `loader` and
+  `feed` merge key by key. For a feed among desks ("‹ Latest", "Latest 01 /
+  05", "Back to Latest", not the desks' words).
+  - The reference journal now carries its feed copy on its item (new
+    `buildDossierFeedItem(locale, feed)` in the client-owned template;
+    `buildDossierFeedConfig` uses it, same output).
+  - `verify:ssr`: the override shows on every view of its item and on no
+    other; that item's views pass the whole contract with it.
+- **`useDossierFeed` no longer loops on an inline source** (feed review N7).
+  - 1.14.0 reset its cache during render whenever the `source` object
+    changed. An unmemoised inline source changed on every render and threw
+    "Too many re-renders" (React #301), reproduced in a production build.
+  - The cache now belongs to `options.key` when given, else to the source's
+    functions (`fetchPage`, `fetchEntry`, `toEntry`), not to the object.
+  - The latest source is always called (with `key`, an inline literal works).
+  - In-flight requests are aborted on a real reset only, not on every render.
+  - Functions rebuilt on every render without a `key` are detected within the
+    render pass: the cache is kept and a console warning names the fix.
+  - Checked in production and dev with StrictMode:
+    - an inline source loads its batches and survives re-renders;
+    - with `key` there is no warning;
+    - a memoised source per locale still empties on a locale switch.
+- **`head` answers a pending item's unknown entry key** (feed review N8).
+  - `parse` accepted it (`item.pending`) but `head` threw. It now gets the
+    item board's answer, as a feed's awaited view does: overview title,
+    description and picture, one crumb per level.
+  - CRAWLABLE-MODALS §2 keeps "head answers every view parse accepts". The
+    contract was extended rather than narrowed, because a static host builds
+    the §7.4 shell from `head`.
+  - `verify:ssr` checks it on every non-feed item of each reference config.
+- `scripts/feed-fetch-check.mjs` is client-agnostic.
+  - It fails page ≥ 2 requests by CDP `Fetch` interception and counts them
+    itself. Usage: `<feed board URL> [--page-request <regex>] [--tile <selector>]`.
+  - It no longer needs the showcase's `window.__journalFetches`, which was
+    removed.
+  - The showcase journal's fake API now makes one real request per page
+    (`/library/dossier/journal.json?page=N`); `?feed-network` stays.
+- Docs:
+  - README: opening screen for 2–5 items, five being a full-row lead tile
+    over a 2×2 from 600 and five rows on phones (approved on Evoview Gaming);
+    item copy; the feed cache owner.
+  - CRAWLABLE-MODALS §7.1: a host that stores view keys keeps the `page`
+    reported with entries opened from a page view.
+  - CRAWLABLE-MODALS §7.4: the static-host shell recipe (`_shells.json`,
+    server order, rewrite-rule hosts, checks).
+  - SKILL procedure.
+
 ## 1.14.0
 
 Additive. Requires nothing new (foundation ≥ 1.16.0, controls ≥ 1.5.0, as

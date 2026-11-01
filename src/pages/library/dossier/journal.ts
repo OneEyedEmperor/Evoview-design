@@ -162,13 +162,15 @@ export const JOURNAL_PAGE_SIZE = 9;
     pages and single entries. */
 export type JournalNetwork = "normal" | "down" | "down-from-2";
 
-/** Calls the fake API received, by kind (`window.__journalFetches`, read by `scripts/feed-fetch-check.mjs`). */
-type Fetches = { pages: Record<number, number>; entries: Record<string, number> };
-const fetches = (): Fetches | null => {
-  if (typeof window === "undefined") return null;
-  const w = window as unknown as { __journalFetches?: Fetches };
-  return (w.__journalFetches ??= { pages: {}, entries: {} });
-};
+/* Each page call is also a real request (a static file, `?page=N`), so a client-agnostic check sees and fails it by
+   request interception, as it would a client's API (`scripts/feed-fetch-check.mjs`). */
+const JOURNAL_API = "/library/dossier/journal.json";
+const request = (page: number, signal: AbortSignal) =>
+  typeof window === "undefined"
+    ? Promise.resolve()
+    : fetch(`${JOURNAL_API}?page=${page}`, { signal, cache: "no-store" }).then((r) => {
+        if (!r.ok) throw new Error(`journal page ${page}: ${r.status}`);
+      });
 
 /** The fake API: pages of nine, newest first, `latencyMs` per call; `network()` makes calls fail (above). After its
     first page-1 call the three newest records count as published (a live update to find). */
@@ -187,23 +189,19 @@ export function journalSource(locale: Locale, options: { latencyMs?: number; net
   return {
     fetchPage: (page, _cursor, signal) => {
       if (page === 1) firstPageCalls += 1;
-      const count = fetches();
-      if (count) count.pages[page] = (count.pages[page] ?? 0) + 1;
-      return wait(
-        signal,
-        () => network() === "down" || (network() === "down-from-2" && page >= 2),
-        () => {
-          const list = published();
-          const items = list.slice((page - 1) * JOURNAL_PAGE_SIZE, page * JOURNAL_PAGE_SIZE);
-          return { items, next: page * JOURNAL_PAGE_SIZE < list.length ? String(page + 1) : null };
-        },
+      return request(page, signal).then(() =>
+        wait(
+          signal,
+          () => network() === "down" || (network() === "down-from-2" && page >= 2),
+          () => {
+            const list = published();
+            const items = list.slice((page - 1) * JOURNAL_PAGE_SIZE, page * JOURNAL_PAGE_SIZE);
+            return { items, next: page * JOURNAL_PAGE_SIZE < list.length ? String(page + 1) : null };
+          },
+        ),
       );
     },
-    fetchEntry: (id, signal) => {
-      const count = fetches();
-      if (count) count.entries[id] = (count.entries[id] ?? 0) + 1;
-      return wait(signal, () => network() !== "normal", () => JOURNAL.find((r) => r.id === id) ?? null);
-    },
+    fetchEntry: (id, signal) => wait(signal, () => network() !== "normal", () => JOURNAL.find((r) => r.id === id) ?? null),
     toEntry: (record) => journalEntry(record, locale),
   };
 }
