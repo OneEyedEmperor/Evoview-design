@@ -506,6 +506,7 @@ a.ps-card { display: block; color: inherit; text-decoration: none; }
   height: 100dvh;
   overflow: hidden;
   background: var(--ev-shell);
+  outline: none;
   animation: psd-sheet-in 320ms var(--ev-ease-cinematic) both;
 }
 .psd--closing .psd__backdrop { animation: psd-fade-out 320ms ease forwards; }

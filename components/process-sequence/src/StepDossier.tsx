@@ -96,15 +96,19 @@ export function StepDossier({ steps, index, onIndexChange, onClose, copy, cta, a
 
   // Close button focus once the sheet is up, retried over its first frames; never steals focus
   // already in the dialog. A step swap that drops focus with the outgoing controls lands here too.
+  // A page loaded on a step URL has had no input yet: programmatic focus would match `:focus-visible`
+  // and keep Close ringed for the whole read, so the dialog itself (no outline) takes it; the first
+  // Tab reaches the controls with their ring. Chrome ignores `focus({ focusVisible: false })`.
   useEffect(() => {
     if (closing) return;
     let frame = 0;
     let attempts = 0;
     const focusClose = () => {
-      const button = closeRef.current;
-      if (!button || shellRef.current?.contains(document.activeElement)) return;
-      button.focus({ preventScroll: true });
-      if (document.activeElement !== button && ++attempts < 20) frame = window.requestAnimationFrame(focusClose);
+      const coldLoad = typeof navigator !== "undefined" && navigator.userActivation?.hasBeenActive === false;
+      const target = coldLoad ? shellRef.current : closeRef.current;
+      if (!target || shellRef.current?.contains(document.activeElement)) return;
+      target.focus({ preventScroll: true });
+      if (document.activeElement !== target && ++attempts < 20) frame = window.requestAnimationFrame(focusClose);
     };
     frame = window.requestAnimationFrame(focusClose);
     return () => window.cancelAnimationFrame(frame);
@@ -142,7 +146,7 @@ export function StepDossier({ steps, index, onIndexChange, onClose, copy, cta, a
     const first = list[0];
     const last = list[list.length - 1];
     const active = document.activeElement;
-    if (!shell.contains(active)) {
+    if (!shell.contains(active) || active === shell) {
       e.preventDefault();
       (e.shiftKey ? last : first).focus();
     } else if (e.shiftKey && active === first) {
@@ -287,6 +291,7 @@ export function StepDossier({ steps, index, onIndexChange, onClose, copy, cta, a
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
+        tabIndex={-1}
         data-ready={shown === index && live ? "" : undefined}
         data-leaving={leaving || undefined}
       >

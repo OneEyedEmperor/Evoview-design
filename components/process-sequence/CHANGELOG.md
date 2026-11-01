@@ -1,5 +1,24 @@
 # process-sequence changelog
 
+## 1.9.1
+
+Fixes. No API or config change. Requires nothing new.
+
+- **Cold step URL: no focus ring on Close.** This is the dossier 1.13.0 fix.
+  When the page has had no input yet (`navigator.userActivation.hasBeenActive`
+  is false), focus on open goes to the dialog shell (`tabindex="-1"`, no
+  outline) instead of Close. The first Tab reaches the first control with
+  its ring, and Shift+Tab from the shell stays in the dialog. In-page opens
+  still focus Close: no ring after a mouse or tap open, a ring after a
+  keyboard open. The logic is duplicated, not in foundation: it's one
+  expression, and a helper would need a foundation release, a new `requires`
+  floor and a dossier release to remove one line.
+- **Board images are `loading="lazy"`.** React 19 no longer hoists a
+  `<link rel="preload" as="image">` per step into the head; `fetchPriority="low"`
+  would also stop the hoist, but would still fetch at load. Below the fold,
+  nothing is fetched until the board is near. The media gate and the step
+  dossier's stage image (still preloaded on its view URL) are unchanged.
+
 ## 1.9.0
 
 Signature change per the emperor's counter rule (RULES §1: no counting tags

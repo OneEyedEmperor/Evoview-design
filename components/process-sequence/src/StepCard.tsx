@@ -85,7 +85,8 @@ export function StepCard({ step, index, state, clock, runKey, mark, statusLabel,
                 style={fill}
               />
             ) : (
-              <img key={state === "active" ? runKey : "still"} className="ps-card__img" src={step.media.src} alt={step.media.alt ?? ""} decoding="async" draggable={false} style={fill} />
+              // Lazy: the board sits below the fold; it also stops React hoisting a head preload per step image.
+              <img key={state === "active" ? runKey : "still"} className="ps-card__img" src={step.media.src} alt={step.media.alt ?? ""} loading="lazy" decoding="async" draggable={false} style={fill} />
             )}
           </div>
           <span className="ps-card__veil" aria-hidden="true" />

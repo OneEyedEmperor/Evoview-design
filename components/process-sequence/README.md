@@ -209,12 +209,16 @@ whose server HTML carries the step's full copy.
   `role="button"` (Enter / Space), `aria-current="step"` on the active one.
 - **Phone < 768**: index controls (jump), one monitor (media 1.79:1, height
   reserved for the tallest step), tap opens the dossier.
+- **Board images** are `loading="lazy"`: no head preload hoisted by React,
+  no fetch until the board is near. The step dossier's stage image is not
+  lazy (it is a step view's main image and keeps its preload).
 - **Dossier**: opens behind a media gate (loader after 350 ms, ≥ 500 ms,
   text status, retry at 20 s); stage curtain 400 ms + media 1.15 → 1, heading
   wipe, cells, intro, items (+40 ms each), footer stagger; step change = 180 ms
   out, hold until the next media is decoded, replay. ←/→, Esc (one level up =
-  close), Tab contained, focus on close once the sheet is up, returns to the
-  launching card, page scroll locked before paint (foundation
+  close), Tab contained, focus on close once the sheet is up (a cold step
+  URL, no input yet: on the dialog itself, no ring; the first Tab rings the
+  first control), returns to the launching card, page scroll locked before paint (foundation
   `useScrollLock`: shared, scrollbar width kept, fixed host chrome reads
   `--ev-scroll-lock-gap`), background suspended
   (`useSuspendBackground`); Back closes, Forward reopens. It sets no `inert` on the page, so host
