@@ -147,6 +147,12 @@ html:has(.ev-dossier[data-rest-lock][data-phase="open"]) { overflow: hidden; }
 .evd-header__brand { display: inline-flex; max-width: 8.5em; flex: 0 0 auto; align-items: center; color: var(--ev-fg); white-space: nowrap; }
 .evd-header__brand > svg, .evd-header__brand > img { display: block; height: 18px; width: auto; max-width: 100%; }
 .evd-header__brand .ev-t-readout-lg { font-size: 11px; letter-spacing: 0.16em; }
+/* A text brand is never cut and never leaves its box: content-sized up to 60 % of the identity, never under 7em (a short
+   name stays on one line at 320, as before), the item readout keeping the rest (`min-width: 0`); a longer name wraps
+   onto balanced lines inside it. The box stays inside the identity, so it never reaches the pager or the Evoview mark.
+   A logo keeps its 8.5em box. */
+.evd-header__brand:has(> .ev-t-readout-lg) { max-width: max(60%, 7em); white-space: normal; }
+.evd-header__brand > .ev-t-readout-lg { min-width: 0; line-height: 1.2; overflow-wrap: anywhere; text-wrap: balance; }
 .evd-header__meta { display: flex; min-width: 0; flex-direction: column; gap: 4px; }
 .evd-header__kicker,
 .evd-header__title {

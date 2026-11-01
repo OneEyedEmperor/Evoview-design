@@ -1,5 +1,42 @@
 # dossier changelog
 
+## 1.16.2
+
+Fix. No config, API or markup change (CSS only). Requires nothing new (foundation ≥ 1.16.0, controls ≥ 1.5.0). Server
+HTML, head answers, view media and parse results are byte-identical to 1.16.1 for every reference config
+(`scripts/ssr-snapshot.mjs`, 2,326 renders).
+
+- **A long text brand no longer runs into the readout or the Evoview mark** (1.16.1 review F1, pre-existing).
+  - The cause: `.evd-header__brand` gave a text name a fixed `8.5em` box, `nowrap`, with visible overflow.
+  - Measured in 1.16.1 on the universes dossier, gap from the name's ink to the next element:
+    - 28 characters ("Boulangerie des Trois Frères"): readout −89px at 1440 and 1024, −50px at 390 and 320; the Evoview mark
+      +23px at 390 and −47px at 320 (RULES §9);
+    - 19 characters: readout −14px at 1440.
+  - The fix, a layout one with nothing cut (no ellipsis, no `title`; markup unchanged):
+    - a text brand (`.evd-header__brand:has(> .ev-t-readout-lg)`) is content-sized up to `max(60%, 7em)` of the
+      identity;
+    - a longer name wraps onto balanced lines inside its box (`overflow-wrap: anywhere` only as the last resort);
+    - the item readout keeps the rest and its existing ellipsis.
+  - The box stays inside the identity column, so it never reaches the pager or the mark. A logo keeps its 8.5em box,
+    untouched.
+  - Checked with the new `scripts/header-brand-check.mjs`: 14, 19 and 28 characters at 1440, 1024, 390 and 320, on the
+    universes (with pager), the journal and the sheet menu (choose, specials). That's 48 combinations, all passing:
+    - never cut, inside the box and the bar;
+    - ≥ 12px from the readout, ≥ 168px from the pager, ≥ 41px from the mark;
+    - the phone capsule stays 56px (two lines at most for these names).
+  - Limit, measured with a 46-character name ("Brasserie et Comptoir des Trois Frères du Port"):
+    - 3 lines at 1024 (beside the pager) and at 390, the bar unchanged;
+    - 4 lines at 320, where the capsule grows 56 → 60px.
+    - Never cut and never overlapping (readout +34px, mark +61px). The README advises a logo over ~20 characters.
+  - Wrapping: 19 characters wrap onto 2 lines on phones; 28 characters wrap onto 2 lines on phones and at 1024 beside
+    the pager. 1440 keeps one line.
+  - Short names: "Maison Ardoise" (14) is one line at every width, as before. On phones the box and gaps are unchanged
+    (103px). From 1024 it measured 119px, already 2px past the old 117px box, so the readout now starts 2px further
+    right.
+  - At 320 the readout keeps its existing ellipsis ("LA T…" with the short name, as in 1.16.1; "LA …" beside a
+    28-character name). The dock carries the location on phones.
+  - `:has()` is required (Chrome 105, Safari 15.4, Firefox 121); older engines keep 1.16.1's layout.
+
 ## 1.16.1
 
 Fixes. No config or API change. Requires nothing new (foundation ≥ 1.16.0, controls ≥ 1.5.0). Configs without

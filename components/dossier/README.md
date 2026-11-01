@@ -54,7 +54,14 @@ restyle them to the client's UI kit. Changing them is a library change
   detail's title (RULES §1): the item is carried by the pager / chapter strip
   / dock and stays in the dialog's accessible name. An optional
   `config.kicker` may sit over the opening / overview title (≥ 600); omit it
-  by default.
+  by default. Client identity: a logo (`brand.logo`, 18px high, up to 8.5em
+  wide) or the name as text (`brand.name`). A text name is never cut: its
+  box is content-sized up to 60 % of the identity (never under 7em), and a
+  longer name wraps onto balanced lines inside it while the readout keeps
+  the rest. It never reaches the pager or the Evoview mark (1.16.2). The
+  phone capsule holds three lines (about 40 characters at 320); a longer name
+  takes a fourth line there and the capsule grows 4px. Prefer a logo for
+  names over ~20 characters.
 - **Selection board**: four tiles make the asymmetric mosaic, 7/5 over 4/8
   on 12 columns, rows 1.2fr / .8fr (panorama ≥ 1024); 2×2 from 600 (and in
   the sheet); four rows on phones. Any other count (live content) takes the
@@ -814,3 +821,10 @@ is suspended while open.
     every tier the same way. Configs without `feedCards` render byte-identical
     server HTML (`node scripts/ssr-snapshot.mjs <base tree> a.json`, then this
     tree, then `--diff`).
+14. Header brand: `node scripts/header-brand-check.mjs <dossier view URL>…
+    [--widths] [--names "a|b|c"] [--shots <dir>]` (any client with a text
+    brand; it swaps the name in place) checks, per width and name length, that
+    the name is never cut, stays in its box and the bar, keeps ≥ 8px from the
+    readout, the pager and the Evoview mark, and leaves the phone capsule's
+    height unchanged. Run it with the client's own name and a ~30-character
+    one at 1440, 1024, 390 and 320.
