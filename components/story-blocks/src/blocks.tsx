@@ -31,16 +31,17 @@ function HeadSplit({ id, heading, body }: { id: string; heading: Lines; body?: R
   );
 }
 
-export function StoryIntro({ title, lead, body, media, caption, align = "end" }: StoryIntroProps) {
+export function StoryIntro({ title, lead, body, media, caption, align = "end", level = 2 }: StoryIntroProps) {
   const id = useId();
+  const H = `h${level}` as const;
   return (
     <Chapter id={id} className="evsb-intro">
       <div className="evsb-intro__body">
         <div className="evsb-split" data-align={align}>
           <Reveal>
-            <h2 id={id} className="ev-t-title evsb-title">
+            <H id={id} className="ev-t-title evsb-title">
               {renderLines(title)}
-            </h2>
+            </H>
           </Reveal>
           <Reveal index={1} className="evsb-intro__copy">
             <p className="ev-t-lead evsb-lead">{lead}</p>

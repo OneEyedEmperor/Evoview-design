@@ -1,5 +1,16 @@
 # story-blocks changelog
 
+## 2.6.0
+
+Additive. Requires nothing new. No config changes.
+
+API (additive): `StoryIntro` (and `{ kind: "intro" }` chapters) take
+`level?: 1 | 2` (default 2). `1` makes a page's opening intro title its h1;
+the element changes, the voice (`ev-t-title`), size and markup don't. On a
+page hosting a crawlable modal the host passes `1` on the page URL and `2`
+while a view is open (`docs/CRAWLABLE-MODALS.md` §4). Existing configs
+render unchanged (same server HTML).
+
 ## 2.5.0
 
 - Sync (`docs/SYNC.md`): `evoview.json` (`requires` foundation `>=1.9.0 <2`,

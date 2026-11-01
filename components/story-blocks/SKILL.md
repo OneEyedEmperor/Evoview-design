@@ -44,6 +44,9 @@ and the pause model.
 5. Mount `<Story tone=… copy={config.copy} chapters={…} />` per story; a
    tone cut is a second `<Story>`. Check the host `--primary` /
    `--primary-foreground`; fix those tokens rather than restyling the blocks.
+   If the page opens on a `StoryIntro`, its title is the page's h1:
+   `level: 1` (`2` while a modal view is open, README "Page title"); never
+   a hidden h1.
 6. Verify with the README checklist at 1440, 1024, 390, then log an
    activity record (`surface: code`, `type: feature`, subject = the client
    project) with the package version.

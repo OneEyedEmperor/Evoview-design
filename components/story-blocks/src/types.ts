@@ -25,6 +25,8 @@ export type StoryIntroProps = {
   caption?: { kicker?: ReactNode; title: ReactNode };
   /** Copy bottom-aligned against the title (default) or top-aligned. */
   align?: StoryIntroAlign;
+  /** The title's element only (never the voice or size). 1 = the page's title; 2 while a modal view's h1 is open (docs/CRAWLABLE-MODALS.md §4). Default 2. */
+  level?: 1 | 2;
 };
 
 export const STORY_INTRO_ALIGNS = ["end", "start"] as const;

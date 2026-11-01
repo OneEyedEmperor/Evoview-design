@@ -128,7 +128,7 @@ buildStoryBlocksConfig(locale): StoryBlocksConfig
 
 type StoryMedia = { src; alt; position?; positionPhone?; fit?: "cover" | "contain" };
 type StoryChapter =
-  | { kind: "intro"; title: Lines; lead; body?; media: StoryMedia; caption?: { kicker?; title }; align?: "end" | "start" }
+  | { kind: "intro"; title: Lines; lead; body?; media: StoryMedia; caption?: { kicker?; title }; align?: "end" | "start"; level?: 1 | 2 }
   | { kind: "rows"; heading: Lines; body?; rows: { label; detail; index? }[];
       media?: StoryMedia & { ratio?; ratioPhone? };
       surface?: "tiles" | "rows" }   // default: tiles beside media, rows without
@@ -153,6 +153,13 @@ const config = buildStoryBlocksConfig(locale);
 Each block is a `<section aria-labelledby>` on the wide rail; headings are
 `h2`, row labels / results `h3`. Automatic row indices are `aria-hidden`
 (the `ol` carries order); a custom `index` is read.
+
+Page title: a page that opens on a `StoryIntro` makes its title the h1 with
+`level={1}` (default 2); only the element changes, never the voice, size or
+markup, and the blocks after it stay `h2` / `h3`. On a page that hosts a
+crawlable modal (`docs/CRAWLABLE-MODALS.md` §4) the host passes `1` on the
+page URL and `2` while a view is open (the view's title is the h1 then).
+One h1 per page; never a visually hidden h1 beside it.
 
 Sequence: with `media`, text `.72` | media `1.28`; the heading tops the
 media and the last tile ends on its baseline. From 1024 the ratio (default
