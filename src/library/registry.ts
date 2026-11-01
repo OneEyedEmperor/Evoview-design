@@ -35,7 +35,7 @@ const DRAFTS: Draft[] = [
     category: "layouts",
     route: "/layouts/card",
     title: { fr: "Carte", en: "Card" },
-    meta: { fr: "Cartes média : piste, donne, séquence", en: "Media cards: track, deal, sequence" },
+    meta: { fr: "Cartes média : piste, donne, séquence, sommaire", en: "Media cards: track, deal, sequence, index" },
     status: "ready",
   },
   {

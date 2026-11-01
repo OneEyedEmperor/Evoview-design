@@ -1,5 +1,30 @@
 # card changelog
 
+## 2.5.0
+
+- New composition `CardIndex` (additive): an index of peer destinations
+  (services, collections, a site's pages), every card a link. Extracted
+  from the Evoview Library index cards. Graded 16:10 cover under a dark
+  blurred veil with the client's emblem (`mark`, optional), caption on a
+  tonal tile (tag readout, title, one line), order as a bare-number orb
+  set into the seam; hover / keyboard focus lifts the veil and runs the
+  accent through the seam and round the orb (`IndexSeam`, liquid
+  `OrbFill`). Phones: row tiles, thumbnail beside caption. Files
+  `CardIndex.tsx`, `IndexSeam.tsx`, `card-index.css`.
+- API (additive): `CardIndex`, `buildCardIndexConfig`, `CARD_INDEX_COLUMNS`
+  (`2` · `3`), types `CardIndexColumns`, `CardIndexConfig`, `CardIndexCopy`,
+  `CardIndexDefinition`, `CardIndexItem`, `CardIndexMedia`.
+- Config (client-owned, additive): `card.config.tsx` gains
+  `buildCardIndexConfig(locale)` (reference: Atelier Sorel's six pages);
+  `card.theme.css` gains an `.ev-card-index` token block. Existing clients
+  keep their files: copy both blocks from the template diff only when
+  adopting `CardIndex`. Existing compositions unchanged.
+- **Requires foundation `>=1.16.0 <2`** (was `>=1.8.0`): `CardIndex` gives
+  the media gate the cover's `srcSet` / `sizes`. `sync.sh` upgrades
+  foundation with the package; controls unchanged.
+- Showcase: `/layouts/card` gains the "Sommaire / Index" scene (light;
+  desk: columns, order orbs; the dummy client's eye as the mark).
+
 ## 2.4.0
 
 - API (additive): `CardTrackItem.href?` / `external?`, for `CardTrack` and

@@ -278,3 +278,83 @@ export function buildCardSequenceConfig(locale: Locale): CardSequenceConfig {
   };
 }
 /* ── end CardSequence ─────────────────────────────────────────────────── */
+
+/* ── CardIndex ────────────────────────────────────────────────────────────
+   The studio's site as an index of its pages: each card links to one. A
+   still is 16:10, ~2× the column width (≈1200px for two columns); a loop
+   takes its first frame as poster. */
+
+import type { CardIndexConfig, CardIndexCopy, CardIndexItem } from "./types";
+
+const INDEX_COPY: Record<Locale, CardIndexCopy> = {
+  fr: { newTab: "(nouvel onglet)", loading: "Chargement", failed: "Média indisponible" },
+  en: { newTab: "(new tab)", loading: "Loading", failed: "Media unavailable" },
+};
+
+const INDEX: { id: string; title: L; body: L; tag?: L; src: string; video?: string; position?: string; href: string }[] = [
+  {
+    id: "architecture",
+    title: { fr: "Architecture", en: "Architecture" },
+    body: { fr: "Maisons et extensions dessinées pour leur terrain", en: "Houses and extensions drawn for their site" },
+    src: `${MEDIA}/svc-architecture.webp`,
+    href: "/architecture",
+  },
+  {
+    id: "interior",
+    title: { fr: "Intérieur", en: "Interiors" },
+    body: { fr: "Des pièces pensées à l'usage", en: "Rooms shaped around use" },
+    tag: { fr: "Nouveau", en: "New" },
+    ...LOOP.interior,
+    href: "/interieur",
+  },
+  {
+    id: "renovation",
+    title: { fr: "Rénovation", en: "Renovation" },
+    body: { fr: "Garder le caractère, reprendre le reste", en: "Keep the character, rework the rest" },
+    src: `${MEDIA}/svc-renovation.webp`,
+    href: "/renovation",
+  },
+  {
+    id: "furniture",
+    title: { fr: "Mobilier", en: "Furniture" },
+    body: { fr: "Tables, bibliothèques et cuisines sur mesure", en: "Bespoke tables, bookcases and kitchens" },
+    ...LOOP.furniture,
+    href: "/mobilier",
+  },
+  {
+    id: "projects",
+    title: { fr: "Projets", en: "Projects" },
+    body: { fr: "Vingt lieux livrés, de Liège aux Ardennes", en: "Twenty delivered places, from Liège to the Ardennes" },
+    src: `${MEDIA}/pf-loft.webp`,
+    position: "50% 45%",
+    href: "/projets",
+  },
+  {
+    id: "visit",
+    title: { fr: "Visite conseil", en: "Site visit" },
+    body: { fr: "Deux heures sur place avec un architecte", en: "Two hours on site with an architect" },
+    tag: { fr: "240 €", en: "€240" },
+    src: `${MEDIA}/pf-atelier.webp`,
+    position: "50% 40%",
+    href: "/rendez-vous",
+  },
+];
+
+export function buildCardIndexConfig(locale: Locale): CardIndexConfig {
+  const items: CardIndexItem[] = INDEX.map((e) => ({
+    id: e.id,
+    title: pick(locale, e.title),
+    body: pick(locale, e.body),
+    tag: e.tag && pick(locale, e.tag),
+    media: { src: e.src, video: e.video, position: e.position },
+    href: e.href,
+  }));
+  return {
+    locale,
+    copy: INDEX_COPY[locale],
+    indexes: {
+      site: { label: locale === "fr" ? "Pages de l'atelier" : "The studio's pages", items },
+    },
+  };
+}
+/* ── /CardIndex ───────────────────────────────────────────────────────── */

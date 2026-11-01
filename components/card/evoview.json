@@ -1,5 +1,5 @@
 {
-  "requires": { "foundation": ">=1.8.0 <2", "controls": ">=1.1.0 <2" },
+  "requires": { "foundation": ">=1.16.0 <2", "controls": ">=1.1.0 <2" },
   "clientOwned": ["card.config.tsx", "card.theme.css"],
   "hostDeps": { "react": ">=19", "react-dom": ">=19" }
 }

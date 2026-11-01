@@ -5,6 +5,7 @@ import "../../../components/card/showcase.css";
 import ShowcasePage from "../../library/ShowcasePage";
 import { useLibraryLocale, type Localized } from "../../library/locale";
 import DeckScene from "./card/DeckScene";
+import IndexScene from "./card/IndexScene";
 import SequenceScene from "./card/SequenceScene";
 import { Scene } from "./scene/Scene";
 
@@ -24,6 +25,7 @@ export default function CardPage() {
       <Demo />
       <DeckScene />
       <SequenceScene />
+      <IndexScene />
     </ShowcasePage>
   );
 }

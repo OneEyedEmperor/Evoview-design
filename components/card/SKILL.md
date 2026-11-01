@@ -1,6 +1,6 @@
 ---
 name: evoview-card
-description: Evoview card package (was card-track) — media cards (ribbon or portrait) in three compositions, accent-driven from the host --primary. CardTrack: desktop scroll-scrubbed track / phone snap strip, for services or a portfolio browsed one card at a time. CardDeck: category switch over a dealt hand of 3 or 6 cards, for a menu, collection or work by category. CardSequence: timed focus over video cards (one loop plays, hover/keyboard hold), for rooms, venues or experiences on video, as a gallery row or a board with facts and a price. Triggers on "evoview card", "card track", "services slider", "portfolio track", "menu cards", "card deck", "category tabs cards", "video cards", "clip board", "video gallery".
+description: Evoview card package (was card-track) — media cards (ribbon or portrait) in three compositions plus the index card, accent-driven from the host --primary. CardTrack: desktop scroll-scrubbed track / phone snap strip, for services or a portfolio browsed one card at a time. CardDeck: category switch over a dealt hand of 3 or 6 cards, for a menu, collection or work by category. CardSequence: timed focus over video cards (one loop plays, hover/keyboard hold), for rooms, venues or experiences on video, as a gallery row or a board with facts and a price. CardIndex: linked peer cards (veiled cover with the client emblem, order orb in a seam that fills with the accent), for a site's pages, services or collections. Triggers on "evoview card", "card track", "services slider", "portfolio track", "menu cards", "card deck", "category tabs cards", "video cards", "clip board", "video gallery", "card index", "page index cards", "sommaire".
 ---
 
 # Evoview card
@@ -17,9 +17,11 @@ and the pause model.
 - **Preserve** (README "Signature"): the track's scrub / snap mechanism,
   card anatomy, spoken positions, graded media; the deck deal and switch
   timings; the sequence's dwell, hold, tune-in and state as frame; the
-  watermark rule. Changes go into the library, never the client.
+  watermark rule; the index veil, seam fill and seam orbs. Changes go into
+  the library, never the client.
 - **Select** (README "Variations"): the composition, then
-  `CARD_TRACK_VARIANTS`, `CARD_DECK_ROWS`, `CARD_SEQUENCE_LAYOUTS`. Nothing
+  `CARD_TRACK_VARIANTS`, `CARD_DECK_ROWS`, `CARD_SEQUENCE_LAYOUTS`,
+  `CARD_INDEX_COLUMNS`, `numbered`. Nothing
   else.
 - **Invent** (README "Expression"): items, media, copy, accent, tone.
 
@@ -115,3 +117,22 @@ its timing and the API.
    switch; no CRT, noise or flicker layers, no kicker above the titles, no
    reduced-motion branch. Verify with the README CardSequence checklist at
    1440, 1024, 390.
+
+## CardIndex (linked peer cards: a site's pages, services, collections)
+
+Use when a section sends the visitor to one of a few peer destinations
+(2–6). README "Signature" / "CardIndex" hold the states and the API.
+
+1. Same install. In the client's `card.config.tsx` add / adapt
+   `buildCardIndexConfig(locale)`: one `indexes` entry per placement;
+   every item has its `href` (the client's page), a 16:10 cover (webp,
+   `srcSet` with a ~640px candidate), one body line, an optional `tag`
+   (price, novelty; never a count).
+2. Pass the client's emblem as `mark` (white, sized by width; an SVG with a
+   `viewBox`). Never the Evoview mark. Omit it if the client has none.
+3. `columns`: 2 for 2–4 items, 3 for 6. `numbered` only when the order
+   means something.
+4. Mount `<CardIndex index copy columns numbered mark tone heading />`;
+   wire `onOpen` to the host router for in-app pages (plain clicks only).
+   Keep the veil, the seam fill and the orb; no counting readout. Verify
+   with the README CardIndex checklist at 1440, 1024, 390.

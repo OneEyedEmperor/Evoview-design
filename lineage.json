@@ -449,6 +449,14 @@
       }
     },
     {
+      "id": "card-index",
+      "title": "CardIndex: linked peer cards, veiled cover with the client's emblem, order orb set into a seam that fills with the accent",
+      "class": "C",
+      "source": "library",
+      "library": { "package": "card", "files": ["components/card/src/CardIndex.tsx", "components/card/src/IndexSeam.tsx", "components/card/src/card-index.css"] },
+      "downstream": {}
+    },
+    {
       "id": "process-board",
       "title": "Timed step board: segmented instrument, three-state step cards, phone index + monitor",
       "class": "P",

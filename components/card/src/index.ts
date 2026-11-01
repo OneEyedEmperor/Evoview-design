@@ -25,6 +25,13 @@ export type {
   CardSequenceOffer,
 } from "./types";
 // /CardSequence
+// CardIndex
+import "./card-index.css";
+export { CardIndex, type CardIndexProps } from "./CardIndex";
+export { buildCardIndexConfig } from "./card.config";
+export type { CardIndexColumns, CardIndexConfig, CardIndexCopy, CardIndexDefinition, CardIndexItem, CardIndexMedia } from "./types";
+export { CARD_INDEX_COLUMNS } from "./types";
+// /CardIndex
 import "./card.theme.css";
 export type {
   CardHeadingLevel,

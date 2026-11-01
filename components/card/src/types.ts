@@ -173,3 +173,57 @@ export type CardDeckConfig = {
   deck: CardDeckDefinition;
 };
 /* ── /CardDeck ────────────────────────────────────────────────────────── */
+
+/* ── CardIndex ────────────────────────────────────────────────────────── */
+
+/** Desktop columns (≥ 1024; 2 from 768, rows below). */
+export const CARD_INDEX_COLUMNS = [2, 3] as const;
+export type CardIndexColumns = (typeof CARD_INDEX_COLUMNS)[number];
+
+export type CardIndexMedia = {
+  /** Cover still, 16:10; the poster when `video` is set (its first frame). */
+  src: string;
+  /** Width candidates of `src`; the gate fetches the one the `<img>` picks. */
+  srcSet?: string;
+  /** Rendered width; defaults to the grid's column width. */
+  sizes?: string;
+  alt?: string;
+  /** Muted loop under the veil, played while the card is on screen. */
+  video?: string;
+  /** CSS object-position, e.g. "50% 30%". */
+  position?: string;
+};
+
+export type CardIndexItem = {
+  id: string;
+  title: string;
+  /** One line under the title. */
+  body?: string;
+  /** State readout in the caption's corner (price, novelty, status). Never a count. */
+  tag?: string;
+  media: CardIndexMedia;
+  /** The card's destination: every index card is a link. */
+  href: string;
+  /** Opens `href` in a new tab. */
+  external?: boolean;
+};
+
+export type CardIndexDefinition = {
+  /** Accessible name of the list. */
+  label: string;
+  items: CardIndexItem[];
+};
+
+export type CardIndexCopy = {
+  /** Appended to an external card's accessible name. */
+  newTab: string;
+  loading: string;
+  failed: string;
+};
+
+export type CardIndexConfig = {
+  locale: Locale;
+  copy: CardIndexCopy;
+  indexes: Record<string, CardIndexDefinition>;
+};
+/* ── /CardIndex ───────────────────────────────────────────────────────── */

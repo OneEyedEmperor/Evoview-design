@@ -26,3 +26,15 @@
   /* --card-sequence-deep: var(--ev-accent-deep); */
   /* --card-sequence-well-signal: color-mix(in oklab, var(--card-sequence-accent) 88%, #fff); */
 }
+
+.ev-card-index {
+  /* --card-index-accent: var(--ev-accent); */
+  /* --card-index-ink: var(--ev-accent-ink); */
+  /* --card-index-signal: var(--ev-accent-signal); */
+  /* --card-index-tile: color-mix(in oklab, var(--ev-bg) 95%, var(--ev-fg)); */
+  /* --card-index-tile-hover: color-mix(in oklab, var(--ev-bg) 92%, var(--ev-fg)); */
+  /* --card-index-veil: rgb(0 0 0 / 0.4); */
+  /* Width of the client's emblem on the veil (desktop / phone thumbnails). */
+  /* --card-index-mark: 17%; */
+  /* --card-index-mark-phone: 36%; */
+}

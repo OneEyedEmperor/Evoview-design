@@ -1,0 +1,235 @@
+/* Evoview card index — peer destinations as linked cards: veiled cover,
+   caption tile, order orb set into the seam (source: the Evoview Library
+   index). Scoped under .ev-card-index; structure in em on the foundation
+   scale; the host accent arrives through --primary (foundation --ev-accent*).
+   The seam fill is drawn by IndexSeam.tsx (SVG), the orb fill by OrbFill. */
+
+.ev-card-index {
+  --card-index-accent: var(--ev-accent);
+  --card-index-ink: var(--ev-accent-ink);
+  --card-index-signal: var(--ev-accent-signal);
+  /* Caption tiles: a step off the chapter tone (RULES §3), a second on hover. */
+  --card-index-tile: color-mix(in oklab, var(--ev-bg) 95%, var(--ev-fg));
+  --card-index-tile-hover: color-mix(in oklab, var(--ev-bg) 92%, var(--ev-fg));
+  /* Veil over the cover at rest, and the emblem's width on it. */
+  --card-index-veil: rgb(0 0 0 / 0.4);
+  --card-index-mark: 17%;
+  --card-index-mark-phone: 36%;
+
+  --cix-seam: 0.375em;
+  --cix-orb: 2.5em;
+  --cix-ring: var(--ev-bg);
+}
+
+.cix-head { margin-bottom: var(--ev-gap-heading); }
+
+/* Peers, so an equal grid: phones a column of row tiles (thumbnail beside
+   caption), 2-up from 768, 2 or 3 from 1024; one well ratio, captions
+   stretched so each row's tiles share one height. */
+.cix-grid {
+  display: grid;
+  gap: 0.5em;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.cix-grid > li { min-width: 0; }
+@media (min-width: 768px) {
+  .cix-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2.5em 1.5em; align-items: stretch; }
+}
+@media (min-width: 1024px) {
+  .ev-card-index[data-columns="3"] .cix-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2.5em 1.25em; }
+}
+
+.cix-card {
+  position: relative;
+  display: grid;
+  height: 100%;
+  grid-template-rows: auto 1fr;
+  gap: var(--cix-seam);
+  color: inherit;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Well: graded cover, dark blurred veil, the client's emblem ───────── */
+.cix-well {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  border-radius: var(--ev-radius-surface);
+  background: #080808;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+.cix-cover {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: var(--cix-pos, 50% 50%);
+  user-select: none;
+  filter: saturate(0.45) brightness(0.88);
+  opacity: 0;
+  transition: transform var(--ev-dur-cinematic) var(--ev-ease-cinematic), filter var(--ev-dur-reveal) var(--ev-ease), opacity var(--ev-dur-reveal) var(--ev-ease);
+}
+.cix-well[data-state="ready"] .cix-cover { opacity: 1; }
+.cix-well::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background: var(--card-index-veil);
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+  pointer-events: none;
+  transition: opacity var(--ev-dur-reveal) var(--ev-ease);
+}
+.cix-mark {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  pointer-events: none;
+  transition: opacity var(--ev-dur-reveal) var(--ev-ease), scale var(--ev-dur-reveal) var(--ev-ease-cinematic);
+}
+.cix-mark > * { display: block; width: var(--card-index-mark); height: auto; }
+/* Phones' accent bar under the well (from 768 the seam fill replaces it). */
+.cix-well::after {
+  content: "";
+  position: absolute;
+  z-index: 3;
+  inset: auto 0 0;
+  height: 2px;
+  background: var(--card-index-accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--ev-dur-reveal) var(--ev-ease-cinematic);
+}
+.cix-status {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+/* ── Caption tile ─────────────────────────────────────────────────────── */
+.cix-caption {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 0.5em;
+  padding: 1.1em 1.25em 1.3em;
+  border-radius: var(--ev-radius-surface);
+  background: var(--card-index-tile);
+  transition: background-color var(--ev-dur-control) var(--ev-ease);
+}
+.cix-meta { display: flex; min-height: max(0.8125em, 12px); align-items: center; justify-content: flex-end; gap: 1em; }
+.cix-tag { color: var(--ev-fg-65); white-space: nowrap; }
+.cix-title { font-size: 1.1em; line-height: 0.95; letter-spacing: -0.02em; }
+.cix-body {
+  margin: 0;
+  color: var(--ev-fg-65);
+  font-family: var(--ev-font-body);
+  font-size: max(0.875em, var(--ev-floor-body));
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+/* Order: a bare number in an orb centred on the seam; its ring is the
+   seam's own colour, so it reads as set into the gap (RULES §1). */
+.cix-orb {
+  position: absolute;
+  z-index: 2;
+  top: calc(-0.5 * var(--cix-seam) - 0.5 * var(--cix-orb));
+  left: 1.25em;
+  display: grid;
+  width: var(--cix-orb);
+  height: var(--cix-orb);
+  place-items: center;
+  border-radius: 999px;
+  box-shadow: 0 0 0 0.3em var(--cix-ring);
+  font-family: var(--ev-font-readout);
+  font-size: max(1em, 13px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  --ev-orb-rest: var(--ev-fg);
+  --ev-orb-rest-ink: var(--ev-bg);
+  --ev-orb-lit: var(--card-index-accent);
+  --ev-orb-lit-ink: var(--card-index-ink);
+}
+
+/* ── Seam fill (IndexSeam) ────────────────────────────────────────────── */
+.cix-flow { position: absolute; z-index: 1; left: 0; display: none; overflow: hidden; pointer-events: none; }
+/* Unplaced until IndexSeam measures (it writes the inline style): a
+   default-sized box at its static position would count as a layout shift. */
+.cix-flow:not([style]) { visibility: hidden; }
+.cix-flow__ring { fill: var(--cix-ring); }
+.cix-flow__liquid { fill: var(--card-index-accent); }
+
+@media (min-width: 768px) {
+  .cix-caption { justify-items: center; padding: 1.4em 1.6em 1.6em; gap: 0.6em; text-align: center; }
+  .cix-caption > .cix-meta { justify-self: stretch; }
+  .cix-orb { left: 50%; translate: -50% 0; box-shadow: none; }
+  .cix-title { font-size: 1.63em; }
+  .cix-body { font-size: max(1em, var(--ev-floor-body)); }
+  .cix-flow { display: block; }
+  .cix-well::after { display: none; }
+}
+@media (min-width: 1024px) {
+  .ev-card-index[data-columns="3"] .cix-title { font-size: 1.4em; }
+}
+
+/* Phones: one tile per card, thumbnail (concentric: 1em − .5em pad)
+   beside the caption, so the whole index reads in one screen; the seam is
+   vertical, inside the tile. */
+@media (max-width: 767px) {
+  .cix-card {
+    --cix-seam: 0.25em;
+    --cix-orb: 2.1em;
+    --cix-ring: var(--card-index-tile);
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    grid-template-rows: none;
+    align-items: center;
+    gap: 0.25em;
+    padding: 0.5em;
+    border-radius: var(--ev-radius-surface);
+    background: var(--card-index-tile);
+  }
+  .cix-well { border-radius: 0.5em; }
+  .cix-well::before { -webkit-backdrop-filter: blur(2.5px); backdrop-filter: blur(2.5px); }
+  .cix-mark > * { width: var(--card-index-mark-phone); }
+  .cix-caption { gap: 0.35em; padding: 0.4em 0.5em 0.4em 1.75em; background: none; }
+  .cix-orb { top: 50%; left: calc(-0.5 * var(--cix-seam) - 0.5 * var(--cix-orb)); translate: 0 -50%; }
+  .cix-meta { justify-content: flex-start; gap: 0.5em; }
+  .cix-meta:empty { display: none; }
+  .cix-body { font-size: 13px; line-height: 1.4; }
+  .cix-card:not(:has(.cix-orb)) .cix-caption { padding-left: 0.75em; }
+}
+
+/* ── States: hover (fine pointers) and keyboard focus lift the veil ───── */
+.cix-card:focus-visible { outline: none; }
+.cix-card:focus-visible .cix-well { outline: 2px solid var(--card-index-signal); outline-offset: 3px; }
+.cix-card:focus-visible .cix-well::before { opacity: 0; }
+.cix-card:focus-visible .cix-mark { opacity: 0; scale: 0.96; }
+.cix-card:focus-visible .cix-cover { filter: none; }
+.cix-card:focus-visible .cix-well::after { transform: scaleX(1); }
+@media (hover: hover) {
+  .cix-card:hover .cix-well::before { opacity: 0; }
+  .cix-card:hover .cix-mark { opacity: 0; scale: 0.96; }
+  .cix-card:hover .cix-cover { filter: none; transform: scale(1.03); }
+  .cix-card:hover .cix-well::after { transform: scaleX(1); }
+  .cix-card:hover .cix-caption { background: var(--card-index-tile-hover); }
+}
+@media (hover: hover) and (max-width: 767px) {
+  .cix-card { transition: background-color var(--ev-dur-control) var(--ev-ease); }
+  .cix-card:hover { background: var(--card-index-tile-hover); }
+  .cix-card:hover .cix-caption { background: none; }
+}

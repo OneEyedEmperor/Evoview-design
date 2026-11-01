@@ -1,7 +1,7 @@
 # card — Evoview media cards
 
-The library's card compositions, one `MediaCard` anatomy (`ribbon` or
-`portrait`) and three ways to present it. Depends on `foundation` and
+The library's card compositions: one `MediaCard` anatomy (`ribbon` or
+`portrait`) in three presentations, plus the index card. Depends on `foundation` and
 `controls`. (Renamed from `card-track` in 2.0.0.)
 
 | Component | Job | Source |
@@ -9,10 +9,11 @@ The library's card compositions, one `MediaCard` anatomy (`ribbon` or
 | `CardTrack` | Browse services or work one card at a time: desktop scroll-scrubbed track under a sticky stage, phone snap strip | Evoview Services slider + Portfolio archive |
 | `CardDeck` | A catalogue by category: category switch over a dealt hand of 3 or 6 cards | Tchin Tchin home menu ("Un Voyage Culinaire") |
 | `CardSequence` | Moving pictures shown in turn: timed focus over video cards, one loop playing, hover/keyboard hold | Tchin Tchin karaoke board + "Vivez l'Expérience" |
+| `CardIndex` | An index of peer destinations (services, collections, a site's pages): linked cards, veiled covers, order orbs in the seam | Evoview Library index |
 
 Showcase: `https://evoview-library.said.bet/layouts/card` (one studio,
-Atelier Sorel: portfolio track, services track, deck, sequence; live accent
-palette, FR / EN).
+Atelier Sorel: portfolio track, services track, deck, sequence, index; live
+accent palette, FR / EN).
 
 ## Signature (preserve)
 
@@ -102,15 +103,44 @@ Evoview piece; changing these is a library change, never a client edit
   per scene: set `accent` on gallery titles, leave it off when an offer
   shows the price). Never a card surface or body text.
 
+### CardIndex
+
+- **Veiled at rest, lifted on intent.** The cover is graded (saturate .45,
+  brightness .88) under a black .4 veil with a 5px backdrop blur (2.5px on
+  phone thumbnails) and the client's emblem centred on it (17 % of the
+  well, 36 % on phones). Hover (fine pointers) or keyboard focus lifts veil
+  and emblem (600ms, emblem to .96 scale), releases the grade and pushes
+  the cover to 1.03 (900ms cinematic).
+- **The seam fill** (≥ 768): one eased 1000ms timeline; an accent bar runs
+  in from the left through the gap between well and caption, splits into
+  two arcs round the orb's ring that meet on the far side, then runs out to
+  the right edge (through the corner notches); it drains back the same way,
+  from the frame it is on. The orb fills with the accent as liquid
+  (`OrbFill`) at the pace of the arcs. Phones: no seam; a 2px accent bar
+  under the well and the orb fill follow the same timeline.
+- **Order as a bare number in an orb set into the seam** (RULES §1): its
+  ring is the seam's own colour (the chapter ground; the tile on phones),
+  centred on the seam's midpoint from 768, on the vertical seam inside the
+  tile on phones. Never a `01 / 06` readout.
+- **Peers in an equal grid**: one well ratio (16:10), captions on tonal
+  tiles stretched to one height per row (RULES §3), titles on one line
+  across a row (a tagged index reserves the tag row on every card). Phones:
+  one tile per card, thumbnail beside caption, the whole index in a screen.
+- Three voices: display title (900, uppercase), body line, readout tag.
+- **Accent roles** (`--card-index-accent`, `-ink`, `-signal`): seam fill,
+  orb fill (with contrast ink), phone bar, focus ring. Never a tile, cover
+  or text.
+
 ### Attribution
 
 Only `CardSequence` carries the Evoview wordmark, as a decorative watermark:
 unlinked, centred, `aria-hidden`, opacity .12, no filter, on by default
 (`watermark: false` removes it; that is the founder's call). Its few large
 video cards are the inventoried source placement (`STRATEGY.md`).
-`CardTrack` and `CardDeck` cards carry none — a mark repeated across a grid
+`CardTrack`, `CardDeck` and `CardIndex` cards carry none — a mark repeated across a grid
 of peers is noise (the Tchin deck repeated a watermark on every card;
-dropped). None of the three has a header / chassis strip, so none carries a
+dropped). `CardIndex`'s `mark` is the client's emblem, never the Evoview mark. None
+of them has a header / chassis strip, so none carries a
 linked mark (RULES §9): it lives in the chassis of what `onOpen` opens
 (dossier) or the site footer (`chapter`'s `ChapterFooter`). Never put it on
 a card or next to the affordance. Card links go to the client's own
@@ -119,14 +149,16 @@ Evoview referral.
 
 ## Variations (select)
 
-The composition first: `CardTrack`, `CardDeck` or `CardSequence` (table
-above). Then:
+The composition first: `CardTrack`, `CardDeck`, `CardSequence` or
+`CardIndex` (table above). Then:
 
 | Component | Prop | Array (default first) | Choose |
 | --- | --- | --- | --- |
 | `CardTrack` (per track), `CardDeck` | `variant` | `CARD_TRACK_VARIANTS`: `portrait` · `ribbon` (required per track) | `portrait` when the image is the argument, `ribbon` when each card needs a sentence |
 | `CardDeck` | `rows` | `CARD_DECK_ROWS`: `2` (six cards) · `1` (three) | |
 | `CardSequence` | `layout` | `CARD_SEQUENCE_LAYOUTS`: `gallery` · `board` | `gallery`: all clips in one row (the page's own section) · `board`: clips + facts + offer (home teaser) |
+| `CardIndex` | `columns` | `CARD_INDEX_COLUMNS`: `2` · `3` (desktop ≥ 1024) | `2` for 2–4 destinations or wide pictures, `3` for 6 |
+| `CardIndex` | `numbered` | `true` · `false` | orbs when the order means something (a path, a sequence of pages); none for unordered peers |
 
 ## Expression (adapt)
 
@@ -139,6 +171,10 @@ above). Then:
 - **CardSequence:** clips (poster, loop, title, meta, destination), `ratio`
   from the footage, `dwellMs` (default and recommendation 2000), facts,
   offer and action, `tone`, accent.
+- **CardIndex:** items (cover, optional loop, title, body line, tag,
+  destination), the client's emblem as `mark` (white on the veil; omit for
+  none), tone, accent; tile, veil and emblem size tokens in
+  `card.theme.css`.
 
 Accent = the client's, read from the host `--primary` /
 `--primary-foreground`.
@@ -173,6 +209,9 @@ Accent = the client's, read from the host `--primary` /
 | `src/CardSequence.tsx` | Sequence: timed focus, hold, channel switch, board / gallery | no |
 | `src/card-sequence.css` | `.ev-card-sequence` token block + `.csq-*` | no |
 | `src/strip.ts` | Snap strips (track phone mode, deck below 1024): the centred card | no |
+| `src/CardIndex.tsx` | Index: grid, linked cards, veiled well, media gate, loop pause model | no |
+| `src/IndexSeam.tsx` | The seam fill (SVG) and the orb fill's timeline | no |
+| `src/card-index.css` | `.ev-card-index` token block + `.cix-*` | no |
 
 `showcase.css` is the library page's sheet; not installed.
 
@@ -487,3 +526,83 @@ loop is revealed only once frames play.
 4. Palette yellow / near-white / indigo on dark and paper: focus edge,
    dwell line, orb fill, accent word / price readable.
 5. Card links: client destinations only; watermark unlinked, `aria-hidden`.
+
+## CardIndex
+
+An index of peer destinations, every card a link: a site's pages, its
+services, its collections. Extracted from the Evoview Library index (the
+package cards on `https://evoview-library.said.bet/`). Showcase: the
+"Sommaire / Index" scene on `/layouts/card` (Atelier Sorel; columns and
+order orbs on the desk).
+
+### API
+
+```tsx
+import { CardIndex, buildCardIndexConfig } from "@/components/card";
+
+const { indexes, copy } = buildCardIndexConfig(locale);
+<CardIndex
+  index={indexes.site} copy={copy}
+  columns={2}                   // 2 (default) | 3, desktop ≥ 1024
+  numbered                      // order orbs (default true)
+  mark={<ClientEmblem />}       // centred on the veiled covers, white, aria-hidden
+  tone="light" rhythm="standard"
+  heading={<MyChapterHeading />}
+  cardHeadingLevel={3}
+  onOpen={(item, e) => navigate(item.href)}  // plain clicks only; omit to follow the href
+/>
+```
+
+```ts
+type CardIndexConfig = { locale; copy: CardIndexCopy; indexes: Record<string, CardIndexDefinition> };
+type CardIndexDefinition = {
+  label: string;                 // list name
+  items: {
+    id; title;
+    body?: string;               // one line
+    tag?: string;                // readout in the caption corner (price, "New"); never a count
+    media: { src; srcSet?; sizes?; alt?; video?; position? };
+    href: string;                // required: every card is a link
+    external?: boolean;          // new tab, copy.newTab spoken
+  }[];
+};
+type CardIndexCopy = { newTab; loading; failed };
+```
+
+Media: 16:10 stills, webp, ~2× the column width (≈1200px for two columns;
+pass `srcSet` with a ~640px candidate for phone thumbnails). A loop is
+muted, short, its `src` the loop's first frame. `mark` is any element
+sized by width (`--card-index-mark`); an SVG with a `viewBox` keeps its
+ratio.
+
+### Behaviour
+
+| | ≥ 1024 | 768–1023 | Phone < 768 |
+| --- | --- | --- | --- |
+| Grid | `columns` (2 or 3) | 2 | one row tile per card: thumbnail .8 : caption 1.2 |
+| Caption | centred, tag top-right | same | left, tag above the title |
+| Orb | on the seam's midpoint | same | on the vertical seam |
+| Hover / focus | seam fill + orb liquid, veil lifts | same | bar under the well + orb fill (focus; no hover on touch) |
+
+Keyboard: each card is a link (Tab order = grid order); focus-visible runs
+the same state as hover, ring in the accent signal around the well.
+
+### Motion and pause model
+
+No reduced-motion branch: every state is complete at rest. Covers load
+from 600px before the viewport through `useMediaReady` (readout after
+350ms, "unavailable" on failure; no retry button, it cannot sit inside a
+link) and are `loading="lazy"` (no hoisted preload). Loops play only while
+the card is on screen, the document visible and no modal suspends the
+page. The seam runs on rAF only while it moves; geometry is measured on
+mount and on resize, never inside a frame.
+
+### Verification
+
+1. 1440 / 1024 / 390: both `columns` × `numbered`; no horizontal overflow;
+   titles on one line across a row; body ≥ 13px, tag ≥ 12px.
+2. Hover and Tab: veil and emblem lift, the seam fills left to right and
+   round the orb, drains back from where it is when left mid-run.
+3. Palette yellow / near-white / indigo on light and dark: seam, orb ink,
+   focus ring readable.
+4. Server HTML: every card an `<a href>`; links are client destinations.
