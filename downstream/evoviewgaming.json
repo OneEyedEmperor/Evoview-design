@@ -3,7 +3,7 @@
   "repo": "/root/.vibehub/projects/evoviewgaming",
   "branch": "master",
   "fork": { "commit": "806600f", "snapshot": "5b352ba", "library": "02db691" },
-  "libraryReviewed": "23b5620",
+  "libraryReviewed": "c44eca4",
   "siteReviewed": "d81ad6a",
   "items": [
     {
@@ -215,6 +215,27 @@
       "value": "medium",
       "signoff": false,
       "recommendation": "Do with the next minors of those packages."
+    },
+    {
+      "id": "dossier-feed-adopt",
+      "capability": "dossier-modal",
+      "direction": "down",
+      "class": "C",
+      "source": ["dossier@1.14.0"],
+      "incorporatedIn": null,
+      "status": "candidate",
+      "reason": "dossier 1.14.0 adds the feed board (live batches of fetched entries, page URLs, deep links), the emperor's request for a news use. The site's desks are static content (4 entries each from content.ts); adopting a feed needs a live article source (API or build-time snapshot via dossierFeed) and a server rule for parsed-but-unknown keys (CRAWLABLE-MODALS §2 live content).",
+      "evidence": ["Library c44eca4, independent review dea26eb6 r2: merge as-is"],
+      "date": "2026-11-01",
+      "layer": "Variations",
+      "targets": ["src/components/dossier/dossier.config.tsx", "src/stories/StoriesDossier.tsx", "scripts/prerender.ts"],
+      "adaptation": "Sync dossier 1.14.0; desks become feed items fed by a DossierFeedSource (or dossierFeed snapshot at build); page views prerendered; unknown keys 404 / shell + noindex.",
+      "risk": "medium",
+      "verify": "verify-crawlability over page views and deep links; feed-fetch-check against the gate; 1440 / 1024 / 390 batches and deep links.",
+      "size": "l",
+      "value": "high",
+      "signoff": true,
+      "recommendation": "Decide with the emperor's 8 feed design questions and the site's future (live source, hosting)."
     }
   ]
 }
