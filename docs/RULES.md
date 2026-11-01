@@ -240,7 +240,7 @@ Keep (Evoview authorship): asymmetric splits, three-voice type, radius-by-role
 with square-against-round, numbered order as orbs and the orb-seam card (§1), state-as-frame,
 paper-inversion active state, chapter strip with scroll progress, glass chrome,
 media-gated reveals, timed sequences with the pause model.
-Do **not** clone into neutral packages: eye artwork, REC dots, CRT/TV power-on,
+Do **not** clone into neutral packages: eye artwork, boxed REC dots, CRT/TV power-on,
 scanlines/phosphor/grain, viewfinder brackets, Gaegu numerals, `méthode`
 wordmark, `EVV` prefixes, red reset. Replace by role (see
 `extraction/method.md` §8 table). One exception: the channel switch (§6),

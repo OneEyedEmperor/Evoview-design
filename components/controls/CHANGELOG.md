@@ -1,5 +1,11 @@
 # controls changelog
 
+## Unreleased
+
+Docs only, no version bump. README: `Tag`'s `dot` marks a status only (live,
+draft / sent…), never decoration (RULES §8: only the boxed REC dot is
+banned).
+
 ## 1.6.0
 
 - Sync (`docs/SYNC.md`): `evoview.json` (`requires` foundation `>=1.9.0 <2`);

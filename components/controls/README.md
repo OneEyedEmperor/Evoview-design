@@ -115,7 +115,7 @@ Every control root carries `ev-controls`; pass `className` to extend.
 | `ChoiceOption` | `{ value, label, index?, hint?, icon?, disabled? }` |
 | `CheckOrb` | `checked` |
 | `StepMark` | `index`, `state?: "idle" \| "current" \| "done"`, `size?: "sm" 24 \| "md" 34`, `label?` (else decorative) |
-| `Tag` | `tone?: "neutral" \| "accent"`, `dot?` |
+| `Tag` | `tone?: "neutral" \| "accent"`, `dot?` (marks a status only: live, draft / sent…; never decoration, RULES §8) |
 | `Badge` | `tone?: "accent" \| "neutral"` |
 | `UnderlineField` | `label`, `optional?`, `required?` (`*` + spoken), `error?`, `hint?`, `wide?`, `multiline?` (textarea), `ref`, input / textarea attributes |
 | `FieldGrid` | one column, two from a 560px-wide container; `wide` fields span |
