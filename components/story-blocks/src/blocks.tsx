@@ -2,6 +2,7 @@ import { useId, type CSSProperties, type ReactNode } from "react";
 import { PrimaryPlate } from "../controls";
 import { cn, StepGauge } from "../foundation";
 import { Reveal, StoryFigure, renderLines } from "./parts";
+import { STORY_INTRO_SIZES, STORY_SEQUENCE_SIZES, storyProofSizes } from "./sizes";
 import type { IndexedRow, IndexedRowsProps, Lines, PayoffBandProps, ProofGridProps, ProofItem, StoryIntroProps } from "./types";
 
 /** Open chapter: separated from its neighbours by the chapter band of space only. */
@@ -49,7 +50,7 @@ export function StoryIntro({ title, lead, body, media, caption, align = "end", l
           </Reveal>
         </div>
         <Reveal kind="media" className="evsb-intro__media">
-          <StoryFigure media={media} eager scrim={!!caption} className="evsb-hero">
+          <StoryFigure media={media} eager scrim={!!caption} sizes={STORY_INTRO_SIZES} className="evsb-hero">
             {caption && (
               <figcaption className="evsb-caption">
                 <span className="evsb-caption__text">
@@ -132,7 +133,7 @@ export function IndexedRows({ heading, body, rows, media, surface = media ? "til
             className="evsb-sequence__media"
             style={{ "--evsb-ratio": ratio, "--evsb-ratio-phone": ratioPhone ?? ratio } as CSSProperties}
           >
-            <StoryFigure media={figure} className="evsb-sequence__figure" />
+            <StoryFigure media={figure} sizes={STORY_SEQUENCE_SIZES} className="evsb-sequence__figure" />
           </Reveal>
         </div>
       </Chapter>
@@ -182,7 +183,7 @@ export function ProofGrid({ heading, body, headingAt = "start", items }: ProofGr
             className={cn("evsb-proof__item", halves[i] && "evsb-proof__item--half")}
             style={{ "--evsb-span": item.span ?? autoSpan(i), "--evsb-ratio": item.ratio, "--evsb-ratio-phone": item.ratioPhone ?? item.ratio } as CSSProperties}
           >
-            <StoryFigure media={item.media} className="evsb-proof__figure" />
+            <StoryFigure media={item.media} sizes={item.media.srcSet ? storyProofSizes(item.span ?? autoSpan(i), halves[i]) : undefined} className="evsb-proof__figure" />
             {item.caption && <p className="ev-t-compact evsb-proof__caption">{item.caption}</p>}
           </Reveal>
         ))}

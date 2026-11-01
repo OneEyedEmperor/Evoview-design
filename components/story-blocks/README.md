@@ -126,7 +126,7 @@ type StoryBlocksConfig = {
 };
 buildStoryBlocksConfig(locale): StoryBlocksConfig
 
-type StoryMedia = { src; alt; position?; positionPhone?; fit?: "cover" | "contain" };
+type StoryMedia = { src; srcSet?; sizes?; alt; position?; positionPhone?; fit?: "cover" | "contain" };
 type StoryChapter =
   | { kind: "intro"; title: Lines; lead; body?; media: StoryMedia; caption?: { kicker?; title }; align?: "end" | "start"; level?: 1 | 2 }
   | { kind: "rows"; heading: Lines; body?; rows: { label; detail; index? }[];
@@ -172,6 +172,25 @@ Proof collage: items flow on 12 columns, default spans 7/5 then 5/7
 (vertically centred, so mixed ratios stagger); `span` overrides. Phone: one
 column; two consecutive portrait items (`ratio < 1`) share a row.
 
+### Media
+
+Give every image width-described renditions in `srcSet`, with `src` as the
+largest (fallback). The `<img>` and its media gate fetch the same single
+candidate (foundation ≥ 1.16.0 gate). A client passes `srcSet` only: each
+block supplies its `sizes` from its page-rhythm layout. `media.sizes`
+overrides it, e.g. inside a dossier, where the rail is narrower than these
+upper bounds.
+
+| Block | Default `sizes` (exported constant) | Rendered at 390 / 1024 / 1440 |
+| --- | --- | --- |
+| Intro hero | `STORY_INTRO_SIZES`: full rail, `calc(100vw − 40px)` phone … `1240px` from 1280 | 350 / 926 / 1170 |
+| Sequence media | `STORY_SEQUENCE_SIZES`: full rail below 1024, the `1.28` side from 1024 (`calc(64vw − 84px)`, `761px` from 1280) | 350 / 562 / 718 |
+| Proof item | `storyProofSizes(span, half)`: `span` / 12 columns from 768; full rail or half (paired portraits) below | 350 or 169 / 524 or 363 / 666 or 464 |
+
+Renditions that cover them at 1×–3×: about 480, 800, 1200 and the
+1400–1600 original. Without `srcSet`, the markup is unchanged: no `sizes`
+or `srcset` attributes.
+
 ## Desktop / tablet / phone
 
 | | ≥ 1024 | 640–1023 | < 640 (phone) |
@@ -214,3 +233,6 @@ their image. Proof images zoom 1.045 on hover (fine pointers only).
    and retry; retry reveals the image.
 8. Scroll fast past the story with the tab hidden / restored: parts reveal
    only once seen.
+9. With `srcSet`: at 390 (1× / 3×) and 1440, the network log fetches each
+   image once, as the candidate ≥ its rendered width × DPR (`currentSrc`);
+   never `src` beside it.

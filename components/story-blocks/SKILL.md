@@ -39,7 +39,9 @@ and the pause model.
 4. Edit only `src/components/story-blocks/story-blocks.config.tsx`: media
    labels in the site languages and the client's stories (or pass props
    from the page). Real media in `public/`, ratios chosen per artefact,
-   `positionPhone` checked for the 4:5 crop. Captions say what the image
+   `positionPhone` checked for the 4:5 crop, each image with a `srcSet`
+   (≈ 480 / 800 / 1200 w + the original as `src`; the blocks set `sizes`,
+   README "Media"). Captions say what the image
    proves, in one sentence; row `index` only when it is a real value.
 5. Mount `<Story tone=… copy={config.copy} chapters={…} />` per story; a
    tone cut is a second `<Story>`. Check the host `--primary` /

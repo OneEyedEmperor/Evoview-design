@@ -4,7 +4,12 @@ import type { MouseEventHandler, ReactNode } from "react";
 export type Lines = ReactNode | readonly ReactNode[];
 
 export type StoryMedia = {
+  /** Fallback file; with `srcSet`, the largest rendition. */
   src: string;
+  /** Width-described renditions ("hero-800.webp 800w, hero-1600.webp 1600w"): the image and its media gate fetch the one candidate the layout needs. */
+  srcSet?: string;
+  /** Overrides the block's default `sizes` (README "Media"); used only with `srcSet`. */
+  sizes?: string;
   /** Describe the artefact, not "image of". */
   alt: string;
   /** object-position from 640px up, e.g. "50% 40%". */

@@ -1,5 +1,21 @@
 # story-blocks changelog
 
+## 2.7.0
+
+Additive. Requires `foundation` ≥ 1.16.0 (`MediaSource` `srcSet` / `sizes`:
+the media gate probes the candidate the `<img>` picks, so it is fetched
+once).
+
+API (additive): `StoryMedia` takes `srcSet?` and `sizes?`. They render on
+every block's `<img>` and go into its media gate. Without `sizes`, each
+block supplies its own from its layout: `STORY_INTRO_SIZES`,
+`STORY_SEQUENCE_SIZES`, `storyProofSizes(span, half)`, exported, values in
+the README "Media". `StoryMedia` has no video, so there's no `posterSrcSet`.
+Without `srcSet` the markup is byte-identical to 2.6.0. The media gate's
+reveal is unchanged.
+
+Config changes: none (the reference config has no renditions).
+
 ## 2.6.0
 
 Additive. Requires nothing new. No config changes.

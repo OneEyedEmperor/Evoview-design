@@ -58,18 +58,23 @@ type FigureProps = {
   eager?: boolean;
   /** Bottom scrim for captions laid inside the media. */
   scrim?: boolean;
+  /** The block's rendered width (`sizes` syntax), applied when `media.srcSet` is set and `media.sizes` isn't. */
+  sizes?: string;
   /** Overlay content (caption inside the media). */
   children?: ReactNode;
 };
 
 /** Media well: the image is revealed only once decoded; text status after 350ms, retry on failure. */
-export function StoryFigure({ media, className, eager = false, scrim = false, children }: FigureProps) {
+export function StoryFigure({ media, className, eager = false, scrim = false, sizes: blockSizes = "100vw", children }: FigureProps) {
   const copy = useStoryCopy();
   const ref = useRef<HTMLElement>(null);
   usePressJelly();
   const { active } = useInViewPause(ref, { rootMargin: "600px 0px", enabled: !eager, ignoreSuspension: true, once: true });
   const near = eager || active;
-  const gate = useMediaReady(near, [media.src]);
+  const srcSet = media.srcSet || undefined;
+  const sizes = srcSet ? (media.sizes ?? blockSizes) : undefined;
+  // The gate probes the same candidate the <img> picks, so it is fetched once.
+  const gate = useMediaReady(near, [srcSet ? { src: media.src, srcSet, sizes } : media.src]);
   const state = gate.ready ? "ready" : gate.failed ? "failed" : gate.slow ? "loading" : "pending";
 
   const style = {
@@ -80,7 +85,7 @@ export function StoryFigure({ media, className, eager = false, scrim = false, ch
 
   return (
     <figure ref={ref} className={cn("evsb-figure", className)} data-state={state} style={style}>
-      {near && <img className="evsb-figure__img" src={media.src} alt={media.alt} decoding="async" />}
+      {near && <img className="evsb-figure__img" sizes={sizes} srcSet={srcSet} src={media.src} alt={media.alt} decoding="async" />}
       {scrim && <span className="evsb-figure__scrim" aria-hidden="true" />}
       {state === "loading" && (
         <span className="evsb-figure__status" role="status">
