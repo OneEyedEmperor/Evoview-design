@@ -84,21 +84,23 @@
 .ps-captions {
   display: grid;
   grid-template-columns: repeat(var(--ps-n), minmax(0, 1fr));
+  align-items: end;
   gap: 3px;
   margin: 0;
   padding: 0 4px;
   list-style: none;
 }
+/* Captions default to the step title: they wrap, never an ellipsis. All are laid out from the start
+   (opacity 0), so a two-line caption never resizes the chapter mid-cycle. */
 .ps-captions li {
-  overflow: hidden;
   min-width: 0;
   color: var(--ev-fg-90);
   font-size: max(calc(0.75 * var(--ev-rem)), 11px);
   line-height: 1.5;
   letter-spacing: 0.14em;
+  overflow-wrap: break-word;
   text-align: center;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  text-wrap: balance;
   opacity: 0;
 }
 .ps-captions li > span { display: inline-block; }
@@ -229,16 +231,28 @@ a.ps-card { display: block; color: inherit; text-decoration: none; }
     radial-gradient(circle farthest-corner at 50% 50%, transparent 36%, rgba(0, 0, 0, 0.24) 62%, rgba(0, 0, 0, 0.5) 100%),
     rgba(0, 0, 0, 0.62);
 }
-/* Pending = the muted step numeral, centred where the mark will be drawn. */
+/* Pending = a muted orb with the bare step number, the size of the completion mark it gives way to. */
 .ps-card__pending {
   position: absolute;
   inset: 0;
   display: grid;
-  place-content: center;
-  color: rgba(255, 255, 255, 0.55);
-  font-size: max(calc(1.125 * var(--ev-rem)), 15px);
-  letter-spacing: 0.16em;
+  place-items: center;
   transition: opacity 300ms ease;
+}
+.ps-card__orb {
+  display: grid;
+  width: max(4em, 52px);
+  height: max(4em, 52px);
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.28);
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.28);
+  color: rgba(255, 255, 255, 0.72);
+  font-family: var(--ev-font-readout);
+  font-size: max(calc(1.25 * var(--ev-rem)), 16px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
 }
 .ps-card:not([data-state="idle"]) .ps-card__pending { opacity: 0; }
 
@@ -396,14 +410,15 @@ a.ps-card { display: block; color: inherit; text-decoration: none; }
 }
 .ev-process .ps-index { opacity: 0; transform: translateY(24px); transition: opacity 600ms var(--ev-ease-cinematic) 120ms, transform 600ms var(--ev-ease-cinematic) 120ms; }
 .ev-process[data-revealed] .ps-index { opacity: 1; transform: none; }
+.ps-index > li { display: grid; }
 .ps-index__btn {
   display: flex;
   width: 100%;
   min-height: 52px;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   margin: 0;
-  padding: 8px 12px;
+  padding: 8px 10px 8px 9px;
   border: 1px solid transparent;
   border-radius: var(--ev-radius-control);
   background: color-mix(in oklab, var(--ev-fg) 5%, transparent);
@@ -417,29 +432,40 @@ a.ps-card { display: block; color: inherit; text-decoration: none; }
 }
 .ps-index__btn:active { transform: scale(0.97); }
 .ps-index__btn:focus-visible { outline: 2px solid var(--process-signal); outline-offset: 3px; }
-.ps-index__num {
+/* Orb: ring in the chip's ink at rest; completion fills it with the accent and a check (OrbFill). */
+.ps-index__orb {
+  --ev-orb-rest: transparent;
+  --ev-orb-rest-ink: var(--ev-fg-65);
+  --ev-orb-lit: var(--process-accent);
+  --ev-orb-lit-ink: var(--ev-accent-ink);
+  position: relative;
+  display: block;
+  width: 26px;
+  height: 26px;
   flex: 0 0 auto;
-  color: var(--ev-fg-55);
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1.5px color-mix(in oklab, currentColor 30%, transparent);
   font-family: var(--ev-font-readout);
-  font-size: 15px;
+  font-size: 12px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   line-height: 1;
+  transition: box-shadow 300ms ease;
 }
+.ps-index__orb svg { width: 13px; height: 13px; }
+/* Titles stay whole: they wrap (two lines for ≈ 20 characters at 360), never an ellipsis. */
 .ps-index__title {
   flex: 1 1 auto;
   min-width: 0;
-  overflow: hidden;
   font-family: var(--ev-font-display);
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.06em;
-  line-height: 1.1;
-  text-overflow: ellipsis;
+  line-height: 1.15;
+  overflow-wrap: break-word;
   text-transform: uppercase;
-  white-space: nowrap;
+  text-wrap: balance;
 }
-.ps-index__check { flex: 0 0 auto; width: 16px; height: 16px; color: var(--process-signal); }
 /* An odd step count closes the grid with one full-width control. */
 .ps-index > li:last-child:nth-child(odd) { grid-column: 1 / -1; }
 .ps-index__btn[data-state="active"] { border-color: var(--ps-frame-active); background: var(--ps-frame-active); color: var(--ps-ribbon-fg); }
@@ -502,7 +528,7 @@ a.ps-card { display: block; color: inherit; text-decoration: none; }
 .psd__close { margin-left: auto; }
 .psd__where { display: flex; min-width: 0; align-items: center; gap: 12px; }
 .psd__where-num { font-family: var(--ev-font-display); font-size: 34px; font-weight: 900; line-height: 0.9; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
-.psd__where-title { overflow: hidden; font-family: var(--ev-font-display); font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+.psd__where-title { min-width: 0; font-family: var(--ev-font-display); font-size: 13px; font-weight: 700; letter-spacing: 0.06em; line-height: 1.15; overflow-wrap: break-word; text-transform: uppercase; text-wrap: balance; }
 
 .psd__scroll {
   display: flex;
@@ -598,14 +624,14 @@ a.ps-card { display: block; color: inherit; text-decoration: none; }
   box-shadow: inset 0 0 0 1px var(--ev-line-strong);
   color: var(--ev-accent-signal);
   font-family: var(--ev-font-readout);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
 }
-.psd__objective { display: grid; gap: 6px; }
+.psd__objective { display: grid; gap: 0.6em; }
 .psd__content > .psd__objective { margin-top: 32px; }
-.psd__objective .ev-t-readout { color: var(--ev-accent-signal); }
+.psd__objective-h { color: var(--ev-fg); }
 .psd__objective p { color: var(--ev-fg-65); }
 
 .psd__foot {

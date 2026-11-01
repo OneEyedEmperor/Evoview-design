@@ -1,5 +1,5 @@
 import { useEffect, useRef, type KeyboardEvent, type ReactNode } from "react";
-import { cn, followRouteLink, pad, sequenceFillStyle, useHydrated, type SequenceClock } from "../foundation";
+import { cn, followRouteLink, sequenceFillStyle, useHydrated, type SequenceClock } from "../foundation";
 import { isVideo } from "./media";
 import type { CompletionMark, ProcessStep, StepState } from "./types";
 
@@ -57,7 +57,7 @@ export function StepCard({ step, index, state, clock, runKey, mark, statusLabel,
   const fill = state === "active" ? sequenceFillStyle(clock) : undefined;
   const open = ghost ? undefined : onOpen;
   const interactive = !!open;
-  const name = `${pad(index + 1)} ${step.title} · ${statusLabel}`;
+  const name = `${index + 1} ${step.title} · ${statusLabel}`;
 
   const shared = {
     className: cn("ps-card", interactive && "ps-card--interactive"),
@@ -89,8 +89,9 @@ export function StepCard({ step, index, state, clock, runKey, mark, statusLabel,
             )}
           </div>
           <span className="ps-card__veil" aria-hidden="true" />
-          <span className="ev-t-readout-lg ps-card__pending" aria-hidden="true">
-            {pad(index + 1)}
+          {/* Pending: the bare step number in an orb, where the completion mark will be drawn (RULES §1). */}
+          <span className="ps-card__pending" aria-hidden="true">
+            <span className="ps-card__orb">{index + 1}</span>
           </span>
           {state === "active" && loading && (
             <span className="ev-t-readout ps-card__loader" role="status">
@@ -153,7 +154,7 @@ export function StepCard({ step, index, state, clock, runKey, mark, statusLabel,
 function Mark({ kind, step, index }: { kind: CompletionMark; step: ProcessStep; index: number }) {
   let inner: ReactNode;
   if (kind === "icon" && step.mark) inner = <span className="ps-mark__icon">{step.mark}</span>;
-  else if (kind === "numeral") inner = <span className="ps-mark__numeral">{pad(index + 1)}</span>;
+  else if (kind === "numeral") inner = <span className="ps-mark__numeral">{index + 1}</span>;
   else
     inner = (
       <svg className="ps-mark__check" viewBox="0 0 24 24" aria-hidden="true">

@@ -1,5 +1,37 @@
 # process-sequence changelog
 
+## 1.9.0
+
+Signature change per the emperor's counter rule (RULES §1: no counting tags
+or kickers; order = a bare number in a round orb). Visible change, API
+unchanged.
+
+- Board, idle cards: the muted "02" numeral becomes a muted ring orb with
+  the bare number ("2"), the size of the completion mark that replaces it.
+- Phone index: the "01" readout becomes a 26px orb with the bare number;
+  completion pours the accent into it with a check (`OrbFill`), replacing
+  the separate trailing check.
+- Phone index titles and the instrument captions (default: the step title)
+  wrap instead of ending in an ellipsis: ≈ 20-character titles take two
+  lines at 360–390 and at 1024. A two-line caption row is laid out from the
+  first frame, so the chapter still never resizes mid-cycle.
+- `completionMark: "numeral"` draws the bare number ("2", was "02").
+- Step dossier: item orbs carry bare numbers ("1", was "01"); the objective's
+  small accent label becomes the block's own heading (`h2`, card-title
+  voice, `copy.dossier.objective`). Phone sticky header: the step title
+  wraps instead of ending in an ellipsis.
+- Accessible names of cards and progress segments read "2 Esquisse", not
+  "02 Esquisse".
+- Unchanged and open with the emperor (modal counters, RULES §1 exemption):
+  the stage's large "02" numeral (and the phone header's "02"), and the
+  sheet's "02 / 04" readout next to the progress cells.
+
+Config changes: none. No field is unused (`copy.dossier.objective` is now
+the heading text). Host CSS targeting `.ps-index__num`, `.ps-index__check`
+or `.psd__objective .ev-t-readout` no longer matches (package internals).
+
+Requires: nothing new (`foundation` ≥ 1.14.0, `controls` ≥ 1.5.0).
+
 ## 1.8.1
 
 Docs only. No code, config or visual change. Requires nothing new.

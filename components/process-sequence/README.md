@@ -25,7 +25,8 @@ restyled away; changing them is a library change (RULES §13).
 - **Two independent column stacks in Z order** (01 02 / 03 04); the grid
   reserves the tallest state, so the chapter never resizes during the cycle.
 - **State as frame, nothing else** — idle: no frame, dimmed grey media with
-  the muted step numeral, title at low contrast; active: 2.5px frame, live
+  a muted ring orb carrying the bare step number ("2", never "02"; the size
+  of the completion mark), title at low contrast; active: 2.5px frame, live
   media (opens from its centre line, then drifts with the clock), **paper
   inversion ribbon** wiped in L → R 700 ms, title typed in 800 ms, 2px
   progress (desktop), description at +800 ms; complete: 1px accent frame,
@@ -34,12 +35,17 @@ restyled away; changing them is a library change (RULES §13).
   shine: state words live in the accessible names only.
 - **Active = contrast, not accent** (paper on dark, ink on light); the accent
   encodes completion only.
-- **Phone changes the mechanism**: 2 × 2 index of 52px controls (number +
-  title; a check on completed steps; an odd last control spans the row) +
-  one monitor (the active card); no instrument, no card bar.
+- **Phone changes the mechanism**: 2 × 2 index of ≥ 52px controls (orb with
+  the bare number + title wrapping to two lines, never an ellipsis;
+  completion fills the orb with the accent and a check; an odd last control
+  spans the row) + one monitor (the active card); no instrument, no card bar.
+- **No counting tags or kickers on the board** (RULES §1): order is a bare
+  number in an orb (idle card, phone index, `numeral` mark, dossier items);
+  step titles and captions wrap, never truncate.
 - **Dossier**: stage / sheet 5/12 : 7/12 at every desktop width (never
   50/50), heading → progress cells + `02 / 04` → intro → numbered stadium
-  items (2 columns ≥ 1024) → objective → footer; last step's "next" becomes
+  items (bare number orbs, 2 columns ≥ 1024) → objective (its own `h2`
+  heading, not a label) → footer; last step's "next" becomes
   the client CTA. Phone: full sheet, sticky header (numeral, title, close),
   cells under the media well, footer (pager + block plate). Sections are
   separated by spacing and tone, never rules.
@@ -230,7 +236,10 @@ whose server HTML carries the step's full copy.
 ## Verification
 
 1. `pnpm build`; showcase at 1440, 1024, 390: heading .37 / .63, no
-   horizontal overflow, nothing below 9px (body ≥ 13px).
+   horizontal overflow, nothing below 9px (body ≥ 13px). No padded numbers
+   on the board (`01`, `02 / 04`): orbs carry bare numbers. With ≈ 20-char
+   titles, phone index titles (360 / 390) and instrument captions (1024)
+   wrap to two lines, no ellipsis.
 2. Watch one full cycle: captions lock on, ramp, drain, wrap; the chapter
    height never changes; columns move independently.
 3. Scroll away mid-step / hide the tab / open the dossier: the step does not

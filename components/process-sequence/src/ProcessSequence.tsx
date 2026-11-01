@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
 import { SegmentedProgress } from "../controls";
-import { Check, cn, pad, restoreFocus, TextFill, useInViewPause, useMediaQuery, useMediaReady, useRouteHistory, useSequenceClock, type RouteViewProps } from "../foundation";
+import { Check, cn, OrbFill, restoreFocus, TextFill, useInViewPause, useMediaQuery, useMediaReady, useRouteHistory, useSequenceClock, type RouteViewProps } from "../foundation";
 import { isVideo } from "./media";
 import { processSequenceRoutes } from "./routes";
 import { StepCard } from "./StepCard";
@@ -188,7 +188,7 @@ export function ProcessSequence({
                 count={n}
                 current={phase}
                 label={copy.instrumentLabel}
-                labels={steps.map((s, i) => `${pad(i + 1)} ${s.title}`)}
+                labels={steps.map((s, i) => `${i + 1} ${s.title}`)}
                 size="lg"
                 clock={draining ? undefined : clock}
                 fill={draining ? 1 : undefined}
@@ -216,12 +216,13 @@ export function ProcessSequence({
                 return (
                   <li key={s.id}>
                     <button type="button" className="ps-index__btn" data-state={st} aria-current={st === "active" ? "step" : undefined} onClick={() => jump(i)}>
-                      <span className="ps-index__num">
-                        {/* The index's state ink rises in (RULES §1). */}
-                        <TextFill ink={st === "active" ? "var(--ps-ribbon-fill)" : st === "complete" ? "var(--process-signal)" : undefined}>{pad(i + 1)}</TextFill>
+                      {/* Bare number in an orb (RULES §1); completion pours the accent in with a check. */}
+                      <span className="ps-index__orb" aria-hidden="true">
+                        <OrbFill on={st === "complete"} lit={<Check />}>
+                          <TextFill ink={st === "active" ? "var(--ps-ribbon-fill)" : undefined}>{i + 1}</TextFill>
+                        </OrbFill>
                       </span>
                       <span className="ps-index__title">{s.title}</span>
-                      {st === "complete" && <Check className="ps-index__check" />}
                       <span className="ev-sr">{copy.status[st]}</span>
                     </button>
                   </li>

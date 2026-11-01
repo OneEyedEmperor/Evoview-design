@@ -214,7 +214,7 @@ export function StepDossier({ steps, index, onIndexChange, onClose, copy, cta, a
     </div>
   );
 
-  const cellLabels = steps.map((s, i) => `${pad(i + 1)} ${s.title}`);
+  const cellLabels = steps.map((s, i) => `${i + 1} ${s.title}`);
   const progress = (
     <div className="psd__progress psd-in" style={{ "--d": wide ? "150ms" : "220ms" } as CSSProperties}>
       <SegmentedProgress count={n} current={shown} label={copy.dossier.progress} labels={cellLabels} onSelect={go} canSelect={(i) => i !== shown && openable(i)} hrefFor={hrefFor} fill={1} className="psd__cells" />
@@ -331,7 +331,7 @@ export function StepDossier({ steps, index, onIndexChange, onClose, copy, cta, a
                   <ol className="psd__items">
                     {detail.items.map((item, i) => (
                       <li key={item} className="psd-in psd-in--side" style={{ "--d": `${(wide ? 260 : 440) + i * (wide ? 40 : 60)}ms` } as CSSProperties}>
-                        <span className="psd__chip">{pad(i + 1)}</span>
+                        <span className="psd__chip">{i + 1}</span>
                         <span>{item}</span>
                       </li>
                     ))}
@@ -339,7 +339,7 @@ export function StepDossier({ steps, index, onIndexChange, onClose, copy, cta, a
                 )}
                 {detail?.objective && (
                   <div className="psd__objective psd-in" style={{ "--d": `${(wide ? 300 : 460) + detail.items.length * (wide ? 40 : 60)}ms` } as CSSProperties}>
-                    <span className="ev-t-readout">{copy.dossier.objective}</span>
+                    <h2 className="ev-t-card psd__objective-h">{copy.dossier.objective}</h2>
                     <p className="ev-t-body">{detail.objective}</p>
                   </div>
                 )}
