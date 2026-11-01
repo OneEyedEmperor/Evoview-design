@@ -3,8 +3,8 @@
   "repo": "/root/.vibehub/projects/evoviewgaming",
   "branch": "master",
   "fork": { "commit": "806600f", "snapshot": "5b352ba", "library": "02db691" },
-  "libraryReviewed": "2876bab",
-  "siteReviewed": "a75754b",
+  "libraryReviewed": "71e7b90",
+  "siteReviewed": "bc82328",
   "items": [
     {
       "id": "card-href",
@@ -320,21 +320,12 @@
       "capability": "dossier-modal",
       "direction": "up",
       "class": "V",
-      "source": ["dossier@1.16.3"],
-      "incorporatedIn": null,
-      "status": "approved",
-      "reason": "The emperor (\"yes\", 2026-11-01): every graded board's own-hover grade release snaps (mismatched filter lists, the declared 260 ms never runs, confirmed by review dea26eb6 r8). Fix library-wide: one function list per transitioned element, no retiming; true-colour stays none.",
-      "evidence": ["Review dea26eb6 1.16.3: selection board hover in 2 values, out already final at first frame"],
-      "date": "2026-11-01",
-      "layer": "Signature",
-      "targets": ["components/dossier/src/dossier.css", "components/card/src/card-track.css", "components/selector-stage/src/selector-stage.css", "components/navbar/src/navbar.css"],
-      "adaptation": "Audit every package's filter transitions; patch per package.",
-      "risk": "medium",
-      "verify": "Sampled filter values ≥ 6 per declared transition (own hover in / out, neighbour dim, focus); rest crops unchanged; SSR identical.",
-      "size": "m",
-      "value": "high",
-      "signoff": true,
-      "recommendation": "In progress (lane grade-easing, 8810d21d); independent review, then sync."
+      "source": ["dossier@1.16.3", "dossier@1.16.4", "c10d1c3"],
+      "incorporatedIn": "dossier@1.16.4",
+      "status": "applied",
+      "reason": "The emperor (\"yes\", 2026-11-01): every graded board's own-hover grade release snapped (mismatched filter lists; the declared 260 ms never ran). Audit of every package: only the dossier mismatched (board tiles, rows); the others already ease (list ↔ none and prefix lists interpolate). Fixed with one function list, no retiming; true colour stays none.",
+      "evidence": ["Library b95312b (merge 71e7b90), review dea26eb6 r9: merge, no findings", "Site c10d1c3, review 9edb3481 r9: hover eases ~260 ms, the 390 touch cycle cross-fades (36 values vs 2); P1–P7 pass at bc82328"],
+      "date": "2026-11-01"
     }
   ]
 }
