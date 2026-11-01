@@ -1,5 +1,56 @@
 # dossier changelog
 
+## 1.16.4
+
+Fix. No config, API or markup change (CSS only). Requires nothing new (foundation ≥ 1.16.0, controls ≥ 1.5.0). Server
+HTML, head answers, view media and parse results are byte-identical to 1.16.3 (`scripts/ssr-snapshot.mjs`, 2,326
+renders).
+
+- **Signature motion now runs as declared** (the emperor, 2026-11-01): hover / dim grade transitions ease instead of
+  snapping; no retiming.
+  - The cause: CSS interpolates `filter` only between lists of the same functions in the same order. A rest grade
+    (`grayscale saturate contrast brightness`) and the released one (`saturate sepia contrast brightness`) didn't match,
+    so every declared transition between them flipped at once.
+  - Affected, all graded: board tiles (selection boards, opening tiles, editions standard cards) on own hover in / out,
+    hover to a neighbour, keyboard focus in / out and touch-cycle focus in / out; row thumbnails (rows with media) on
+    row hover in / out.
+  - The fix: every graded state is written as one list, `grayscale saturate sepia contrast brightness`, with identity
+    values (`grayscale(0)`, `sepia(0)`) filling the unused steps. The values, durations and curves are unchanged.
+  - True colour stays `filter: none` in every state (the emperor's 2026-10-29 rule); the board's one-time entrance
+    blur is unchanged.
+- **A tier card's own-hover release keeps the board's 260ms** (1.16.3 review N1).
+  - In 1.16.3 the 600ms in-out curve sat on the tier card's rest state, so it governed every change landing at rest:
+    the release took 579ms.
+  - The curve now sits on the dimmed state only. Going into the dim still pours over 600ms; the release and the return
+    from the dim take 260ms.
+- Measured on the showcase (production preview, Chrome, computed `filter` every animation frame at 5× slowed playback,
+  times in real ms; before = 1.16.3, after = this release):
+
+  | Transition | Before | After |
+  | --- | --- | --- |
+  | Board tile: own hover in / out, own hover → neighbour | 0 intermediate values (flip) | 16–18 values over 253–262ms |
+  | Board tile: keyboard focus in / out | 0 (flip) | 17 over 264–270ms |
+  | Board tile: touch-cycle focus in / out | 0 (flip) | 49 over 694–714ms |
+  | Board tile: neighbour dim in / out | 15–18 (already one list) | 15–16 over 253ms |
+  | Row thumbnail: row hover in / out | 0 (flip) | 36–39 over 415ms |
+  | Editions standard card: own hover in / out | 0 (flip) | 9 over 251–281ms |
+  | Editions top card: own hover release | 19 over 579ms (600ms curve) | 7 over 233ms |
+  | Editions top card: neighbour dim in | 18 over 599ms | 20 over 587ms (unchanged) |
+  | True colour: own hover, neighbour dim | `none` throughout | `none` throughout |
+- Rest unchanged: base vs fix screenshots, pixel by pixel, at 1440 and 390, on the board, the opening screen, the
+  editions board, the menu rows and true colour. All are identical apart from header-chrome noise of a few pixels (the
+  base-vs-base floor). On phones the touch cycle's current and previous tiles differ: their 700ms transitions now run.
+  The tiles at rest are identical (0 pixels).
+- Audit of the other packages: no change needed. Their transitioned grades already share one list, or meet `none`,
+  which CSS replaces by the matching identity list:
+  - card: track `.ctc__img`, index `.cix-cover`;
+  - selector-stage: `.ss-thumb img`;
+  - navbar: `.nav-tray-card-media`;
+  - process-sequence: `.ps-card__img`.
+
+  Each was sampled easing over its declared duration (89–210 intermediate values). Keyframed blurs (entrances) don't
+  depend on this.
+
 ## 1.16.3
 
 Fix. No config, API or markup change (CSS only). Requires nothing new (foundation ≥ 1.16.0, controls ≥ 1.5.0).
