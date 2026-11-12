@@ -382,6 +382,60 @@ export async function buildSeed(manifest: Manifest, dir: string): Promise<SeedRe
   return { state, vault: Object.fromEntries(notes) };
 }
 
+/* ---------- amending the rules ---------- */
+
+export interface AmendResult {
+  state: SanctumState;
+  canon: Canon;
+  changed: string[];
+}
+
+/** Rule tables re-read from the manifest (grammar, kinds, roles, capacities); content untouched. */
+export function amendRules(base: SanctumState, baseCanon: Canon, manifest: Manifest): AmendResult {
+  const state = clone(base);
+  const changed: string[] = [];
+  const note = (what: string, before: unknown, after: unknown) => {
+    if (JSON.stringify(before) !== JSON.stringify(after)) changed.push(what);
+  };
+  for (const k of state.threadKinds) {
+    const m = manifest.threadKinds.find((x) => x.id === k.id);
+    if (!m) throw new Error(`manifest lacks cord kind ${k.id}`);
+    const before = clone(k);
+    k.grammar = clone(m.grammar);
+    k.directed = m.directed;
+    k.flow = m.flow;
+    k.colour = { ...k.colour, hex: m.hex };
+    if (m.steadfast) k.steadfast = true;
+    else delete k.steadfast;
+    note(`cord kind ${k.id}`, before, k);
+  }
+  for (const l of state.layers) {
+    const m = manifest.layers.find((x) => x.id === l.id);
+    if (!m) throw new Error(`manifest lacks layer ${l.id}`);
+    note(`layer ${l.id}`, [l.capacity, l.colour.hex], [m.capacity, m.hex]);
+    l.capacity = m.capacity;
+    l.colour = { ...l.colour, hex: m.hex };
+  }
+  note("beyond", state.beyond.capacity, manifest.beyond.capacity);
+  state.beyond.capacity = manifest.beyond.capacity;
+  note("element kinds", state.elementKinds, manifest.elementKinds);
+  note("tie kinds", state.tieKinds, manifest.tieKinds);
+  note("roles", state.roles, manifest.roles);
+  state.elementKinds = clone(manifest.elementKinds);
+  state.tieKinds = clone(manifest.tieKinds);
+  state.roles = clone(manifest.roles);
+  const canon: Canon = {
+    ...baseCanon,
+    layers: clone(state.layers),
+    beyond: clone(state.beyond),
+    threadKinds: clone(state.threadKinds),
+    elementKinds: clone(state.elementKinds),
+    tieKinds: clone(state.tieKinds),
+    roles: clone(state.roles),
+  };
+  return { state, canon, changed };
+}
+
 /* ---------- merging explanations and readings ---------- */
 
 export interface Explanations {

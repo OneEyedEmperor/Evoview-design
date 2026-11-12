@@ -4,11 +4,12 @@
 
    node scripts/sanctum-import.mjs seed [--force]  vault → seed/ + state v1
    node scripts/sanctum-import.mjs merge [file]     explanations + readings → new state
+   node scripts/sanctum-import.mjs rules [--dry]    rule tables re-read from the manifest → new state
    node scripts/sanctum-import.mjs check            current state against every invariant */
 
 import fs from "node:fs";
 import path from "node:path";
-import { buildSeed, mergeExplanations } from "../server/sanctum/importer.ts";
+import { amendRules, buildSeed, mergeExplanations } from "../server/sanctum/importer.ts";
 import { Store, dataDir, ensureDir, readJson, writeAtomic } from "../server/sanctum/store.ts";
 import { canonOf, validate } from "../src/sanctum/model/validate.ts";
 import { diffStates } from "../src/sanctum/model/ops.ts";
@@ -77,6 +78,31 @@ if (mode === "seed") {
   store.seal(state, { version, at: state.meta.updatedAt, summary, ops: applied.length });
   const d = diffStates(base, state);
   console.log(`merged into v${version}: ${applied.length} applied, ${refused.length} refused; readings +${d.readings.added.length} ~${d.readings.changed.length}`);
+} else if (mode === "rules") {
+  if (!manifest) throw new Error("no seed/manifest.json in the data dir");
+  const base = store.current();
+  const { state, canon, changed } = amendRules(base, store.canon(), manifest);
+  if (!changed.length) {
+    console.log("the rules already match the manifest");
+    process.exit(0);
+  }
+  const version = base.meta.version + 1;
+  const summary = "The rules of the cords were amended.";
+  state.meta = { schemaVersion: 1, version, updatedAt: new Date().toISOString(), summary };
+  const refusals = validate(state, canon);
+  console.log(`changed: ${changed.join(", ")}`);
+  if (refusals.length) {
+    console.error("the map would not hold under the amended rules:");
+    report(refusals);
+    process.exit(1);
+  }
+  if (rest.includes("--dry")) {
+    console.log("dry: nothing sealed");
+    process.exit(0);
+  }
+  store.writeCanon(canon);
+  store.seal(state, { version, at: state.meta.updatedAt, summary, ops: 0 });
+  console.log(`sealed v${version}`);
 } else if (mode === "check") {
   const state = store.current();
   const refusals = validate(state, store.canon());
