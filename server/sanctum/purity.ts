@@ -52,7 +52,8 @@ const NAME_ALLUSIONS = [
   new RegExp(`\\b(${FORM})\\b[^.!?]{0,40}\\bnames?\\b`, "iu"),
   /\b(true|real|secret|hidden|full|encrypted|first|last|given|unspoken|sealed)\s+names?\s+(is|was|reads|means|of)\b/iu,
   /\b(one['’]s|his|her|its|their)\s+names?\b/iu,
-  /\bname\s+(is|was)\s+(?!sealed\b|silent\b|unspoken\b|kept\b)\w+/iu,
+  /\bnames?\s+(is|was|reads|means)\s*[:"“'‘]/iu,
+  /\b[Nn]ames?\s+(is|was)\s+[A-Z]/u,
 ];
 
 /** True when a text speaks of the form of the sealed name. */

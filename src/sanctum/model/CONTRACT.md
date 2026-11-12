@@ -137,14 +137,49 @@ expires; the gate rests with growing backoff after refusals.
 ## Client data layer (`src/sanctum/data`)
 
 `createSanctumStore()` / `useSanctum(store, select)`: status
-(`unknown | gate | gathering | open`), `state`, `preview` (dry-run result),
-`refusals`, `record`; actions `enter`, `leave`, `gather`, `preview(ops)`,
-`seal(ops, summary?)`, `restore(version, dryRun?)`, `loadRecord`,
-`bringVision(blob)`. `checkLocally(state, ops)` runs the same engine for
-instant feedback. Media: `visionSrcSet(files, format)`, `visionUrl(id, w, f)`.
+(`unknown | gate | gathering | open`), `state`, `preview` (dry-run result
+with `ops`, `diff`, would-be `state`), `refusals`, `record`, `brought`
+(visions brought, not yet in the map), `busy`, `word` (last outcome in pure
+words); actions `enter`, `leave`, `gather`, `preview(ops, summary?)`,
+`seal(ops?, summary?)` (no ops = seal the preview), `clearPreview`,
+`restore(version, dryRun = true)`, `loadRecord`, `recordAt(version)`,
+`bringVision(blob)`. `select` must return a field, not a fresh object.
 
-## Route entry
+- `checkLocally(state, ops, brought)`: the same engine, for instant feedback.
+- `litBy(state, reading)` → `{ layers, elements, threads }` (sets of ids): a
+  cord lights when its kind is listed and both ends are lit; a layer end is lit
+  when that layer or any element in it is lit (BRIEF §10).
+- `ops.*` builders; `markFrom(title, taken)` for new marks.
+- Media: `visionSrcSet(files, format)`, `visionUrl(id, w, format)`; reveal a
+  vision only once decoded (`files.placeholder` and `files.tone` veil it until then).
+- The keeper (voice of refusals and acceptances, BRIEF §10): the element with
+  a tie whose `to` is `lexicon`. Read its title from the state; never name it
+  in code.
 
-`/sanctum` (lazy, outside the library layout). The entry renders the gate
-until entered, then lazy-loads `src/sanctum/sight/index.tsx`, whose default
-export receives `{ store }`. Nothing of the map loads before entry.
+## Route entry and mounts
+
+`/sanctum` (lazy, outside the library layout, never preloaded or linked).
+`src/sanctum/index.tsx` renders the gate until entered, then lazy-loads:
+
+- `src/sanctum/sight/index.tsx`: default export, `SightProps { store, console }`
+  (Render owns). The sight places `console` wherever it belongs.
+- `src/sanctum/console/index.tsx`: default export, `ConsoleProps { store }`
+  (Console owns), passed to the sight as the `console` slot.
+
+Both start as placeholders. Nothing of the map loads before entry.
+
+### Gate markup (stable; restyle freely, keep the classes and words)
+
+```
+main.sanctum-gate
+  form.sanctum-gate__form
+    label.sanctum-gate__label[for=sanctum-watchword]   "Watchword"
+    input#sanctum-watchword.sanctum-gate__field[type=password]
+    button.sanctum-gate__enter[type=submit]           "Enter"
+    p.sanctum-gate__words[role=status]                 "" | "The gate weighs the watchword."
+                                                       | "The watchword is not received."
+                                                       | "The gate rests. Return in a moment."
+```
+
+Styles: `src/sanctum/Gate.css` (functional only). While gathering:
+`p.sanctum-gathering` "The sight is gathering.". Root: `div.sanctum-root[lang=en]`.
