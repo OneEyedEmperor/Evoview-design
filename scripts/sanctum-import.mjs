@@ -1,0 +1,89 @@
+#!/usr/bin/env node
+/* Sanctum importer (trusted tool; the manifest and all content live in the
+   private data dir, EVOVIEW_SANCTUM_DIR or /root/.evoview-sanctum).
+
+   node scripts/sanctum-import.mjs seed [--force]  vault → seed/ + state v1
+   node scripts/sanctum-import.mjs merge [file]     explanations + readings → new state
+   node scripts/sanctum-import.mjs check            current state against every invariant */
+
+import fs from "node:fs";
+import path from "node:path";
+import { buildSeed, mergeExplanations } from "../server/sanctum/importer.ts";
+import { Store, dataDir, ensureDir, readJson, writeAtomic } from "../server/sanctum/store.ts";
+import { canonOf, validate } from "../src/sanctum/model/validate.ts";
+import { diffStates } from "../src/sanctum/model/ops.ts";
+
+const [mode = "check", ...rest] = process.argv.slice(2);
+const dir = dataDir();
+const store = new Store(dir);
+const manifest = readJson(path.join(dir, "seed", "manifest.json"));
+fs.chmodSync(dir, 0o700);
+
+function report(refusals) {
+  for (const r of refusals) console.error(`  [${r.rule}] ${r.message}`);
+}
+
+if (mode === "seed") {
+  if (!manifest) throw new Error("no seed/manifest.json in the data dir");
+  if (store.exists()) {
+    if (!rest.includes("--force")) {
+      console.error("state exists; use --force to archive it and seed again");
+      process.exit(1);
+    }
+    const archive = path.join(dir, "archive", new Date().toISOString().replace(/[:.]/g, "-"));
+    ensureDir(archive);
+    fs.renameSync(path.join(dir, "state"), path.join(archive, "state"));
+    if (fs.existsSync(store.canonPath)) fs.renameSync(store.canonPath, path.join(archive, "canon.json"));
+    console.log(`archived previous state to ${archive}`);
+  }
+  const { state, vault } = await buildSeed(manifest, dir);
+  const canon = canonOf(state);
+  const refusals = validate(state, canon);
+  if (refusals.length) {
+    console.error(`seed refused (${refusals.length}):`);
+    report(refusals);
+    process.exit(1);
+  }
+  writeAtomic(path.join(dir, "seed", "vault.json"), JSON.stringify(vault, null, 2));
+  store.writeCanon(canon);
+  store.seal(state, { version: 1, at: state.meta.updatedAt, summary: state.meta.summary, ops: 0 });
+  console.log(`seeded v1: ${state.elements.length} elements, ${state.threads.length} cords, ${state.ties.length} ties, ${state.visions.length} visions`);
+} else if (mode === "merge") {
+  const file = rest[0] ?? manifest?.explanations;
+  if (!file || !fs.existsSync(file)) {
+    console.error(`no explanations at ${file ?? "(none given)"}`);
+    process.exit(1);
+  }
+  const base = store.current();
+  const data = JSON.parse(fs.readFileSync(file, "utf8"));
+  const { state, canon, applied, refused } = mergeExplanations(base, store.canon(), data);
+  for (const r of refused) {
+    console.error(`refused ${r.what}:`);
+    report(r.refusals);
+  }
+  if (!applied.length) {
+    console.error("nothing to merge");
+    process.exit(refused.length ? 1 : 0);
+  }
+  const version = base.meta.version + 1;
+  const summary = "The explanations and readings were set into the map.";
+  state.meta = { schemaVersion: 1, version, updatedAt: new Date().toISOString(), summary };
+  const final = validate(state, canon);
+  if (final.length) {
+    report(final);
+    process.exit(1);
+  }
+  store.writeCanon(canon);
+  store.seal(state, { version, at: state.meta.updatedAt, summary, ops: applied.length });
+  const d = diffStates(base, state);
+  console.log(`merged into v${version}: ${applied.length} applied, ${refused.length} refused; readings +${d.readings.added.length} ~${d.readings.changed.length}`);
+} else if (mode === "check") {
+  const state = store.current();
+  const refusals = validate(state, store.canon());
+  console.log(`v${state.meta.version}: ${state.elements.length} elements, ${state.threads.length} cords, ${state.ties.length} ties, ${state.visions.length} visions, ${state.readings.length} readings; ${refusals.length} refusals`);
+  report(refusals);
+  process.exit(refusals.length ? 1 : 0);
+} else {
+  console.error(`unknown mode ${mode}`);
+  process.exit(2);
+}

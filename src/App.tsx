@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+import { Suspense, lazy } from "react";
 import { BrowserRouter, Navigate, Route, Routes, type Location } from "react-router-dom";
 import LibraryLayout from "./library/LibraryLayout";
 import { AccentChoiceProvider } from "./library/accentChoice";
@@ -22,6 +22,8 @@ const Controls = lazyPage(() => import("./pages/library/Controls"));
 const NavbarPage = lazyPage(() => import("./pages/library/Navbar"));
 const NavbarReference = lazyPage(() => import("./pages/library/NavbarReference"));
 const NavbarOnePage = lazyPage(() => import("./pages/library/NavbarOnePage"));
+/* Hidden, gated page: never linked, never preloaded (src/sanctum/model/CONTRACT.md). */
+const Sanctum = lazy(() => import("./sanctum"));
 
 const PAGES = [Chapter, Card, ProcessSequence, StoryBlocks, Reservation, Dossier, SelectorStage, Controls, NavbarPage, NavbarReference, NavbarOnePage];
 
@@ -38,7 +40,7 @@ const LAYOUT_PAGES: Record<string, LazyPage | null> = {
   "/components/controls": Controls,
   "/navbar": NavbarPage,
 };
-const OUTSIDE_LAYOUT = /^\/(navbar\/(reference|one-page)|reservation|evoview)(\/|$)/;
+const OUTSIDE_LAYOUT = /^\/(navbar\/(reference|one-page)|reservation|evoview|sanctum)(\/|$)/;
 
 const curtainKey = ({ pathname }: Location) => {
   const path = pagePath(pathname);
@@ -89,6 +91,7 @@ function AppRoutes() {
             <Route path="navbar/one-page" element={<NavbarOnePage />} />
             <Route path="reservation" element={<Navigate to="/components/reservation" replace />} />
             <Route path="evoview" element={<Navigate to="/navbar/one-page" replace />} />
+            <Route path="sanctum/*" element={<Suspense fallback={null}><Sanctum /></Suspense>} />
           </Routes>
         </Suspense>
       </RouteBoundary>

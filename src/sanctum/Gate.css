@@ -1,0 +1,61 @@
+/* Functional gate; the Render designer styles it later. */
+.sanctum-gate {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: #07080b;
+  color: #e9e6df;
+}
+
+.sanctum-gate__form {
+  display: grid;
+  gap: 14px;
+  width: min(340px, 100%);
+}
+
+.sanctum-gate__label {
+  font-size: 15px;
+  letter-spacing: 0.02em;
+  color: #b9b4aa;
+}
+
+.sanctum-gate__field {
+  min-height: 48px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 12px;
+  background: #15171d;
+  color: inherit;
+  font: inherit;
+  font-size: 16px;
+}
+
+.sanctum-gate__field:focus-visible {
+  outline: 2px solid #e9e6df;
+  outline-offset: 2px;
+}
+
+.sanctum-gate__enter {
+  min-height: 48px;
+  border: 0;
+  border-radius: 999px;
+  background: #e9e6df;
+  color: #07080b;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sanctum-gate__enter:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.sanctum-gate__words {
+  min-height: 1.4em;
+  margin: 0;
+  font-size: 15px;
+  color: #b9b4aa;
+}
