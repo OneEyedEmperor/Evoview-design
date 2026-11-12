@@ -2,7 +2,7 @@
    is then checked by validate(). Bodies arrive from the network, so every
    field is checked for form here before it is trusted. */
 
-import { BUDGET, SLUG, ZOOM, clone, elementById, endTitle, isLayerRef, numberWord, realmTitle, stableEqual } from "./rules.ts";
+import { BUDGET, SLUG, ZOOM, clone, elementById, endTitle, numberWord, realmTitle, stableEqual } from "./rules.ts";
 import { expectedCondition } from "./validate.ts";
 import {
   BEYOND,
@@ -482,8 +482,6 @@ export function diffStates(a: SanctumState, b: SanctumState): Diff {
     sight: !stableEqual(a.sight, b.sight),
   };
 }
-
-export const isThreadToLayer = (t: Thread) => isLayerRef(t.to) || isLayerRef(t.from);
 
 function cap(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
