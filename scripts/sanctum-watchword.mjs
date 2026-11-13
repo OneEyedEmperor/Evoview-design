@@ -1,58 +1,40 @@
 #!/usr/bin/env node
-/* Generates the watchword once: six random dictionary words (~90 bits).
-   Plaintext goes only to the Vibehub secret vault (EVOVIEW_SANCTUM_WATCHWORD);
-   the data dir keeps an scrypt hash. Nothing is printed but the outcome.
+/* The watchword is chosen by the emperor himself and passes through no agent,
+   no vault and no log: this script only issues a one-time summons. Its link
+   carries the token in the fragment, which browsers never send to a server.
+   Answering it stores the scrypt hash, voids every entry and device mark, and
+   enters. The data dir keeps only the token's hash; it expires and serves once.
 
-   node scripts/sanctum-watchword.mjs            first time only
-   node scripts/sanctum-watchword.mjs --rotate   new watchword, every entry revoked */
+   node scripts/sanctum-watchword.mjs --setup [--base=https://evoview-library.said.bet] [--minutes=60]
+   node scripts/sanctum-watchword.mjs --status
 
-import crypto from "node:crypto";
+   EVOVIEW_SANCTUM_DIR selects the data dir (default /root/.evoview-sanctum). */
+
 import fs from "node:fs";
 import path from "node:path";
-import { hashWatchword } from "../server/sanctum/auth.ts";
-import { dataDir, writeAtomic } from "../server/sanctum/store.ts";
+import { SETUP_TTL_MS, issueSetup, pendingSetup } from "../server/sanctum/auth.ts";
+import { dataDir, ensureDir } from "../server/sanctum/store.ts";
 
-const ENV_VAR = "EVOVIEW_SANCTUM_WATCHWORD";
+const args = process.argv.slice(2);
+const opt = (name) => args.find((a) => a.startsWith(`--${name}=`))?.split("=").slice(1).join("=");
 const dir = dataDir();
-const authPath = path.join(dir, "auth.json");
-const rotate = process.argv.includes("--rotate");
 
-if (fs.existsSync(authPath) && !rotate) {
-  console.error("auth.json exists; use --rotate to replace the watchword");
-  process.exit(1);
+if (args.includes("--setup")) {
+  ensureDir(dir);
+  const minutes = Number(opt("minutes") ?? SETUP_TTL_MS / 60000);
+  if (!(minutes > 0 && minutes <= 24 * 60)) {
+    console.error("--minutes must be between 1 and 1440");
+    process.exit(2);
+  }
+  const base = (opt("base") ?? "https://evoview-library.said.bet").replace(/\/+$/, "");
+  const token = issueSetup(dir, minutes * 60000);
+  console.log(`summons for ${dir}, valid ${minutes} min, serves once (any earlier summons is replaced):`);
+  console.log(`${base}/sanctum#setup=${token}`);
+} else if (args.includes("--status")) {
+  const pending = pendingSetup(dir);
+  const hasHash = fs.existsSync(path.join(dir, "auth.json"));
+  console.log(`${dir}: watchword hash ${hasHash ? "present" : "absent"}; summons ${pending ? `pending, ${Math.ceil((pending.expires - Date.now()) / 60000)} min left` : "none pending"}`);
+} else {
+  console.error("usage: --setup [--base=URL] [--minutes=N] | --status");
+  process.exit(2);
 }
-const base = process.env.VIBEHUB_URL;
-const key = process.env.VIBEHUB_API_KEY;
-if (!base || !key) {
-  console.error("VIBEHUB_URL / VIBEHUB_API_KEY missing");
-  process.exit(1);
-}
-
-const words = fs
-  .readFileSync("/usr/share/dict/words", "utf8")
-  .split("\n")
-  .filter((w) => /^[a-z]{4,8}$/.test(w));
-const watchword = Array.from({ length: 6 }, () => words[crypto.randomInt(words.length)]).join("-");
-
-const api = (method, p, body) =>
-  fetch(`${base}${p}`, {
-    method,
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-
-const description = "Watchword of the hidden /sanctum page of the Evoview library (scrypt hash in /root/.evoview-sanctum/auth.json).";
-const listed = await (await api("GET", `/api/secrets?q=${ENV_VAR}`)).json();
-const existing = (listed.secrets ?? []).find((s) => s.envVar === ENV_VAR || s.key === ENV_VAR);
-const res = existing
-  ? await api("PUT", `/api/secrets/${encodeURIComponent(existing.key)}`, { value: watchword, description })
-  : await api("POST", "/api/secrets", { key: ENV_VAR, envVar: ENV_VAR, value: watchword, description, category: "evoview" });
-if (!res.ok) {
-  console.error(`vault refused: ${res.status}`);
-  process.exit(1);
-}
-
-const auth = await hashWatchword(watchword);
-writeAtomic(authPath, JSON.stringify(auth, null, 2));
-fs.rmSync(path.join(dir, "entries.json"), { force: true });
-console.log(`watchword ${existing ? "rotated" : "created"}: plaintext in the vault as ${ENV_VAR}, scrypt hash in ${authPath}`);

@@ -23,7 +23,7 @@ import { applyOps, summarize } from "../src/sanctum/model/ops.ts";
 import { BUDGET, clone, isQuiet, pairKey, rimOrder, ringPairs } from "../src/sanctum/model/rules.ts";
 import { BEYOND } from "../src/sanctum/model/types.ts";
 import { canonOf, validate } from "../src/sanctum/model/validate.ts";
-import { hashWatchword, signEntry } from "../server/sanctum/auth.ts";
+import { hashWatchword, issueSetup, readDevice, signEntry } from "../server/sanctum/auth.ts";
 import { alludesToName, impureWords } from "../server/sanctum/purity.ts";
 import { createSanctumHandler } from "../server/sanctum/http.ts";
 import { Store, dataDir, readJson } from "../server/sanctum/store.ts";
@@ -395,7 +395,7 @@ for (const parent of base.elements) {
   const named = [`The name of ${coreTitle} is Zed.`, `${coreTitle} is called Zed.`, `${coreTitle} is known as Zed.`, `${coreTitle} goes by Zed.`, "Name: Zed.", "The sealed name: Zed.", "The name has five characters.", "Two vowels hold the name.", "The name, read backwards, is deZ.", "Z...d is the name kept.", `${coreTitle} has three letters.`];
   let missed = named.filter((t) => !say(t).refusals.some((x) => x.rule === "sealed-name"));
   check(`the sealed name: ${named.length} ways of naming or counting it refused`, missed.length === 0, missed.join(" | "));
-  const silent = ["The name is sealed.", "The name is never spoken.", "Authority rests on the silence of the name."];
+  const silent = ["The name is sealed.", "The name is never spoken.", "Its silence is kept, as the name is kept."];
   missed = silent.filter((t) => say(t).refusals.length);
   check("the silence of the name may still be spoken of", missed.length === 0, missed.join(" | "));
   const addTitled = (title) => run([{ op: "addElement", element: { id: stamp("titled"), title, kind: free.id, realm: freeRealm.id, purpose: "A probe." } }]);
@@ -418,7 +418,7 @@ for (const parent of base.elements) {
   const evasions = ["The wall was saved.", "It uploaded the pattern.", "They clicked and linked it.", "It was toggled, deleted, downloading, loaded, configured, programmed.", "The users' seats.", "The pаssword.", "The ｕｓｅｒ.", "The pass­word.", "A pass-word.", "Then log-in.", "Then l o g i n.", "Its Wi-Fi.", "The uśer.", "The mot de passe.", "Das Passwort.", "La contraseña.", "Télécharger.", "A pass word."];
   const missed = evasions.filter((t) => !say(t).refusals.some((x) => x.rule === "purity"));
   check(`purity: ${evasions.length} inflections and evasions refused`, missed.length === 0, missed.join(" | "));
-  const plain = ["They committed to the siege.", "A cache of spears lies near.", "Every sign in the wall returns.", "The stones drop down.", "The end point of the cord holds.", "Without exception, the wall holds.", "The aid of the loom."];
+  const plain = ["They committed to the work.", "A cache of grain lies near.", "Every sign in the field returns.", "The leaves drop down.", "The end point of the road holds.", "Without exception, the gate holds.", "The aid of the hand.", "He holds the pass, word by word.", "The cart bore down, load upon load."];
   const caught = plain.filter((t) => say(t).refusals.length);
   check("purity: plain speech that only resembles them is kept", caught.length === 0, caught.join(" | "));
 }
@@ -757,6 +757,53 @@ try {
 
   /* leaving */
   check("leaving → the entry is revoked", (await req("/sanctum-api/session", { method: "DELETE", headers: CW })).status === 200 && (await req("/sanctum-api/map", { headers: C })).status === 401);
+
+  /* review r2 · G1: the summons. The watchword is chosen at the gate; only its hash is kept. */
+  {
+    const answer = (token, watchword, h = {}) => req("/sanctum-api/setup", { method: "POST", headers: { ...W, ...h }, body: JSON.stringify({ token, watchword }) });
+    const knockEntry = async (w, h = {}) => {
+      const r = await req("/sanctum-api/session", { method: "POST", headers: { ...W, ...h }, body: JSON.stringify({ watchword: w }) });
+      return { status: r.status, cookie: (r.headers.getSetCookie?.() ?? []).find((c) => c.startsWith("sanctum="))?.split(";")[0] };
+    };
+    const chosen = `${crypto.randomBytes(6).toString("hex")} river lantern harbor stone`;
+    const stillOpen = await knockEntry(word);
+    const oldEntry = stillOpen.cookie;
+    check("before the summons, the old watchword still enters", stillOpen.status === 200);
+    check("no summons pending → nothing useful (401, a bare refusal)", (await answer("no-such-summons-here-at-all", chosen, { "cf-connecting-ip": "192.0.2.50" })).status === 401);
+    const token = issueSetup(tmp);
+    const setupFile = fs.readFileSync(path.join(tmp, "setup.json"), "utf8");
+    check("the summons is kept only as a hash", !setupFile.includes(token) && /"hash":"[0-9a-f]{64}"/.test(setupFile));
+    check("a watchword too short is refused, the summons kept", (await answer(token, "short words", { "cf-connecting-ip": "192.0.2.51" })).body.weak === true && fs.existsSync(path.join(tmp, "setup.json")));
+    check("a wrong summons is refused", (await answer(`${token.slice(0, -2)}xx`, chosen, { "cf-connecting-ip": "192.0.2.52" })).status === 401);
+    check("the summons needs the custom header", (await req("/sanctum-api/setup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token, watchword: chosen }) })).status === 403);
+    const sealed = await answer(token, chosen, { "cf-connecting-ip": "192.0.2.53" });
+    const set = sealed.headers.getSetCookie?.() ?? [];
+    check("the summons answered → entered, with an entry and a device mark", sealed.status === 200 && set.some((c) => c.startsWith("sanctum=")) && set.some((c) => c.startsWith("sanctum_device=")));
+    check("the summons is burnt on use", !fs.existsSync(path.join(tmp, "setup.json")));
+    check("the same summons again → refused", (await answer(token, chosen, { "cf-connecting-ip": "192.0.2.54" })).status === 401);
+    const auth = JSON.parse(fs.readFileSync(path.join(tmp, "auth.json"), "utf8"));
+    check("only the scrypt hash of the chosen watchword is kept", !JSON.stringify(auth).includes(chosen) && auth.scrypt?.hash?.length > 20);
+    check("every earlier entry is void", (await req("/sanctum-api/map", { headers: { cookie: oldEntry } })).status === 401);
+    check("every earlier device mark is void", readDevice(auth.secret, deviceMark?.split("=")[1]) === undefined);
+    const newEntry = set.find((c) => c.startsWith("sanctum="))?.split(";")[0];
+    check("the new entry opens the map", (await req("/sanctum-api/map", { headers: { cookie: newEntry } })).status === 200);
+    check("live entries: only the new one", Object.keys(JSON.parse(fs.readFileSync(path.join(tmp, "entries.json"), "utf8"))).length === 1);
+    check("the old watchword is no longer received", (await knockEntry(word, { "cf-connecting-ip": "192.0.2.55" })).status === 401);
+    const again = await knockEntry(chosen, { "cf-connecting-ip": "192.0.2.56" });
+    check("the chosen watchword enters", again.status === 200);
+    const lapsed = issueSetup(tmp);
+    const f = JSON.parse(fs.readFileSync(path.join(tmp, "setup.json"), "utf8"));
+    fs.writeFileSync(path.join(tmp, "setup.json"), JSON.stringify({ ...f, expires: Date.now() - 1000 }));
+    check("a lapsed summons → refused", (await answer(lapsed, chosen, { "cf-connecting-ip": "192.0.2.57" })).status === 401);
+    const contested = issueSetup(tmp);
+    const race = await Promise.all(Array.from({ length: 8 }, (_, i) => answer(contested, `${chosen} again`, { "cf-connecting-ip": `192.0.2.${60 + i}` })));
+    check("a summons answered eight times at once, from eight sources, serves once", race.filter((r) => r.status === 200).length === 1);
+    for (const r of race) {
+      const c = (r.headers.getSetCookie?.() ?? []).find((x) => x.startsWith("sanctum="))?.split(";")[0];
+      if (c) await req("/sanctum-api/session", { method: "DELETE", headers: { ...W, cookie: c } });
+    }
+    for (const c of [newEntry, again.cookie]) if (c) await req("/sanctum-api/session", { method: "DELETE", headers: { ...W, cookie: c } });
+  }
 } catch (err) {
   check("endpoint checks ran to the end", false, err.stack);
 } finally {
@@ -781,14 +828,9 @@ try {
     const x = await fetch(`${LIVE}/sanctum-api/visions/${base.visions[0].id}/${base.visions[0].sizes[0]}.webp`);
     check("a vision without entry → 401", x.status === 401);
   }
-  const ww = process.env.EVOVIEW_SANCTUM_WATCHWORD;
-  if (ww) {
-    const e = await fetch(`${LIVE}/sanctum-api/session`, { method: "POST", headers: { "Content-Type": "application/json", "X-Sanctum": "1" }, body: JSON.stringify({ watchword: ww }) });
-    const c = (e.headers.get("set-cookie") ?? "").split(";")[0];
-    const m = await fetch(`${LIVE}/sanctum-api/map`, { headers: { cookie: c } });
-    check("the vault's watchword enters the live server", e.status === 200 && m.status === 200);
-    await fetch(`${LIVE}/sanctum-api/session`, { method: "DELETE", headers: { cookie: c, "X-Sanctum": "1" } });
-  } else console.log("  (EVOVIEW_SANCTUM_WATCHWORD not in the environment: live entry not tried)");
+  /* Read-only: no agent holds the real watchword, and none is tried here. */
+  const summons = await fetch(`${LIVE}/sanctum-api/setup`, { method: "POST", headers: { "Content-Type": "application/json", "X-Sanctum": "1" }, body: JSON.stringify({ token: "no-such-summons-here", watchword: "a long enough probe of the summons" }) });
+  check("the summons answers nothing useful when none is pending", summons.status === 401 && (await summons.text()).length < 40);
 } catch (err) {
   check(`live server reachable at ${LIVE}`, false, err.message);
 }
@@ -909,15 +951,12 @@ if (fs.existsSync(dist)) {
 
 /* review r1 · m12: the wider net, case-insensitive. Kind, tie, colour, condition,
    quarter and station words, and every word of the private texts that the
-   library's own files never use. The charter's open vocabulary (and words of
-   the code itself) are allowed by name below; nothing else. */
+   library's own files never use. Words the code may speak are allowed by name
+   in the private <data>/seed/scan-allow.json ({ "open": [...] }); nothing else. */
 {
-  const OPEN = new Set([
-    /* the charter's permitted words: the interface may speak them */
-    "stone", "stones", "cord", "cords", "knot", "keystone", "engine", "wall", "spear", "center", "binding", "return", "occupation", "loyalty", "symbiosis", "layer", "layers", "signal", "pattern", "map",
-    /* model vocabulary the code is written in (CONTRACT.md) */
-    "steering", "crossing", "convergence", "condition", "quarter", "station", "threshold", "ring", "awaiting",
-  ]);
+  const allow = readJson(path.join(DIR, "seed", "scan-allow.json"));
+  if (!allow) console.log("  (no seed/scan-allow.json: every listed word is searched)");
+  const OPEN = new Set((allow?.open ?? []).map((w) => String(w).toLowerCase()));
   const wide = new Set();
   const addWide = (t) => {
     const w = String(t ?? "").trim().toLowerCase().replace(/^the\s+/, "");

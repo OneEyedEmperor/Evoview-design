@@ -41,6 +41,10 @@ export const api = {
   async enter(watchword: string): Promise<SessionResponse> {
     return (await call<SessionResponse>("/session", json("POST", { watchword }), [401, 429])).body;
   },
+  /** Answers a summons: the watchword is chosen, the summons burnt, and the chooser enters. */
+  async setup(token: string, watchword: string): Promise<SessionResponse & { weak?: boolean }> {
+    return (await call<SessionResponse & { weak?: boolean }>("/setup", json("POST", { token, watchword }), [401, 422, 429])).body;
+  },
   async leave(): Promise<void> {
     await call("/session", { method: "DELETE" });
   },

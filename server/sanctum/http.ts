@@ -23,10 +23,13 @@ import {
   signDevice,
   signEntry,
   sourceOf,
+  strongEnough,
+  takeSetup,
+  hashWatchword,
   verifyWatchword,
   type AuthFile,
 } from "./auth.ts";
-import { MovedError, Store, dataDir, ensureDir, readJson } from "./store.ts";
+import { MovedError, Store, dataDir, ensureDir, readJson, writeAtomic } from "./store.ts";
 import { VisionRefusal, deriveVision, newVisionId, sniff } from "./visions.ts";
 
 type Next = (err?: unknown) => void;
@@ -251,6 +254,49 @@ export function createSanctumHandler(options: SanctumHandlerOptions = {}) {
         return send(res, 200, { entered: false }, { "Set-Cookie": entryCookie("", 0) });
       }
       throw new HttpRefusal(405, {});
+    }
+
+    /* The summons: the emperor chooses the watchword. Unentered by nature, kept
+       by the same gate; without a pending summons it answers like a refusal. */
+    if (sub === "/setup") {
+      if (method !== "POST") throw new HttpRefusal(405, {});
+      guardWrite(req);
+      const key = `setup|${sourceOf(req.socket.remoteAddress, req.headers["cf-connecting-ip"])}`;
+      const reserved = gate.reserve(key);
+      if ("rest" in reserved) return send(res, 429, { entered: false, rest: reserved.rest }, { "Retry-After": String(reserved.rest) });
+      let body: Record<string, unknown>;
+      try {
+        body = await readJsonBody(req);
+      } catch (err) {
+        gate.settle(key, false);
+        throw err;
+      }
+      const word = typeof body.watchword === "string" ? body.watchword : "";
+      const token = typeof body.token === "string" ? body.token : "";
+      if (!strongEnough(word)) {
+        gate.settle(key, false, false);
+        return send(res, 422, { entered: false, weak: true });
+      }
+      if (!takeSetup(dir, token)) {
+        const rest = gate.settle(key, false);
+        await sleep(Gatekeeper.FAIL_DELAY_MS);
+        return send(res, 401, rest ? { entered: false, rest } : { entered: false });
+      }
+      const release = await gate.slot("device", 0);
+      let fresh: AuthFile;
+      try {
+        fresh = await hashWatchword(word.trim());
+      } finally {
+        release?.();
+      }
+      /* A new secret voids every entry and every device mark at once. */
+      writeAtomic(authPath, JSON.stringify(fresh, null, 2));
+      entries.closeAll();
+      gate.settle(key, true);
+      const exp = Date.now() + ENTRY_TTL_MS;
+      const sid = entries.open(exp);
+      res.setHeader("Set-Cookie", [entryCookie(signEntry(fresh.secret, sid, exp), Math.floor(ENTRY_TTL_MS / 1000)), deviceCookie(signDevice(fresh.secret))]);
+      return send(res, 200, { entered: true });
     }
 
     if (!entered(req)) return send(res, 401, { entered: false });

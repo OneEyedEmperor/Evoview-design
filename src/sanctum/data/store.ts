@@ -64,6 +64,8 @@ export interface SanctumStore {
   subscribe(listener: () => void): () => void;
   check(): Promise<void>;
   enter(watchword: string): Promise<{ entered: boolean; rest?: number }>;
+  /** Answers a summons with a chosen watchword. */
+  setup(token: string, watchword: string): Promise<{ entered: boolean; rest?: number; weak?: boolean }>;
   leave(): Promise<void>;
   gather(): Promise<void>;
   openDraft(subject?: DraftSubject | null): void;
@@ -178,6 +180,13 @@ export function createSanctumStore(): SanctumStore {
 
     async enter(watchword) {
       const s = await guarded(() => api.enter(watchword));
+      if (!s) return { entered: false };
+      if (s.entered) await store.gather();
+      return s;
+    },
+
+    async setup(token, watchword) {
+      const s = await guarded(() => api.setup(token, watchword));
       if (!s) return { entered: false };
       if (s.entered) await store.gather();
       return s;

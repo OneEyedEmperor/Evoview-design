@@ -2,6 +2,7 @@
    live entries (so leaving revokes), and the gate's backoff. */
 
 import crypto from "node:crypto";
+import fs from "node:fs";
 import path from "node:path";
 import { readJson, writeAtomic } from "./store.ts";
 
@@ -119,6 +120,49 @@ export function sourceOf(peer: string | undefined, cfConnectingIp: string | stri
   return loopback && cf && cf.length <= 64 ? `cf:${cf}` : `peer:${p}`;
 }
 
+/* The summons: a one-time token that lets the emperor choose the watchword
+   himself, so no plaintext ever passes through an agent or the vault. Only
+   its hash is kept; it expires, and it is burnt on first use. */
+export interface SetupFile {
+  hash: string;
+  expires: number;
+  createdAt: string;
+}
+
+export const SETUP_TTL_MS = 60 * 60 * 1000;
+const sha256 = (s: string) => crypto.createHash("sha256").update(s).digest("hex");
+
+export function issueSetup(dir: string, ttlMs = SETUP_TTL_MS): string {
+  const token = crypto.randomBytes(24).toString("base64url");
+  const file: SetupFile = { hash: sha256(token), expires: Date.now() + ttlMs, createdAt: new Date().toISOString() };
+  writeAtomic(path.join(dir, "setup.json"), JSON.stringify(file));
+  return token;
+}
+
+export function pendingSetup(dir: string): SetupFile | undefined {
+  const f = readJson<SetupFile>(path.join(dir, "setup.json"));
+  return f && typeof f.hash === "string" && f.expires > Date.now() ? f : undefined;
+}
+
+/** True when `token` is the pending summons; burns it at once, so it serves once. */
+export function takeSetup(dir: string, token: string): boolean {
+  const f = pendingSetup(dir);
+  if (!f || typeof token !== "string" || token.length < 16 || token.length > 128) return false;
+  const good = Buffer.from(f.hash, "hex");
+  const given = Buffer.from(sha256(token), "hex");
+  if (good.length !== given.length || !crypto.timingSafeEqual(good, given)) return false;
+  fs.rmSync(path.join(dir, "setup.json"), { force: true });
+  return true;
+}
+
+/** At least twenty letters, or four words of three letters and sixteen in all; at most 256. */
+export function strongEnough(word: string): boolean {
+  const w = word.trim();
+  const length = [...w].length;
+  const words = w.split(/[\s\-_.,]+/u).filter((x) => [...x].filter((c) => /\p{L}/u.test(c)).length >= 3).length;
+  return length <= 256 && (length >= 20 || (words >= 4 && length >= 16));
+}
+
 /** Live entries, shared by every server process through the data dir. */
 export class Entries {
   private file: string;
@@ -148,6 +192,9 @@ export class Entries {
     const all = this.read();
     delete all[sid];
     this.write(all);
+  }
+  closeAll() {
+    this.write({});
   }
 }
 
@@ -249,7 +296,19 @@ export class Gatekeeper {
       queue.forEach((w, i) => {
         if (worst < 0 || w.fails > queue[worst].fails) worst = i;
       });
-      if (worst < 0 || queue[worst].fails <= fails) return Promise.resolve(null);
+      if (worst < 0 || queue[worst].fails <= fails) {
+        /* A first knock may borrow the device lane only while it is idle; it never queues
+           there, so known devices keep their place ahead of it. */
+        if (lane === "common" && fails <= 1 && this.running.device < Gatekeeper.SLOTS.device && !this.waiting.device.length) {
+          this.running.device += 1;
+          return Promise.resolve(() => {
+            this.running.device -= 1;
+            const next = this.waiting.device.shift();
+            if (next) next.admit(true);
+          });
+        }
+        return Promise.resolve(null);
+      }
       queue.splice(worst, 1)[0].admit(false);
     }
     return new Promise((resolve) => {

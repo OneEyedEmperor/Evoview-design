@@ -62,6 +62,7 @@ nothing else.
 | Method | Path | Body | Answer |
 | --- | --- | --- | --- |
 | GET | `/session` | | `{entered}` |
+| POST | `/setup` | `{token, watchword}` | the summons (unentered, same gate): `200 {entered:true}` + entry and device mark; `422 {weak:true}` (needs ≥ 20 letters, or ≥ 4 words of 3+ letters and ≥ 16); `401` wrong, used, lapsed or no summons pending; `429` resting |
 | POST | `/session` | `{watchword}` | `200 {entered:true}` + cookie; `401 {entered:false}`; `429 {entered:false, rest}` (seconds) |
 | DELETE | `/session` | | `{entered:false}`, cookie cleared, entry revoked |
 | GET | `/map` | | `SanctumState` |
@@ -74,7 +75,20 @@ nothing else.
 
 Cookie: HttpOnly, Secure, SameSite=Strict, Path=/sanctum-api, HMAC-signed
 (exactly `payload.signature`), expires. Entry also sets a known-device mark
-(`sanctum_device`, same attributes, 400 days; opens nothing by itself).
+(`sanctum_device`, same attributes, 400 days; opens nothing by itself; it
+cannot be revoked one by one: `sanctum-entries revoke` keeps marks, and a
+sealed summons voids them all, since it renews the signing secret).
+
+The watchword: no plaintext exists anywhere but in the emperor's mind. No
+vault secret, no agent environment. `node scripts/sanctum-watchword.mjs
+--setup [--base=URL] [--minutes=60]` issues a one-time summons (only its hash
+is kept, `setup.json`; a newer summons replaces an older one) and prints
+`<base>/sanctum#setup=<token>`. The token rides in the fragment, which no
+server or proxy log ever receives. The entry chunk reads it once, wipes it
+from the address, and the gate asks for the watchword twice. On seal the
+server burns the summons, stores only the scrypt hash with a new signing
+secret (every entry and device mark is void), and enters. `--status` tells
+whether a summons is pending. Agents test entry on trial dirs only.
 
 The gate: the source is `cf-connecting-ip` only when the peer is loopback (the
 local proxy), else the peer address; client forward headers are ignored. Each
@@ -262,6 +276,12 @@ main.sanctum-gate
                                                        | "The watchword is not received."
                                                        | "The gate rests. Return in a moment."
 ```
+
+With a summons (`/sanctum#setup=…`) the same form reads: label "Choose the
+watchword", a second `input#sanctum-watchword-again.sanctum-gate__field` with
+label "Speak it again", button "Seal the watchword"; words also "The two do not
+agree." | "A watchword needs at least twenty letters, or four words." | "The
+gate does not know this summons.".
 
 Styles: `src/sanctum/Gate.css` (functional only). While gathering:
 `p.sanctum-gathering` "The sight is gathering.". Root: `div.sanctum-root[lang=en]`.

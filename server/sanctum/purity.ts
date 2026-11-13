@@ -99,12 +99,15 @@ export function impureWords(text: string): string[] {
     const w = run.replace(/[^\p{L}]/gu, "");
     if (forbidden(w) || COMPOUNDS.has(w)) found.add(run.trim());
   }
-  for (let i = 0; i + 1 < tokens.length; i++) {
-    const pair = tokens[i] + tokens[i + 1];
-    if (COMPOUNDS.has(pair) || COMPOUNDS.has(pair.replace(/s$/u, ""))) found.add(`${tokens[i]} ${tokens[i + 1]}`);
+  /* Words written apart join only across plain spaces, never across punctuation. */
+  for (const m of f.matchAll(/([\p{L}\p{N}]+)[^\S\n]+(?=([\p{L}\p{N}]+))/gu)) {
+    const pair = m[1] + m[2];
+    if (COMPOUNDS.has(pair) || COMPOUNDS.has(pair.replace(/s$/u, ""))) found.add(`${m[1]} ${m[2]}`);
   }
-  const spaced = ` ${f.replace(/[^\p{L}\p{N}'’-]+/gu, " ")} `;
-  for (const phrase of PHRASES) if (spaced.includes(` ${phrase} `)) found.add(phrase);
+  for (const phrase of PHRASES) {
+    const re = new RegExp(`(^|[^\\p{L}\\p{N}])${phrase.split(" ").map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("[^\\S\\n]+")}(?![\\p{L}\\p{N}])`, "u");
+    if (re.test(f)) found.add(phrase);
+  }
   return [...found];
 }
 
@@ -162,10 +165,13 @@ export function equatesFigures(text: string, ctx: NameContext = {}): boolean {
   const a = titleRe(ctx.turner);
   const b = titleRe(ctx.core);
   const copula = "is|was|becomes|became|equals|is none other than|is one with|=";
+  const one = "one|the same|a single|one and the same";
   return [
     new RegExp(`${a}\\s+(${copula})\\s+${b}\\b`, "u"),
     new RegExp(`${b}\\s+(${copula})\\s+${a}\\b`, "u"),
-    new RegExp(`${a}\\s*(,|and)\\s*${b}\\s+(are|were)\\s+(one|the same)\\b`, "u"),
-    new RegExp(`${b}\\s*(,|and)\\s*${a}\\s+(are|were)\\s+(one|the same)\\b`, "u"),
+    new RegExp(`${a}\\s*,\\s*(who|which|that)\\s+(${copula})\\s+${b}\\b`, "u"),
+    new RegExp(`${b}\\s*,\\s*(who|which|that)\\s+(${copula})\\s+${a}\\b`, "u"),
+    new RegExp(`${a}\\s*(,|and)\\s*${b}\\s+(are|were)\\s+(${one})\\b`, "u"),
+    new RegExp(`${b}\\s*(,|and)\\s*${a}\\s+(are|were)\\s+(${one})\\b`, "u"),
   ].some((re) => re.test(t));
 }
