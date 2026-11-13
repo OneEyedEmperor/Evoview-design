@@ -447,7 +447,8 @@ export class SightEngine {
     const f = this.frame;
     const reach = this.layout?.reach ?? 1.36;
     const ray = this.layout?.beyondRay ?? this.beyondRay;
-    const tall = f.mode === "full" && f.w < 560 && f.h > f.w * 1.4;
+    /* only a whole narrow screen pans; a frame left beside a panel fits the eye whole */
+    const tall = f.mode === "full" && f.w < 560 && f.h > f.w * 1.4 && f.w >= this.W - 1;
     const padX = f.mode === "index" ? 8 : f.w < 560 ? 18 : 76;
     const padY = f.mode === "index" ? 8 : f.w < 560 ? 30 : 46;
     const padT = Math.max(padY, (f.cover ?? 0) + 6 - f.y);
@@ -965,7 +966,9 @@ export class SightEngine {
     const camKey = `${cx.toFixed(1)}|${cy.toFixed(1)}|${R.toFixed(1)}`;
     if (!this.staticCv) this.staticCv = document.createElement("canvas");
     const sc = this.staticCv;
-    if (base !== this.staticBase || (this.camSettled && camKey !== this.staticCamKey)) {
+    /* a pan (drag or glide) moves the settled camera every frame: the layer is drawn shifted until it rests */
+    const panning = Boolean(this.drag?.moved) || this.pan.vx !== 0 || this.pan.x > this.pan.max || this.pan.x < this.pan.min;
+    if (base !== this.staticBase || (this.camSettled && !panning && camKey !== this.staticCamKey)) {
       this.staticBase = base;
       this.staticCamKey = camKey;
       this.staticCam = { cx, cy, R };
@@ -1214,12 +1217,14 @@ export class SightEngine {
     return m ? { x: m.sx, y: m.sy, th: m.pos.th } : null;
   }
 
-  /** The reach: taut and still from the ring to that state, lengthening as it goes out; it never flows. */
+  /** The reach: taut and still from the ring's knot to that state, lengthening as it goes out; it never flows. */
   private drawReach(c: Cord, w: number, a: number) {
     const end = this.reachEnd(c);
     if (!end) return;
+    /* it leaves the ring at its knot, the element the ring is tied at, so no other state seems to send it */
     const ringR = c.unit[2];
-    const start = this.toXY(ringR, end.th, { x: 0, y: 0 });
+    const knot = this.marks.get(c.t.from)?.pos.th ?? end.th;
+    const start = this.toXY(ringR, knot, { x: 0, y: 0 });
     if (Math.hypot(end.x - start.x, end.y - start.y) < 2) return;
     const ctx = this.ctx;
     ctx.beginPath(); ctx.moveTo(start.x, start.y); ctx.lineTo(end.x, end.y);
@@ -1516,6 +1521,9 @@ export class SightEngine {
     label.textContent = m.el.title;
     label.setAttribute("aria-hidden", "true");
     b.appendChild(label);
+    /* marks are rebuilt on every state and hand their button on: handlers read the current mark by id */
+    const id = m.id;
+    const now = () => this.marks.get(id) ?? m;
     b.addEventListener("click", (e) => {
       if (performance.now() < this.suppressTap) return;
       /* while sockets are asked for, a pointer tap nearer a socket than this mark is the socket's */
@@ -1523,23 +1531,25 @@ export class SightEngine {
         const r = this.host.getBoundingClientRect();
         const px = e.clientX - r.left, py = e.clientY - r.top;
         const hit = this.socketAt(px, py);
-        if (hit && hit.d < Math.hypot(m.sx - px, m.sy - py)) { if (hit.s.ok) this.hooks.onSocketPick?.(hit.s.socket); return; }
+        const c = now();
+        if (hit && hit.d < Math.hypot(c.sx - px, c.sy - py)) { if (hit.s.ok) this.hooks.onSocketPick?.(hit.s.socket); return; }
       }
-      this.touch(m.id);
-      this.hooks.onPick(m.id, "tap");
+      this.touch(id);
+      this.hooks.onPick(id, "tap");
     });
-    /* a mark reached by keyboard outside the view glides in (the pan's own inertia travels vx / 5) */
+    /* a mark reached by keyboard outside the view glides in, with room for its name (the pan's own
+       inertia travels vx / 5); a mark already in view never moves the eye */
     b.addEventListener("focus", () => {
       if (this.pan.max <= 0 && this.pan.min >= 0) return;
-      const f = this.frame, edge = 120;
-      const d = m.sx < f.x + edge ? f.x + edge - m.sx : m.sx > f.x + f.w - edge ? f.x + f.w - edge - m.sx : 0;
-      if (!d) return;
+      const f = this.frame, edge = 120, c = now();
+      if (c.sx >= f.x + 22 && c.sx <= f.x + f.w - 22) return;
+      const d = c.sx < f.x + 22 ? f.x + edge - c.sx : f.x + f.w - edge - c.sx;
       const to = Math.max(this.pan.min, Math.min(this.pan.max, this.pan.x + d));
       this.pan.vx = (to - this.pan.x) * 5;
       this.kick();
     });
-    b.addEventListener("pointerenter", () => this.hooks.onPick(m.id, "hover-in"));
-    b.addEventListener("pointerleave", () => this.hooks.onPick(m.id, "hover-out"));
+    b.addEventListener("pointerenter", () => this.hooks.onPick(id, "hover-in"));
+    b.addEventListener("pointerleave", () => this.hooks.onPick(id, "hover-out"));
     this.layer.appendChild(b);
     m.button = b;
     m.labelEl = label;

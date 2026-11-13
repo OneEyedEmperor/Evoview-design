@@ -93,13 +93,16 @@ export default function Sight({ store, console }: SightProps) {
     return band({ x: 0, y: 0, w: W, h: H - 88, mode: "full" });
   }, [vp, focus, wide, focusVision, panel, shaping, foreseen]);
 
-  /* a tap answers the console when it is asking, else opens the element */
+  /* a tap answers the console when it is asking; while a change is being shaped it only rings the
+     eye (the engine's touch), so no element sheet stacks over the console; else it opens the element */
   const awaitingRef = useRef(draft.awaiting);
   awaitingRef.current = draft.awaiting;
+  const shapingRef = useRef(shaping);
+  shapingRef.current = shaping;
   const onPick = useCallback((id: Id, how: "tap" | "hover-in" | "hover-out") => {
     if (how !== "tap") return;
     if (awaitingRef.current) store.pick(id);
-    else setFocus(id);
+    else if (!shapingRef.current) setFocus(id);
   }, [store]);
 
   /* the engine lives once per mount */
