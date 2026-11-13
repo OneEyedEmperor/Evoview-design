@@ -71,7 +71,7 @@ export interface SanctumStore {
   /** New ops are judged at once (local engine), then confirmed by a debounced server dry run. */
   setDraft(patch: Partial<Pick<Draft, "subject" | "ops" | "awaiting" | "hover">>): void;
   pick(value: ThreadEnd | Socket): void;
-  /** Seals the draft (its ops, or its restore). Clears the draft when accepted. */
+  /** Seals the draft (its ops, or its restore). Clears it when accepted, keeping `open`. */
   seal(summary?: string): Promise<boolean>;
   /** Opens a draft previewing the restore of `version`; seal() confirms it. */
   restore(version: number): Promise<boolean>;
@@ -236,7 +236,8 @@ export function createSanctumStore(): SanctumStore {
       );
       if (!res) return false;
       if (res.accepted) {
-        set({ state: res.state, draft: emptyDraft(res.state.meta.version), record: null, word: res.summary });
+        /* The shell stays as it was, so the sealed knot can be seen and shaping go on. */
+        set({ state: res.state, draft: { ...emptyDraft(res.state.meta.version), open: draft.open }, record: null, word: res.summary });
         return true;
       }
       setDraftState({ verdict: { state: "refused", confirmed: true, refusals: res.refusals, summary: "" } });

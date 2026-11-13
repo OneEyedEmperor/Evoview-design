@@ -179,8 +179,9 @@ map: local at once, the server's once confirmed), `diff`, `verdict
 `openDraft(subject?)`, `closeDraft()` (withdraw), `setDraft({ops|subject|awaiting|hover})`
 (new ops: local verdict at once, server dry run after a pause; a late answer
 never overwrites a newer draft), `pick(value)` (the sight, on a tap while
-`awaiting`), `seal(summary?)` (seals the ops or the restore; on `moved` the map
-is gathered and the draft recomposed), `restore(version)`.
+`awaiting`), `seal(summary?)` (seals the ops or the restore; when accepted the
+draft is cleared but keeps `open`, and `word` holds the record's words; on
+`moved` the map is gathered and the draft recomposed), `restore(version)`.
 
 ### Affordances (judged by the engine; pass `draft.previewState` when composing on pending ops)
 

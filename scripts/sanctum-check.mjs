@@ -592,13 +592,13 @@ try {
       const late = st.get().draft.previewState.elements.find((e) => e.id === e0).explanation;
       check("store: a late dry run never overwrites a newer draft", late === "Second thought." && st.get().draft.verdict.confirmed);
       const sealedOk = await st.seal();
-      check("store: seal → a new version, the draft cleared", sealedOk && st.get().state.meta.version === v + 1 && st.get().draft.ops.length === 0 && !st.get().draft.open);
+      check("store: seal → a new version, the draft cleared, the shell still open", sealedOk && st.get().state.meta.version === v + 1 && st.get().draft.ops.length === 0 && st.get().draft.open && st.get().word.length > 0);
       const rec = await st.loadRecord();
       check("record: a sealed change carries its op names", JSON.stringify(rec[0].opNames) === JSON.stringify(["setText"]));
       const previewed = await st.restore(v);
       check("store: a restore previewed as a draft", previewed && st.get().draft.restoring === v && st.get().draft.verdict.state === "accepted");
       const restoredOk = await st.seal();
-      check("store: the restore sealed", restoredOk && st.get().state.meta.version === v + 2 && (await st.loadRecord())[0].restoredFrom === v);
+      check("store: the restore sealed, the shell still open", restoredOk && st.get().state.meta.version === v + 2 && st.get().draft.open && st.get().draft.restoring === null && (await st.loadRecord())[0].restoredFrom === v);
       st.setDraft({ ops: [words("Withdrawn.")] });
       st.closeDraft();
       await sleep(600);
