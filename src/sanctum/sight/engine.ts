@@ -398,9 +398,10 @@ export class SightEngine {
 
   private resize() {
     const r = this.host.getBoundingClientRect();
-    this.dpr = Math.min(2, window.devicePixelRatio || 1);
     this.W = Math.max(1, r.width);
     this.H = Math.max(1, r.height);
+    /* DPR-aware within a pixel budget: crisp on phones, bounded on large screens */
+    this.dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1, Math.sqrt(4.2e6 / (this.W * this.H))));
     this.canvas.width = Math.round(this.W * this.dpr);
     this.canvas.height = Math.round(this.H * this.dpr);
     this.canvas.style.width = `${this.W}px`;
@@ -595,6 +596,7 @@ export class SightEngine {
       c.recoil = Math.max(this.refused.has(c.id) ? 0.35 : 0, c.recoil - dt / 1.3);
     }
 
+    this.focusVeil += ((this.view.focus ? 0.3 : 0) - this.focusVeil) * (1 - Math.exp(-dt / 0.25));
     for (const [id, a] of this.layerAlphaTargets()) {
       const cur = this.layerAlpha.get(id) ?? a;
       this.layerAlpha.set(id, cur + (a - cur) * (1 - Math.exp(-dt / 0.22)));
@@ -683,8 +685,6 @@ export class SightEngine {
     for (const r of this.layout?.rings ?? []) {
       let a = v.litLayers.has(r.id) ? 1 : 0.25;
       if (v.reading && !v.reading.layers.has(r.id) && ![...this.marks.values()].some((m) => m.el.realm === r.id && v.reading!.elements.has(m.id))) a *= 0.3;
-      if (v.focus) a *= 0.72;
-      if (this.frame.mode === "index") a *= 0.9;
       out.set(r.id, a);
     }
     return out;
@@ -802,25 +802,12 @@ export class SightEngine {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.globalCompositeOperation = "source-over";
     ctx.globalAlpha = 1;
-    ctx.fillStyle = "#06080b";
-    ctx.fillRect(0, 0, W, H);
     const state = this.state, lay = this.layout;
-    if (!state || !lay) return;
-    const { cx, cy, R } = this.cam;
+    if (!state || !lay) { ctx.fillStyle = "#06080b"; ctx.fillRect(0, 0, W, H); return; }
     const breath = Math.sin((this.t / 8) * TAU);
     const beat = this.rehearsing() ? Math.max(0, Math.sin((this.t / 2.4) * TAU)) ** 3 : 0;
 
-    /* cathedral air: cold above, warm reception at the core */
-    {
-      const g = ctx.createRadialGradient(cx, cy, R * 0.15, cx, cy, R * 1.95);
-      g.addColorStop(0, "rgba(40,56,84,0.20)"); g.addColorStop(0.5, "rgba(18,26,40,0.12)"); g.addColorStop(1, "rgba(6,8,11,0)");
-      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-      const body = ctx.createRadialGradient(cx, cy, R * 0.1, cx, cy, R);
-      body.addColorStop(0, "rgba(26,24,20,0.9)"); body.addColorStop(0.45, "rgba(16,18,24,0.85)"); body.addColorStop(0.97, "rgba(12,15,21,0.8)"); body.addColorStop(1, "rgba(6,8,11,0)");
-      ctx.fillStyle = body; ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.fill();
-    }
-
-    this.drawTexture(breath);
+    this.drawStatic();
     this.drawTies();
     this.drawCords(beat);
     this.drawBreach();
@@ -903,36 +890,103 @@ export class SightEngine {
     });
   }
 
-  private drawTexture(breath: number) {
-    const ctx = this.ctx, lay = this.layout!, state = this.state!;
-    this.ensureTexture();
+  /** Air, the iris body, the ring fibres and names: drawn once into a layer, re-drawn only when they change. */
+  private staticCv: HTMLCanvasElement | null = null;
+  private staticBase = "";
+  private staticCamKey = "";
+  private staticCam = { cx: 0, cy: 0, R: 1 };
+  private ringAlpha(i: number, id: Id) {
+    const lay = this.layout!;
+    const wake = this.wakeLen ? clamp01((this.wakeT - (0.05 + i * (this.wakeLen * 0.62) / lay.rings.length)) / 0.8) : 1;
+    return (this.layerAlpha.get(id) ?? 1) * wake;
+  }
+  private drawStatic() {
+    const lay = this.layout!, state = this.state!;
     const { cx, cy, R } = this.cam;
-    const k = R / this.texture.R;
+    this.ensureTexture();
+    /* rebuilt on a quantised change only; while the camera travels the last layer is drawn transformed (exact for rings) */
+    const alphas = lay.rings.map((r, i) => Math.round(this.ringAlpha(i, r.id) * 20)).join(",");
+    const base = `${this.texture.key}|${this.texture.R}|${alphas}|${this.frame.mode}|${this.canvas.width}x${this.canvas.height}`;
+    const camKey = `${cx.toFixed(1)}|${cy.toFixed(1)}|${R.toFixed(1)}`;
+    if (!this.staticCv) this.staticCv = document.createElement("canvas");
+    const sc = this.staticCv;
+    if (base !== this.staticBase || (this.camSettled && camKey !== this.staticCamKey)) {
+      this.staticBase = base;
+      this.staticCamKey = camKey;
+      this.staticCam = { cx, cy, R };
+      if (sc.width !== this.canvas.width || sc.height !== this.canvas.height) { sc.width = this.canvas.width; sc.height = this.canvas.height; }
+      const g = sc.getContext("2d")!;
+      g.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+      g.globalCompositeOperation = "source-over";
+      g.globalAlpha = 1;
+      g.fillStyle = "#06080b";
+      g.fillRect(0, 0, this.W, this.H);
+      /* cathedral air: cold above, warm reception at the core */
+      const air = g.createRadialGradient(cx, cy, R * 0.15, cx, cy, R * 1.95);
+      air.addColorStop(0, "rgba(40,56,84,0.20)"); air.addColorStop(0.5, "rgba(18,26,40,0.12)"); air.addColorStop(1, "rgba(6,8,11,0)");
+      g.fillStyle = air; g.fillRect(0, 0, this.W, this.H);
+      const body = g.createRadialGradient(cx, cy, R * 0.1, cx, cy, R);
+      body.addColorStop(0, "rgba(26,24,20,0.9)"); body.addColorStop(0.45, "rgba(16,18,24,0.85)"); body.addColorStop(0.97, "rgba(12,15,21,0.8)"); body.addColorStop(1, "rgba(6,8,11,0)");
+      g.fillStyle = body; g.beginPath(); g.arc(cx, cy, R, 0, TAU); g.fill();
+      const k = R / this.texture.R;
+      g.globalCompositeOperation = "lighter";
+      lay.rings.forEach((ring, i) => {
+        const cv = this.texture.canvases.get(ring.id);
+        if (!cv) return;
+        const a = Math.round(this.ringAlpha(i, ring.id) * 20) / 20;
+        if (a < 0.01) return;
+        g.globalAlpha = a;
+        const s = (cv.width / this.dpr) * k;
+        g.drawImage(cv, cx - s / 2, cy - s / 2, s, s);
+      });
+      g.globalAlpha = 1;
+      /* the eye's own edge */
+      g.strokeStyle = "rgba(200,215,235,0.09)"; g.lineWidth = 1; g.beginPath(); g.arc(cx, cy, R, 0, TAU); g.stroke();
+      g.globalCompositeOperation = "source-over";
+      if (this.frame.mode !== "focus" && this.frame.mode !== "index" && R > 150) this.drawRingNames(g, lay, state);
+    }
+    const ctx = this.ctx;
+    const s = this.staticCam;
     ctx.save();
-    ctx.globalCompositeOperation = "lighter";
-    lay.rings.forEach((ring, i) => {
-      const cv = this.texture.canvases.get(ring.id);
-      if (!cv) return;
-      const a = this.layerAlpha.get(ring.id) ?? 1;
-      const wake = this.wakeLen ? clamp01((this.wakeT - (0.05 + i * (this.wakeLen * 0.62) / lay.rings.length)) / 0.8) : 1;
-      if (a * wake < 0.01) return;
-      ctx.globalAlpha = a * wake;
-      const s = (cv.width / this.dpr) * k;
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(rad(breath * 0.35 * (i % 2 ? -1 : 1)));
-      ctx.drawImage(cv, -s / 2, -s / 2, s, s);
-      ctx.restore();
-    });
-    ctx.globalAlpha = 1;
+    if (s.cx === cx && s.cy === cy && s.R === R) {
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.drawImage(sc, 0, 0);
+    } else {
+      ctx.fillStyle = "#06080b";
+      ctx.fillRect(0, 0, this.W, this.H);
+      const k = R / s.R;
+      ctx.setTransform(this.dpr * k, 0, 0, this.dpr * k, this.dpr * (cx - s.cx * k), this.dpr * (cy - s.cy * k));
+      ctx.drawImage(sc, 0, 0, this.W, this.H);
+    }
     ctx.restore();
-    /* the eye's own edge */
-    ctx.save(); ctx.globalCompositeOperation = "lighter"; ctx.strokeStyle = "rgba(200,215,235,0.09)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.stroke(); ctx.restore();
-    if (this.frame.mode !== "focus" && this.frame.mode !== "index" && R > 150) this.drawRingNames(lay, state);
+    /* focus quiets the fibres with one veil, not a rebuild */
+    const veil = this.focusVeil;
+    if (veil > 0.005) { ctx.fillStyle = `rgba(6,8,11,${veil.toFixed(3)})`; ctx.fillRect(0, 0, this.W, this.H); }
+  }
+  private focusVeil = 0;
+
+  /** Tinted glow sprites, so no gradient is built per frame. */
+  private sprites = new Map<string, HTMLCanvasElement>();
+  private glow(x: number, y: number, r: number, colour: string, a: number) {
+    if (a < 0.01 || r < 0.5) return;
+    let s = this.sprites.get(colour);
+    if (!s) {
+      s = document.createElement("canvas");
+      s.width = s.height = 64;
+      const g = s.getContext("2d")!;
+      const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+      gr.addColorStop(0, rgba(colour, 1)); gr.addColorStop(0.35, rgba(colour, 0.45)); gr.addColorStop(1, rgba(colour, 0));
+      g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+      this.sprites.set(colour, s);
+    }
+    const ctx = this.ctx;
+    const prev = ctx.globalAlpha;
+    ctx.globalAlpha = Math.min(1, a);
+    ctx.drawImage(s, x - r, y - r, r * 2, r * 2);
+    ctx.globalAlpha = prev;
   }
 
-  private drawRingNames(lay: Layout, state: SanctumState) {
-    const ctx = this.ctx;
+  private drawRingNames(ctx: CanvasRenderingContext2D, lay: Layout, state: SanctumState) {
     const size = this.cam.R > 300 ? 11 : 10;
     const core = lay.rings[lay.rings.length - 1];
     ctx.save();
@@ -1174,9 +1228,7 @@ export class SightEngine {
         prev = { x: q.x, y: q.y, a: q.a };
       }
       const h = smp.at(u, pt); const rr = head * 4.5 * lw;
-      const g = ctx.createRadialGradient(h.x, h.y, 0, h.x, h.y, rr);
-      g.addColorStop(0, rgba(colour, 0.55 * a)); g.addColorStop(1, rgba(colour, 0));
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(h.x, h.y, rr, 0, TAU); ctx.fill();
+      this.glow(h.x, h.y, rr, colour, 0.6 * a);
       ctx.fillStyle = `rgba(255,252,240,${(0.95 * a).toFixed(3)})`; ctx.beginPath(); ctx.arc(h.x, h.y, head * 0.62 * lw, 0, TAU); ctx.fill();
       if (p.grade === 1) { ctx.strokeStyle = rgba("#fff1c8", 0.55 * a); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(h.x, h.y, 5.2 * lw, 0, TAU); ctx.stroke(); }
     }
@@ -1185,9 +1237,7 @@ export class SightEngine {
       const k = (this.t - f.t) / 1.4;
       const a = (1 - k) ** 2;
       const rr = (f.big ? 26 : 14) * lw * (0.6 + k);
-      const g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, rr);
-      g.addColorStop(0, rgba("#fff4dc", 0.7 * a)); g.addColorStop(1, rgba(f.colour, 0));
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(f.x, f.y, rr, 0, TAU); ctx.fill();
+      this.glow(f.x, f.y, rr, mix(f.colour, "#fff4dc", 0.6), 0.75 * a);
       if (f.colour === this.lexiconTone) { ctx.strokeStyle = rgba(f.colour, 0.6 * a); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.arc(f.x, f.y, 6 * lw + k * 8, 0, TAU); ctx.stroke(); }
     }
     ctx.restore();
@@ -1202,9 +1252,7 @@ export class SightEngine {
     const pr = PUPIL * R * (1 + breath * 0.03 + beat * 0.05);
     const dim = this.view.reading && !this.view.reading.elements.has(core.id) ? 0.3 : 1;
     ctx.save(); ctx.globalCompositeOperation = "lighter";
-    const corona = ctx.createRadialGradient(cx, cy, pr * 0.9, cx, cy, pr * (3.4 + beat * 0.5));
-    corona.addColorStop(0, rgba(core.colour, (0.34 + beat * 0.15) * wake * dim)); corona.addColorStop(1, rgba(core.colour, 0));
-    ctx.fillStyle = corona; ctx.beginPath(); ctx.arc(cx, cy, pr * 3.9, 0, TAU); ctx.fill();
+    this.glow(cx, cy, pr * (3.6 + beat * 0.5), core.colour, (0.5 + beat * 0.2) * wake * dim);
     ctx.restore();
     ctx.fillStyle = "#020203"; ctx.beginPath(); ctx.arc(cx, cy, pr, 0, TAU); ctx.fill();
     const ig = ctx.createRadialGradient(cx, cy, pr * 0.2, cx, cy, pr);
@@ -1236,10 +1284,7 @@ export class SightEngine {
       /* come to rest, unbound: cold, without the glow of a bound element */
       if (m.el.awaiting) a *= 0.7;
       ctx.save(); ctx.globalCompositeOperation = "lighter";
-      const gr = 4.5 * s * 4.2;
-      const g = ctx.createRadialGradient(px, py, 0, px, py, gr);
-      g.addColorStop(0, rgba(glowCol, (m.el.awaiting ? 0.12 : 0.45) * a)); g.addColorStop(1, rgba(glowCol, 0));
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(px, py, gr, 0, TAU); ctx.fill();
+      this.glow(px, py, 4.5 * s * 4.2, glowCol, (m.el.awaiting ? 0.14 : 0.5) * a);
       ctx.restore();
       if (m.removed) a *= 0.8;
       ctx.save();

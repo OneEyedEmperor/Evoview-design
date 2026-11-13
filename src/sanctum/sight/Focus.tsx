@@ -63,7 +63,7 @@ export function Lancet({ vision, subject, tone }: { vision: Vision; subject: Vis
       <div className="sx-lancet__veil" style={{ backgroundImage: `url(${vision.placeholder})`, opacity: ready ? 0 : 1 }} />
       {w > 0 && (
         <picture>
-          {formats.includes("avif") && <source type="image/avif" srcSet={visionSrcSet(vision, "avif")} sizes={sizes} />}
+          {!formats.includes("webp") && formats.includes("avif") && <source type="image/avif" srcSet={visionSrcSet(vision, "avif")} sizes={sizes} />}
           <img
             ref={img}
             alt={vision.title}
