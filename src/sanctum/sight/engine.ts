@@ -217,7 +217,7 @@ export class SightEngine {
   }
 
   /** The sealed state, with an optional ghosted preview of the would-be state. */
-  setState(state: SanctumState, opts: { preview?: { state: SanctumState; added: Id[]; removed: Id[]; changed: Id[]; restoring?: boolean } | null; refused?: Id[]; turned?: boolean } = {}) {
+  setState(state: SanctumState, opts: { preview?: { state: SanctumState; added: Id[]; removed: Id[]; changed: Id[]; restoring?: boolean } | null; refused?: Id[]; turned?: { from: Id; to: Id } | null } = {}) {
     const first = !this.state;
     const prior = this.state;
     const shown = opts.preview?.state ?? state;
@@ -242,7 +242,8 @@ export class SightEngine {
     this.refused = refused;
     if (first) this.startWake(3.2);
     else if (this.restoring && !wasRestoring) this.startWake(2.6);
-    if (opts.turned && prior && prior.condition !== state.condition) this.startPassage(prior.condition, state.condition, true);
+    /* the sealed act: the turner's gesture, then the passage, even if it was foreseen a moment ago */
+    if (opts.turned) this.startPassage(opts.turned.from, opts.turned.to, true);
     this.texture.key = "";
     this.labelsDirty = true;
     this.kick();
@@ -504,7 +505,7 @@ export class SightEngine {
     p.gestureFrom = "";
     p.gestureTo = "";
     if (sealedTurn) {
-      /* the turner's gesture travels to the one whose states turn, then the passage plays */
+      /* the turner's gesture travels to the element whose states turn, then the passage plays */
       const parent = state.elements.find((e) => e.condition && e.parent)?.parent;
       const turner = state.roles.turner;
       if (turner && parent && this.marks.has(turner)) { p.gestureFrom = turner; p.gestureTo = parent; p.gesture = 0.0001; }

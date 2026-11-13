@@ -111,7 +111,7 @@ export default function Sight({ store, console }: SightProps) {
   useEffect(() => {
     const e = engine.current;
     if (!e || !state) return;
-    const turned = sealedCondition.current !== null && sealedCondition.current !== state.condition;
+    const turned = sealedCondition.current !== null && sealedCondition.current !== state.condition ? { from: sealedCondition.current, to: state.condition } : null;
     sealedCondition.current = state.condition;
     /* what a refusal touches: its subject, else what its op names */
     const named = (op: Op | undefined): string[] => {
