@@ -29,7 +29,8 @@ export interface View {
 }
 
 export type FrameMode = "full" | "focus" | "index";
-export interface Frame { x: number; y: number; w: number; h: number; mode: FrameMode }
+/** `cover`: chrome lies over the frame's top down to this y; the eye starts below it. */
+export interface Frame { x: number; y: number; w: number; h: number; mode: FrameMode; cover?: number }
 
 export interface Affordance {
   /** An element id or `layer:<id>` that may answer the console's question. */
@@ -449,25 +450,26 @@ export class SightEngine {
     const tall = f.mode === "full" && f.w < 560 && f.h > f.w * 1.4;
     const padX = f.mode === "index" ? 8 : f.w < 560 ? 18 : 76;
     const padY = f.mode === "index" ? 8 : f.w < 560 ? 30 : 46;
+    const padT = Math.max(padY, (f.cover ?? 0) + 6 - f.y);
     /* the eye's box: rim on three sides, the beyond ray reaching out on the fourth */
     const right = Math.max(1, reach * Math.cos(rad(ray)) + 0.08);
     const down = Math.max(1, reach * Math.sin(rad(ray)) + 0.06);
     let R: number, cx: number;
     if (tall) {
       /* a tall screen: the eye takes the height, the core stays centred, the sides are reached by pan */
-      R = Math.max(40, Math.min((f.h - padY * 2) / (1 + down), f.w * 0.8));
+      R = Math.max(40, Math.min((f.h - padT - padY) / (1 + down), f.w * 0.8));
       const left = R + 46, rightExt = R * right + 46;
       this.pan.max = Math.max(0, left - f.w / 2);
       this.pan.min = -Math.max(0, rightExt - f.w / 2);
       this.pan.x = Math.max(this.pan.min, Math.min(this.pan.max, this.pan.x));
       cx = f.x + f.w / 2 + this.pan.x;
     } else {
-      R = Math.max(40, Math.min((f.w - padX * 2) / (1 + right), (f.h - padY * 2) / (1 + down)));
+      R = Math.max(40, Math.min((f.w - padX * 2) / (1 + right), (f.h - padT - padY) / (1 + down)));
       cx = f.x + padX + R + ((f.w - padX * 2) - R * (1 + right)) / 2;
       this.pan.max = this.pan.min = this.pan.x = this.pan.vx = 0;
     }
     this.host.style.touchAction = this.pan.max > 0 || this.pan.min < 0 ? "none" : "";
-    const cy = f.y + padY + R + ((f.h - padY * 2) - R * (1 + down)) / 2;
+    const cy = f.y + padT + R + ((f.h - padT - padY) - R * (1 + down)) / 2;
     this.camTarget = { cx, cy, R };
     this.camSettled = false;
     if (snap || !this.cam.R || this.cam.R === 100) {

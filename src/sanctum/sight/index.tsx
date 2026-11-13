@@ -79,17 +79,19 @@ export default function Sight({ store, console }: SightProps) {
 
   const frame: Frame = useMemo(() => {
     const W = vp.w, H = vp.h;
+    /* the foresight note (top 20, about 40 high) covers the frame's top: the eye starts below it */
+    const band = (f: Frame): Frame => (foreseen ? { ...f, cover: 62 } : f);
     if (focus) {
       if (!wide) return { x: 0, y: 0, w: W, h: Math.round(H * 0.4), mode: "index" };
       const sheetW = clamp(W * 0.27, 340, 430);
       const lanW = focusVision ? clamp(W * 0.25, 260, 400) : 0;
-      return { x: 0, y: 0, w: W - sheetW - lanW - (lanW ? 64 : 40), h: H, mode: "focus" };
+      return band({ x: 0, y: 0, w: W - sheetW - lanW - (lanW ? 64 : 40), h: H, mode: "focus" });
     }
     const side = panel ? (W >= 1280 ? 600 : 440) : shaping ? 440 : 0;
-    if (wide) return { x: 0, y: 0, w: W - (side ? side + 48 : 0), h: side ? H : H - 84, mode: "full" };
-    if (panel || shaping) return { x: 0, y: 0, w: W, h: Math.round(H * 0.38), mode: "index" };
-    return { x: 0, y: 0, w: W, h: H - 88, mode: "full" };
-  }, [vp, focus, wide, focusVision, panel, shaping]);
+    if (wide) return band({ x: 0, y: 0, w: W - (side ? side + 48 : 0), h: side ? H : H - 84, mode: "full" });
+    if (panel || shaping) return band({ x: 0, y: 0, w: W, h: Math.round(H * 0.38), mode: "index" });
+    return band({ x: 0, y: 0, w: W, h: H - 88, mode: "full" });
+  }, [vp, focus, wide, focusVision, panel, shaping, foreseen]);
 
   /* a tap answers the console when it is asking, else opens the element */
   const awaitingRef = useRef(draft.awaiting);
