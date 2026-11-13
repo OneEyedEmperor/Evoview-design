@@ -10,6 +10,8 @@ export interface AuthFile {
   scrypt: { N: number; r: number; p: number; keylen: number; salt: string; hash: string };
   secret: string;
   createdAt: string;
+  /** Set by a summons: no watchword opens the gate until it is sealed. */
+  voided?: boolean;
 }
 
 export const COOKIE = "sanctum";
@@ -137,6 +139,16 @@ export function issueSetup(dir: string, ttlMs = SETUP_TTL_MS): string {
   const file: SetupFile = { hash: sha256(token), expires: Date.now() + ttlMs, createdAt: new Date().toISOString() };
   writeAtomic(path.join(dir, "setup.json"), JSON.stringify(file));
   return token;
+}
+
+/** Issues a summons and voids the current watchword at once: a hash of bytes nobody
+    knows and a new signing secret (every entry and device mark dies), entries
+    cleared. Until the summons is sealed the gate is closed to everyone. */
+export async function summon(dir: string, ttlMs = SETUP_TTL_MS): Promise<string> {
+  const voided = await hashWatchword(crypto.randomBytes(32).toString("base64url"));
+  writeAtomic(path.join(dir, "auth.json"), JSON.stringify({ ...voided, voided: true } satisfies AuthFile, null, 2));
+  writeAtomic(path.join(dir, "entries.json"), "{}");
+  return issueSetup(dir, ttlMs);
 }
 
 export function pendingSetup(dir: string): SetupFile | undefined {

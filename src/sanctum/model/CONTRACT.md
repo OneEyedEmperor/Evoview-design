@@ -76,19 +76,21 @@ nothing else.
 Cookie: HttpOnly, Secure, SameSite=Strict, Path=/sanctum-api, HMAC-signed
 (exactly `payload.signature`), expires. Entry also sets a known-device mark
 (`sanctum_device`, same attributes, 400 days; opens nothing by itself; it
-cannot be revoked one by one: `sanctum-entries revoke` keeps marks, and a
-sealed summons voids them all, since it renews the signing secret).
+cannot be revoked one by one: `sanctum-entries revoke` keeps marks; issuing
+or sealing a summons voids them all, since each renews the signing secret).
 
 The watchword: no plaintext exists anywhere but in the emperor's mind. No
 vault secret, no agent environment. `node scripts/sanctum-watchword.mjs
---setup [--base=URL] [--minutes=60]` issues a one-time summons (only its hash
-is kept, `setup.json`; a newer summons replaces an older one) and prints
+--setup [--base=URL] [--minutes=60]` voids the current watchword at once (a
+hash of bytes nobody knows, a new signing secret, entries cleared: the gate is
+closed to everyone), issues a one-time summons (only its hash is kept,
+`setup.json`; a newer summons replaces an older one) and prints
 `<base>/sanctum#setup=<token>`. The token rides in the fragment, which no
 server or proxy log ever receives. The entry chunk reads it once, wipes it
 from the address, and the gate asks for the watchword twice. On seal the
 server burns the summons, stores only the scrypt hash with a new signing
-secret (every entry and device mark is void), and enters. `--status` tells
-whether a summons is pending. Agents test entry on trial dirs only.
+secret, and enters. `--status`: watchword set / voided / none, and the summons
+pending (with its expiry) or lapsed. Agents test entry on trial dirs only.
 
 The gate: the source is `cf-connecting-ip` only when the peer is loopback (the
 local proxy), else the peer address; client forward headers are ignored. Each

@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 /* The watchword is chosen by the emperor himself and passes through no agent,
-   no vault and no log: this script only issues a one-time summons. Its link
+   no vault and no log: this script only issues a one-time summons. Issuing it
+   voids the current watchword at once (with every entry and device mark), so
+   the gate is closed to everyone until the summons is sealed. Its link
    carries the token in the fragment, which browsers never send to a server.
-   Answering it stores the scrypt hash, voids every entry and device mark, and
-   enters. The data dir keeps only the token's hash; it expires and serves once.
+   Answering it stores the scrypt hash of the chosen watchword and enters.
+   The data dir keeps only the token's hash; it expires and serves once.
 
    node scripts/sanctum-watchword.mjs --setup [--base=https://evoview-library.said.bet] [--minutes=60]
    node scripts/sanctum-watchword.mjs --status
@@ -12,8 +14,8 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { SETUP_TTL_MS, issueSetup, pendingSetup } from "../server/sanctum/auth.ts";
-import { dataDir, ensureDir } from "../server/sanctum/store.ts";
+import { SETUP_TTL_MS, pendingSetup, summon } from "../server/sanctum/auth.ts";
+import { dataDir, ensureDir, readJson } from "../server/sanctum/store.ts";
 
 const args = process.argv.slice(2);
 const opt = (name) => args.find((a) => a.startsWith(`--${name}=`))?.split("=").slice(1).join("=");
@@ -27,13 +29,17 @@ if (args.includes("--setup")) {
     process.exit(2);
   }
   const base = (opt("base") ?? "https://evoview-library.said.bet").replace(/\/+$/, "");
-  const token = issueSetup(dir, minutes * 60000);
-  console.log(`summons for ${dir}, valid ${minutes} min, serves once (any earlier summons is replaced):`);
+  const token = await summon(dir, minutes * 60000);
+  console.log(`summons for ${dir}: the current watchword, entries and device marks are void now;`);
+  console.log(`the gate is closed until this summons is sealed (valid ${minutes} min, serves once):`);
   console.log(`${base}/sanctum#setup=${token}`);
 } else if (args.includes("--status")) {
   const pending = pendingSetup(dir);
-  const hasHash = fs.existsSync(path.join(dir, "auth.json"));
-  console.log(`${dir}: watchword hash ${hasHash ? "present" : "absent"}; summons ${pending ? `pending, ${Math.ceil((pending.expires - Date.now()) / 60000)} min left` : "none pending"}`);
+  const auth = readJson(path.join(dir, "auth.json"));
+  const until = (t) => new Date(t).toISOString().slice(11, 16) + " UTC";
+  const watchword = !fs.existsSync(path.join(dir, "auth.json")) ? "no watchword" : auth?.voided ? "watchword voided" : "watchword set";
+  const summons = pending ? `summons pending, expires ${until(pending.expires)}` : auth?.voided ? "summons lapsed: the gate is closed until a new summons is sealed" : "no summons pending";
+  console.log(`${dir}: ${watchword}, ${summons}`);
 } else {
   console.error("usage: --setup [--base=URL] [--minutes=N] | --status");
   process.exit(2);

@@ -23,7 +23,7 @@ import { applyOps, summarize } from "../src/sanctum/model/ops.ts";
 import { BUDGET, clone, isQuiet, pairKey, rimOrder, ringPairs } from "../src/sanctum/model/rules.ts";
 import { BEYOND } from "../src/sanctum/model/types.ts";
 import { canonOf, validate } from "../src/sanctum/model/validate.ts";
-import { hashWatchword, issueSetup, readDevice, signEntry } from "../server/sanctum/auth.ts";
+import { hashWatchword, readDevice, signEntry, summon } from "../server/sanctum/auth.ts";
 import { alludesToName, impureWords } from "../server/sanctum/purity.ts";
 import { createSanctumHandler } from "../server/sanctum/http.ts";
 import { Store, dataDir, readJson } from "../server/sanctum/store.ts";
@@ -770,7 +770,12 @@ try {
     const oldEntry = stillOpen.cookie;
     check("before the summons, the old watchword still enters", stillOpen.status === 200);
     check("no summons pending → nothing useful (401, a bare refusal)", (await answer("no-such-summons-here-at-all", chosen, { "cf-connecting-ip": "192.0.2.50" })).status === 401);
-    const token = issueSetup(tmp);
+    const token = await summon(tmp);
+    check("issuing the summons voids the old watchword at once", (await knockEntry(word, { "cf-connecting-ip": "192.0.2.49" })).status === 401);
+    check("…and every earlier entry at once", (await req("/sanctum-api/map", { headers: { cookie: oldEntry } })).status === 401);
+    check("…and every earlier device mark at once", readDevice(JSON.parse(fs.readFileSync(path.join(tmp, "auth.json"), "utf8")).secret, deviceMark?.split("=")[1]) === undefined);
+    check("…and the live entries are cleared", fs.readFileSync(path.join(tmp, "entries.json"), "utf8").trim() === "{}");
+    check("…and the true watchword is gone too: the gate is closed to everyone", JSON.parse(fs.readFileSync(path.join(tmp, "auth.json"), "utf8")).voided === true);
     const setupFile = fs.readFileSync(path.join(tmp, "setup.json"), "utf8");
     check("the summons is kept only as a hash", !setupFile.includes(token) && /"hash":"[0-9a-f]{64}"/.test(setupFile));
     check("a watchword too short is refused, the summons kept", (await answer(token, "short words", { "cf-connecting-ip": "192.0.2.51" })).body.weak === true && fs.existsSync(path.join(tmp, "setup.json")));
@@ -791,11 +796,11 @@ try {
     check("the old watchword is no longer received", (await knockEntry(word, { "cf-connecting-ip": "192.0.2.55" })).status === 401);
     const again = await knockEntry(chosen, { "cf-connecting-ip": "192.0.2.56" });
     check("the chosen watchword enters", again.status === 200);
-    const lapsed = issueSetup(tmp);
+    const lapsed = await summon(tmp);
     const f = JSON.parse(fs.readFileSync(path.join(tmp, "setup.json"), "utf8"));
     fs.writeFileSync(path.join(tmp, "setup.json"), JSON.stringify({ ...f, expires: Date.now() - 1000 }));
     check("a lapsed summons → refused", (await answer(lapsed, chosen, { "cf-connecting-ip": "192.0.2.57" })).status === 401);
-    const contested = issueSetup(tmp);
+    const contested = await summon(tmp);
     const race = await Promise.all(Array.from({ length: 8 }, (_, i) => answer(contested, `${chosen} again`, { "cf-connecting-ip": `192.0.2.${60 + i}` })));
     check("a summons answered eight times at once, from eight sources, serves once", race.filter((r) => r.status === 200).length === 1);
     for (const r of race) {
