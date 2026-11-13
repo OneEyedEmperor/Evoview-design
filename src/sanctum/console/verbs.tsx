@@ -86,12 +86,17 @@ export function Raise({ store, state, subject, verdict, previewState, compose }:
 
   const turnOp = turnFirst ? [op.turn(turnFirst)] : [];
   const base = useMemo(() => (turnFirst ? checkLocally(state, turnOp).state : state), [state, turnFirst]);
-  const slots = useMemo(() => slotsFor(base, { op: "addElement", kind, realm, parent, condition, quarter }), [base, kind, realm, parent, condition, quarter]);
+  const first = useMemo(() => slotsFor(base, { op: "addElement", kind, realm, parent, condition, quarter }), [base, kind, realm, parent, condition, quarter]);
   const k = base.elementKinds.find((x) => x.id === kind);
 
   /* A slot with a single open answer answers itself. */
-  const realmChoice = has(slots.slots.realm, realm) ? realm : ok(slots.slots.realm).length === 1 ? ok(slots.slots.realm)[0].value : "";
-  const parentChoice = !slots.slots.parent ? "" : has(slots.slots.parent, parent) ? parent : ok(slots.slots.parent).length === 1 ? ok(slots.slots.parent)[0].value : "";
+  const realmChoice = has(first.slots.realm, realm) ? realm : ok(first.slots.realm).length === 1 ? ok(first.slots.realm)[0].value : "";
+  const parentChoice = !first.slots.parent ? "" : has(first.slots.parent, parent) ? parent : ok(first.slots.parent).length === 1 ? ok(first.slots.parent)[0].value : "";
+  /* The cords that could hold it are known once its realm (and elder) are. */
+  const slots = useMemo(
+    () => (realmChoice === realm && parentChoice === parent ? first : slotsFor(base, { op: "addElement", kind, realm: realmChoice, parent: parentChoice, condition, quarter })),
+    [first, base, realmChoice, parentChoice],
+  );
   const id = markFrom(title || "new", base.elements.map((e) => e.id));
 
   /* Does it need a cord to hold it? (A quartered stone is held by the ring.) */

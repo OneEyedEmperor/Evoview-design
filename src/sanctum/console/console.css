@@ -53,6 +53,7 @@
   color: var(--sx-ivory);
   font-weight: 600;
   line-height: 1.2;
+  text-align: left;
   vertical-align: middle;
   transition: background var(--sx-control) var(--sx-standard);
 }
@@ -261,7 +262,7 @@
 .sanctum-console__foresee[aria-pressed="true"] { color: var(--sx-ink); }
 
 /* The phone sheet: the same sentence, a chip strip for the verbs, a slim verdict. */
-@container (max-width: 420px) {
+@container (max-width: 370px) {
   .sanctum-console__sentence, .sanctum-console__inline input { font-size: 16px; }
   .sanctum-console__office { font-size: 22px; }
   .sanctum-console__head { flex-wrap: nowrap; }

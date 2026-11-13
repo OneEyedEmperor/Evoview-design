@@ -42,12 +42,11 @@ export function Record({ store }: { store: SanctumStore }) {
         const foreseen = restoring === e.version;
         return (
           <li key={e.version} className={`sanctum-console__knot is-${kind}${current ? " is-current" : ""}${foreseen ? " is-foreseen" : ""}`}>
-            <Knot kind={kind} />
+            <Knot kind={kind} label={KNOT_WORD[kind]} />
             <div className="sanctum-console__knot-words">
-              <span className="sx-state">{current ? "The map as it stands" : KNOT_WORD[kind]}</span>
               <span className="sanctum-console__knot-summary">{e.summary}</span>
               <span className="sx-small">
-                {whenInWords(e.at)}
+                {current ? `The map as it stands, sealed ${lower(whenInWords(e.at))}` : whenInWords(e.at)}
                 {e.restoredFrom && pointed(e) ? `. A return to the knot tied ${lower(whenInWords(pointed(e)!.at))}` : ""}
               </span>
             </div>
@@ -73,7 +72,7 @@ export function Record({ store }: { store: SanctumStore }) {
 const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 
 /** One knot shape per family of change, tied on the record's cord. */
-function Knot({ kind }: { kind: KnotKind }) {
+function Knot({ kind, label }: { kind: KnotKind; label: string }) {
   const paths: Record<KnotKind, string> = {
     raise: "M5 13c0-4 3-7 6-7s6 3 6 7-3 5-6 5-6-1-6-5zM11 6v-3",
     cord: "M11 3c-3 0-5 2-5 4.5S8 12 11 12s5 2 5 4.5S14 21 11 21s-5-2-5-4.5S8 12 11 12s5-2 5-4.5S14 3 11 3z",
@@ -89,7 +88,7 @@ function Knot({ kind }: { kind: KnotKind }) {
     canon: "M5 12a6 6 0 1012 0 6 6 0 10-12 0z",
   };
   return (
-    <svg className="sanctum-console__knot-mark" width="22" height="24" viewBox="0 0 22 24" aria-hidden="true">
+    <svg className="sanctum-console__knot-mark" width="22" height="24" viewBox="0 0 22 24" role="img" aria-label={label}>
       <path d={paths[kind]} fill={kind === "canon" ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );

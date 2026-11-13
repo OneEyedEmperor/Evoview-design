@@ -56,6 +56,7 @@ export default function Console({ store }: ConsoleProps) {
     if (!subjectKey) return;
     setVerb(verbFor(draft.subject));
     setFace("shape");
+    setSealed("");
     setEpoch((e) => e + 1);
   }, [subjectKey]);
 
@@ -77,11 +78,14 @@ export default function Console({ store }: ConsoleProps) {
     return () => window.clearTimeout(id);
   }, [draft.open]);
 
+  /* While a seal is in flight the state is replaced under the verb: whatever
+     it recomposes then belongs to the map that is going away. */
+  const sealing = useRef(false);
   const compose = (c: Composed) => {
+    if (sealing.current) return;
     setComposed(c);
     const ops = c.ops ?? [];
     if (JSON.stringify(ops) !== JSON.stringify(store.get().draft.ops)) patchDraft(store, { ops });
-    if (c.ops) setSealed("");
   };
 
   const withdraw = () => {
@@ -90,14 +94,22 @@ export default function Console({ store }: ConsoleProps) {
     setEpoch((e) => e + 1);
   };
 
+  /* After a seal the lectern rests on the sealed words until a verb is chosen
+     again (a verb that composes at once, like the turn, must not hide them). */
   const seal = async () => {
+    sealing.current = true;
     const ok = await store.seal();
     if (ok) {
       setSealed(store.get().word);
       setComposed({ ops: null });
       setEpoch((e) => e + 1);
-    }
+    } else sealing.current = false;
   };
+  /* The lectern now rests on the sealed words; composing may begin again. */
+  useEffect(() => {
+    sealing.current = false;
+  }, [sealed, epoch]);
+  const resting = Boolean(sealed) && !draft.ops.length && !draft.restoring;
 
   const verbs = useMemo(() => {
     if (!state) return [];
@@ -143,8 +155,9 @@ export default function Console({ store }: ConsoleProps) {
                 aria-pressed={x.id === current.id}
                 data-jelly=""
                 onClick={() => {
-                  if (x.id === current.id) return;
+                  if (x.id === current.id && !resting) return;
                   withdraw();
+                  setSealed("");
                   setVerb(x.id);
                 }}
               >
@@ -159,7 +172,11 @@ export default function Console({ store }: ConsoleProps) {
             )}
           </div>
           <div className="sanctum-console__compose">
-            <V key={`${current.id}-${epoch}`} store={store} state={state} brought={brought} subject={draft.subject} verdict={v} previewState={draft.previewState} compose={compose} />
+            {resting ? (
+              <p className="sx-body">Choose what to shape next, or read the new knot in the record.</p>
+            ) : (
+              <V key={`${current.id}-${epoch}`} store={store} state={state} brought={brought} subject={draft.subject} verdict={v} previewState={draft.previewState} compose={compose} />
+            )}
             {composed.ops && composed.brings && composed.brings.length > 0 && (
               <div className="sanctum-console__brings">
                 <p className="sx-small">What the change brings, foreseen:</p>
