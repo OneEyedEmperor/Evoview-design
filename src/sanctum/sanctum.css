@@ -1,0 +1,111 @@
+/* Sanctum tokens and shared primitives (Render owns; the console proposes).
+   Scoped to .sanctum-root so nothing reaches the library. Three voices, no
+   lines that segment, text lists on tonal tiles, radius by role. */
+
+.sanctum-root {
+  --sx-night: #06080b;
+  --sx-night-2: #0a0c10;
+  --sx-tile: #10131a;
+  --sx-tile-2: #141821;
+  --sx-tile-3: #1a1f29;
+  --sx-tile-lit: #1d222c;
+  --sx-ivory: #f3efe6;
+  --sx-ink: #0b0c0f;
+  --sx-fg-90: rgba(243, 239, 230, 0.9);
+  --sx-fg-65: rgba(243, 239, 230, 0.66);
+  --sx-fg-55: rgba(243, 239, 230, 0.55);
+  --sx-fg-35: rgba(243, 239, 230, 0.36);
+  --sx-fg-12: rgba(243, 239, 230, 0.12);
+  --sx-glass: rgba(12, 14, 19, 0.76);
+  --sx-refuse: color-mix(in oklab, #c2483f 15%, var(--sx-tile));
+  --sx-refuse-ink: #f2b8ad;
+  --sx-display: "Overused Grotesk", "Montserrat", sans-serif;
+  --sx-body: "Montserrat", sans-serif;
+  --sx-state: "Satoshi", "Montserrat", sans-serif;
+  --sx-r-shell: 24px;
+  --sx-r-surface: 16px;
+  --sx-r-control: 12px;
+  --sx-r-tag: 8px;
+  --sx-fast: 180ms;
+  --sx-control: 280ms;
+  --sx-reveal: 600ms;
+  --sx-cinematic: 900ms;
+  --sx-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --sx-pour: cubic-bezier(0.65, 0, 0.35, 1);
+  --sx-out: cubic-bezier(0.23, 1, 0.32, 1);
+
+  color: var(--sx-ivory);
+  font-family: var(--sx-body);
+  -webkit-font-smoothing: antialiased;
+  background: var(--sx-night);
+}
+
+:where(.sanctum-root) *,
+:where(.sanctum-root) *::before,
+:where(.sanctum-root) *::after {
+  box-sizing: border-box;
+}
+
+/* zero specificity, so every primitive below wins over the reset */
+:where(.sanctum-root) :where(button) {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.sanctum-root :focus-visible {
+  outline: 2px solid var(--sx-ivory);
+  outline-offset: 3px;
+}
+
+/* ---------- voices ---------- */
+.sx-title { margin: 0; font-family: var(--sx-display); font-weight: 900; text-transform: uppercase; letter-spacing: -0.025em; line-height: 0.92; }
+.sx-head { margin: 0; font-family: var(--sx-display); font-weight: 900; text-transform: uppercase; letter-spacing: -0.01em; line-height: 1; font-size: 15px; color: var(--sx-fg-90); }
+.sx-label { font-family: var(--sx-display); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; font-size: 13px; line-height: 1.15; }
+.sx-state { font-family: var(--sx-state); font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; font-size: 11px; }
+.sx-lead { margin: 0; font-family: var(--sx-body); font-weight: 500; font-size: 16px; line-height: 1.55; color: var(--sx-fg-90); }
+.sx-body { margin: 0; font-family: var(--sx-body); font-weight: 400; font-size: 14px; line-height: 1.6; color: var(--sx-fg-65); }
+.sx-small { margin: 0; font-family: var(--sx-body); font-weight: 400; font-size: 13px; line-height: 1.45; color: var(--sx-fg-55); }
+
+/* ---------- tonal lists ---------- */
+.sx-tiles { display: grid; gap: 6px; }
+.sx-tile { position: relative; display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 10px 14px; border-radius: var(--sx-r-control); background: var(--sx-tile); text-align: left; transition: background var(--sx-control) var(--sx-standard); }
+.sx-tile:nth-child(even) { background: var(--sx-tile-2); }
+.sx-tile:is(button):hover { background: var(--sx-tile-lit); }
+.sx-tile:is(button):active { transform: scale(0.99); }
+.sx-txt { display: grid; gap: 3px; min-width: 0; text-align: left; }
+.sx-rows { display: grid; border-radius: var(--sx-r-surface); overflow: hidden; }
+.sx-rows > * { padding: 11px 14px; background: var(--sx-tile); }
+.sx-rows > *:nth-child(even) { background: var(--sx-tile-2); }
+
+/* ---------- commands ---------- */
+.sx-plate, .sx-ghost { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 46px; padding: 0 20px; border-radius: var(--sx-r-control); font-family: var(--sx-body); font-weight: 700; font-size: 14px; white-space: nowrap; }
+.sx-plate { background: var(--sx-ivory); color: var(--sx-ink); }
+.sx-ghost { background: var(--sx-tile-2); color: var(--sx-fg-90); font-weight: 600; }
+.sx-plate:disabled, .sx-ghost:disabled { background: var(--sx-tile-3); color: var(--sx-fg-35); cursor: default; }
+.sx-orb-button { position: relative; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--sx-glass); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07); }
+
+/* ---------- choices ---------- */
+.sx-seg { display: inline-flex; gap: 4px; padding: 4px; border-radius: 14px; background: var(--sx-tile); }
+.sx-opt { position: relative; display: grid; place-items: center; min-height: 36px; padding: 0 16px; border-radius: 10px; font-family: var(--sx-display); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; font-size: 12px; color: var(--sx-fg-55); white-space: nowrap; }
+.sx-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.sx-chip { position: relative; display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 13px 0 9px; border-radius: 999px; background: var(--sx-tile-2); font-family: var(--sx-body); font-weight: 600; font-size: 13px; color: var(--sx-fg-65); }
+.sx-switch { position: relative; flex: none; width: 46px; height: 28px; border-radius: 999px; background: var(--sx-tile-3); }
+.sx-switch__knob { position: absolute; z-index: 1; top: 4px; left: 4px; width: 20px; height: 20px; border-radius: 50%; background: var(--sx-fg-55); transition: transform var(--sx-control) var(--sx-out), background var(--sx-control) var(--sx-standard); }
+.sx-switch[data-on] .sx-switch__knob, [aria-checked="true"] > .sx-switch .sx-switch__knob { transform: translateX(18px); background: var(--sx-night); }
+
+/* ---------- fields ---------- */
+.sx-field { display: grid; gap: 8px; }
+.sx-field > label, .sx-field__label { font-family: var(--sx-body); font-weight: 600; font-size: 13px; color: var(--sx-fg-65); }
+.sx-input { width: 100%; min-height: 46px; padding: 12px 14px; border: 0; border-radius: var(--sx-r-control); background: var(--sx-tile-2); color: var(--sx-ivory); font-family: var(--sx-body); font-size: 15px; line-height: 1.5; }
+.sx-input::placeholder { color: var(--sx-fg-35); }
+
+/* ---------- words of refusal and examination ---------- */
+.sx-refuse { display: grid; gap: 6px; padding: 16px 18px; border-radius: var(--sx-r-surface); background: var(--sx-refuse); }
+.sx-refuse .sx-head { color: var(--sx-refuse-ink); font-size: 16px; }
+
+/* ---------- glass shells ---------- */
+.sx-glass { border-radius: var(--sx-r-shell); background: var(--sx-glass); -webkit-backdrop-filter: blur(22px) saturate(1.15); backdrop-filter: blur(22px) saturate(1.15); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 30px 80px -30px rgba(0, 0, 0, 0.9); }
