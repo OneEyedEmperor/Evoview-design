@@ -152,6 +152,12 @@ export class SightEngine {
   private sockets: { pos: Placed; ok: boolean; socket: { realm: Id; order: number } }[] = [];
   private hoverEnd: string | null = null;
   private refused = new Set<Id>();
+  /** Where the beyond realm opens: lower right on a wide screen, downward on a tall one. */
+  private beyondRay = typeof window !== "undefined" && window.innerWidth / window.innerHeight < 0.8 ? 72 : 40;
+  private pan = { x: 0, vx: 0, min: 0, max: 0 };
+  private drag: { id: number; x0: number; pan0: number; moved: boolean; lastX: number; lastT: number } | null = null;
+  private suppressTap = 0;
+  private lastSet: Parameters<SightEngine["setState"]> | null = null;
   private pointer = { x: -9999, y: -9999, vx: 0, vy: 0, t: 0, inside: false };
   private texture: { key: string; R: number; canvases: Map<Id, HTMLCanvasElement> } = { key: "", R: 0, canvases: new Map() };
   private layerAlpha = new Map<Id, number>();
@@ -182,6 +188,9 @@ export class SightEngine {
     document.addEventListener("visibilitychange", this.onVisibility);
     host.addEventListener("pointermove", this.onPointerMove);
     host.addEventListener("pointerleave", this.onPointerLeave);
+    host.addEventListener("pointerdown", this.onPointerDown, { capture: true });
+    host.addEventListener("pointerup", this.onPointerUp);
+    host.addEventListener("pointercancel", this.onPointerUp);
     canvas.addEventListener("click", this.onCanvasClick);
     this.resize();
     (window as unknown as { __sanctumPerf?: () => number[] }).__sanctumPerf = () => this.perf.slice();
@@ -195,6 +204,9 @@ export class SightEngine {
     document.removeEventListener("visibilitychange", this.onVisibility);
     this.host.removeEventListener("pointermove", this.onPointerMove);
     this.host.removeEventListener("pointerleave", this.onPointerLeave);
+    this.host.removeEventListener("pointerdown", this.onPointerDown, { capture: true });
+    this.host.removeEventListener("pointerup", this.onPointerUp);
+    this.host.removeEventListener("pointercancel", this.onPointerUp);
     this.canvas.removeEventListener("click", this.onCanvasClick);
     this.layer.replaceChildren();
   }
@@ -205,12 +217,22 @@ export class SightEngine {
     const prev = this.view;
     this.view = view;
     if (prev.condition !== view.condition && this.state && this.passage.to !== view.condition) this.startPassage(prev.condition, view.condition, false);
-    if (prev.focus !== view.focus) this.labelsDirty = true;
+    this.labelsDirty = true;
+    /* a focus quiets the other names at once */
+    if (prev.focus !== view.focus && view.focus) {
+      const keep = this.focusSet();
+      for (const m of this.marks.values()) if (m.labelEl && !keep.has(m.id)) m.labelEl.dataset.hidden = "true";
+    }
     this.kick();
   }
 
   setFrame(frame: Frame) {
     this.frame = frame;
+    const ray = window.innerWidth / window.innerHeight < 0.8 ? 72 : 40;
+    if (ray !== this.beyondRay) {
+      this.beyondRay = ray;
+      if (this.lastSet) this.setState(...this.lastSet);
+    }
     this.fitCamera(false);
     this.labelsDirty = true;
     this.kick();
@@ -226,7 +248,8 @@ export class SightEngine {
     this.state = shown;
     this.unseen = new Set(shown.roles.unseen);
     this.lexiconTone = lift(shown.lexicon.colour.hex, 0.82);
-    this.layout = computeLayout(shown);
+    this.lastSet = [state, { ...opts, turned: null }];
+    this.layout = computeLayout(shown, { beyondRay: this.beyondRay });
     this.threshold = this.layout.threshold;
     this.hasThresholdStation = shown.elements.some((e) => Boolean(e.station));
     const removedIds = new Set(opts.preview?.removed ?? []);
@@ -260,7 +283,7 @@ export class SightEngine {
         const trial = { ...state, elements: [...state.elements, phantom].map((e) => (e.realm === phantom.realm ? { ...e } : e)) };
         const inRealm = trial.elements.filter((e) => e.realm === phantom.realm).sort((x, y) => x.order - y.order);
         inRealm.forEach((e, i) => { e.order = i; });
-        const lay = computeLayout(trial);
+        const lay = computeLayout(trial, { beyondRay: this.beyondRay });
         const p = lay.pos.get(phantom.id);
         if (p) this.sockets.push({ pos: p, ok: a.ok, socket: a.socket });
       }
@@ -416,13 +439,28 @@ export class SightEngine {
   private fitCamera(snap: boolean) {
     const f = this.frame;
     const reach = this.layout?.reach ?? 1.36;
+    const ray = this.layout?.beyondRay ?? this.beyondRay;
+    const tall = f.mode === "full" && f.w < 560 && f.h > f.w * 1.4;
     const padX = f.mode === "index" ? 8 : f.w < 560 ? 18 : 76;
     const padY = f.mode === "index" ? 8 : f.w < 560 ? 30 : 46;
-    /* the eye's box: rim on three sides, the beyond ray reaching lower right */
-    const right = Math.max(1, reach * Math.cos(rad(this.layout?.beyondRay ?? 40)) + 0.08);
-    const down = Math.max(1, reach * Math.sin(rad(this.layout?.beyondRay ?? 40)) + 0.06);
-    const R = Math.max(40, Math.min((f.w - padX * 2) / (1 + right), (f.h - padY * 2) / (1 + down)));
-    const cx = f.x + padX + R + ((f.w - padX * 2) - R * (1 + right)) / 2;
+    /* the eye's box: rim on three sides, the beyond ray reaching out on the fourth */
+    const right = Math.max(1, reach * Math.cos(rad(ray)) + 0.08);
+    const down = Math.max(1, reach * Math.sin(rad(ray)) + 0.06);
+    let R: number, cx: number;
+    if (tall) {
+      /* a tall screen: the eye takes the height, the core stays centred, the sides are reached by pan */
+      R = Math.max(40, Math.min((f.h - padY * 2) / (1 + down), f.w * 0.8));
+      const left = R + 46, rightExt = R * right + 46;
+      this.pan.max = Math.max(0, left - f.w / 2);
+      this.pan.min = -Math.max(0, rightExt - f.w / 2);
+      this.pan.x = Math.max(this.pan.min, Math.min(this.pan.max, this.pan.x));
+      cx = f.x + f.w / 2 + this.pan.x;
+    } else {
+      R = Math.max(40, Math.min((f.w - padX * 2) / (1 + right), (f.h - padY * 2) / (1 + down)));
+      cx = f.x + padX + R + ((f.w - padX * 2) - R * (1 + right)) / 2;
+      this.pan.max = this.pan.min = this.pan.x = this.pan.vx = 0;
+    }
+    this.host.style.touchAction = this.pan.max > 0 || this.pan.min < 0 ? "none" : "";
     const cy = f.y + padY + R + ((f.h - padY * 2) - R * (1 + down)) / 2;
     this.camTarget = { cx, cy, R };
     this.camSettled = false;
@@ -562,7 +600,11 @@ export class SightEngine {
       if (Math.abs(this.camTarget[k] - this.cam[k]) > 0.3 || Math.abs(this.camVel[k]) > 0.3) moving = true;
       else { this.cam[k] = this.camTarget[k]; this.camVel[k] = 0; }
     }
-    if (!moving && !this.camSettled) { this.camSettled = true; this.labelsDirty = true; this.project(); this.moveButtons(); }
+    /* names step aside while the eye travels far, and return placed anew when it rests */
+    const far = Math.abs(this.camTarget.R - this.cam.R) > 16 || Math.hypot(this.camTarget.cx - this.cam.cx, this.camTarget.cy - this.cam.cy) > 30;
+    if (moving && far && !this.drag) this.layer.dataset.moving = "";
+    if (!moving && !this.camSettled) { this.camSettled = true; this.labelsDirty = true; this.project(); this.moveButtons(); delete this.layer.dataset.moving; }
+    this.stepPan(dt);
 
     /* passage between conditions: gesture first, then one in-out sequence */
     const ps = this.passage;
@@ -906,12 +948,12 @@ export class SightEngine {
     return (this.layerAlpha.get(id) ?? 1) * wake;
   }
   private drawStatic() {
-    const lay = this.layout!, state = this.state!;
+    const lay = this.layout!;
     const { cx, cy, R } = this.cam;
     this.ensureTexture();
     /* rebuilt on a quantised change only; while the camera travels the last layer is drawn transformed (exact for rings) */
     const alphas = lay.rings.map((r, i) => Math.round(this.ringAlpha(i, r.id) * 20)).join(",");
-    const base = `${this.texture.key}|${this.texture.R}|${alphas}|${this.frame.mode}|${this.canvas.width}x${this.canvas.height}`;
+    const base = `${this.texture.key}|${this.texture.R}|${alphas}|${this.frame.mode}|${this.canvas.width}x${this.canvas.height}|${this.ringNameKey}`;
     const camKey = `${cx.toFixed(1)}|${cy.toFixed(1)}|${R.toFixed(1)}`;
     if (!this.staticCv) this.staticCv = document.createElement("canvas");
     const sc = this.staticCv;
@@ -948,7 +990,7 @@ export class SightEngine {
       /* the eye's own edge */
       g.strokeStyle = "rgba(200,215,235,0.09)"; g.lineWidth = 1; g.beginPath(); g.arc(cx, cy, R, 0, TAU); g.stroke();
       g.globalCompositeOperation = "source-over";
-      if (this.frame.mode !== "focus" && this.frame.mode !== "index" && R > 150) this.drawRingNames(g, lay, state);
+      if (this.frame.mode === "full") this.drawRingNames(g);
     }
     const ctx = this.ctx;
     const s = this.staticCam;
@@ -991,33 +1033,27 @@ export class SightEngine {
     ctx.globalAlpha = prev;
   }
 
-  private drawRingNames(ctx: CanvasRenderingContext2D, lay: Layout, state: SanctumState) {
-    const size = this.cam.R > 300 ? 11 : 10;
-    const core = lay.rings[lay.rings.length - 1];
+  /** Ring names at the places the placement pass chose: lower arcs read with their tops inward, upper arcs upright. */
+  private drawRingNames(ctx: CanvasRenderingContext2D) {
+    const size = 11;
     ctx.save();
     ctx.font = `700 ${size}px Satoshi`;
-    for (const ring of lay.rings) {
-      const shared = [...this.marks.values()].filter((m) => m.el.realm === ring.id && !m.isCore).length >= 2;
-      if (!shared) continue;
-      const layer = state.layers.find((l) => l.id === ring.id);
-      if (!layer) continue;
-      const text = layer.title.toUpperCase();
-      const r = ring === core ? Math.min(ring.r1 + 0.012, lay.threshold - 0.005) : ring.r1 - 0.028;
-      const th0 = ring === core ? 152 : 138;
-      const a = (this.layerAlpha.get(ring.id) ?? 1) * 0.72 * (this.wakeLen ? clamp01(this.wakeT / 1.5) : 1);
-      ctx.fillStyle = rgba(lift(layer.colour.hex, 0.7), a);
-      const track = size * 0.24;
-      const widths = [...text].map((ch) => ctx.measureText(ch).width + track);
-      const rr = r * this.cam.R;
-      let th = th0 + ((widths.reduce((s, w) => s + w, 0) / 2) / rr) * (180 / Math.PI);
-      const p = { x: 0, y: 0 };
-      for (let i = 0; i < text.length; i++) {
-        const mid = th - ((widths[i] / 2) / rr) * (180 / Math.PI);
-        this.toXY(r, mid, p);
-        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(rad(mid - 90));
-        ctx.fillText(text[i], -ctx.measureText(text[i]).width / 2, 0);
+    ctx.textBaseline = "middle";
+    const p = { x: 0, y: 0 };
+    for (const n of this.ringNames) {
+      const a = (this.layerAlpha.get(n.id) ?? 1) * 0.56 * (this.wakeLen ? clamp01(this.wakeT / 1.5) : 1);
+      ctx.fillStyle = rgba(n.colour, a);
+      const rr = n.r * this.cam.R;
+      const total = n.widths.reduce((s, x) => s + x, 0);
+      let s = -total / 2;
+      for (let i = 0; i < n.text.length; i++) {
+        const gw = n.widths[i];
+        const mid = n.th + ((s + gw / 2) / rr) * (180 / Math.PI) * (n.up ? 1 : -1);
+        this.toXY(n.r, mid, p);
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(rad(n.up ? mid + 90 : mid - 90));
+        ctx.fillText(n.text[i], -ctx.measureText(n.text[i]).width / 2, 0);
         ctx.restore();
-        th -= (widths[i] / rr) * (180 / Math.PI);
+        s += gw;
       }
     }
     ctx.restore();
@@ -1398,42 +1434,22 @@ export class SightEngine {
     ctx.restore();
   }
 
+  /** Each cord's function, written where the placement pass found room. */
   private drawExplanations() {
+    if (!this.explainPlaced.length) return;
     const ctx = this.ctx;
-    const seen = new Set<string>();
-    const rects: [number, number, number, number][] = [];
     ctx.save();
     ctx.font = `500 ${this.cam.R > 300 ? 11.5 : 11}px Montserrat`;
     ctx.textAlign = "center";
     ctx.textBaseline = "bottom";
-    for (const c of this.cords) {
-      if (c.alpha < 0.45 || c.sweep < 1 || c.ring) continue;
-      const kindTitle = this.state!.threadKinds.find((k) => k.id === c.t.kind)?.title ?? "";
-      const purpose = c.t.purpose.replace(/\.$/, "");
-      /* a cord says its function: its own label when it has one, else a short purpose */
-      const text = c.t.label && c.t.label !== kindTitle ? c.t.label : purpose.length <= 44 ? purpose.charAt(0).toLowerCase() + purpose.slice(1) : "";
-      if (!text) continue;
-      const key = `${c.t.kind}|${text}`;
-      if (seen.has(key)) continue;
-      const w = ctx.measureText(text).width;
-      if (w > c.smp.total * 0.8) continue;
-      let slot = this.explainSlots.get(c.id);
-      const tryAt = slot !== undefined ? [slot] : [0.5, 0.42, 0.58, 0.34, 0.66];
-      let placed = false;
-      for (const u of tryAt) {
-        const p = c.smp.at(u, { x: 0, y: 0, a: 0 });
-        const box: [number, number, number, number] = [p.x - w / 2 - 4, p.y - 18, p.x + w / 2 + 4, p.y + 4];
-        if (slot === undefined && rects.some((r) => !(box[2] < r[0] || box[0] > r[2] || box[3] < r[1] || box[1] > r[3]))) continue;
-        slot = u; this.explainSlots.set(c.id, u); rects.push(box);
-        let ang = p.a; if (ang > Math.PI / 2 || ang < -Math.PI / 2) ang += Math.PI;
-        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(ang);
-        ctx.lineWidth = 3.2; ctx.strokeStyle = `rgba(6,8,11,${(0.9 * c.alpha).toFixed(3)})`; ctx.strokeText(text, 0, -4);
-        ctx.fillStyle = rgba(mix(c.colour, "#ffffff", 0.35), 0.95 * c.alpha); ctx.fillText(text, 0, -4);
-        ctx.restore();
-        placed = true;
-        break;
-      }
-      if (placed) seen.add(key);
+    for (const { cord: c, u, text } of this.explainPlaced) {
+      if (c.alpha < 0.3 || c.sweep < 1) continue;
+      const p = c.smp.at(u, { x: 0, y: 0, a: 0 });
+      let ang = p.a; if (ang > Math.PI / 2 || ang < -Math.PI / 2) ang += Math.PI;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(ang);
+      ctx.lineWidth = 3.2; ctx.strokeStyle = `rgba(6,8,11,${(0.9 * c.alpha).toFixed(3)})`; ctx.strokeText(text, 0, -4);
+      ctx.fillStyle = rgba(mix(c.colour, "#ffffff", 0.35), 0.95 * c.alpha); ctx.fillText(text, 0, -4);
+      ctx.restore();
     }
     ctx.restore();
   }
@@ -1451,7 +1467,11 @@ export class SightEngine {
     label.textContent = m.el.title;
     label.setAttribute("aria-hidden", "true");
     b.appendChild(label);
-    b.addEventListener("click", () => { this.touch(m.id); this.hooks.onPick(m.id, "tap"); });
+    b.addEventListener("click", () => {
+      if (performance.now() < this.suppressTap) return;
+      this.touch(m.id);
+      this.hooks.onPick(m.id, "tap");
+    });
     b.addEventListener("pointerenter", () => this.hooks.onPick(m.id, "hover-in"));
     b.addEventListener("pointerleave", () => this.hooks.onPick(m.id, "hover-out"));
     this.layer.appendChild(b);
@@ -1468,74 +1488,239 @@ export class SightEngine {
     }
   }
 
-  /** Greedy placement: each label takes the first free spot around its mark; a label that cannot fit hides (its button keeps the name). */
+  /** One deterministic pass, by structure: the core's name first and alone on its line, then every
+      element's name in a free spot around its mark, then each ring's name where no mark, name or
+      cord crosses it, then (when asked) the cords' functions. A name that cannot fit hides; its
+      button keeps the name and shows it on hover or focus. */
   private placeLabels() {
     this.labelsDirty = false;
     this.moveButtons();
     const ctx = this.ctx;
+    const { cx, cy, R } = this.cam;
+    const f = this.frame;
+    const lay = this.layout, state = this.state;
+    if (!lay || !state) return;
+    type Box = [number, number, number, number];
+    const hits = (a: Box, b: Box) => !(a[2] < b[0] || a[0] > b[2] || a[3] < b[1] || a[1] > b[3]);
+    const lens = Math.max(11, Math.min(27, R * 0.0625));
+    const marks: Box[] = [...this.marks.values()].filter((m) => !m.isCore && !m.removed).map((m) => { const k = m.vision?.img ? lens + 2 : 8; return [m.sx - k, m.sy - k, m.sx + k, m.sy + k]; });
+    const placed: Box[] = [];
+    const pupilR = PUPIL * R * 1.45;
+    const inFrame = (b: Box) => b[0] >= f.x + 6 && b[2] <= f.x + f.w - 6 && b[1] >= f.y + 6 && b[3] <= f.y + f.h - 6;
+    const onPupil = (b: Box) => Math.hypot(Math.max(b[0] - cx, 0, cx - b[2]), Math.max(b[1] - cy, 0, cy - b[3])) < pupilR;
+    let coreName: Box | null = null;
+    /* the core's name keeps its own line: no other name shares it or comes near */
+    const nearCore = (b: Box) => {
+      if (!coreName) return false;
+      const z: Box = [coreName[0] - 40, coreName[1] - 8, coreName[2] + 40, coreName[3] + 8];
+      if (hits(b, z)) return true;
+      const sameLine = b[1] < coreName[3] + 3 && b[3] > coreName[1] - 3;
+      return sameLine && Math.max(coreName[0] - b[2], b[0] - coreName[2]) < 84;
+    };
+    const free = (b: Box) => inFrame(b) && !onPupil(b) && !nearCore(b) && !placed.some((x) => hits([b[0] - 3, b[1] - 2, b[2] + 3, b[3] + 2], x)) && !marks.some((x) => hits(b, x));
+
     ctx.save();
     ctx.font = LABEL_FONT;
     ctx.letterSpacing = `${LABEL_TRACK}px`;
-    const placed: [number, number, number, number][] = [];
-    const { cx, cy, R } = this.cam;
-    const pr = PUPIL * R * 1.6;
-    const lens = Math.max(11, Math.min(27, R * 0.0625));
-    const markBoxes = [...this.marks.values()].filter((m) => !m.isCore).map((m) => { const k = m.vision?.img ? lens : 7; return [m.sx - k, m.sy - k, m.sx + k, m.sy + k] as [number, number, number, number]; });
-    const hit = (b: [number, number, number, number]) =>
-      placed.some((r) => !(b[2] < r[0] || b[0] > r[2] || b[3] < r[1] || b[1] > r[3])) ||
-      markBoxes.some((r) => !(b[2] < r[0] || b[0] > r[2] || b[3] < r[1] || b[1] > r[3])) ||
-      Math.hypot(Math.max(b[0] - cx, 0, cx - b[2]), Math.max(b[1] - cy, 0, cy - b[3])) < pr ||
-      b[0] < this.frame.x + 4 || b[2] > this.frame.x + this.frame.w - 4 || b[1] < this.frame.y + 4 || b[3] > this.frame.y + this.frame.h - 4;
     const focus = this.view.focus ? this.focusSet() : null;
-    const priority = (m: Mark) => (m.isCore ? 0 : m.el.kind && !m.el.parent && m.shape === "disc" ? 1 : m.shape === "crest" ? 1 : m.shape === "state" ? 2 : 3) + (m.el.realm === BEYOND ? 0.5 : 0);
-    const order = [...this.marks.values()].filter((m) => !m.removed).sort((a, b) => priority(a) - priority(b));
-    const index = this.frame.mode === "index";
+    const index = f.mode === "index";
+    const priority = (m: Mark) => (m.isCore ? 0 : m.shape === "crest" || (m.shape === "disc" && !m.el.parent) ? 1 : m.shape === "state" ? 2 : 3) + (m.el.realm === BEYOND ? 0.5 : 0) + (m.el.awaiting ? 1 : 0);
+    const order = [...this.marks.values()].filter((m) => !m.removed).sort((a, b) => priority(a) - priority(b) || a.el.order - b.el.order || (a.id < b.id ? -1 : 1));
+    const H = 14;
     for (const m of order) {
       this.ensureButton(m);
       const label = m.labelEl!;
       const show = !index && (!focus || focus.has(m.id)) && m.alpha > 0.15;
       if (!show) { label.dataset.hidden = "true"; continue; }
-      const text = m.el.title.toUpperCase();
-      const w = ctx.measureText(text).width + 2, h = 14;
-      const hasCameo = Boolean(m.vision && m.vision.img);
-      const gap = (hasCameo ? Math.max(11, Math.min(27, R * 0.0625)) : 0) + 11;
+      const w = ctx.measureText(m.el.title.toUpperCase()).width + 2;
       if (m.isCore) {
-        const box: [number, number, number, number] = [cx - w / 2, cy - PUPIL * R * 2 - h - 2, cx + w / 2, cy - PUPIL * R * 2 - 2];
+        const off = pupilR + 6;
+        const cands: Box[] = [[cx - w / 2, cy - off - H, cx + w / 2, cy - off], [cx - w / 2, cy + off, cx + w / 2, cy + off + H], [cx - off - w, cy - H / 2, cx - off, cy + H / 2], [cx + off, cy - H / 2, cx + off + w, cy + H / 2]];
+        const box = cands.find((b) => !marks.some((x) => hits(b, x))) ?? cands[0];
+        coreName = box;
         placed.push(box);
         this.setLabel(m, box);
         continue;
       }
+      const gap0 = (m.vision?.img ? lens : 0) + 11;
       const radial = Math.atan2(m.sy - cy, m.sx - cx);
-      const tries = [0, 0.5, -0.5, 1, -1, 1.57, -1.57, 2.3, -2.3, Math.PI];
       let done = false;
-      for (const d of tries) {
-        const a = radial + d;
-        const ax = m.sx + Math.cos(a) * gap, ay = m.sy + Math.sin(a) * gap;
-        const ca = Math.cos(a), sa = Math.sin(a);
-        const x0 = ca > 0.35 ? ax : ca < -0.35 ? ax - w : ax - w / 2;
-        const y0 = sa > 0.35 ? ay : sa < -0.35 ? ay - h : ay - h / 2;
-        const box: [number, number, number, number] = [x0, y0, x0 + w, y0 + h];
-        if (hit(box)) continue;
-        placed.push(box);
-        this.setLabel(m, box);
-        done = true;
-        break;
+      for (const gap of [gap0, gap0 + 9, gap0 + 20]) {
+        for (let k = 0; k < 16 && !done; k++) {
+          const d = (k % 2 ? 1 : -1) * Math.ceil(k / 2) * (Math.PI / 8);
+          const a = radial + d;
+          const ax = m.sx + Math.cos(a) * gap, ay = m.sy + Math.sin(a) * gap;
+          const ca = Math.cos(a), sa = Math.sin(a);
+          const x0 = ca > 0.38 ? ax : ca < -0.38 ? ax - w : ax - w / 2;
+          const y0 = sa > 0.38 ? ay : sa < -0.38 ? ay - H : ay - H / 2;
+          const box: Box = [x0, y0, x0 + w, y0 + H];
+          if (!free(box)) continue;
+          placed.push(box);
+          this.setLabel(m, box);
+          done = true;
+        }
+        if (done) break;
       }
       if (!done) label.dataset.hidden = "true";
     }
+
+    /* ring names: all six, quiet, where nothing crosses them */
+    this.ringNames = [];
+    if (f.mode === "full" && R > 150) {
+      const size = 11;
+      ctx.font = `700 ${size}px Satoshi`;
+      ctx.letterSpacing = "0px";
+      const track = size * 0.24;
+      for (const ring of lay.rings) {
+        const layer = state.layers.find((l) => l.id === ring.id);
+        if (!layer) continue;
+        const text = layer.title.toUpperCase();
+        const widths = [...text].map((ch) => ctx.measureText(ch).width + track);
+        const total = widths.reduce((s, x) => s + x, 0);
+        const r = ring.r1 - ring.r0 > 0.07 ? ring.r1 - 0.03 : ring.r1 + 0.009;
+        const rr = r * R;
+        const span = (total / rr) * (180 / Math.PI);
+        let best: { th: number; cost: number; glyphs: Box[] } | null = null;
+        for (let th = 24; th <= 336; th += 3) {
+          if (th > 156 && th < 204) continue;
+          const up = th > 180;
+          const glyphs: Box[] = [];
+          let s = -total / 2;
+          for (const gw of widths) {
+            const mid = th + ((s + gw / 2) / rr) * (180 / Math.PI) * (up ? 1 : -1);
+            const p = this.toXY(r, mid, { x: 0, y: 0 });
+            glyphs.push([p.x - size * 0.55, p.y - size * 0.55, p.x + size * 0.55, p.y + size * 0.55]);
+            s += gw;
+          }
+          if (glyphs.some((g) => !inFrame(g) || marks.some((x) => hits(g, x)) || placed.some((x) => hits(g, x)) || nearCore(g))) continue;
+          let crossings = 0;
+          const a0 = th - span / 2 - 1, a1 = th + span / 2 + 1;
+          for (const c of this.cords) {
+            if (c.alpha < 0.1) continue;
+            for (let i = 0; i < c.xy.length; i += 4) {
+              const dx = c.xy[i] - cx, dy = c.xy[i + 1] - cy;
+              if (Math.abs(Math.hypot(dx, dy) - rr) > 9) continue;
+              const ang = ((Math.atan2(dy, dx) * 180) / Math.PI + 360) % 360;
+              if (ang >= a0 && ang <= a1) { crossings++; break; }
+            }
+          }
+          const cost = crossings * 3 + Math.abs(shortest(th, 140)) / 45 + (up ? 1.5 : 0) + (Math.abs(shortest(th, lay.beyondRay)) < 26 ? 4 : 0);
+          if (!best || cost < best.cost) best = { th, cost, glyphs };
+        }
+        if (!best) continue;
+        placed.push(...best.glyphs);
+        this.ringNames.push({ text, r, th: best.th, up: best.th > 180, widths, colour: lift(layer.colour.hex, 0.7), id: ring.id });
+      }
+    }
+    this.ringNameKey = this.ringNames.map((n) => `${n.id}@${n.th}`).join(",");
+
+    /* the cords' functions, along their courses, clear of every name */
+    this.explainPlaced = [];
+    if (this.view.explanations && f.mode !== "index" && R >= 220) {
+      ctx.font = `500 ${R > 300 ? 11.5 : 11}px Montserrat`;
+      ctx.letterSpacing = "0px";
+      const seen = new Set<string>();
+      for (const c of this.cords) {
+        if (this.cordAlpha(c) < 0.45 || c.ring) continue;
+        const kindTitle = state.threadKinds.find((k) => k.id === c.t.kind)?.title ?? "";
+        const purpose = c.t.purpose.replace(/\.$/, "");
+        const text = c.t.label && c.t.label !== kindTitle ? c.t.label : purpose.length <= 44 ? purpose.charAt(0).toLowerCase() + purpose.slice(1) : "";
+        if (!text) continue;
+        const key = `${c.t.kind}|${text}`;
+        if (seen.has(key)) continue;
+        const w = ctx.measureText(text).width;
+        if (w > c.smp.total * 0.75) continue;
+        for (const u of [0.5, 0.42, 0.58, 0.34, 0.66, 0.26, 0.74]) {
+          const p = c.smp.at(u, { x: 0, y: 0, a: 0 });
+          let ang = p.a; if (ang > Math.PI / 2 || ang < -Math.PI / 2) ang += Math.PI;
+          const ux = Math.cos(ang), uy = Math.sin(ang), nx = -uy, ny = ux;
+          const pts = [[-w / 2, -16], [w / 2, -16], [-w / 2, -2], [w / 2, -2]].map(([a2, b2]) => [p.x + ux * a2 + nx * b2, p.y + uy * a2 + ny * b2]);
+          const box: Box = [Math.min(...pts.map((q) => q[0])), Math.min(...pts.map((q) => q[1])), Math.max(...pts.map((q) => q[0])), Math.max(...pts.map((q) => q[1]))];
+          if (!free(box)) continue;
+          placed.push(box);
+          this.explainPlaced.push({ cord: c, u, text });
+          seen.add(key);
+          break;
+        }
+      }
+    }
     ctx.restore();
   }
+
+  private ringNames: { id: Id; text: string; r: number; th: number; up: boolean; widths: number[]; colour: string }[] = [];
+  private ringNameKey = "";
+  private explainPlaced: { cord: Cord; u: number; text: string }[] = [];
 
   private setLabel(m: Mark, box: [number, number, number, number]) {
     const label = m.labelEl!;
     delete label.dataset.hidden;
     label.style.transform = `translate(${(box[0] - (m.sx - 22)).toFixed(1)}px, ${(box[1] - (m.sy - 22)).toFixed(1)}px)`;
     label.style.color = m.isCore ? mix(m.colour, "#fff6dc", 0.25) : m.el.realm === BEYOND ? mix(m.colour, "#ffffff", 0.55) : "";
+    /* a dimmed element's name dims with it */
+    label.style.setProperty("--sx-label-dim", m.alpha < 0.5 ? "0.42" : "1");
   }
 
   /* -------------------------------------------------------------- pointer */
 
+  /* pan, on a tall screen where the eye is wider than the view */
+  private onPointerDown = (e: PointerEvent) => {
+    if (this.pan.max <= 0 && this.pan.min >= 0) return;
+    this.drag = { id: e.pointerId, x0: e.clientX, pan0: this.pan.x, moved: false, lastX: e.clientX, lastT: performance.now() };
+    this.pan.vx = 0;
+  };
+
+  private onPointerUp = (e: PointerEvent) => {
+    if (!this.drag || e.pointerId !== this.drag.id) return;
+    if (this.drag.moved) { this.suppressTap = performance.now() + 300; this.layer.style.pointerEvents = ""; }
+    this.drag = null;
+    this.kick();
+  };
+
+  private shiftPan(x: number) {
+    const d = x - this.pan.x;
+    if (!d) return;
+    this.pan.x = x;
+    this.camTarget.cx += d;
+    this.cam.cx += d;
+    this.project();
+    this.moveButtons();
+  }
+
+  private stepPan(dt: number) {
+    if (this.drag || (this.pan.vx === 0 && this.pan.x <= this.pan.max && this.pan.x >= this.pan.min)) return;
+    let x = this.pan.x + this.pan.vx * dt;
+    this.pan.vx *= Math.exp(-dt * 5);
+    if (x > this.pan.max) { x += (this.pan.max - x) * Math.min(1, dt * 12); this.pan.vx *= 0.5; }
+    if (x < this.pan.min) { x += (this.pan.min - x) * Math.min(1, dt * 12); this.pan.vx *= 0.5; }
+    if (Math.abs(this.pan.vx) < 6 && x <= this.pan.max + 0.5 && x >= this.pan.min - 0.5) {
+      this.pan.vx = 0;
+      x = Math.max(this.pan.min, Math.min(this.pan.max, x));
+      this.labelsDirty = true;
+    }
+    this.shiftPan(x);
+  }
+
   private onPointerMove = (e: PointerEvent) => {
+    if (this.drag && e.pointerId === this.drag.id) {
+      const dx = e.clientX - this.drag.x0;
+      if (!this.drag.moved && Math.abs(dx) > 8) {
+        this.drag.moved = true;
+        this.layer.style.pointerEvents = "none";
+        try { this.host.setPointerCapture(e.pointerId); } catch { /* the pointer may already be gone */ }
+      }
+      if (this.drag.moved) {
+        const now = performance.now();
+        this.pan.vx = ((e.clientX - this.drag.lastX) / Math.max(1, now - this.drag.lastT)) * 1000;
+        this.drag.lastX = e.clientX;
+        this.drag.lastT = now;
+        let x = this.drag.pan0 + dx;
+        if (x > this.pan.max) x = this.pan.max + (x - this.pan.max) * 0.35;
+        if (x < this.pan.min) x = this.pan.min + (x - this.pan.min) * 0.35;
+        this.shiftPan(x);
+        this.kick();
+        return;
+      }
+    }
     const r = this.host.getBoundingClientRect();
     const x = e.clientX - r.left, y = e.clientY - r.top;
     const now = performance.now();

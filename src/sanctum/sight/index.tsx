@@ -45,6 +45,7 @@ export default function Sight({ store, console }: SightProps) {
   const [panel, setPanel] = useState(false);
   const [pane, setPane] = useState<"readings" | "layers">("layers");
   const [focus, setFocus] = useState<Id | null>(null);
+  const [readingOpen, setReadingOpen] = useState(false);
   const shaping = draft.open;
   const previewState = draft.previewState;
 
@@ -170,7 +171,7 @@ export default function Sight({ store, console }: SightProps) {
       {reading && !focus && !panel && (
         <section className="sx-reading sx-glass" aria-live="polite">
           <h2 className="sx-title" style={{ fontSize: wide ? 30 : 22 }}>{reading.title}</h2>
-          <p className="sx-small" style={{ color: "var(--sx-fg-65)" }}>{reading.text}</p>
+          <button type="button" className="sx-small sx-reading__text" data-open={readingOpen || undefined} aria-expanded={readingOpen} onClick={() => setReadingOpen(!readingOpen)}>{reading.text}</button>
           <button type="button" className="sx-orb-button sx-orb-button--tile" data-jelly="" aria-label="Close" onClick={() => patch({ reading: null })}>
             <svg width="12" height="12" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2 L12 12 M12 2 L2 12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
           </button>

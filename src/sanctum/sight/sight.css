@@ -13,11 +13,13 @@
   font-family: var(--sx-state); font-weight: 700; font-size: 11px; line-height: 14px; letter-spacing: 1.3px; text-transform: uppercase;
   color: rgba(239, 233, 220, 0.9);
   text-shadow: 0 0 3px var(--sx-night), 0 0 3px var(--sx-night), 0 0 6px var(--sx-night);
+  opacity: var(--sx-label-dim, 1);
   transition: opacity var(--sx-reveal) var(--sx-pour);
 }
 .sx-mark__label[data-hidden] { opacity: 0; }
 .sx-mark:hover .sx-mark__label[data-hidden], .sx-mark:focus-visible .sx-mark__label[data-hidden] { opacity: 1; }
 .sx-marks[data-mode="index"] .sx-mark__label { opacity: 0; }
+.sx-marks[data-moving] .sx-mark__label { opacity: 0; transition-duration: 200ms; }
 
 /* the single entry */
 .sx-pill {
@@ -35,6 +37,10 @@
 .sx-chip-note { position: absolute; left: 50%; top: 20px; translate: -50% 0; margin: 0; padding: 10px 18px; border-radius: 999px; font-family: var(--sx-body); font-weight: 600; font-size: 13px; color: var(--sx-fg-90); white-space: nowrap; }
 .sx-reading { position: absolute; left: 28px; top: 28px; width: min(400px, calc(100vw - 56px)); display: grid; gap: 10px; padding: 22px 64px 22px 24px; }
 .sx-reading .sx-orb-button { position: absolute; right: 14px; top: 14px; }
+.sx-reading__text { text-align: left; color: var(--sx-fg-65); cursor: default; }
+@media (max-width: 1023px) {
+  .sx-reading__text:not([data-open]) { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; cursor: pointer; }
+}
 
 /* the sight panel */
 .sx-panel { position: absolute; z-index: 3; right: 24px; top: 24px; bottom: 24px; width: 600px; display: flex; flex-direction: column; padding: 26px 26px 0; overflow: hidden; }

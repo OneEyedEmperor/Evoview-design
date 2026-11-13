@@ -80,7 +80,6 @@ export interface Layout {
 
 export const PUPIL = 0.112;
 const RIM = 0.99;
-const BEYOND_RAY = 40;
 const deg = (a: number) => ((a % 360) + 360) % 360;
 export const shortest = (a: number, b: number) => {
   let d = (b - a) % 360;
@@ -99,7 +98,11 @@ const circMean = (angles: number[]) => {
 /** Ends of a cord or tie as element ids (layer ends resolved to nothing). */
 const endEl = (end: string) => (isLayerRef(end) || end.startsWith("cord:") || end === "lexicon" ? undefined : end);
 
-export function computeLayout(state: SanctumState): Layout {
+/** `beyondRay`: where the beyond realm opens (lower right on a wide screen, downward on a tall one). */
+export function computeLayout(state: SanctumState, opts: { beyondRay?: number } = {}): Layout {
+  const BEYOND_RAY = opts.beyondRay ?? 40;
+  /* the core's name stands on the crest axis; the core's ring keeps that side clear */
+  const CORE_NAME = 270;
   const layers = [...state.layers].sort((a, b) => a.order - b.order);
   const { core, apex } = state.roles;
   const byRealm = new Map<Id, Element[]>();
@@ -219,10 +222,31 @@ export function computeLayout(state: SanctumState): Layout {
     let best: Map<Id, number> | undefined;
     const withStates = units.find((u) => hasStates(u[0]));
     if (withStates && units.length) {
-      /* rotate so the parent's first in-ring state stands on the beyond ray */
+      /* the parent's first in-ring state stands on the beyond ray; the others take their own side,
+         clear of the states, of the ray and of the core's name */
       const trial = spread(0);
       const anchor = withStates.length > 1 ? withStates[1].id : withStates[0].id;
-      best = spread(deg(BEYOND_RAY - trial.get(anchor)!));
+      const shift = BEYOND_RAY - trial.get(anchor)!;
+      best = new Map<Id, number>();
+      for (const e of withStates) best.set(e.id, deg(trial.get(e.id)! + shift));
+      const taken = [...best.values()];
+      for (const u of units) {
+        if (u === withStates) continue;
+        let bestA = 0, bestC = Infinity;
+        for (let a = 0; a < 360; a += 3) {
+          let c = 0;
+          for (const p of placedAnglesOf(u[0].id)) c += (0.3 * Math.abs(shortest(a, p))) / 180;
+          const toName = Math.abs(shortest(a, CORE_NAME));
+          if (toName < 40) c += 4 + (40 - toName) / 10;
+          const toRay = Math.abs(shortest(a, BEYOND_RAY));
+          if (toRay < 90) c += (90 - toRay) / 45;
+          for (const t of taken) { const d = Math.abs(shortest(a, t)); if (d < 55) c += 4 + (55 - d) / 10; }
+          if (c < bestC) { bestC = c; bestA = a; }
+        }
+        best.set(u[0].id, deg(bestA));
+        taken.push(bestA);
+        u.slice(1).forEach((ch, k) => { best!.set(ch.id, deg(bestA - 20 * (k + 1))); taken.push(bestA - 20 * (k + 1)); });
+      }
     } else if (units.length === 1 && units[0].length === 1) {
       const id = units[0][0].id;
       /* a lone element faces what it serves, clear of the crest, the beyond ray and its neighbours */
