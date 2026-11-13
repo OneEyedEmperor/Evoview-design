@@ -14,8 +14,10 @@ import {
   isOneSentence,
   numberWord,
   omit,
+  pairKey,
   realmTitle,
   refId,
+  ringPairs,
   stableEqual,
 } from "./rules.ts";
 import {
@@ -32,9 +34,12 @@ import {
   type Id,
   type Layer,
   type Passage,
+  type Quarter,
   type Reading,
   type Refusal,
+  type Rim,
   type Roles,
+  type Station,
   type SanctumState,
   type Thread,
   type ThreadKind,
@@ -49,6 +54,9 @@ export interface Canon {
   layers: Layer[];
   beyond: Beyond;
   conditions: Condition[];
+  quarters: Quarter[];
+  stations: Station[];
+  rim?: Rim;
   elementKinds: ElementKind[];
   threadKinds: ThreadKind[];
   tieKinds: TieKind[];
@@ -67,6 +75,9 @@ export function canonOf(state: SanctumState): Canon {
     layers: state.layers,
     beyond: state.beyond,
     conditions: state.conditions,
+    quarters: state.quarters,
+    stations: state.stations,
+    rim: state.rim,
     elementKinds: state.elementKinds,
     threadKinds: state.threadKinds,
     tieKinds: state.tieKinds,
@@ -175,7 +186,7 @@ export function validate(state: SanctumState, canon: Canon): Refusal[] {
     out.push(subject ? { rule, message, subject } : { rule, message });
   };
 
-  const arrays = ["layers", "conditions", "elementKinds", "threadKinds", "tieKinds", "readings", "elements", "threads", "ties", "visions"] as const;
+  const arrays = ["layers", "conditions", "quarters", "stations", "elementKinds", "threadKinds", "tieKinds", "readings", "elements", "threads", "ties", "visions"] as const;
   if (!state || typeof state !== "object" || arrays.some((k) => !Array.isArray(state[k])) || !state.sight || !state.meta || !state.roles || !state.beyond) {
     return [{ rule: "shape", message: "The map has lost its form." }];
   }
@@ -202,6 +213,10 @@ export function validate(state: SanctumState, canon: Canon): Refusal[] {
     refuse("fixed", "The kinds of the map are fixed.", { type: "map" });
   }
   if (!stableEqual(state.roles, canon.roles)) refuse("fixed", "The roles of the map are fixed.", { type: "map" });
+  if (!stableEqual(state.quarters, canon.quarters) || !stableEqual(state.stations, canon.stations) || !stableEqual(state.rim, canon.rim)) {
+    refuse("fixed", "The quarters, stations and ring of the map are fixed.", { type: "map" });
+  }
+  if (!state.conditions.some((c) => c.id === state.condition)) refuse("condition", "The map must stand in one of its conditions.", { type: "map" });
   if (!stableEqual(passage(state.lexicon), passage(canon.lexicon)) || !stableEqual(passage(state.threshold), passage(canon.threshold))) {
     refuse("fixed", `${canon.lexicon.title} and ${canon.threshold.title} are fixed: only their explanations may change.`, { type: "map" });
   }
@@ -209,6 +224,8 @@ export function validate(state: SanctumState, canon: Canon): Refusal[] {
   const layerIds = new Set(state.layers.map((l) => l.id));
   const realmIds = new Set([...layerIds, BEYOND]);
   const conditionIds = new Set(state.conditions.map((c) => c.id));
+  const quarterIds = new Set(state.quarters.map((q) => q.id));
+  const stationIds = new Set(state.stations.map((s) => s.id));
   const elementKinds = new Map(state.elementKinds.map((k) => [k.id, k]));
   const threadKinds = new Map(state.threadKinds.map((k) => [k.id, k]));
   const tieKinds = new Map(state.tieKinds.map((k) => [k.id, k]));
@@ -255,7 +272,7 @@ export function validate(state: SanctumState, canon: Canon): Refusal[] {
     }
   }
   for (const e of state.elements) {
-    if (e.locked && !canonElements.has(e.id)) refuse("canonical", `${e.title} cannot be made canonical: only the vault's elements are.`, { type: "element", id: e.id });
+    if (e.locked && !canonElements.has(e.id)) refuse("canonical", `${e.title} cannot be made canonical: only the canon's elements are.`, { type: "element", id: e.id });
   }
 
   /* ---- kind and realm ---- */
@@ -277,6 +294,13 @@ export function validate(state: SanctumState, canon: Canon): Refusal[] {
     } else if (e.condition !== undefined) {
       refuse("kind-realm", `${e.title} cannot carry a condition.`, subject);
     }
+    const becomesQuartered = !e.locked && kind.becomes && elementKinds.get(kind.becomes.kind)?.quarter === "required";
+    if (e.quarter !== undefined && !quarterIds.has(e.quarter)) refuse("kind-realm", `${e.title} stands in a quarter the map does not hold.`, subject);
+    else if (!kind.quarter && e.quarter !== undefined) refuse("kind-realm", `${e.title} cannot carry a quarter.`, subject);
+    else if ((kind.quarter === "required" || becomesQuartered) && e.quarter === undefined) refuse("kind-realm", `${e.title} must stand in one of the quarters.`, subject);
+    if (e.station !== undefined && !stationIds.has(e.station)) refuse("kind-realm", `${e.title} keeps a station the map does not hold.`, subject);
+    if (e.awaiting !== undefined && (e.awaiting !== true || !state.rim || e.kind !== state.rim.stoneKind)) refuse("kind-realm", `${e.title} cannot await a binding.`, subject);
+    if (kind.raisedIn && !e.locked && state.condition !== kind.raisedIn.condition) refuse("condition", kind.raisedIn.refusal, subject);
     const realmOk = kind.realms.some((r) => {
       if (r.condition && e.condition !== r.condition) return false;
       if (r.realms?.includes(e.realm)) return true;
@@ -298,7 +322,7 @@ export function validate(state: SanctumState, canon: Canon): Refusal[] {
     } else if (e.parent !== undefined) {
       refuse("kind-realm", `${e.title} cannot belong to another.`, subject);
     }
-    for (const req of kind.ties ?? []) {
+    for (const req of e.awaiting ? [] : kind.ties ?? []) {
       if (!state.ties.some((t) => t.kind === req.kind && t.from === e.id && t.to === req.to)) {
         refuse("kind-realm", `The structure of ${e.title} is incomplete.`, subject);
       }
@@ -320,6 +344,15 @@ export function validate(state: SanctumState, canon: Canon): Refusal[] {
   for (const k of state.elementKinds) {
     const n = state.elements.filter((e) => e.kind === k.id).length;
     if (n > k.capacity) refuse("capacity", `The map holds at most ${numberWord(k.capacity)} of the kind ${k.title.toLowerCase()}.`, { type: "kind", id: k.id });
+    /* What will come to rest on a turn keeps its room in advance. */
+    if (k.becomes) {
+      const pending = state.elements.filter((e) => e.kind === k.id && !e.locked).length;
+      const realmCap = k.becomes.realm === BEYOND ? state.beyond.capacity : state.layers.find((l) => l.id === k.becomes!.realm)?.capacity ?? 0;
+      const target = elementKinds.get(k.becomes.kind);
+      const inRealm = byRealm.get(k.becomes.realm)?.length ?? 0;
+      const ofTarget = state.elements.filter((e) => e.kind === k.becomes!.kind).length;
+      if (pending && (inRealm + pending > realmCap || (target && ofTarget + pending > target.capacity))) refuse("capacity", k.becomes.refusal, { type: "kind", id: k.id });
+    }
   }
 
   /* ---- cords ---- */
@@ -424,8 +457,46 @@ export function validate(state: SanctumState, canon: Canon): Refusal[] {
   const reaching = reachingCore(state);
   const core = byId.get(state.roles.core);
   for (const e of state.elements) {
-    if (!touched.has(e.id)) refuse("no-dead-space", `No dead space: ${e.title} would stand without a cord.`, { type: "element", id: e.id });
-    else if (e.realm !== BEYOND && !reaching.has(e.id)) refuse("reach", `${e.title} would no longer reach ${core?.title ?? "the core"}.`, { type: "element", id: e.id });
+    const subject = { type: "element" as const, id: e.id };
+    if (e.awaiting) {
+      if (touched.has(e.id)) refuse("rim", `${e.title} awaits its binding: no cord may touch it yet.`, subject);
+      else if (!state.ties.some((t) => t.from === e.id || t.to === e.id)) refuse("no-dead-space", `No dead space: ${e.title} would stand held by nothing.`, subject);
+      else if (!reaching.has(e.id)) refuse("reach", `${e.title} would no longer reach ${core?.title ?? "the core"}.`, subject);
+      continue;
+    }
+    if (!touched.has(e.id)) refuse("no-dead-space", `No dead space: ${e.title} would stand without a cord.`, subject);
+    else if (e.realm !== BEYOND && !reaching.has(e.id)) refuse("reach", `${e.title} would no longer reach ${core?.title ?? "the core"}.`, subject);
+  }
+
+  /* ---- the rim: one closed ring, one crossing per quarter ---- */
+  if (state.rim) {
+    const rim = state.rim;
+    const required = new Map(ringPairs(state).map(([a, b]) => [pairKey(a, b), [a, b] as const]));
+    const bound = new Set<string>();
+    for (const t of state.threads) {
+      if (t.kind !== rim.ringKind || isLayerRef(t.from) || isLayerRef(t.to)) continue;
+      const a = byId.get(t.from);
+      const b = byId.get(t.to);
+      if (a?.kind !== rim.stoneKind || b?.kind !== rim.stoneKind) continue;
+      const key = pairKey(a.id, b.id);
+      if (!required.has(key)) refuse("rim", `The rim is one closed ring: ${a.title} and ${b.title} are not neighbours on it.`, { type: "thread", id: t.id });
+      bound.add(key);
+    }
+    for (const [key, [a, b]] of required) {
+      if (!bound.has(key)) refuse("rim", `The rim is one closed ring: ${title(a)} and ${title(b)} must be bound.`, { type: "map" });
+    }
+    const perQuarter = new Map<Id, number>(state.quarters.map((q) => [q.id, 0]));
+    for (const t of state.threads) {
+      if (t.kind !== rim.crossingKind) continue;
+      const from = byId.get(t.from);
+      if (from?.quarter && perQuarter.has(from.quarter)) perQuarter.set(from.quarter, perQuarter.get(from.quarter)! + 1);
+      else refuse("rim", `A crossing departs only from an element of a quarter.`, { type: "thread", id: t.id });
+    }
+    for (const q of state.quarters) {
+      const n = perQuarter.get(q.id) ?? 0;
+      const holdsAny = state.elements.some((e) => e.quarter === q.id && e.kind === rim.stoneKind && !e.awaiting);
+      if (holdsAny && n !== 1) refuse("rim", `Each quarter gathers into exactly one crossing: ${q.title} holds ${n ? numberWord(n) : "none"}.`, { type: "map" });
+    }
   }
 
   /* ---- words ---- */

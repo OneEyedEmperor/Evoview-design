@@ -3,7 +3,7 @@
    map lives in the private state; code only knows the shape and reads
    meaning from fields (CONTRACT.md). Never add a map id or word here. */
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 /** The realm outside the layers (an element that stands in no layer). */
 export const BEYOND = "beyond";
@@ -49,11 +49,45 @@ export interface Beyond extends Passage {
   capacity: number;
 }
 
-/** A condition of the map (one is shown at a time, `sight.condition`). */
+/** A condition of the map. One is sealed (`state.condition`, changed only by
+    the `turn` op); `sight.condition` is the one viewed (a foresight when it differs). */
 export interface Condition {
   id: Id;
   title: string;
+  /** The record's words when the map is turned into this condition. */
+  turn: string;
   explanation: string;
+}
+
+/** A direction of the rim; quartered elements fall into one. */
+export interface Quarter {
+  id: Id;
+  title: string;
+  /** Position around the rim. */
+  order: number;
+}
+
+/** A placement hint: drawn on the boundary between two layers. */
+export interface Station {
+  id: Id;
+  title: string;
+  between: [Id, Id];
+}
+
+/** The rim's ring rules. */
+export interface Rim {
+  /** The layer the ring stands in. */
+  realm: Id;
+  /** Element kind that forms the ring. */
+  stoneKind: Id;
+  /** Cord kind binding rim neighbours: exactly one closed ring through every bound element, in rim order. */
+  ringKind: Id;
+  /** Cord kind of which each quarter holds exactly one, departing from an element of that quarter. */
+  crossingKind: Id;
+  /** Words of the ring cords the map derives. */
+  ring: { label: string; purpose: string };
+  /** The record's words when an awaiting element is bound ("{title}" is replaced). */
+  firstBinding: string;
 }
 
 /** A whole-map interpretation, shown as one semantic layer lighting exactly `lights`. */
@@ -160,6 +194,13 @@ export interface ElementKind {
   capacity: number;
   /** Elements of this kind may be added through the console. */
   addable: boolean;
+  /** Elements carry a quarter: always, or when given. */
+  quarter?: "required" | "optional";
+  /** New elements of this kind are raised only in this sealed condition. */
+  raisedIn?: { condition: Id; refusal: string };
+  /** On the turn into `on`, unlocked elements of this kind become `kind` in `realm`,
+      awaiting binding, held by a tie of kind `tie` to `to`. Their room is kept in advance. */
+  becomes?: { on: Id; kind: Id; realm: Id; tie: Id; to: Id; refusal: string };
 }
 
 /* ---------- the map ---------- */
@@ -175,6 +216,12 @@ export interface Element {
   realm: Id;
   parent?: Id;
   condition?: Id;
+  /** Its quarter of the rim. */
+  quarter?: Id;
+  /** Placement hint (`state.stations`); layout honours it. */
+  station?: Id;
+  /** Come to rest but not yet bound (holds by a tie; outside the ring; takes no cord). */
+  awaiting?: boolean;
   /** One sentence. */
   purpose: string;
   nature: string[];
@@ -266,6 +313,8 @@ export interface Roles {
   apex: Id;
   /** Elements that take no vision. */
   unseen: Id[];
+  /** The element whose office turns the sealed condition. */
+  turner: Id;
 }
 
 export interface Meta {
@@ -282,6 +331,11 @@ export interface SanctumState {
   layers: Layer[];
   beyond: Beyond;
   conditions: Condition[];
+  /** The sealed condition. Cords carrying another condition are quiet. */
+  condition: Id;
+  quarters: Quarter[];
+  stations: Station[];
+  rim?: Rim;
   elementKinds: ElementKind[];
   threadKinds: ThreadKind[];
   tieKinds: TieKind[];
@@ -312,6 +366,7 @@ export interface NewElement {
   realm: Id;
   parent?: Id;
   condition?: Id;
+  quarter?: Id;
   purpose: string;
   nature?: string[];
   /** Defaults to the purpose. */
@@ -352,7 +407,11 @@ export type Op =
   | { op: "setVisionSubject"; visionId: Id; elementId: Id; x: number; y: number; zoom: number }
   | { op: "reorderWithinLayer"; realm: Id; order: Id[] }
   | { op: "setEmphasis"; id: Id; emphasis: Emphasis }
-  | { op: "setSight"; sight: Partial<Sight> };
+  | { op: "setSight"; sight: Partial<Sight> }
+  /** The turner's office: seal another condition (taken elements come to rest per `becomes`). */
+  | { op: "turn"; condition: Id }
+  /** Bind an awaiting element into the ring. */
+  | { op: "firstBinding"; id: Id };
 
 export type OpName = Op["op"];
 
@@ -373,6 +432,8 @@ export type RuleId =
   | "vision"
   | "sight"
   | "reading"
+  | "rim"
+  | "condition"
   | "op"
   | "moved";
 
@@ -394,6 +455,8 @@ export interface Diff {
   /** Layers, kinds, lexicon, threshold, beyond or conditions whose words changed. */
   passages: string[];
   sight: boolean;
+  /** The sealed condition turned. */
+  condition: boolean;
 }
 
 export interface ChangeRequest {

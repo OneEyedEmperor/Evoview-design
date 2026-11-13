@@ -17,8 +17,9 @@ import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { applyOps } from "../src/sanctum/model/ops.ts";
-import { BUDGET, clone } from "../src/sanctum/model/rules.ts";
+import { cordsFor } from "../src/sanctum/model/affordances.ts";
+import { applyOps, summarize } from "../src/sanctum/model/ops.ts";
+import { BUDGET, clone, isQuiet, pairKey, rimOrder, ringPairs } from "../src/sanctum/model/rules.ts";
 import { BEYOND } from "../src/sanctum/model/types.ts";
 import { canonOf, validate } from "../src/sanctum/model/validate.ts";
 import { hashWatchword, signEntry } from "../server/sanctum/auth.ts";
@@ -186,7 +187,9 @@ for (const kind of base.elementKinds.filter((k) => k.addable)) {
   for (const realm of realms) {
     const id = stamp(`${kind.id}-${realm}`);
     const expected = kind.realms.some((r) => !r.condition && (r.realms?.includes(realm) || (r.inLayers && layerIds.has(realm)) || (r.parentRealm && parent?.realm === realm)));
-    const r = run([{ op: "addElement", element: { id, title: "Probe", kind: kind.id, realm, purpose: "A probe of the realms.", ...(parent ? { parent: parent.id } : {}) } }]);
+    const pre = kind.raisedIn && kind.raisedIn.condition !== base.condition ? [{ op: "turn", condition: kind.raisedIn.condition }] : [];
+    const quarter = kind.quarter ? { quarter: base.quarters[0].id } : {};
+    const r = run([...pre, { op: "addElement", element: { id, title: "Probe", kind: kind.id, realm, purpose: "A probe of the realms.", ...quarter, ...(parent ? { parent: parent.id } : {}) } }]);
     const realmRefused = r.refusals.some((x) => x.rule === "kind-realm" && x.message.includes("cannot stand in"));
     realmCases++;
     if (expected === realmRefused) realmWrong++;
@@ -231,6 +234,75 @@ if (free && freeRealm) {
   const parent = kind.parent ? base.elements.find((e) => selElement(e, kind.parent.select)) : undefined;
   const ops = Array.from({ length: Math.min(measure - have + 1, BUDGET.ops) }, (_, i) => ({ op: "addElement", element: { id: stamp(`cap-${i}`), title: "Probe", kind: kind.id, realm, purpose: "A probe.", ...(parent ? { parent: parent.id } : {}) } }));
   refusedBy("a realm filled past its measure", ops, "capacity");
+}
+
+/* the rim: a derived ring, one crossing per quarter */
+if (base.rim) {
+  const rim = base.rim;
+  const q0 = base.quarters[0];
+  const raise = (id, quarter = q0.id) => ({ op: "addElement", element: { id, title: "Probe", kind: rim.stoneKind, realm: rim.realm, quarter, purpose: "A probe of the rim." } });
+  const id = stamp("rim");
+  const r = run([raise(id)]);
+  const arcs = (s) => new Set(s.threads.filter((t) => t.kind === rim.ringKind).map((t) => pairKey(t.from, t.to)));
+  const ringHolds = (s) => ringPairs(s).every(([a, b]) => arcs(s).has(pairKey(a, b)));
+  check("raising a stone in a quarter re-derives the ring through it", r.refusals.length === 0 && ringHolds(r.next) && ringPairs(r.next).some(([a, b]) => a === id || b === id), r.refusals.map((x) => x.message).join(" | "));
+  check("the raised stone takes no crossing of its own", r.next.threads.filter((t) => t.kind === rim.crossingKind && t.from === id).length === 0);
+  const order = rimOrder(base).map((e) => e.id);
+  if (order.length >= 4) refusedBy("a binding between stones that are not rim neighbours", [{ op: "addThread", thread: { kind: rim.ringKind, from: order[0], to: order[2], label: "Probe", purpose: "A probe." } }], "rim");
+  const arc = base.threads.find((t) => t.kind === rim.ringKind && !t.locked && byId.get(t.from)?.kind === rim.stoneKind && byId.get(t.to)?.kind === rim.stoneKind);
+  if (arc) refusedBy("an arc of the ring unbound", [{ op: "removeThread", id: arc.id }], "rim");
+  const crossing = base.threads.find((t) => t.kind === rim.crossingKind);
+  if (crossing) refusedBy("a quarter with two crossings", [raise(id), { op: "addThread", thread: { kind: rim.crossingKind, from: id, to: crossing.to, label: "Probe", purpose: "A probe." } }], "rim");
+  refusedBy("a stone with no quarter", [{ op: "addElement", element: { id, title: "Probe", kind: rim.stoneKind, realm: rim.realm, purpose: "A probe." } }], "kind-realm");
+  const loose = clone(base);
+  const station = loose.elements.find((e) => e.station);
+  if (station) {
+    station.station = undefined;
+    check("a canonical station moved → refused (canonical)", validate(loose, canon).some((x) => x.rule === "canonical"));
+  }
+}
+
+/* the sealed condition and its turn */
+const other = base.conditions.find((c) => c.id !== base.condition);
+if (other) {
+  const t = accepted("a turn into the other condition", [{ op: "turn", condition: other.id }]);
+  check("the turn seals the condition and the record speaks its words", t.next.condition === other.id && summarize(base, t.next, [{ op: "turn", condition: other.id }]) === other.turn);
+  refusedBy("a turn into the condition already sealed", [{ op: "turn", condition: base.condition }], "op");
+  const quiet = base.threads.filter((x) => x.condition && x.condition !== base.condition);
+  check("cords of the other condition are quiet, the rest never", quiet.every((x) => isQuiet(base, x)) && base.threads.filter((x) => !x.condition).every((x) => !isQuiet(base, x)));
+}
+
+/* what is taken in one condition comes to rest in the other */
+const taker = base.elementKinds.find((k) => k.becomes && k.raisedIn && k.addable);
+if (taker && base.rim) {
+  const into = taker.raisedIn.condition;
+  const pre = into !== base.condition ? [{ op: "turn", condition: into }] : [];
+  const realm = taker.realms.find((r) => r.realms)?.realms[0];
+  const id = stamp("taken");
+  const add = { op: "addElement", element: { id, title: "Probe", kind: taker.id, realm, quarter: base.quarters[1 % base.quarters.length].id, purpose: "A probe of what is taken." } };
+  if (pre.length) refusedBy("an element raised outside its condition", [add], "op");
+  const { state: virtual } = applyOps(base, [...pre, add]);
+  const hold = cordsFor(virtual, id).find((c) => c.ok);
+  check("a cord can hold what is taken", Boolean(hold));
+  if (hold) {
+    const bind = { op: "addThread", thread: { kind: hold.kind, from: hold.from, to: hold.to, label: "Probe", purpose: "A probe." } };
+    accepted("an element taken in its condition", [...pre, add, bind]);
+    const unquartered = { ...add, element: { ...add.element, quarter: undefined } };
+    refusedBy("an element taken without its bearing", [...pre, unquartered, bind], "kind-realm");
+    const rest = [...pre, add, bind, { op: "turn", condition: taker.becomes.on }];
+    const r = accepted("what was taken comes to rest on the turn", rest);
+    const rested = r.next.elements.find((e) => e.id === id);
+    check("…as an awaiting element of the new kind, held by its tie, outside the ring", rested?.awaiting === true && rested.kind === taker.becomes.kind && r.next.ties.some((t) => t.from === id && t.kind === taker.becomes.tie) && !ringPairs(r.next).flat().includes(id));
+    const homeward = base.threadKinds.find((k) => k.grammar.courses.some((c) => c.to.element?.ids?.includes(base.roles.core)));
+    if (homeward) refusedBy("an awaiting element touched by a cord", [...rest, { op: "addThread", thread: { kind: homeward.id, from: id, to: base.roles.core, label: "Probe", purpose: "A probe." } }], "rim");
+    const b = accepted("the first binding joins it to the ring", [...rest, { op: "firstBinding", id }]);
+    check("…and the ring runs through it", ringPairs(b.next).flat().includes(id) && ringPairs(b.next).every(([x, y]) => b.next.threads.some((t) => t.kind === base.rim.ringKind && pairKey(t.from, t.to) === pairKey(x, y))));
+    refusedBy("a binding of what awaits nothing", [{ op: "firstBinding", id: locked[0].id }], "op");
+    const realmCap = base.layers.find((l) => l.id === taker.becomes.realm)?.capacity ?? 0;
+    const free = realmCap - base.elements.filter((e) => e.realm === taker.becomes.realm).length;
+    const fill = Array.from({ length: free }, (_, i) => ({ op: "addElement", element: { id: stamp(`fill-${i}`), title: "Probe", kind: base.rim.stoneKind, realm: base.rim.realm, quarter: base.quarters[i % base.quarters.length].id, purpose: "A probe." } }));
+    if (fill.length + 3 <= BUDGET.ops) refusedBy("taking while the rim has no room for it", [...fill, ...pre, add, bind], "capacity");
+  }
 }
 
 /* words */

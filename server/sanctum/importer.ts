@@ -5,7 +5,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { expectedCondition, validate, type Canon } from "../../src/sanctum/model/validate.ts";
+import { canonOf, expectedCondition, validate, type Canon } from "../../src/sanctum/model/validate.ts";
 import { applyOps } from "../../src/sanctum/model/ops.ts";
 import { clone } from "../../src/sanctum/model/rules.ts";
 import {
@@ -20,9 +20,12 @@ import {
   type Id,
   type Layer,
   type Op,
+  type Quarter,
   type Reading,
   type Refusal,
+  type Rim,
   type Roles,
+  type Station,
   type SanctumState,
   type Sight,
   type Thread,
@@ -40,7 +43,11 @@ export interface Manifest {
   lexicon: { note: string; colour: Colour };
   layers: { id: Id; note: string; title: string; hex: string; capacity: number }[];
   beyond: { title: string; purpose: string; colour: Colour; capacity: number; order: string[] };
-  conditions: { id: Id; title: string; tag: string }[];
+  conditions: { id: Id; title: string; tag: string; turn?: string }[];
+  condition?: Id;
+  quarters?: Quarter[];
+  stations?: Station[];
+  rim?: Rim;
   elementKinds: ElementKind[];
   tieKinds: TieKind[];
   tieKeys: { key: string; tie: Id; from?: EndType; to?: EndType }[];
@@ -350,7 +357,11 @@ export async function buildSeed(manifest: Manifest, dir: string): Promise<SeedRe
     lexicon,
     layers,
     beyond: { id: BEYOND, title: manifest.beyond.title, purpose: manifest.beyond.purpose, nature: [], explanation: manifest.beyond.purpose, colour: manifest.beyond.colour, capacity: manifest.beyond.capacity },
-    conditions: manifest.conditions.map((c) => ({ id: c.id, title: c.title, explanation: "" })),
+    conditions: manifest.conditions.map((c) => ({ id: c.id, title: c.title, turn: c.turn ?? "", explanation: "" })),
+    condition: manifest.condition ?? manifest.conditions[0].id,
+    quarters: manifest.quarters ?? [],
+    stations: manifest.stations ?? [],
+    ...(manifest.rim ? { rim: manifest.rim } : {}),
     elementKinds: manifest.elementKinds,
     threadKinds,
     tieKinds: manifest.tieKinds,
@@ -380,6 +391,59 @@ export async function buildSeed(manifest: Manifest, dir: string): Promise<SeedRe
   }
 
   return { state, vault: Object.fromEntries(notes) };
+}
+
+/* ---------- canon amendments (trusted: rulings) ---------- */
+
+/** One raw edit. `set` replaces a top-level field; the others act on an id-keyed collection. */
+export type AmendEdit =
+  | { set: string; value: unknown }
+  | { add: string; value: { id: string } & Record<string, unknown> }
+  | { remove: string; id: string }
+  | { patch: string; id: string; value: Record<string, unknown> };
+
+export interface AmendEntry {
+  summary: string;
+  edits: AmendEdit[];
+}
+
+const COLLECTIONS = new Set(["elements", "threads", "ties", "layers", "threadKinds", "elementKinds", "tieKinds", "conditions", "readings", "quarters", "stations"]);
+
+/** Applies raw edits past every lock; the result becomes the canon only if it passes every invariant against itself. */
+export function applyAmendment(base: SanctumState, entry: AmendEntry): { state: SanctumState; canon: Canon; refusals: Refusal[] } {
+  const state = clone(base) as SanctumState & Record<string, unknown>;
+  if (state.meta.schemaVersion !== SCHEMA_VERSION) {
+    state.condition ??= state.sight.condition;
+    state.quarters ??= [];
+    state.stations ??= [];
+    state.conditions = state.conditions.map((c) => ({ turn: "", ...c }));
+  }
+  const coll = (name: string) => {
+    if (!COLLECTIONS.has(name)) throw new Error(`unknown collection ${name}`);
+    return state[name] as ({ id: string } & Record<string, unknown>)[];
+  };
+  for (const edit of entry.edits) {
+    if ("set" in edit) (state as Record<string, unknown>)[edit.set] = clone(edit.value);
+    else if ("add" in edit) {
+      const list = coll(edit.add);
+      if (list.some((x) => x.id === edit.value.id)) throw new Error(`${edit.add} ${edit.value.id} exists`);
+      list.push(clone(edit.value));
+    } else if ("remove" in edit) {
+      const list = coll(edit.remove);
+      if (!list.some((x) => x.id === edit.id)) throw new Error(`${edit.remove} ${edit.id} missing`);
+      (state as Record<string, unknown>)[edit.remove] = list.filter((x) => x.id !== edit.id);
+    } else {
+      const item = coll(edit.patch).find((x) => x.id === edit.id);
+      if (!item) throw new Error(`${edit.patch} ${edit.id} missing`);
+      for (const [k, v] of Object.entries(edit.value)) {
+        if (v === null) delete item[k];
+        else item[k] = clone(v);
+      }
+    }
+  }
+  state.meta = { ...state.meta, schemaVersion: SCHEMA_VERSION, summary: entry.summary };
+  const canon = canonOf(state);
+  return { state, canon, refusals: validate(state, canon) };
 }
 
 /* ---------- amending the rules ---------- */
@@ -421,13 +485,31 @@ export function amendRules(base: SanctumState, baseCanon: Canon, manifest: Manif
   note("element kinds", state.elementKinds, manifest.elementKinds);
   note("tie kinds", state.tieKinds, manifest.tieKinds);
   note("roles", state.roles, manifest.roles);
+  note("quarters", state.quarters, manifest.quarters ?? []);
+  note("stations", state.stations, manifest.stations ?? []);
+  note("rim", state.rim, manifest.rim);
   state.elementKinds = clone(manifest.elementKinds);
   state.tieKinds = clone(manifest.tieKinds);
   state.roles = clone(manifest.roles);
+  state.quarters = clone(manifest.quarters ?? []);
+  state.stations = clone(manifest.stations ?? []);
+  if (manifest.rim) state.rim = clone(manifest.rim);
+  else delete state.rim;
+  for (const c of state.conditions) {
+    const m = manifest.conditions.find((x) => x.id === c.id);
+    if (!m) throw new Error(`manifest lacks condition ${c.id}`);
+    note(`condition ${c.id}`, [c.title, c.turn], [m.title, m.turn ?? ""]);
+    c.title = m.title;
+    c.turn = m.turn ?? "";
+  }
   const canon: Canon = {
     ...baseCanon,
     layers: clone(state.layers),
     beyond: clone(state.beyond),
+    conditions: clone(state.conditions),
+    quarters: clone(state.quarters),
+    stations: clone(state.stations),
+    ...(state.rim ? { rim: clone(state.rim) } : { rim: undefined }),
     threadKinds: clone(state.threadKinds),
     elementKinds: clone(state.elementKinds),
     tieKinds: clone(state.tieKinds),

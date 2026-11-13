@@ -1,6 +1,6 @@
 /* Budgets and small helpers shared by the engine, server and client. */
 
-import { BEYOND, type Element, type Id, type LayerRef, type SanctumState, type ThreadEnd } from "./types.ts";
+import { BEYOND, type Element, type Id, type LayerRef, type SanctumState, type Thread, type ThreadEnd } from "./types.ts";
 
 export const BUDGET = {
   title: 28,
@@ -60,6 +60,31 @@ export function numberWord(n: number): string {
   if (n < 100) return TENS[Math.floor(n / 10)] + (n % 10 ? `-${ONES[n % 10]}` : "");
   const rest = n % 100;
   return `${ONES[Math.floor(n / 100)]} hundred${rest ? ` and ${numberWord(rest)}` : ""}`;
+}
+
+/** Bound ring elements in rim order: by quarter, then order. Awaiting ones stand outside. */
+export function rimOrder(state: SanctumState): Element[] {
+  const rim = state.rim;
+  if (!rim) return [];
+  const q = new Map(state.quarters.map((x) => [x.id, x.order]));
+  return state.elements
+    .filter((e) => e.kind === rim.stoneKind && e.realm === rim.realm && !e.awaiting)
+    .sort((a, b) => (q.get(a.quarter ?? "") ?? 99) - (q.get(b.quarter ?? "") ?? 99) || a.order - b.order);
+}
+
+export const pairKey = (a: Id, b: Id) => (a < b ? `${a}|${b}` : `${b}|${a}`);
+
+/** The neighbour pairs the ring must bind, closing back to the first. */
+export function ringPairs(state: SanctumState): [Id, Id][] {
+  const order = rimOrder(state).map((e) => e.id);
+  if (order.length < 2) return [];
+  if (order.length === 2) return [[order[0], order[1]]];
+  return order.map((id, i) => [id, order[(i + 1) % order.length]] as [Id, Id]);
+}
+
+/** A cord carrying another condition than the one given (default: the sealed one) is quiet. */
+export function isQuiet(state: SanctumState, thread: Thread, condition: Id = state.condition): boolean {
+  return Boolean(thread.condition && thread.condition !== condition);
 }
 
 export function clone<T>(value: T): T {

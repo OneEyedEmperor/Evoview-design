@@ -2,7 +2,7 @@
    is then checked by validate(). Bodies arrive from the network, so every
    field is checked for form here before it is trusted. */
 
-import { BUDGET, SLUG, ZOOM, clone, elementById, endTitle, numberWord, realmTitle, stableEqual } from "./rules.ts";
+import { BUDGET, SLUG, ZOOM, clone, elementById, endTitle, isLayerRef, numberWord, pairKey, realmTitle, ringPairs, stableEqual } from "./rules.ts";
 import { expectedCondition } from "./validate.ts";
 import {
   BEYOND,
@@ -61,6 +61,42 @@ function freshId(taken: Set<Id>, base: string): Id {
   }
 }
 
+/** The rim's ring is derived, never hand-bound: arcs between rim neighbours
+    are added, arcs that are no longer between neighbours are drawn out. */
+function deriveRing(state: SanctumState) {
+  const rim = state.rim;
+  if (!rim) return;
+  const byId = elementById(state);
+  const kind = state.threadKinds.find((k) => k.id === rim.ringKind);
+  if (!kind) return;
+  const isArc = (t: Thread) =>
+    t.kind === rim.ringKind && !isLayerRef(t.from) && !isLayerRef(t.to) && byId.get(t.from)?.kind === rim.stoneKind && byId.get(t.to)?.kind === rim.stoneKind;
+  const required = new Map(ringPairs(state).map(([a, b]) => [pairKey(a, b), [a, b] as const]));
+  state.threads = state.threads.filter((t) => !isArc(t) || t.locked || required.has(pairKey(t.from, t.to)));
+  const present = new Set(state.threads.filter(isArc).map((t) => pairKey(t.from, t.to)));
+  const taken = new Set(state.threads.map((t) => t.id));
+  for (const [key, [a, b]] of required) {
+    if (present.has(key)) continue;
+    const base = `${rim.ringKind}-${a}-${b}`.slice(0, 44).replace(/-+$/, "");
+    const id = taken.has(base) ? freshId(taken, base) : base;
+    taken.add(id);
+    state.threads.push({
+      id,
+      kind: kind.id,
+      from: a,
+      to: b,
+      label: rim.ring.label,
+      purpose: rim.ring.purpose,
+      explanation: "",
+      bidirectional: Boolean(kind.grammar.bidirectional),
+      irreversible: Boolean(kind.grammar.irreversible),
+      locked: false,
+    });
+  }
+}
+
+const touchesRim = (state: SanctumState, e: { kind: Id; realm: Id }) => Boolean(state.rim && (e.kind === state.rim.stoneKind || e.realm === state.rim.realm));
+
 export function applyOps(base: SanctumState, ops: unknown, ctx: OpsContext = {}): OpsResult {
   const state = clone(base);
   const refusals: Refusal[] = [];
@@ -98,9 +134,11 @@ function applyOne(state: SanctumState, raw: unknown, ctx: OpsContext): string | 
       if (n.condition !== undefined && !isStr(n.condition)) return unknown;
       if (n.nature !== undefined && !isStrList(n.nature)) return unknown;
       if (n.explanation !== undefined && !isStr(n.explanation)) return unknown;
+      if (n.quarter !== undefined && !isStr(n.quarter)) return unknown;
       const kind = state.elementKinds.find((k) => k.id === n.kind);
       if (!kind) return `${n.title}: no such kind of element is known to the map.`;
       if (!kind.addable) return `No ${kind.title.toLowerCase()} may be added to the map.`;
+      if (kind.raisedIn && state.condition !== kind.raisedIn.condition) return kind.raisedIn.refusal;
       if (!SLUG.test(n.id)) return `${n.title}: its mark must be plain lowercase words joined by dashes.`;
       if (byId.has(n.id)) return `${n.title}: another part of the map already bears this mark.`;
       const element: Element = {
@@ -110,6 +148,7 @@ function applyOne(state: SanctumState, raw: unknown, ctx: OpsContext): string | 
         realm: n.realm,
         ...(n.parent ? { parent: n.parent } : {}),
         ...(n.condition ? { condition: n.condition } : {}),
+        ...(n.quarter ? { quarter: n.quarter as string } : {}),
         purpose: n.purpose,
         nature: (n.nature as string[] | undefined) ?? [],
         explanation: (n.explanation as string | undefined) ?? n.purpose,
@@ -127,6 +166,7 @@ function applyOne(state: SanctumState, raw: unknown, ctx: OpsContext): string | 
       };
       if (kind.parent && element.parent) tie(kind.parent.tie, element.parent);
       for (const req of kind.ties ?? []) tie(req.kind, req.to);
+      if (touchesRim(state, element)) deriveRing(state);
       return;
     }
 
@@ -148,6 +188,7 @@ function applyOne(state: SanctumState, raw: unknown, ctx: OpsContext): string | 
       }
       state.elements = state.elements.filter((x) => x.id !== e.id);
       compactOrder(state, e.realm);
+      if (touchesRim(state, e)) deriveRing(state);
       return;
     }
 
@@ -254,6 +295,56 @@ function applyOne(state: SanctumState, raw: unknown, ctx: OpsContext): string | 
       const same = op.order.length === members.length && new Set(op.order).size === members.length && members.every((e) => op.order.includes(e.id));
       if (!same) return `The new order must hold every element of ${title}, each once.`;
       op.order.forEach((id, i) => (byId.get(id)!.order = i));
+      if (state.rim?.realm === op.realm) deriveRing(state);
+      return;
+    }
+
+    case "turn": {
+      if (!isStr(op.condition)) return unknown;
+      const c = state.conditions.find((x) => x.id === op.condition);
+      if (!c) return "The map knows no such condition.";
+      if (state.condition === c.id) return `The map already stands in ${c.title.toLowerCase()}.`;
+      state.condition = c.id;
+      state.sight.condition = c.id;
+      for (const kind of state.elementKinds) {
+        const b = kind.becomes;
+        if (!b || b.on !== c.id) continue;
+        const shedTies = new Set((kind.ties ?? []).map((t) => t.kind));
+        const tieIds = new Set(state.ties.map((t) => t.id));
+        for (const e of state.elements.filter((x) => x.kind === kind.id && !x.locked)) {
+          const from = e.realm;
+          state.threads = state.threads.filter((t) => t.from !== e.id && t.to !== e.id);
+          state.ties = state.ties.filter((t) => !(t.from === e.id && shedTies.has(t.kind)));
+          e.kind = b.kind;
+          e.realm = b.realm;
+          e.awaiting = true;
+          delete e.parent;
+          delete e.condition;
+          e.order = state.elements.filter((x) => x.realm === b.realm && x.id !== e.id).length;
+          const id = freshId(tieIds, `${b.tie}-${e.id}`);
+          tieIds.add(id);
+          state.ties.push({ id, kind: b.tie, from: e.id, to: b.to as Tie["to"], locked: false });
+          compactOrder(state, from);
+        }
+      }
+      return;
+    }
+
+    case "firstBinding": {
+      if (!isStr(op.id)) return unknown;
+      const e = byId.get(op.id);
+      if (!e) return missing;
+      if (!e.awaiting) return `${e.title} awaits no binding.`;
+      delete e.awaiting;
+      const kind = state.elementKinds.find((k) => k.id === e.kind);
+      const tieIds = new Set(state.ties.map((t) => t.id));
+      for (const req of kind?.ties ?? []) {
+        if (state.ties.some((t) => t.kind === req.kind && t.from === e.id && t.to === req.to)) continue;
+        const id = freshId(tieIds, `${req.kind}-${e.id}`);
+        tieIds.add(id);
+        state.ties.push({ id, kind: req.kind, from: e.id, to: req.to, locked: false });
+      }
+      deriveRing(state);
       return;
     }
 
@@ -443,6 +534,10 @@ function opSentence(before: SanctumState, after: SanctumState, op: Op): string {
       return `The reading ${before.readings.find((r) => r.id === op.id)?.title ?? ""} was set aside.`;
     case "setReadingLights":
       return `What the reading ${before.readings.find((r) => r.id === op.id)?.title ?? ""} lights was changed.`;
+    case "turn":
+      return before.conditions.find((c) => c.id === op.condition)?.turn ?? "The map was turned.";
+    case "firstBinding":
+      return (before.rim?.firstBinding ?? "{title} was bound.").replace("{title}", bt(op.id));
   }
 }
 
@@ -480,6 +575,7 @@ export function diffStates(a: SanctumState, b: SanctumState): Diff {
     visions: diffById(a.visions, b.visions),
     passages,
     sight: !stableEqual(a.sight, b.sight),
+    condition: a.condition !== b.condition,
   };
 }
 
