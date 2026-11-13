@@ -3,7 +3,7 @@
    window, is brought nearer by `zoom`, and keeps the focal point centred
    unless an edge of the picture would show. Revealed only once decoded. */
 
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { checkLocally, ops as op, slotsFor, visionSrcSet, visionUrl, type Choice } from "../data";
 import { BUDGET, VISION_MAX_BYTES, ZOOM } from "../model/rules";
 import type { Op, VisionFiles } from "../model/types";
@@ -27,8 +27,9 @@ export function VisionVerb({ store, state, brought, subject, compose }: VerbProp
 
   const inMap = state.visions.find((v) => v.id === visionId);
   const files: VisionFiles | undefined = inMap ?? brought[visionId];
-  const base = mode === "bring" && files && !inMap ? checkLocally(state, [op.addVision(visionId, title.trim() || "A vision")], brought).state : state;
-  const assignSlots = slotsFor(base, { op: mode === "bring" || mode === "set" ? "assignVision" : mode === "gaze" ? "setVisionSubject" : "unassignVision", visionId });
+  const fresh = mode === "bring" && Boolean(files) && !inMap;
+  const base = useMemo(() => (fresh ? checkLocally(state, [op.addVision(visionId, "A vision")], brought).state : state), [state, fresh, visionId, brought]);
+  const assignSlots = useMemo(() => slotsFor(base, { op: mode === "bring" || mode === "set" ? "assignVision" : mode === "gaze" ? "setVisionSubject" : "unassignVision", visionId }), [base, mode, visionId]);
   const elementOk = assignSlots.slots.elementId?.some((c) => c.value === elementId && c.ok) ? elementId : "";
 
   /* When an existing gaze is chosen, start from where it rests. */

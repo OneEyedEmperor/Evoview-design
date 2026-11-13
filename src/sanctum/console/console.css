@@ -224,7 +224,8 @@
 .sanctum-console__exam.is-weigh .sanctum-console__seal-mark { animation: sanctum-console-breathe 0.9s var(--sx-pour) infinite alternate; box-shadow: inset 0 0 0 1.5px var(--sx-fg-65); }
 .sanctum-console__exam.is-accept .sanctum-console__seal-mark, .sanctum-console__exam.is-sealed .sanctum-console__seal-mark { background: var(--c-accept-ink); box-shadow: none; }
 .sanctum-console__exam.is-refuse .sanctum-console__seal-mark { box-shadow: inset 0 0 0 2px var(--sx-refuse-ink); }
-.sanctum-console__brings > * { margin: 0; }
+.sanctum-console__brings { display: grid; gap: 8px; }
+.sanctum-console__brings .sx-rows > * { margin: 0; color: var(--sx-fg-65); }
 .sanctum-console__fixes { margin-top: 2px; }
 
 /* ---------- the seal bar ---------- */
@@ -259,10 +260,25 @@
 .sanctum-console__foresee { overflow: hidden; }
 .sanctum-console__foresee[aria-pressed="true"] { color: var(--sx-ink); }
 
+/* The phone sheet: the same sentence, a chip strip for the verbs, a slim verdict. */
 @container (max-width: 420px) {
   .sanctum-console__sentence, .sanctum-console__inline input { font-size: 16px; }
-  .sanctum-console__title { font-size: 22px; }
+  .sanctum-console__office { font-size: 22px; }
+  .sanctum-console__head { flex-wrap: nowrap; }
+  .sanctum-console__title { font-size: 19px; flex: 1; min-width: 0; }
+  .sanctum-console__head .sx-opt { min-height: 36px; padding: 0 12px; font-size: 11px; }
+  .sanctum-console__verbs { flex-wrap: nowrap; overflow-x: auto; margin: 0 -24px; padding: 0 24px 2px; scrollbar-width: none; }
+  .sanctum-console__verbs::-webkit-scrollbar { display: none; }
+  .sanctum-console__verb, .sanctum-console__more { flex: none; min-height: 44px; }
+  .sanctum-console__bar { padding: 18px 24px 14px; gap: 8px; }
+  .sanctum-console__exam { padding: 12px 14px; gap: 10px; grid-template-columns: 18px 1fr; }
+  .sanctum-console__seal-mark { width: 16px; height: 16px; }
+  .sanctum-console__exam-head { font-size: 12.5px; }
+  .sanctum-console__exam .sx-body { font-size: 13px; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .sanctum-console__acts .sx-ghost, .sanctum-console__acts .sx-plate { min-height: 44px; }
+  .sanctum-console__how { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+@container (max-width: 300px) {
   .sanctum-console__gaze { grid-template-columns: 1fr; }
   .sanctum-console__lancet { margin: 0 auto; }
-  .sanctum-console__office { font-size: 22px; }
 }

@@ -60,32 +60,36 @@ export function Sentence({ store, parts, openKey, onOpened }: Props) {
     }
   }, [openKey]);
 
-  /* The eye may answer an open element slot. */
+  /* The eye may answer an open element slot. Published once per change of
+     what is offered (the choices array itself is rebuilt on every render). */
+  const latest = useRef(current);
+  latest.current = current;
+  const offered = current?.onEye ? `${current.key}|${current.choices.map((c) => `${c.value}:${c.ok ? 1 : 0}`).join(",")}` : "";
   useEffect(() => {
-    if (current?.onEye) {
-      patchDraft(store, { awaiting: { slot: current.key, choices: current.choices.map((c) => ({ value: c.value as ThreadEnd, ok: c.ok, ...(c.why ? { why: c.why } : {}) })) } });
-      const key = current.key;
-      return () => {
-        if (store.get().draft.awaiting?.slot === key) patchDraft(store, { awaiting: null });
-      };
-    }
-    return undefined;
-  }, [current?.key, current?.choices]);
+    const c = latest.current;
+    if (!offered || !c) return;
+    patchDraft(store, { awaiting: { slot: c.key, choices: c.choices.map((x) => ({ value: x.value as ThreadEnd, ok: x.ok, ...(x.why ? { why: x.why } : {}) })) } });
+    const key = c.key;
+    return () => {
+      if (store.get().draft.awaiting?.slot === key) patchDraft(store, { awaiting: null });
+    };
+  }, [offered]);
 
   useEffect(() => {
-    if (!current?.onEye) return;
+    if (!offered) return;
     let seen = store.get().draft.picked?.at ?? 0;
     return store.subscribe(() => {
       const picked = store.get().draft.picked;
-      if (!picked || picked.at === seen || picked.slot !== current.key || typeof picked.value !== "string") return;
+      const c = latest.current;
+      if (!c || !picked || picked.at === seen || picked.slot !== c.key || typeof picked.value !== "string") return;
       seen = picked.at;
-      const c = current.choices.find((x) => x.value === picked.value);
-      if (c?.ok) {
-        current.onChoose(c.value);
+      const choice = c.choices.find((x) => x.value === picked.value);
+      if (choice?.ok) {
+        c.onChoose(choice.value);
         setOpen(null);
       }
     });
-  }, [current]);
+  }, [offered]);
 
   const close = (key: string | null) => {
     setOpen(null);

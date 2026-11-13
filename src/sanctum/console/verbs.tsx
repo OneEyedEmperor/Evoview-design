@@ -86,8 +86,7 @@ export function Raise({ store, state, subject, verdict, previewState, compose }:
 
   const turnOp = turnFirst ? [op.turn(turnFirst)] : [];
   const base = useMemo(() => (turnFirst ? checkLocally(state, turnOp).state : state), [state, turnFirst]);
-  const partial = { op: "addElement" as const, kind, realm, parent, condition, quarter };
-  const slots = slotsFor(base, partial);
+  const slots = useMemo(() => slotsFor(base, { op: "addElement", kind, realm, parent, condition, quarter }), [base, kind, realm, parent, condition, quarter]);
   const k = base.elementKinds.find((x) => x.id === kind);
 
   /* A slot with a single open answer answers itself. */
@@ -99,7 +98,8 @@ export function Raise({ store, state, subject, verdict, previewState, compose }:
   const element = k && realmChoice && title.trim() && purpose.trim()
     ? { id, title: title.trim(), kind, realm: realmChoice, ...(parentChoice ? { parent: parentChoice } : {}), ...(condition ? { condition } : {}), ...(quarter ? { quarter } : {}), purpose: purpose.trim() }
     : null;
-  const alone = element ? checkLocally(base, [op.addElement(element)]).refusals.some((r) => r.rule === "no-dead-space" || r.rule === "reach") : false;
+  const elementKey = JSON.stringify(element);
+  const alone = useMemo(() => (element ? checkLocally(base, [op.addElement(element)]).refusals.some((r) => r.rule === "no-dead-space" || r.rule === "reach") : false), [base, elementKey]);
   const cords = (slots.cords ?? []).filter((c) => c.ok);
   const holdChoices: Choice[] = cords.map((c, i) => {
     const other = c.from === "composing-element" ? c.to : c.from;
@@ -135,8 +135,8 @@ export function Raise({ store, state, subject, verdict, previewState, compose }:
   const fixes: Fix[] = [];
   const turnable = state.elementKinds.find((x) => x.raisedIn && x.raisedIn.condition !== state.condition && x.addable);
   const turnWords = turnable && state.conditions.find((c) => c.id === turnable.raisedIn!.condition)?.turn;
-  if (!turnFirst && turnable && turnWords) fixes.push({ label: `First, ${lower(turnWords.replace(/\.$/, ""))}`, run: () => setTurnFirst(turnable.raisedIn!.condition) });
-  if (turnFirst) fixes.push({ label: "Without the turn", run: () => setTurnFirst("") });
+  if (!turnFirst && !kind && turnable && turnWords) fixes.push({ label: `To raise ${aOrAn(lower(turnable.title))}, first: ${lower(turnWords.replace(/\.$/, ""))}`, run: () => setTurnFirst(turnable.raisedIn!.condition) });
+  if (turnFirst && !kind) fixes.push({ label: "Without the turn", run: () => setTurnFirst("") });
   const failing = failingSlot(verdict, { "no-dead-space": "hold", reach: "hold", capacity: "kind", "kind-realm": "realm" });
   if (failing && verdict.state === "refused") fixes.push({ label: failing === "hold" ? "Choose a cord to hold it" : "Choose again", run: () => setOpenKey(failing) });
 
@@ -218,9 +218,9 @@ export function LayCord({ store, state, subject, verdict, compose }: VerbProps) 
   const [purpose, setPurpose] = useState("");
   const [openKey, setOpenKey] = useState<string | null>(null);
 
-  const slots = slotsFor(state, { op: "addThread", kind, from });
+  const slots = useMemo(() => slotsFor(state, { op: "addThread", kind }), [state, kind]);
   const fromOk = has(slots.slots.from, from) ? from : "";
-  const toSlots = fromOk ? slotsFor(state, { op: "addThread", kind, from: fromOk }).slots.to : undefined;
+  const toSlots = useMemo(() => (fromOk ? slotsFor(state, { op: "addThread", kind, from: fromOk }).slots.to : undefined), [state, kind, fromOk]);
   const toOk = has(toSlots, to) ? to : "";
   const k = state.threadKinds.find((x) => x.id === kind);
 
@@ -269,7 +269,7 @@ export function DrawBack({ store, state, subject, previewState, compose }: VerbP
     { value: "removeReading", title: "a reading", ok: true },
     { value: "removeVision", title: "a vision", ok: true },
   ];
-  const slots = what ? slotsFor(state, { op: what }) : null;
+  const slots = useMemo(() => (what ? slotsFor(state, { op: what }) : null), [state, what]);
   const idOk = has(slots?.slots.id, id) ? id : "";
   const waiting = !what ? "what to draw back" : !idOk ? "which one" : undefined;
   const ops = waiting || !what ? null : [what === "removeThread" ? op.removeThread(idOk) : what === "removeElement" ? op.removeElement(idOk) : what === "removeReading" ? op.removeReading(idOk) : op.removeVision(idOk)];
@@ -318,7 +318,7 @@ export function Rewrite({ store, state, subject, compose }: VerbProps) {
   const [field, setField] = useState<TextField | "">("");
   const [value, setValue] = useState<string | string[]>("");
 
-  const slots = type ? slotsFor(state, { op: "setText", target: { type, ...(id ? { id } : {}) } }) : slotsFor(state, { op: "setText" });
+  const slots = useMemo(() => (type ? slotsFor(state, { op: "setText", target: { type, ...(id ? { id } : {}) } }) : slotsFor(state, { op: "setText" })), [state, type, id]);
   const needsId = Boolean(slots.slots.id);
   const idOk = needsId ? (has(slots.slots.id, id) ? id : "") : "";
   const fieldOk = has(slots.slots.field, field) ? field : "";
@@ -373,8 +373,8 @@ export function Order({ store, state, subject, compose }: VerbProps) {
   const [id, setId] = useState(subjectEl?.id ?? "");
   const [weight, setWeight] = useState("");
 
-  const orderSlots = slotsFor(state, { op: "reorderWithinLayer" });
-  const weightSlots = slotsFor(state, { op: "setEmphasis" });
+  const orderSlots = useMemo(() => slotsFor(state, { op: "reorderWithinLayer" }), [state]);
+  const weightSlots = useMemo(() => slotsFor(state, { op: "setEmphasis" }), [state]);
   const realmOk = has(orderSlots.slots.realm, realm) ? realm : "";
   const members = useMemo(() => state.elements.filter((e) => e.realm === realmOk).sort((a, b) => a.order - b.order).map((e) => e.id), [state, realmOk]);
   useEffect(() => setOrder(members), [members.join("|")]);
@@ -451,7 +451,7 @@ export function Readings({ store, state, subject, compose }: VerbProps) {
   const [text, setText] = useState("");
   const [lights, setLights] = useState<Reading["lights"]>(EMPTY_LIGHTS);
 
-  const slots = slotsFor(state, { op: mode, id });
+  const slots = useMemo(() => slotsFor(state, { op: mode, id }), [state, mode, id]);
   const reading = state.readings.find((r) => r.id === id);
   useEffect(() => {
     if (mode === "setReadingLights" && reading) setLights(reading.lights);
@@ -508,7 +508,7 @@ export function SightAtRest({ store, state, compose }: VerbProps) {
   const [reading, setReading] = useState(state.sight.reading ?? "");
   const [explanations, setExplanations] = useState(state.sight.explanations);
   const [flow, setFlow] = useState(state.sight.flow);
-  const slots = slotsFor(state, { op: "setSight" });
+  const slots = useMemo(() => slotsFor(state, { op: "setSight" }), [state]);
 
   const patch: Record<string, unknown> = {};
   if (JSON.stringify([...layers].sort()) !== JSON.stringify([...state.sight.layers].sort())) patch.layers = layers;
@@ -556,7 +556,7 @@ function Switch({ label, on, onChange }: { label: string; on: boolean; onChange:
 /* ---------- the turner's office ---------- */
 
 export function Turn({ store, state, previewState, compose }: VerbProps) {
-  const slots = slotsFor(state, { op: "turn" });
+  const slots = useMemo(() => slotsFor(state, { op: "turn" }), [state]);
   const open = ok(slots.slots.condition);
   const [condition, setCondition] = useState(open.length === 1 ? open[0].value : "");
   const target = state.conditions.find((c) => c.id === condition);
@@ -597,7 +597,7 @@ export function Turn({ store, state, previewState, compose }: VerbProps) {
 /* ---------- the first binding of an awaiting element ---------- */
 
 export function Bind({ store, state, subject, previewState, compose }: VerbProps) {
-  const slots = slotsFor(state, { op: "firstBinding" });
+  const slots = useMemo(() => slotsFor(state, { op: "firstBinding" }), [state]);
   const choices = slots.slots.id ?? [];
   const [id, setId] = useState(subject?.type === "element" && choices.some((c) => c.value === subject.id) ? subject.id ?? "" : ok(choices).length === 1 ? ok(choices)[0].value : "");
   const idOk = has(choices, id) ? id : "";

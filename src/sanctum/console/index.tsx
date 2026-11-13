@@ -160,6 +160,14 @@ export default function Console({ store }: ConsoleProps) {
           </div>
           <div className="sanctum-console__compose">
             <V key={`${current.id}-${epoch}`} store={store} state={state} brought={brought} subject={draft.subject} verdict={v} previewState={draft.previewState} compose={compose} />
+            {composed.ops && composed.brings && composed.brings.length > 0 && (
+              <div className="sanctum-console__brings">
+                <p className="sx-small">What the change brings, foreseen:</p>
+                <div className="sx-rows">
+                  {composed.brings.map((b) => <p key={b} className="sx-small">{b}</p>)}
+                </div>
+              </div>
+            )}
           </div>
         </>
       )}
@@ -213,11 +221,6 @@ function Examination({ keeper, verdict, composed, restoring, sealed }: { keeper:
           <p className="sx-body">
             It will enter the record as: <span className="sanctum-console__summary">{verdict.summary}</span>
           </p>
-        )}
-        {(tone === "accept" || tone === "weigh") && composed.brings && composed.brings.length > 0 && (
-          <div className="sx-rows sanctum-console__brings">
-            {composed.brings.map((b) => <p key={b} className="sx-small">{b}</p>)}
-          </div>
         )}
         {composed.fixes && composed.fixes.length > 0 && (tone === "refuse" || tone === "wait") && (
           <div className="sx-chips sanctum-console__fixes">
