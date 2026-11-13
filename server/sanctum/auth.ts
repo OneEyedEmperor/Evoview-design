@@ -51,33 +51,72 @@ export function signEntry(secret: string, sid: string, exp: number): string {
   return `${payload}.${mac(secret, payload)}`;
 }
 
-export function readEntry(secret: string, value: string | undefined): { sid: string; exp: number } | undefined {
+/** A signed value is exactly `payload.signature`; anything else is refused. */
+function readSigned(secret: string, value: string | undefined): Record<string, unknown> | undefined {
   if (!value) return undefined;
-  const [payload, sig] = value.split(".");
-  if (!payload || !sig) return undefined;
+  const parts = value.split(".");
+  if (parts.length !== 2 || !parts[0] || !parts[1]) return undefined;
+  const [payload, sig] = parts;
   const good = Buffer.from(mac(secret, payload));
   const given = Buffer.from(sig);
   if (good.length !== given.length || !crypto.timingSafeEqual(good, given)) return undefined;
   try {
-    const parsed = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as { sid?: unknown; exp?: unknown };
-    if (typeof parsed.sid !== "string" || typeof parsed.exp !== "number" || parsed.exp < Date.now()) return undefined;
-    return { sid: parsed.sid, exp: parsed.exp };
+    const parsed = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as unknown;
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? (parsed as Record<string, unknown>) : undefined;
   } catch {
     return undefined;
   }
+}
+
+export function readEntry(secret: string, value: string | undefined): { sid: string; exp: number } | undefined {
+  const parsed = readSigned(secret, value);
+  if (!parsed || typeof parsed.sid !== "string" || typeof parsed.exp !== "number" || parsed.exp < Date.now()) return undefined;
+  return { sid: parsed.sid, exp: parsed.exp };
+}
+
+/* The known-device mark: set on entry, it lets the true watchword through
+   whatever others are trying; it opens nothing by itself. */
+export const DEVICE_COOKIE = "sanctum_device";
+export const DEVICE_TTL_SEC = 400 * 24 * 60 * 60;
+
+export function signDevice(secret: string): string {
+  const payload = b64url(JSON.stringify({ device: crypto.randomBytes(12).toString("base64url"), iat: Date.now() }));
+  return `${payload}.${mac(secret, payload)}`;
+}
+
+export function readDevice(secret: string, value: string | undefined): string | undefined {
+  const parsed = readSigned(secret, value);
+  return parsed && typeof parsed.device === "string" ? parsed.device : undefined;
 }
 
 export function parseCookies(header: string | undefined): Record<string, string> {
   const out: Record<string, string> = {};
   for (const part of (header ?? "").split(";")) {
     const i = part.indexOf("=");
-    if (i > 0) out[part.slice(0, i).trim()] = decodeURIComponent(part.slice(i + 1).trim());
+    if (i <= 0) continue;
+    try {
+      out[part.slice(0, i).trim()] = decodeURIComponent(part.slice(i + 1).trim());
+    } catch {
+      /* a malformed cookie is no cookie */
+    }
   }
   return out;
 }
 
 export function entryCookie(value: string, maxAgeSec: number): string {
   return `${COOKIE}=${value}; Path=/sanctum-api; HttpOnly; Secure; SameSite=Strict; Max-Age=${maxAgeSec}`;
+}
+
+export function deviceCookie(value: string): string {
+  return `${DEVICE_COOKIE}=${value}; Path=/sanctum-api; HttpOnly; Secure; SameSite=Strict; Max-Age=${DEVICE_TTL_SEC}`;
+}
+
+/** Who is knocking: Cloudflare's client address when the peer is the local proxy, else the peer itself. Never a client-sent forward header. */
+export function sourceOf(peer: string | undefined, cfConnectingIp: string | string[] | undefined): string {
+  const p = peer ?? "";
+  const loopback = p === "127.0.0.1" || p === "::1" || p === "::ffff:127.0.0.1";
+  const cf = typeof cfConnectingIp === "string" ? cfConnectingIp.trim() : "";
+  return loopback && cf && cf.length <= 64 ? `cf:${cf}` : `peer:${p}`;
 }
 
 /** Live entries, shared by every server process through the data dir. */
@@ -112,34 +151,119 @@ export class Entries {
   }
 }
 
-/* Backoff: after a few refusals from one source the gate rests, doubling
-   each time; a global ceiling stops a spread of sources. In memory. */
+/* The gate, in memory:
+   - each source has one attempt in flight; a refusal is charged before the
+     watchword is weighed, so concurrent guesses cannot slip past the rest;
+   - after a few refusals the source rests, doubling to a ceiling;
+   - weighing is capped (two at a time in the common lane, one in the
+     device lane) so a flood never starves the server's other work; the
+     common queue favours sources with fewer refusals;
+   - a known device has its own key and lane: others' refusals never
+     refuse it. There is no global lock. */
+export type Lane = "common" | "device";
+
+interface SourceState {
+  fails: number;
+  until: number;
+  busy: boolean;
+  seen: number;
+}
+
+interface Waiting {
+  fails: number;
+  admit: (granted: boolean) => void;
+}
+
 export class Gatekeeper {
-  private bySource = new Map<string, { fails: number; until: number }>();
-  private recent: number[] = [];
-  private static FREE = 4;
-  private static MAX_REST_MS = 15 * 60 * 1000;
-  private static GLOBAL_WINDOW_MS = 10 * 60 * 1000;
-  private static GLOBAL_MAX = 60;
+  static readonly FREE = 4;
+  static readonly MAX_REST_MS = 15 * 60 * 1000;
+  static readonly SLOTS: Record<Lane, number> = { common: 2, device: 1 };
+  static readonly QUEUE: Record<Lane, number> = { common: 64, device: 4 };
+  /** Every refused answer waits this long: a slow-down, never a lock. */
+  static readonly FAIL_DELAY_MS = 800;
+  private static readonly MAX_SOURCES = 20000;
 
-  /** Seconds to rest, or 0 when the gate listens. */
-  rest(source: string, now = Date.now()): number {
-    this.recent = this.recent.filter((t) => now - t < Gatekeeper.GLOBAL_WINDOW_MS);
-    if (this.recent.length >= Gatekeeper.GLOBAL_MAX) return Math.ceil((Gatekeeper.GLOBAL_WINDOW_MS - (now - this.recent[0])) / 1000);
-    const s = this.bySource.get(source);
-    return s && s.until > now ? Math.ceil((s.until - now) / 1000) : 0;
+  private sources = new Map<string, SourceState>();
+  private running: Record<Lane, number> = { common: 0, device: 0 };
+  private waiting: Record<Lane, Waiting[]> = { common: [], device: [] };
+
+  private state(key: string, now: number): SourceState {
+    let s = this.sources.get(key);
+    if (!s) {
+      if (this.sources.size >= Gatekeeper.MAX_SOURCES) this.prune(now);
+      s = { fails: 0, until: 0, busy: false, seen: now };
+      this.sources.set(key, s);
+    }
+    s.seen = now;
+    return s;
   }
 
-  refused(source: string, now = Date.now()): number {
-    this.recent.push(now);
-    const s = this.bySource.get(source) ?? { fails: 0, until: 0 };
+  private prune(now: number) {
+    for (const [k, s] of this.sources) if (!s.busy && s.until < now && now - s.seen > 60 * 60 * 1000) this.sources.delete(k);
+    if (this.sources.size >= Gatekeeper.MAX_SOURCES) {
+      for (const [k, s] of this.sources) if (!s.busy && s.until < now) this.sources.delete(k);
+    }
+  }
+
+  /** Synchronous: reserves the attempt (charged as a refusal until it is received), or answers the seconds to rest. */
+  reserve(key: string, now = Date.now()): { rest: number } | { fails: number } {
+    const s = this.state(key, now);
+    if (s.until > now) return { rest: Math.ceil((s.until - now) / 1000) };
+    if (s.busy) return { rest: 1 };
+    s.busy = true;
     s.fails += 1;
-    if (s.fails > Gatekeeper.FREE) s.until = now + Math.min(1000 * 2 ** (s.fails - Gatekeeper.FREE), Gatekeeper.MAX_REST_MS);
-    this.bySource.set(source, s);
-    return this.rest(source, now);
+    return { fails: s.fails };
   }
 
-  received(source: string) {
-    this.bySource.delete(source);
+  /** Ends a reserved attempt. A refusal may set a rest; returns the seconds to rest. `counted: false` withdraws the charge. */
+  settle(key: string, received: boolean, counted = true, now = Date.now()): number {
+    const s = this.state(key, now);
+    s.busy = false;
+    if (received) {
+      this.sources.delete(key);
+      return 0;
+    }
+    if (!counted) {
+      s.fails = Math.max(0, s.fails - 1);
+      return 0;
+    }
+    if (s.fails > Gatekeeper.FREE) s.until = now + Math.min(1000 * 2 ** (s.fails - Gatekeeper.FREE), Gatekeeper.MAX_REST_MS);
+    return s.until > now ? Math.ceil((s.until - now) / 1000) : 0;
+  }
+
+  /** Waits for a weighing slot; resolves with a release, or null when the lane is full. */
+  slot(lane: Lane, fails: number): Promise<(() => void) | null> {
+    const release = () => {
+      this.running[lane] -= 1;
+      const next = this.waiting[lane].shift();
+      if (next) next.admit(true);
+    };
+    if (this.running[lane] < Gatekeeper.SLOTS[lane]) {
+      this.running[lane] += 1;
+      return Promise.resolve(release);
+    }
+    const queue = this.waiting[lane];
+    if (queue.length >= Gatekeeper.QUEUE[lane]) {
+      /* A newcomer with fewer refusals takes the place of the most refused one waiting. */
+      let worst = -1;
+      queue.forEach((w, i) => {
+        if (worst < 0 || w.fails > queue[worst].fails) worst = i;
+      });
+      if (worst < 0 || queue[worst].fails <= fails) return Promise.resolve(null);
+      queue.splice(worst, 1)[0].admit(false);
+    }
+    return new Promise((resolve) => {
+      const entry: Waiting = {
+        fails,
+        admit: (granted) => {
+          if (!granted) return resolve(null);
+          this.running[lane] += 1;
+          resolve(release);
+        },
+      };
+      const at = queue.findIndex((w) => w.fails > fails);
+      if (at < 0) queue.push(entry);
+      else queue.splice(at, 0, entry);
+    });
   }
 }

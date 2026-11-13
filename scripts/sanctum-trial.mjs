@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* A throwaway copy of the sanctum's data dir, for testing seals without
-   touching the emperor's record. Its own test watchword (never the real one)
+   touching the real record. Its own test watchword (never the real one)
    is hashed into its auth.json and written to <trial>/trial-watchword (600).
 
    node scripts/sanctum-trial.mjs [--fresh]       copy (--fresh replaces an existing trial)

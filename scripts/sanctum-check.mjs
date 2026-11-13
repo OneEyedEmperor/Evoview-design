@@ -18,12 +18,13 @@ import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createSanctumStore } from "../src/sanctum/data/store.ts";
-import { cordsFor, room, slotsFor } from "../src/sanctum/model/affordances.ts";
+import { cordEnds, cordsFor, room, slotsFor } from "../src/sanctum/model/affordances.ts";
 import { applyOps, summarize } from "../src/sanctum/model/ops.ts";
 import { BUDGET, clone, isQuiet, pairKey, rimOrder, ringPairs } from "../src/sanctum/model/rules.ts";
 import { BEYOND } from "../src/sanctum/model/types.ts";
 import { canonOf, validate } from "../src/sanctum/model/validate.ts";
 import { hashWatchword, signEntry } from "../server/sanctum/auth.ts";
+import { alludesToName, impureWords } from "../server/sanctum/purity.ts";
 import { createSanctumHandler } from "../server/sanctum/http.ts";
 import { Store, dataDir, readJson } from "../server/sanctum/store.ts";
 
@@ -365,6 +366,75 @@ if (taker && base.rim) {
   check("no vision is offered to what takes none", base.roles.unseen.every((id) => unseen.find((c) => c.value === id)?.ok === false));
 }
 
+/* review r1 · B2: an element with states acts only through them, and the console never offers otherwise */
+for (const parent of base.elements) {
+  const states = base.elements.filter((e) => e.parent === parent.id && base.elementKinds.find((k) => k.id === e.kind)?.conditional);
+  if (!states.length) continue;
+  const ids = new Set(states.map((s) => s.id));
+  const carried = [...new Set(base.threads.filter((t) => ids.has(t.from) || ids.has(t.to)).map((t) => t.kind))];
+  for (const kindId of carried) {
+    const kind = base.threadKinds.find((k) => k.id === kindId);
+    for (const other of ends.filter((x) => x !== parent.id)) {
+      for (const [from, to] of [[parent.id, other], [other, parent.id]]) {
+        if (from.startsWith("layer:")) continue;
+        if (!kind.grammar.courses.some((c) => selEnd(from, c.from) && selEnd(to, c.to))) continue;
+        const r = run([{ op: "addThread", thread: { kind: kindId, from, to, label: "Probe", purpose: "A probe." } }]);
+        check(`an element with states takes no cord they carry (${kindId}, ${from === parent.id ? "from" : "to"} it)`, r.refusals.some((x) => x.rule === "grammar"), rules(r).join(","));
+        const offered = from === parent.id ? cordEnds(base, kindId).find((c) => c.value === parent.id) : cordEnds(base, kindId, from).find((c) => c.value === parent.id);
+        check(`…and it is never offered (${kindId}, ${from === parent.id ? "from" : "to"} it)`, offered?.ok === false);
+      }
+    }
+  }
+}
+
+/* review r1 · M1, m3, m4: names, figures and titles */
+{
+  const coreTitle = byId.get(base.roles.core).title;
+  const turnerTitle = byId.get(base.roles.turner)?.title;
+  const say = (text) => run([{ op: "setText", target: { type: "element", id: locked[0].id }, field: "explanation", value: text }]);
+  const named = [`The name of ${coreTitle} is Zed.`, `${coreTitle} is called Zed.`, `${coreTitle} is known as Zed.`, `${coreTitle} goes by Zed.`, "Name: Zed.", "The sealed name: Zed.", "The name has five characters.", "Two vowels hold the name.", "The name, read backwards, is deZ.", "Z...d is the name kept.", `${coreTitle} has three letters.`];
+  let missed = named.filter((t) => !say(t).refusals.some((x) => x.rule === "sealed-name"));
+  check(`the sealed name: ${named.length} ways of naming or counting it refused`, missed.length === 0, missed.join(" | "));
+  const silent = ["The name is sealed.", "The name is never spoken.", "Authority rests on the silence of the name."];
+  missed = silent.filter((t) => say(t).refusals.length);
+  check("the silence of the name may still be spoken of", missed.length === 0, missed.join(" | "));
+  const addTitled = (title) => run([{ op: "addElement", element: { id: stamp("titled"), title, kind: free.id, realm: freeRealm.id, purpose: "A probe." } }]);
+  if (turnerTitle) {
+    check("words making the turner and the core one figure are refused", say(`${turnerTitle} is ${coreTitle}.`).refusals.some((x) => x.rule === "apart"));
+    check("a title joining the turner and the core is refused", addTitled(`${turnerTitle}, ${coreTitle}`).refusals.some((x) => x.rule === "apart"));
+    check("words setting them side by side are not refused", say(`${turnerTitle} stands beside ${coreTitle}.`).refusals.length === 0);
+  }
+  check("a second element titled as the core is refused", addTitled(coreTitle).refusals.some((x) => x.rule === "apart"));
+  check("a title another element already bears is refused", addTitled(locked[1].title).refusals.some((x) => x.rule === "text"));
+  check("a title opening with a naming verb is refused", addTitled("Called Zed").refusals.some((x) => x.rule === "sealed-name"));
+  check("a title of hidden marks only is refused", addTitled("‮​").refusals.some((x) => x.rule === "text"));
+  check("a title of signs with no letter is refused", addTitled("\u{1F702}\u{1F703}\u{1F704}").refusals.some((x) => x.rule === "text"));
+  check("words holding hidden marks are refused", say("A cord​ of the wall.").refusals.some((x) => x.rule === "text"));
+}
+
+/* review r1 · M5, m1: inflections and evasions */
+{
+  const say = (text) => run([{ op: "setText", target: { type: "element", id: locked[0].id }, field: "explanation", value: text }]);
+  const evasions = ["The wall was saved.", "It uploaded the pattern.", "They clicked and linked it.", "It was toggled, deleted, downloading, loaded, configured, programmed.", "The users' seats.", "The pаssword.", "The ｕｓｅｒ.", "The pass­word.", "A pass-word.", "Then log-in.", "Then l o g i n.", "Its Wi-Fi.", "The uśer.", "The mot de passe.", "Das Passwort.", "La contraseña.", "Télécharger.", "A pass word."];
+  const missed = evasions.filter((t) => !say(t).refusals.some((x) => x.rule === "purity"));
+  check(`purity: ${evasions.length} inflections and evasions refused`, missed.length === 0, missed.join(" | "));
+  const plain = ["They committed to the siege.", "A cache of spears lies near.", "Every sign in the wall returns.", "The stones drop down.", "The end point of the cord holds.", "Without exception, the wall holds.", "The aid of the loom."];
+  const caught = plain.filter((t) => say(t).refusals.length);
+  check("purity: plain speech that only resembles them is kept", caught.length === 0, caught.join(" | "));
+}
+
+/* review r1 · m2: nothing outside the op's own fields is kept */
+{
+  const lights = { layers: [someLayer.id], threadKinds: [], elements: [] };
+  refusedBy("lights carrying a field of their own", [{ op: "addReading", reading: { id: stamp("r"), title: "Probe", text: "A reading of the rim.", lights: { ...lights, note: "anything" } } }], "op");
+  refusedBy("an op carrying a field of its own", [{ op: "setEmphasis", id: locked[0].id, emphasis: 1, note: "anything" }], "op");
+  refusedBy("an element carrying a field of its own", [{ op: "addElement", element: { id: stamp("x"), title: "Probe", kind: free.id, realm: freeRealm.id, purpose: "A probe.", locked: true } }], "op");
+  const r = run([{ op: "addReading", reading: { id: stamp("r"), title: "Probe", text: "A reading of the rim.", lights } }]);
+  check("lights are rebuilt from their three lists only", r.refusals.length === 0 && Object.keys(r.next.readings.at(-1).lights).sort().join() === "elements,layers,threadKinds");
+  refusedBy("a text with an unknown field", [{ op: "setText", target: { type: "element", id: locked[0].id }, field: "colour", value: "A probe." }], "op");
+  check("…and it says so plainly", run([{ op: "setText", target: { type: "element", id: locked[0].id }, field: "colour", value: "x" }]).refusals[0]?.message === "The map does not know this change.");
+}
+
 /* words */
 const e0 = locked[0].id;
 const said = (value, field = "explanation") => [{ op: "setText", target: { type: "element", id: e0 }, field, value }];
@@ -382,7 +452,7 @@ for (const word of ["login", "password", "upload", "save", "settings", "error", 
   const r2 = run(said(`The wall holds ${plural} now.`));
   check(`purity: “${word}” and “${plural}” refused`, r1.refusals.some((r) => r.rule === "purity") && r2.refusals.some((r) => r.rule === "purity"));
 }
-accepted("purity keeps word boundaries (ledger, filed under none, sedge, unlinked words)", said("The ledger lies near the sedge, and the wall was saved."));
+accepted("purity keeps word boundaries (ledger, sedge, aid)", said("The ledger lies near the sedge, and the aid of the wall holds."));
 refusedBy("a phrase of the machines (log in)", said("Here you log in to the wall."), "purity");
 refusedBy("a text alluding to the form of the sealed name", said("His name begins with a letter of the cold rim."), "sealed-name");
 refusedBy("a text writing the sealed name's place", said(`${byId.get(base.roles.core).title}'s name is kept here.`), "sealed-name");
@@ -517,6 +587,49 @@ try {
   const cookie = setCookie.split(";")[0];
   const C = { cookie };
   const CW = { ...W, cookie };
+  const deviceSet = (ok.headers.getSetCookie?.() ?? []).find((c) => c.startsWith("sanctum_device="));
+  const deviceMark = deviceSet?.split(";")[0];
+  check("entry also leaves a known-device mark (HttpOnly, Secure, SameSite=Strict, scoped)", Boolean(deviceSet) && /HttpOnly/.test(deviceSet) && /Secure/.test(deviceSet) && /SameSite=Strict/.test(deviceSet) && /Path=\/sanctum-api/.test(deviceSet));
+
+  /* review r1 · B1: the gate under pressure */
+  {
+    const knock = (w, h = {}) => req("/sanctum-api/session", { method: "POST", headers: { ...W, ...h }, body: JSON.stringify({ watchword: w }) });
+    const leaveWith = async (r) => {
+      const c = (r.headers.getSetCookie?.() ?? []).find((x) => x.startsWith("sanctum="))?.split(";")[0];
+      if (c) await req("/sanctum-api/session", { method: "DELETE", headers: { ...W, cookie: c } });
+    };
+    const race = await Promise.all(Array.from({ length: 60 }, (_, i) => knock(`race-${i}`, { "cf-connecting-ip": "192.0.2.1" })));
+    const weighed = race.filter((r) => r.status === 401).length;
+    check(`60 concurrent guesses from one source: ${weighed} weighed, the rest rested`, weighed === 1 && race.filter((r) => r.status === 429).length === 59);
+    const spoofed = [];
+    for (let i = 0; i < 6; i++) spoofed.push((await knock(`xff-${i}`, { "X-Forwarded-For": `10.0.${i}.1`, "cf-connecting-ip": "192.0.2.2" })).status);
+    check("a client-sent forward header never makes a new source", spoofed.at(-1) === 429, spoofed.join(","));
+    const flood = Promise.all(Array.from({ length: 300 }, (_, i) => knock(`flood-${i}`, { "cf-connecting-ip": `198.51.${i >> 8}.${i & 255}` })));
+    await new Promise((r) => setTimeout(r, 120));
+    const reads = [];
+    for (let i = 0; i < 5; i++) {
+      const t0 = performance.now();
+      await fs.promises.readFile(path.join(ROOT, "package.json"));
+      reads.push(Math.round(performance.now() - t0));
+    }
+    const knownAt = performance.now();
+    const known = await knock(word, { cookie: deviceMark, "cf-connecting-ip": "198.51.0.9" });
+    const knownMs = Math.round(performance.now() - knownAt);
+    const statuses = (await flood).reduce((m, r) => ((m[r.status] = (m[r.status] ?? 0) + 1), m), {});
+    check(`during a 300-source flood the server's own reads stay quick (${reads.join(", ")} ms)`, Math.max(...reads) < 300);
+    check(`the flood is mostly turned away unweighed (${JSON.stringify(statuses)})`, (statuses[429] ?? 0) >= 150);
+    check(`the true watchword from a known device enters during the flood (${known.status}, ${knownMs} ms)`, known.status === 200);
+    await leaveWith(known);
+    const fresh = await knock(word, { "cf-connecting-ip": "203.0.113.9" });
+    check("after hundreds of others' refusals, the true watchword from a fresh source still enters (no global lock)", fresh.status === 200);
+    await leaveWith(fresh);
+    const t0 = performance.now();
+    await knock("slow-down", { "cf-connecting-ip": "203.0.113.10" });
+    check("a refused watchword is answered only after the fixed slow-down", performance.now() - t0 >= 750);
+  }
+  check("a malformed cookie is no cookie (401, not a failure)", (await req("/sanctum-api/map", { headers: { cookie: "sanctum=%E0%A4%A" } })).status === 401);
+  check("GET /session with a malformed cookie → entered false", (await req("/sanctum-api/session", { headers: { cookie: "sanctum=%E0%A4%A" } })).body.entered === false);
+  check("an entry with an extra part never verifies", (await req("/sanctum-api/map", { headers: { cookie: `${cookie}.x` } })).status === 401);
 
   /* forged and lapsed entries */
   const [name, value] = cookie.split("=");
@@ -562,6 +675,17 @@ try {
   check("a restore seals a new version", restored.status === 200 && back.meta.version === v + 2);
   check("the restored map equals the one restored", JSON.stringify({ ...back, meta: null }) === JSON.stringify({ ...base, meta: null }));
   check("the record marks the restore", (await req("/sanctum-api/record", { headers: C })).body.entries[0].restoredFrom === v);
+  {
+    const entries = (await req("/sanctum-api/record", { headers: C })).body.entries;
+    const now = entries[0];
+    const prior = entries.find((e) => e.version === v + 1);
+    const ancient = entries.at(-1);
+    check("record: the current moment is marked as the map as it stands", now.restorable === false && now.unrestorable?.length > 0);
+    check("record: a moment under the same canon is restorable", prior?.restorable === true && !prior.unrestorable);
+    check("record: a moment before the canon is marked, with the reason", ancient.restorable === false && /predates the canon/.test(ancient.unrestorable ?? ""));
+    const r = await req("/sanctum-api/restore", { method: "POST", headers: CW, body: JSON.stringify({ version: ancient.version, baseVersion: v + 2, dryRun: true }) });
+    check("restoring a moment before the canon says it predates the canon", r.status === 422 && /predates the canon/.test(r.body.refusals?.[0]?.message ?? ""));
+  }
 
   /* bringing a vision */
   const pic = path.join(tmp, "probe.png");
@@ -782,6 +906,91 @@ if (fs.existsSync(dist)) {
   check("the gate chunk loads the sight and console as further chunks (after entry)", lazyChunks.length >= 2, `found ${lazyChunks.join(", ") || "none"}`);
   if (VERBOSE) console.log(`  main: ${mainName}; gate: ${gate ? path.basename(gate) : "?"}; after entry: ${lazyChunks.join(", ")}`);
 } else console.log("  (no dist/: run with --build to scan the client bundle)");
+
+/* review r1 · m12: the wider net, case-insensitive. Kind, tie, colour, condition,
+   quarter and station words, and every word of the private texts that the
+   library's own files never use. The charter's open vocabulary (and words of
+   the code itself) are allowed by name below; nothing else. */
+{
+  const OPEN = new Set([
+    /* the charter's permitted words: the interface may speak them */
+    "stone", "stones", "cord", "cords", "knot", "keystone", "engine", "wall", "spear", "center", "binding", "return", "occupation", "loyalty", "symbiosis", "layer", "layers", "signal", "pattern", "map",
+    /* model vocabulary the code is written in (CONTRACT.md) */
+    "steering", "crossing", "convergence", "condition", "quarter", "station", "threshold", "ring", "awaiting",
+  ]);
+  const wide = new Set();
+  const addWide = (t) => {
+    const w = String(t ?? "").trim().toLowerCase().replace(/^the\s+/, "");
+    if (w.length >= 4 && !OPEN.has(w)) wide.add(w);
+  };
+  for (const k of base.threadKinds) [k.id, k.title, k.colour.name].forEach(addWide);
+  for (const k of base.tieKinds) [k.id, k.title, k.inverse].forEach(addWide);
+  for (const x of [...base.layers, base.beyond, base.lexicon]) addWide(x.colour.name);
+  for (const x of [...base.conditions, ...base.quarters, ...base.stations]) addWide(x.title);
+  const tokensOf = (text) => text.toLowerCase().match(/[a-z][a-z'’-]{4,}/g) ?? [];
+  const sanctumPath = (f) => /^(src\/sanctum|server\/sanctum|scripts\/sanctum-)/.test(f);
+  const library = new Set();
+  const isFile = (f) => fs.existsSync(path.join(ROOT, f)) && fs.statSync(path.join(ROOT, f)).isFile();
+  const libraryText = [];
+  for (const f of repoFiles) {
+    if (sanctumPath(f) || !isFile(f)) continue;
+    const buf = fs.readFileSync(path.join(ROOT, f));
+    if (buf.length < 4 * 1024 * 1024 && !buf.includes(0)) {
+      const text = buf.toString("utf8").toLowerCase();
+      libraryText.push(text);
+      for (const t of tokensOf(text)) library.add(t);
+    }
+  }
+  /* A word the library's own files already use reveals nothing when found again. */
+  const boundary = (w) => new RegExp(`(^|[^a-z])${w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^a-z]|$)`);
+  const libraryAll = libraryText.join("\n");
+  for (const w of [...wide]) if (boundary(w).test(libraryAll)) wide.delete(w);
+  const privateText = [];
+  const walk = (v, key = "") => {
+    if (typeof v === "string") {
+      if (!["id", "from", "to", "kind", "realm", "parent", "placeholder", "hex", "tone"].includes(key)) privateText.push(v);
+    } else if (Array.isArray(v)) v.forEach((x) => walk(x, key));
+    else if (v && typeof v === "object") for (const [k, x] of Object.entries(v)) walk(x, k);
+  };
+  walk(base);
+  let distinct = 0;
+  for (const t of tokensOf(privateText.join(" "))) {
+    if (!library.has(t) && !OPEN.has(t) && !dict.has(t) && t.length >= 5) {
+      wide.add(t);
+      distinct++;
+    }
+  }
+  const wideHits = new Map();
+  const scanWide = (label, text) => {
+    const lower = text.toLowerCase();
+    const found = [...wide].filter((w) => new RegExp(`(^|[^a-z])${w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^a-z]|$)`).test(lower));
+    if (found.length) wideHits.set(label, found);
+  };
+  for (const f of repoFiles.filter(sanctumPath)) if (isFile(f)) scanWide(f, fs.readFileSync(path.join(ROOT, f), "utf8"));
+  if (fs.existsSync(dist)) {
+    const walkDist = (d) => fs.readdirSync(d, { withFileTypes: true }).flatMap((x) => (x.isDirectory() ? walkDist(path.join(d, x.name)) : [path.join(d, x.name)]));
+    for (const f of walkDist(dist).filter((x) => /\.(js|css|html)$/.test(x))) scanWide(path.relative(ROOT, f), fs.readFileSync(f, "utf8"));
+  }
+  check(`the wider net: ${wide.size} words (${distinct} found only in the private texts) absent from sanctum code and dist`, wideHits.size === 0, [...wideHits].map(([f, w]) => `${f}: ${w.join(", ")}`).join(" | "));
+
+  /* every sealed string, wherever it sits, is pure */
+  const names = { core: byId.get(base.roles.core)?.title, turner: byId.get(base.roles.turner)?.title };
+  const stained = [];
+  for (const e of [{ version: base.meta.version }, ...store.record()]) {
+    const s = e.version === base.meta.version ? base : store.at(e.version)?.state;
+    if (!s || s.meta.schemaVersion !== base.meta.schemaVersion) continue;
+    const strings = [];
+    const collect = (v, key = "") => {
+      if (typeof v === "string") {
+        if (/\s/.test(v) && !["placeholder"].includes(key)) strings.push(v);
+      } else if (Array.isArray(v)) v.forEach((x) => collect(x, key));
+      else if (v && typeof v === "object") for (const [k, x] of Object.entries(v)) collect(x, k);
+    };
+    collect(s);
+    for (const text of strings) if (impureWords(text).length || alludesToName(text, names)) stained.push(`v${e.version}: ${impureWords(text).join(",") || "name"}`);
+  }
+  check("every string sealed in the record (current canon) is pure", stained.length === 0, stained.slice(0, 5).join(" | "));
+}
 
 if (VERBOSE && hits.size) for (const [k, v] of hits) console.log(`  ${k}: ${v.length} hits`);
 console.log(`\n${passed} passed, ${failures.length} failed (${needles.size} map words and ${colours.size} colours searched)`);

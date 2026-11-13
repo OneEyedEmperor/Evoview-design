@@ -72,8 +72,18 @@ nothing else.
 | POST | `/visions` | raw image, `Content-Type: image/png\|jpeg\|webp`, ≤ 30 MB | `{files: VisionFiles}` (not yet in the map) |
 | GET | `/visions/:id/:width.:format` | | image, `format` ∈ `files.formats`, `width` ∈ `files.sizes` |
 
-Cookie: HttpOnly, Secure, SameSite=Strict, Path=/sanctum-api, HMAC-signed,
-expires; the gate rests with growing backoff after refusals.
+Cookie: HttpOnly, Secure, SameSite=Strict, Path=/sanctum-api, HMAC-signed
+(exactly `payload.signature`), expires. Entry also sets a known-device mark
+(`sanctum_device`, same attributes, 400 days; opens nothing by itself).
+
+The gate: the source is `cf-connecting-ip` only when the peer is loopback (the
+local proxy), else the peer address; client forward headers are ignored. Each
+source has one attempt in flight, charged before the watchword is weighed;
+after four refusals it rests, doubling to 15 min. Weighing is capped (two at
+a time, a queue favouring sources with fewer refusals; beyond it `429 rest 2`,
+not counted). Every refusal is answered after a fixed 0.8 s. A known device
+knocks under its own key and lane, so others' refusals never refuse it. No
+global lock.
 
 ## Changes
 
@@ -140,7 +150,8 @@ expires; the gate rests with growing backoff after refusals.
   touch no cord and hold by a tie.
 - Every cord follows a course of its kind's grammar; condition, both-ways and
   irreversible flags agree with it; no twin cords; each kind within
-  `grammar.min..max`.
+  `grammar.min..max`. An element with conditional states takes no cord of a
+  kind its states carry (it acts through them).
 - Element kind ↔ realm (`elementKinds[].realms`), parent rule and its tie,
   kind ties, condition only on conditional kinds.
 - Capacity: each layer / beyond ≤ `capacity`; each element kind ≤ `capacity`.
@@ -150,7 +161,13 @@ expires; the gate rests with growing backoff after refusals.
 - Text: title ≤ 28, purpose one sentence ≤ 160, explanation ≤ 900, nature ≤ 8
   lines of ≤ 160, label ≤ 48, vision title ≤ 60, reading title ≤ 40, reading
   text ≤ 900, summary ≤ 160. Every text passes the purity lexicon
-  (`server/sanctum/purity.ts`) and the sealed-name guard.
+  (`server/sanctum/purity.ts`: inflections, look-alike letters, accents,
+  hidden marks, split and hyphenated words folded) and the sealed-name guard
+  (form, counting, naming verbs near the core's title or "name"). No text may
+  hold hidden marks (`\p{Cf}`); titles need a letter, are unique (elements;
+  readings), and only the core's and the turner's own titles may hold theirs;
+  no text makes the turner and the core one figure (rule `apart`).
+- Ops carry only their own fields; anything else is refused, never stored.
 - Visions: `element.visions` mirrors `vision.subjects`; focal and zoom in
   bounds; `roles.unseen` elements hold none.
 - Readings: lights name existing realms, kinds and elements; canonical ones
@@ -198,8 +215,13 @@ draft is cleared but keeps `open`, and `word` holds the record's words; on
 ### Also
 
 - Record entries: `opNames` (sealed changes), `restoredFrom` (restores),
-  `trusted` (`seed | merge | rules | amend`: canon entries). Moments sealed
-  before schema 2 stay readable and cannot be restored.
+  `trusted` (`seed | merge | rules | amend`: canon entries), and, computed on
+  each `GET /record`, `restorable` with `unrestorable` (the keeper's reason:
+  the moment predates the canon as it now stands, or it is the current map).
+- Sockets (`draft.awaiting`): `{socket: {realm, order, quarter?}}`, the end of
+  `quarter` when set, else the end of the realm.
+- Live entries: `node scripts/sanctum-entries.mjs [revoke]` (count, or revoke
+  all without touching the watchword). Every harness leaves with `DELETE /session`.
 - Testing seals: `node scripts/sanctum-trial.mjs [--fresh]` makes a throwaway
   copy (`/root/.evoview-sanctum-trial`, its own test watchword in
   `trial-watchword`); serve it with `EVOVIEW_SANCTUM_DIR=/root/.evoview-sanctum-trial

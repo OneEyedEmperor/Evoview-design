@@ -34,10 +34,20 @@ async function measure(src: string): Promise<{ width: number; height: number }> 
   return { width: w, height: h };
 }
 
-/** Derives a vision from a picture file into `<dir>/visions/<id>/`. */
+/** Derives a vision from a picture file into `<dir>/visions/<id>/`; a refused picture leaves nothing behind. */
 export async function deriveVision(dataDirPath: string, id: string, src: string, kind: Picture): Promise<VisionFiles> {
   const out = path.join(dataDirPath, "visions", id);
+  const fresh = !fs.existsSync(out);
   ensureDir(out);
+  try {
+    return await derive(out, id, src, kind);
+  } catch (err) {
+    if (fresh) fs.rmSync(out, { recursive: true, force: true });
+    throw err;
+  }
+}
+
+async function derive(out: string, id: string, src: string, kind: Picture): Promise<VisionFiles> {
   const { width, height } = await measure(src);
   if (!(width > 0 && height > 0) || width > MAX_SIDE || height > MAX_SIDE) throw new VisionRefusal("This picture cannot be held as a vision.");
   const original = path.join(out, `original.${kind}`);

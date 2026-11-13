@@ -434,6 +434,7 @@ export type RuleId =
   | "reading"
   | "rim"
   | "condition"
+  | "apart"
   | "op"
   | "moved";
 
@@ -485,6 +486,10 @@ export interface RecordEntry {
   opNames?: OpName[];
   /** Canon entries written by the trusted tools (seed, explanations, rules, rulings). */
   trusted?: "seed" | "merge" | "rules" | "amend";
+  /** Computed when the record is read: the moment can be restored under the canon and rules as they stand. */
+  restorable?: boolean;
+  /** Why it cannot, in the keeper's voice (set when `restorable` is false). */
+  unrestorable?: string;
 }
 
 export interface SessionResponse {

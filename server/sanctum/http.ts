@@ -7,9 +7,25 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import path from "node:path";
 import { applyOps, diffStates, summarize } from "../../src/sanctum/model/ops.ts";
 import { BUDGET, VISION_MAX_BYTES, clone } from "../../src/sanctum/model/rules.ts";
-import { SCHEMA_VERSION, type ChangeResponse, type Op, type Refusal, type SanctumState } from "../../src/sanctum/model/types.ts";
+import { SCHEMA_VERSION, type ChangeResponse, type Op, type RecordEntry, type Refusal, type SanctumState } from "../../src/sanctum/model/types.ts";
 import { validate } from "../../src/sanctum/model/validate.ts";
-import { ENTRY_TTL_MS, Entries, Gatekeeper, entryCookie, parseCookies, readEntry, signEntry, verifyWatchword, type AuthFile, COOKIE } from "./auth.ts";
+import {
+  COOKIE,
+  DEVICE_COOKIE,
+  ENTRY_TTL_MS,
+  Entries,
+  Gatekeeper,
+  deviceCookie,
+  entryCookie,
+  parseCookies,
+  readDevice,
+  readEntry,
+  signDevice,
+  signEntry,
+  sourceOf,
+  verifyWatchword,
+  type AuthFile,
+} from "./auth.ts";
 import { MovedError, Store, dataDir, ensureDir, readJson } from "./store.ts";
 import { VisionRefusal, deriveVision, newVisionId, sniff } from "./visions.ts";
 
@@ -72,11 +88,6 @@ async function readJsonBody(req: IncomingMessage): Promise<Record<string, unknow
   }
 }
 
-function sourceOf(req: IncomingMessage): string {
-  const fwd = String(req.headers["x-forwarded-for"] ?? "").split(",")[0].trim();
-  return `${req.socket.remoteAddress ?? "?"}|${fwd}`;
-}
-
 /** Writes need the custom header and must come from this same origin. */
 function guardWrite(req: IncomingMessage) {
   if (req.headers["x-sanctum"] !== "1") throw new HttpRefusal(403, {});
@@ -90,10 +101,11 @@ function guardWrite(req: IncomingMessage) {
     } catch {
       throw new HttpRefusal(403, {});
     }
-    const hosts = [req.headers.host, ...String(req.headers["x-forwarded-host"] ?? "").split(",")].map((h) => String(h ?? "").trim()).filter(Boolean);
-    if (!hosts.includes(host)) throw new HttpRefusal(403, {});
+    if (!req.headers.host || host !== req.headers.host.trim()) throw new HttpRefusal(403, {});
   }
 }
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export interface SanctumHandlerOptions {
   dir?: string;
@@ -150,6 +162,32 @@ export function createSanctumHandler(options: SanctumHandlerOptions = {}) {
     return { accepted: true, sealed: true, state: next, diff, summary };
   }
 
+  /* Whether a moment of the record can be restored under the canon and rules as they stand. */
+  const PREDATES = "This moment predates the canon as it now stands.";
+  const CURRENT = "This is the map as it stands.";
+  const restorable = new Map<string, { ok: true } | { ok: false; why: string; refusals?: Refusal[] }>();
+  function restorability(version: number, base: SanctumState): { ok: true } | { ok: false; why: string; refusals?: Refusal[] } {
+    const key = `${version}@${base.meta.version}`;
+    const known = restorable.get(key);
+    if (known) return known;
+    const held = store.at(version);
+    let answer: { ok: true } | { ok: false; why: string; refusals?: Refusal[] };
+    if (!held || held.state.meta.schemaVersion !== SCHEMA_VERSION) answer = { ok: false, why: PREDATES };
+    else {
+      const probe = clone(held.state);
+      probe.meta = { ...base.meta };
+      const refusals = validate(probe, store.canon());
+      answer = !refusals.length
+        ? { ok: true }
+        : refusals.some((x) => x.rule === "fixed" || x.rule === "canonical" || x.rule === "shape")
+          ? { ok: false, why: PREDATES }
+          : { ok: false, why: refusals[0].message, refusals };
+    }
+    if (restorable.size > 2000) restorable.clear();
+    restorable.set(key, answer);
+    return answer;
+  }
+
   function restoreSummary(version: number): string {
     const held = store.at(version)?.entry.summary ?? "";
     const text = `Restored as the record held it: ${held}`;
@@ -164,21 +202,48 @@ export function createSanctumHandler(options: SanctumHandlerOptions = {}) {
       if (method === "GET") return send(res, 200, { entered: Boolean(entered(req)) });
       guardWrite(req);
       if (method === "POST") {
-        const source = sourceOf(req);
-        const rest = gate.rest(source);
-        if (rest) return send(res, 429, { entered: false, rest }, { "Retry-After": String(rest) });
-        const body = await readJsonBody(req);
-        const word = typeof body.watchword === "string" ? body.watchword : "";
         const a = auth();
-        const ok = Boolean(a && word && word.length <= 256 && (await verifyWatchword(word, a)));
-        if (!ok || !a) {
-          const wait = gate.refused(source);
-          return send(res, 401, wait ? { entered: false, rest: wait } : { entered: false });
+        /* A known device knocks under its own key, in its own lane. */
+        const device = a ? readDevice(a.secret, parseCookies(req.headers.cookie)[DEVICE_COOKIE]) : undefined;
+        const key = device ? `device:${device}` : sourceOf(req.socket.remoteAddress, req.headers["cf-connecting-ip"]);
+        const lane = device ? "device" : "common";
+        /* Reserved before anything is awaited, so concurrent knocks cannot slip past. */
+        const reserved = gate.reserve(key);
+        if ("rest" in reserved) return send(res, 429, { entered: false, rest: reserved.rest }, { "Retry-After": String(reserved.rest) });
+        let received = false;
+        let full = false;
+        let release: (() => void) | null = null;
+        try {
+          const body = await readJsonBody(req);
+          const word = typeof body.watchword === "string" ? body.watchword : "";
+          if (a && word && word.length <= 256) {
+            release = await gate.slot(lane, reserved.fails);
+            if (release) received = await verifyWatchword(word, a);
+            else full = true;
+          }
+        } catch (err) {
+          gate.settle(key, false);
+          throw err;
+        } finally {
+          release?.();
         }
-        gate.received(source);
+        if (full) {
+          /* A full lane is no refusal of this knocker: it is not counted. */
+          gate.settle(key, false, false);
+          return send(res, 429, { entered: false, rest: 2 }, { "Retry-After": "2" });
+        }
+        if (!received || !a) {
+          const rest = gate.settle(key, false);
+          await sleep(Gatekeeper.FAIL_DELAY_MS);
+          return send(res, 401, rest ? { entered: false, rest } : { entered: false });
+        }
+        gate.settle(key, true);
         const exp = Date.now() + ENTRY_TTL_MS;
         const sid = entries.open(exp);
-        return send(res, 200, { entered: true }, { "Set-Cookie": entryCookie(signEntry(a.secret, sid, exp), Math.floor(ENTRY_TTL_MS / 1000)) });
+        const cookies = [entryCookie(signEntry(a.secret, sid, exp), Math.floor(ENTRY_TTL_MS / 1000))];
+        if (!device) cookies.push(deviceCookie(signDevice(a.secret)));
+        res.setHeader("Set-Cookie", cookies);
+        return send(res, 200, { entered: true });
       }
       if (method === "DELETE") {
         const entry = entered(req);
@@ -193,7 +258,15 @@ export function createSanctumHandler(options: SanctumHandlerOptions = {}) {
 
     if (sub === "/map" && method === "GET") return send(res, 200, store.current());
 
-    if (sub === "/record" && method === "GET") return send(res, 200, { entries: store.record() });
+    if (sub === "/record" && method === "GET") {
+      const base = store.current();
+      const entries = store.record().map((e): RecordEntry => {
+        if (e.version === base.meta.version) return { ...e, restorable: false, unrestorable: CURRENT };
+        const r = restorability(e.version, base);
+        return r.ok ? { ...e, restorable: true } : { ...e, restorable: false, unrestorable: r.why };
+      });
+      return send(res, 200, { entries });
+    }
 
     const at = /^\/record\/(\d+)$/.exec(sub);
     if (at && method === "GET") {
@@ -217,7 +290,8 @@ export function createSanctumHandler(options: SanctumHandlerOptions = {}) {
       const version = Number(body.version);
       const held = store.at(version);
       if (!held || version === base.meta.version) refused([{ rule: "op", message: "The record holds no such moment to restore." }], base.meta.version);
-      if (held!.state.meta.schemaVersion !== SCHEMA_VERSION) refused([{ rule: "op", message: "That moment was sealed under older rules and cannot be restored." }], base.meta.version);
+      const r = restorability(version, base);
+      if (!r.ok) refused(r.refusals ?? [{ rule: "op", message: r.why }], base.meta.version);
       const next = clone(held!.state);
       const result = change(base, next, [], body, version);
       return send(res, 200, result);

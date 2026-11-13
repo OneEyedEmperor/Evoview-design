@@ -51,6 +51,8 @@ export interface Manifest {
   elementKinds: ElementKind[];
   tieKinds: TieKind[];
   tieKeys: { key: string; tie: Id; from?: EndType; to?: EndType }[];
+  /** Frontmatter keys naming an element's parent. */
+  parentKeys: string[];
   threadKinds: { id: Id; note: string; hex: string; directed: boolean; flow: Flow; steadfast?: boolean; grammar: Grammar }[];
   /** Note title → element id, for every note that is an element. */
   elements: Record<string, Id>;
@@ -244,7 +246,7 @@ export async function buildSeed(manifest: Manifest, dir: string): Promise<SeedRe
     const n = need(title);
     const kind = str(n.front.kind);
     const layer = layerByNote.get(linkOf(str(n.front.layer)) ?? "");
-    const parentNote = linkOf(str(n.front["state-of"])) ?? linkOf(str(n.front["practice-of"]));
+    const parentNote = manifest.parentKeys.map((k) => linkOf(str(n.front[k]))).find(Boolean);
     const condition = list(n.front.tags).map((t) => conditionByTag.get(t)).find(Boolean);
     const purpose = str(n.front.purpose);
     elements.push({

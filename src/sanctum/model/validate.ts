@@ -2,7 +2,7 @@
    The server runs this on every change (authority); the client runs the
    same engine for instant feedback. Messages are in the map's tongue. */
 
-import { alludesToName, impureWords } from "../../../server/sanctum/purity.ts";
+import { alludesToName, equatesFigures, fold, hasHiddenMarks, impureWords, type NameContext } from "../../../server/sanctum/purity.ts";
 import {
   BUDGET,
   SLUG,
@@ -419,6 +419,20 @@ export function validate(state: SanctumState, canon: Canon): Refusal[] {
     if (n > k.grammar.max) refuse("grammar", `The map holds at most ${numberWord(k.grammar.max)} cord${k.grammar.max === 1 ? "" : "s"} of ${k.title.toLowerCase()}.`, { type: "kind", id: k.id });
   }
 
+  /* ---- an element with states acts only through them ---- */
+  for (const parent of state.elements) {
+    const states = state.elements.filter((e) => e.parent === parent.id && elementKinds.get(e.kind)?.conditional);
+    if (!states.length) continue;
+    const stateIds = new Set(states.map((s) => s.id));
+    const carried = new Set(state.threads.filter((t) => stateIds.has(t.from) || stateIds.has(t.to)).map((t) => t.kind));
+    for (const t of state.threads) {
+      if ((t.from === parent.id || t.to === parent.id) && carried.has(t.kind)) {
+        const kind = threadKinds.get(t.kind);
+        refuse("grammar", `${parent.title} acts through its states: a cord of ${kind?.title.toLowerCase() ?? "this kind"} belongs to them.`, { type: "thread", id: t.id });
+      }
+    }
+  }
+
   /* ---- ties ---- */
   const canonTies = new Map(canon.ties.map((t) => [t.id, t]));
   const tieMarks = new Set<Id>();
@@ -500,7 +514,9 @@ export function validate(state: SanctumState, canon: Canon): Refusal[] {
   }
 
   /* ---- words ---- */
-  const words = (value: unknown, what: string, budget: number, subject: Refusal["subject"], opts: { sentence?: boolean; required?: boolean } = {}) => {
+  const turnerEl = byId.get(state.roles.turner);
+  const names: NameContext = { core: core?.title, turner: turnerEl?.title };
+  const words = (value: unknown, what: string, budget: number, subject: Refusal["subject"], opts: { sentence?: boolean; required?: boolean; title?: boolean } = {}) => {
     if (typeof value !== "string") {
       refuse("text", `The words of ${what} have lost their form.`, subject);
       return;
@@ -509,8 +525,11 @@ export function validate(state: SanctumState, canon: Canon): Refusal[] {
     if (opts.required && !text) refuse("text", `${cap(what)} cannot be left empty.`, subject);
     if ([...value].length > budget) refuse("text", `${cap(what)} holds at most ${numberWord(budget)} letters.`, subject);
     if (opts.sentence && text && !isOneSentence(text)) refuse("text", `${cap(what)} must be one sentence.`, subject);
+    if (hasHiddenMarks(value)) refuse("text", `${cap(what)} holds marks that cannot be seen.`, subject);
+    if (opts.title && text && !/\p{L}/u.test(text)) refuse("text", `${cap(what)} needs at least one letter.`, subject);
     for (const w of impureWords(value)) refuse("purity", `The word “${w}” does not belong to the map's tongue (${what}).`, subject);
-    if (alludesToName(value)) refuse("sealed-name", `The sealed name stays sealed: ${what} may not speak of its form.`, subject);
+    if (alludesToName(value, names)) refuse("sealed-name", `The sealed name stays sealed: ${what} may not speak of its form.`, subject);
+    if (equatesFigures(value, names)) refuse("apart", `${names.turner} and ${names.core} are never one figure (${what}).`, subject);
   };
   const lines = (value: unknown, what: string, subject: Refusal["subject"]) => {
     if (!Array.isArray(value)) {
@@ -520,9 +539,16 @@ export function validate(state: SanctumState, canon: Canon): Refusal[] {
     if (value.length > BUDGET.natureLines) refuse("text", `${cap(what)} holds at most ${numberWord(BUDGET.natureLines)} lines.`, subject);
     value.forEach((line) => words(line, what, BUDGET.natureLine, subject, { required: true }));
   };
+  const seenTitles = new Map<string, Id>();
+  const holds = (title: string, other?: string) => Boolean(other) && new RegExp(`(^|[^\\p{L}])${fold(other!).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^\\p{L}]|$)`, "u").test(fold(title));
   for (const e of state.elements) {
     const subject = { type: "element" as const, id: e.id };
-    words(e.title, "a title", BUDGET.title, subject, { required: true });
+    words(e.title, "a title", BUDGET.title, subject, { required: true, title: true });
+    const key = fold(e.title).trim().replace(/\s+/g, " ");
+    if (seenTitles.has(key)) refuse("text", `${e.title}: another element of the map already bears this title.`, subject);
+    seenTitles.set(key, e.id);
+    if (e.id !== state.roles.core && holds(e.title, core?.title)) refuse("apart", `No title but its own may hold ${core?.title}.`, subject);
+    if (e.id !== state.roles.turner && holds(e.title, turnerEl?.title)) refuse("apart", `No title but his own may hold ${turnerEl?.title}.`, subject);
     words(e.purpose, `the purpose of ${e.title}`, BUDGET.purpose, subject, { sentence: true, required: true });
     words(e.explanation, `the explanation of ${e.title}`, BUDGET.explanation, subject);
     lines(e.nature, `the nature of ${e.title}`, subject);
@@ -553,7 +579,7 @@ export function validate(state: SanctumState, canon: Canon): Refusal[] {
     const subject = { type: "vision" as const, id: v.id };
     if (typeof v.id !== "string" || !SLUG.test(v.id) || visionMarks.has(v.id)) refuse("vision", "A vision has lost its mark.", subject);
     visionMarks.add(v.id);
-    words(v.title, "the title of a vision", BUDGET.visionTitle, subject, { required: true });
+    words(v.title, "the title of a vision", BUDGET.visionTitle, subject, { required: true, title: true });
     const sizesOk = Array.isArray(v.sizes) && v.sizes.length > 0 && v.sizes.every((s, i) => Number.isInteger(s) && s > 0 && (i === 0 || s > v.sizes[i - 1]));
     const formatsOk = Array.isArray(v.formats) && v.formats.length > 0 && v.formats.every((f) => f === "avif" || f === "webp");
     if (!(v.width > 0 && v.height > 0) || !sizesOk || !formatsOk || !Array.isArray(v.subjects)) refuse("vision", `The vision ${v.title} has lost its form.`, subject);
@@ -584,13 +610,17 @@ export function validate(state: SanctumState, canon: Canon): Refusal[] {
 
   /* ---- readings ---- */
   const readingIds = new Set<Id>();
+  const readingTitles = new Set<string>();
   const canonReadings = new Map(canon.readings.map((r) => [r.id, r]));
   for (const r of state.readings) {
     const subject = { type: "reading" as const, id: r.id };
     if (typeof r.id !== "string" || !SLUG.test(r.id) || r.id.length > SLUG_MAX) refuse("shape", `${r.title}: its mark must be plain lowercase words joined by dashes.`, subject);
     if (readingIds.has(r.id)) refuse("shape", `${r.title}: another reading already bears this mark.`, subject);
     readingIds.add(r.id);
-    words(r.title, "the title of a reading", BUDGET.readingTitle, subject, { required: true });
+    words(r.title, "the title of a reading", BUDGET.readingTitle, subject, { required: true, title: true });
+    const readingKey = fold(r.title).trim().replace(/\s+/g, " ");
+    if (readingTitles.has(readingKey)) refuse("text", `${r.title}: another reading already bears this title.`, subject);
+    readingTitles.add(readingKey);
     words(r.text, `the reading ${r.title}`, BUDGET.readingText, subject, { required: true });
     const l = r.lights;
     const lightsOk =

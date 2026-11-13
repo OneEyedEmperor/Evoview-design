@@ -14,7 +14,8 @@ export interface DraftSubject {
   id?: Id;
 }
 
-export type Socket = { socket: { realm: Id; order: number } };
+/** A place a new element would take: the end of `quarter` when set, else the end of the realm. */
+export type Socket = { socket: { realm: Id; order: number; quarter?: Id } };
 export type AwaitChoice = ({ value: ThreadEnd } | Socket) & { ok: boolean; why?: string };
 
 export interface Verdict {

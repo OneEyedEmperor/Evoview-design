@@ -42,6 +42,47 @@ const FIELD_WORD: Record<TextField, string> = {
 
 const SIGHT_KEYS: (keyof Sight)[] = ["layers", "kinds", "condition", "reading", "explanations", "flow", "rehearsal"];
 
+/* Every key an op may carry; anything else is refused, never stored. */
+const OP_KEYS: Record<string, string[]> = {
+  setText: ["target", "field", "value"],
+  addElement: ["element"],
+  removeElement: ["id"],
+  addThread: ["thread"],
+  removeThread: ["id"],
+  addVision: ["visionId", "title"],
+  removeVision: ["visionId"],
+  assignVision: ["visionId", "elementId", "x", "y", "zoom", "primary"],
+  unassignVision: ["visionId", "elementId"],
+  setVisionSubject: ["visionId", "elementId", "x", "y", "zoom"],
+  reorderWithinLayer: ["realm", "order"],
+  setEmphasis: ["id", "emphasis"],
+  setSight: ["sight"],
+  addReading: ["reading"],
+  removeReading: ["id"],
+  setReadingLights: ["id", "lights"],
+  turn: ["condition"],
+  firstBinding: ["id"],
+};
+const NESTED_KEYS: Record<string, string[]> = {
+  target: ["type", "id"],
+  element: ["id", "title", "kind", "realm", "parent", "condition", "quarter", "purpose", "nature", "explanation"],
+  thread: ["id", "kind", "from", "to", "label", "purpose", "explanation"],
+  reading: ["id", "title", "text", "lights"],
+  lights: ["layers", "threadKinds", "elements"],
+};
+const onlyKeys = (v: Record<string, unknown>, allowed: string[]) => Object.keys(v).every((k) => allowed.includes(k));
+function wellFormed(raw: Record<string, unknown>): boolean {
+  const allowed = OP_KEYS[raw.op as string];
+  if (!allowed || !onlyKeys(raw, ["op", ...allowed])) return false;
+  for (const [key, keys] of Object.entries(NESTED_KEYS)) {
+    const inner = raw[key];
+    if (inner !== undefined && (!isObj(inner) || !onlyKeys(inner, keys))) return false;
+  }
+  const lights = isObj(raw.reading) ? raw.reading.lights : undefined;
+  if (lights !== undefined && (!isObj(lights) || !onlyKeys(lights, NESTED_KEYS.lights))) return false;
+  return true;
+}
+
 const isObj = (v: unknown): v is Record<string, unknown> => Boolean(v) && typeof v === "object" && !Array.isArray(v);
 const isStr = (v: unknown): v is string => typeof v === "string";
 const isStrList = (v: unknown): v is string[] => Array.isArray(v) && v.every(isStr);
@@ -117,7 +158,7 @@ export function applyOps(base: SanctumState, ops: unknown, ctx: OpsContext = {})
 function applyOne(state: SanctumState, raw: unknown, ctx: OpsContext): string | undefined {
   const unknown = "The map does not know this change.";
   const missing = "Nothing of that mark stands in the map.";
-  if (!isObj(raw) || !isStr(raw.op)) return unknown;
+  if (!isObj(raw) || !isStr(raw.op) || !wellFormed(raw)) return unknown;
   const op = raw as unknown as Op;
   const byId = elementById(state);
 
@@ -371,7 +412,7 @@ function applyOne(state: SanctumState, raw: unknown, ctx: OpsContext): string | 
       if (!isObj(n) || !isStr(n.id) || !isStr(n.title) || !isStr(n.text) || !isLights(n.lights)) return unknown;
       if (!SLUG.test(n.id)) return `${n.title}: its mark must be plain lowercase words joined by dashes.`;
       if (state.readings.some((r) => r.id === n.id)) return `${n.title}: another reading already bears this mark.`;
-      const reading: Reading = { id: n.id, title: n.title, text: n.text, lights: clone(n.lights), order: state.readings.length, locked: false };
+      const reading: Reading = { id: n.id, title: n.title, text: n.text, lights: lightsOf(n.lights), order: state.readings.length, locked: false };
       state.readings.push(reading);
       return;
     }
@@ -392,7 +433,7 @@ function applyOne(state: SanctumState, raw: unknown, ctx: OpsContext): string | 
       const r = state.readings.find((x) => x.id === op.id);
       if (!r) return missing;
       if (r.locked) return `The reading ${r.title} is canonical: what it lights is sealed.`;
-      r.lights = clone(op.lights);
+      r.lights = lightsOf(op.lights);
       return;
     }
 
@@ -404,6 +445,9 @@ function applyOne(state: SanctumState, raw: unknown, ctx: OpsContext): string | 
 function isLights(v: unknown): v is Reading["lights"] {
   return isObj(v) && isStrList(v.layers) && isStrList(v.threadKinds) && isStrList(v.elements);
 }
+
+/** Lights rebuilt from their three lists only. */
+const lightsOf = (l: Reading["lights"]): Reading["lights"] => ({ layers: [...l.layers], threadKinds: [...l.threadKinds], elements: [...l.elements] });
 
 const ALLOWED: Record<TextTarget["type"], TextField[]> = {
   element: ["explanation", "nature", "title", "purpose"],
@@ -420,7 +464,7 @@ const ALLOWED: Record<TextTarget["type"], TextField[]> = {
 
 function setText(state: SanctumState, target: TextTarget, field: TextField, value: unknown): string | undefined {
   const allowed = ALLOWED[target.type];
-  if (!allowed) return "The map does not know this change.";
+  if (!allowed || !(field in FIELD_WORD)) return "The map does not know this change.";
   if (field === "nature" ? !isStrList(value) : !isStr(value)) return "The map does not know this change.";
   let holder: Record<string, unknown> | undefined;
   let title = "";
