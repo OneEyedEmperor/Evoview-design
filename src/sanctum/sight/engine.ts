@@ -426,7 +426,11 @@ export class SightEngine {
     const cy = f.y + padY + R + ((f.h - padY * 2) - R * (1 + down)) / 2;
     this.camTarget = { cx, cy, R };
     this.camSettled = false;
-    if (snap || !this.cam.R || this.cam.R === 100) { this.cam = { ...this.camTarget }; this.camVel = { cx: 0, cy: 0, R: 0 }; }
+    if (snap || !this.cam.R || this.cam.R === 100) {
+      this.cam = { ...this.camTarget };
+      this.camVel = { cx: 0, cy: 0, R: 0 };
+      if (this.state) { this.project(); this.moveButtons(); }
+    }
   }
 
   private toXY(r: number, th: number, out: { x: number; y: number }) {
@@ -558,7 +562,7 @@ export class SightEngine {
       if (Math.abs(this.camTarget[k] - this.cam[k]) > 0.3 || Math.abs(this.camVel[k]) > 0.3) moving = true;
       else { this.cam[k] = this.camTarget[k]; this.camVel[k] = 0; }
     }
-    if (!moving && !this.camSettled) { this.camSettled = true; this.labelsDirty = true; }
+    if (!moving && !this.camSettled) { this.camSettled = true; this.labelsDirty = true; this.project(); this.moveButtons(); }
 
     /* passage between conditions: gesture first, then one in-out sequence */
     const ps = this.passage;
