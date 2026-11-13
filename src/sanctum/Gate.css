@@ -1,15 +1,23 @@
-/* Functional gate; the Render designer styles it later. */
+/* The gate. Nothing of what lies behind it: a closed lid with light at its
+   seam, the watchword, one way in. Markup and words: CONTRACT.md. */
 .sanctum-root {
   min-height: 100vh;
   min-height: 100dvh;
-  background: #07080b;
+  background: #06080b;
 }
 
 .sanctum-gathering {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
   margin: 0;
-  padding: 24px;
-  font-size: 15px;
-  color: #b9b4aa;
+  font-family: "Montserrat", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(243, 239, 230, 0.55);
+  background: #06080b;
+  animation: sanctum-gate-breathe 4s cubic-bezier(0.65, 0, 0.35, 1) infinite alternate;
 }
 
 .sanctum-gate {
@@ -18,58 +26,103 @@
   display: grid;
   place-items: center;
   padding: 24px;
-  background: #07080b;
-  color: #e9e6df;
+  background: radial-gradient(ellipse 60% 50% at 50% 42%, rgba(60, 70, 92, 0.16), rgba(6, 8, 11, 0) 70%), #06080b;
+  color: #f3efe6;
+  font-family: "Montserrat", sans-serif;
 }
 
 .sanctum-gate__form {
+  position: relative;
   display: grid;
-  gap: 14px;
+  gap: 12px;
   width: min(340px, 100%);
+  padding-top: 132px;
+}
+
+/* the lid, almost closed */
+.sanctum-gate__form::before,
+.sanctum-gate__form::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  translate: -50% 0;
+  pointer-events: none;
+}
+.sanctum-gate__form::after {
+  top: 40px;
+  width: min(380px, 92vw);
+  height: 120px;
+  background: radial-gradient(ellipse 50% 40% at 50% 50%, rgba(255, 236, 200, 0.16), rgba(255, 236, 200, 0) 70%);
+  animation: sanctum-gate-breathe 6s cubic-bezier(0.65, 0, 0.35, 1) infinite alternate;
+}
+.sanctum-gate__form::before {
+  top: 96px;
+  width: min(300px, 76vw);
+  height: 7px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, rgba(255, 240, 210, 0), rgba(255, 244, 220, 0.95) 50%, rgba(255, 240, 210, 0));
+  box-shadow: 0 0 18px 2px rgba(255, 236, 200, 0.22);
+  clip-path: ellipse(50% 50% at 50% 50%);
+  animation: sanctum-gate-breathe 6s cubic-bezier(0.65, 0, 0.35, 1) infinite alternate;
 }
 
 .sanctum-gate__label {
-  font-size: 15px;
-  letter-spacing: 0.02em;
-  color: #b9b4aa;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(243, 239, 230, 0.66);
 }
 
 .sanctum-gate__field {
-  min-height: 48px;
+  min-height: 52px;
   padding: 0 16px;
   border: 0;
   border-radius: 12px;
-  background: #15171d;
+  background: rgba(20, 24, 33, 0.9);
   color: inherit;
   font: inherit;
   font-size: 16px;
+  text-align: center;
+  letter-spacing: 0.3em;
 }
 
 .sanctum-gate__field:focus-visible {
-  outline: 2px solid #e9e6df;
-  outline-offset: 2px;
+  outline: 2px solid #f3efe6;
+  outline-offset: 3px;
 }
 
 .sanctum-gate__enter {
-  min-height: 48px;
+  min-height: 50px;
   border: 0;
-  border-radius: 999px;
-  background: #e9e6df;
-  color: #07080b;
+  border-radius: 12px;
+  background: #f3efe6;
+  color: #0b0c0f;
   font: inherit;
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
+  transition: opacity 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.sanctum-gate__enter:active {
+  scale: 0.98;
 }
 
 .sanctum-gate__enter:disabled {
-  opacity: 0.45;
+  background: #1a1f29;
+  color: rgba(243, 239, 230, 0.36);
   cursor: default;
 }
 
 .sanctum-gate__words {
-  min-height: 1.4em;
-  margin: 0;
-  font-size: 15px;
-  color: #b9b4aa;
+  min-height: 1.5em;
+  margin: 2px 0 0;
+  text-align: center;
+  font-size: 14px;
+  color: rgba(243, 239, 230, 0.66);
+}
+
+@keyframes sanctum-gate-breathe {
+  from { opacity: 0.72; }
+  to { opacity: 1; }
 }
