@@ -67,10 +67,19 @@
 }
 
 .sanctum-gate__label {
+  margin-bottom: -4px;
   text-align: center;
   font-size: 14px;
   font-weight: 500;
   color: rgba(243, 239, 230, 0.66);
+}
+
+/* each label belongs to its field; a second pair (choosing the watchword) and the act keep their distance */
+.sanctum-gate__field + .sanctum-gate__label {
+  margin-top: 14px;
+}
+.sanctum-gate__field + .sanctum-gate__enter {
+  margin-top: 8px;
 }
 
 .sanctum-gate__field {
@@ -118,6 +127,7 @@
   min-height: 1.5em;
   margin: 2px 0 0;
   text-align: center;
+  text-wrap: balance;
   font-size: 14px;
   color: rgba(243, 239, 230, 0.66);
 }
