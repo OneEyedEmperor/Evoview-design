@@ -89,8 +89,14 @@ closed to everyone), issues a one-time summons (only its hash is kept,
 server or proxy log ever receives. The entry chunk reads it once, wipes it
 from the address, and the gate asks for the watchword twice. On seal the
 server burns the summons, stores only the scrypt hash with a new signing
-secret, and enters. `--status`: watchword set / voided / none, and the summons
-pending (with its expiry) or lapsed. Agents test entry on trial dirs only.
+secret, and enters. `--void` closes the gate without a summons (unknown hash,
+new signing secret, entries cleared). `--status`: watchword set / voided /
+none, and the summons pending (with its expiry), lapsed, or none pending.
+`--setup`, `--void` and `sanctum-entries revoke` act on the real dir only with
+`--real`. A summons fragment arriving into an open tab (`hashchange`) is
+handled like the first. The watchword is normalised identically for choosing,
+entering and the strength rule (NFC, trimmed, inner runs of space made one).
+Agents test entry on trial dirs only.
 
 The gate: the source is `cf-connecting-ip` only when the peer is loopback (the
 local proxy), else the peer address; client forward headers are ignored. Each
