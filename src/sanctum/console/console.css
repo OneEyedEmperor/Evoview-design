@@ -261,6 +261,10 @@
 .sanctum-console__foresee { overflow: hidden; }
 .sanctum-console__foresee[aria-pressed="true"] { color: var(--sx-ink); }
 
+@media (pointer: coarse) {
+  .sanctum-console .sx-chip, .sanctum-console .sx-opt, .sanctum-console__slot, .sanctum-console__inline { min-height: 44px; }
+}
+
 /* The phone sheet: the same sentence, a chip strip for the verbs, a slim verdict. */
 @container (max-width: 370px) {
   .sanctum-console__sentence, .sanctum-console__inline input { font-size: 16px; }

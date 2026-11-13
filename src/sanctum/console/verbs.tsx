@@ -140,7 +140,7 @@ export function Raise({ store, state, subject, verdict, previewState, compose }:
   const fixes: Fix[] = [];
   const turnable = state.elementKinds.find((x) => x.raisedIn && x.raisedIn.condition !== state.condition && x.addable);
   const turnWords = turnable && state.conditions.find((c) => c.id === turnable.raisedIn!.condition)?.turn;
-  if (!turnFirst && !kind && turnable && turnWords) fixes.push({ label: `To raise ${aOrAn(lower(turnable.title))}, first: ${lower(turnWords.replace(/\.$/, ""))}`, run: () => setTurnFirst(turnable.raisedIn!.condition) });
+  if (!turnFirst && !kind && turnable && turnWords) fixes.push({ label: `Raise ${turnable.title} after the turn`, run: () => { setTurnFirst(turnable.raisedIn!.condition); setKind(turnable.id); } });
   if (turnFirst && !kind) fixes.push({ label: "Without the turn", run: () => setTurnFirst("") });
   const failing = failingSlot(verdict, { "no-dead-space": "hold", reach: "hold", capacity: "kind", "kind-realm": "realm" });
   if (failing && verdict.state === "refused") fixes.push({ label: failing === "hold" ? "Choose a cord to hold it" : "Choose again", run: () => setOpenKey(failing) });
