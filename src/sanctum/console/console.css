@@ -81,7 +81,10 @@
   border-radius: var(--sx-r-tag);
   background: var(--sx-tile-3);
   vertical-align: middle;
+  cursor: text;
 }
+.sanctum-console__said { margin: 12px 0 0; padding: 10px 14px; border-radius: var(--sx-r-control); background: var(--sx-tile); color: var(--sx-light); }
+.sanctum-console__said:empty { margin: 0; padding: 0; background: none; }
 .sanctum-console__inline input {
   min-width: 6ch;
   max-width: 100%;
@@ -282,6 +285,7 @@
 /* The phone sheet: the same sentence, a chip strip for the verbs, a slim verdict. */
 @container (max-width: 370px) {
   .sanctum-console__sentence, .sanctum-console__inline input { font-size: 16px; }
+  .sanctum-console__inline { min-height: 44px; }
   .sanctum-console__office { font-size: 22px; }
   .sanctum-console__head { flex-wrap: nowrap; }
   .sanctum-console__title { font-size: 19px; flex: 1; min-width: 0; }

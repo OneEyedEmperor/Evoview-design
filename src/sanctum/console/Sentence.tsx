@@ -7,6 +7,7 @@ import type { AwaitChoice, Choice, SanctumStore } from "../data";
 import { SurfaceFill } from "../motion";
 import { patchDraft } from "./draft";
 import type { ThreadEnd } from "../model/types";
+import { keeperName, realmName, titleOf } from "./voice";
 
 export interface ChoicePart {
   slot: "choice";
@@ -73,12 +74,16 @@ export function Sentence({ store, parts, openKey, onOpened }: Props) {
     }
   }, [openKey]);
 
-  /* The eye may answer an open element slot. Published once per change of
-     what is offered (the choices array itself is rebuilt on every render). */
-  const latest = useRef(current);
-  latest.current = current;
-  const answerable = current?.onEye || current?.placeOf;
-  const offered = answerable ? `${current.key}|${current.choices.map((c) => `${c.value}:${c.ok ? 1 : 0}:${JSON.stringify(current.placeOf?.(c.value) ?? "")}`).join(",")}` : "";
+  /* The eye may answer the slot the sentence waits on: the open chooser, else
+     the first empty choice, whether or not its chooser is open. Published once
+     per change of what is offered (the choices array is rebuilt every render). */
+  const waitedOn = current ?? live.find((p): p is ChoicePart => typeof p === "object" && p.slot === "choice" && !p.choices.some((c) => c.value === p.value));
+  const asked = waitedOn && (waitedOn.onEye || waitedOn.placeOf) ? waitedOn : undefined;
+  const latest = useRef(asked);
+  latest.current = asked;
+  const offered = asked ? `${asked.key}|${asked.choices.map((c) => `${c.value}:${c.ok ? 1 : 0}:${JSON.stringify(asked.placeOf?.(c.value) ?? "")}`).join(",")}` : "";
+  const [said, setSaid] = useState("");
+  useEffect(() => setSaid(""), [offered]);
   useEffect(() => {
     const c = latest.current;
     if (!offered || !c) return;
@@ -107,8 +112,18 @@ export function Sentence({ store, parts, openKey, onOpened }: Props) {
       const asValue = typeof v === "string" ? (c.placeOf && c.fromEnd ? c.fromEnd(v) : v) : null;
       const choice = typeof v === "string" ? c.choices.find((x) => x.value === asValue) : c.choices.find((x) => { const p = c.placeOf?.(x.value); return Boolean(p && samePlace(p, v.socket as Place)); });
       if (choice?.ok) {
+        setSaid("");
         c.onChoose(choice.value);
         setOpen(null);
+        return;
+      }
+      const state = store.get().state;
+      if (!state) return;
+      const keeper = keeperName(state);
+      if (choice) setSaid(`${keeper} refuses ${choice.title} here. ${choice.why ?? "It cannot be chosen now."}`);
+      else {
+        const title = typeof v !== "string" ? "" : v.startsWith("layer:") ? realmName(state, v.slice(6)) : titleOf(state, v);
+        setSaid(`${title || keeper} cannot answer ${c.placeholder}.`);
       }
     });
   }, [offered]);
@@ -159,6 +174,7 @@ export function Sentence({ store, parts, openKey, onOpened }: Props) {
           );
         })}
       </p>
+      <p className="sx-small sanctum-console__said" role="status">{said}</p>
       {current && <Chooser store={store} part={current} onClose={(back) => close(back ? current.key : null)} />}
     </div>
   );
@@ -265,7 +281,8 @@ export function Sockets({ used, capacity, pending = 0, ghost = 0 }: { used: numb
 function InlineText({ part }: { part: TextPart }) {
   const over = [...part.value].length > part.budget;
   return (
-    <span className={`sanctum-console__inline${over ? " is-over" : ""}`}>
+    /* The whole pill is the field's target, not only the line of the input. */
+    <label className={`sanctum-console__inline${over ? " is-over" : ""}`}>
       <input
         aria-label={part.label}
         value={part.value}
@@ -274,7 +291,7 @@ function InlineText({ part }: { part: TextPart }) {
         onChange={(e) => part.onChange(e.target.value)}
       />
       <Measure value={part.value} budget={part.budget} />
-    </span>
+    </label>
   );
 }
 
