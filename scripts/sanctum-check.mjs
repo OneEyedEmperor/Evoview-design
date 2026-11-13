@@ -17,7 +17,8 @@ import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { cordsFor } from "../src/sanctum/model/affordances.ts";
+import { createSanctumStore } from "../src/sanctum/data/store.ts";
+import { cordsFor, room, slotsFor } from "../src/sanctum/model/affordances.ts";
 import { applyOps, summarize } from "../src/sanctum/model/ops.ts";
 import { BUDGET, clone, isQuiet, pairKey, rimOrder, ringPairs } from "../src/sanctum/model/rules.ts";
 import { BEYOND } from "../src/sanctum/model/types.ts";
@@ -305,6 +306,44 @@ if (taker && base.rim) {
   }
 }
 
+/* affordances: every choice offered agrees with the engine */
+{
+  let disagreements = 0;
+  let judged = 0;
+  const t0 = performance.now();
+  const kindSlots = slotsFor(base, { op: "addThread" }).slots.kind;
+  const slotMs = performance.now() - t0;
+  for (const k of kindSlots.filter((c) => c.ok)) {
+    const from = slotsFor(base, { op: "addThread", kind: k.value }).slots.from.find((c) => c.ok);
+    if (!from) {
+      disagreements++;
+      continue;
+    }
+    for (const to of slotsFor(base, { op: "addThread", kind: k.value, from: from.value }).slots.to) {
+      const r = run([{ op: "addThread", thread: { kind: k.value, from: from.value, to: to.value, label: "Probe", purpose: "A probe." } }]);
+      judged++;
+      if (to.ok !== (r.refusals.length === 0)) disagreements++;
+    }
+  }
+  check(`slotsFor: ${judged} offered cord ends each judged as the engine judges`, disagreements === 0 && judged > 0, `${disagreements} disagreements`);
+  check(`slotsFor answers the kinds of cord in good time (${Math.round(slotMs)} ms)`, slotMs < 1500);
+  for (const k of kindSlots.filter((c) => !c.ok)) check(`a kind offered as closed says why (${k.value})`, Boolean(k.why));
+  if (base.rim) {
+    const s = slotsFor(base, { op: "addElement", kind: base.rim.stoneKind });
+    const counted = (s.slots.quarter ?? []).reduce((n, c) => n + (c.count ?? 0), 0);
+    check("raising offers every quarter with its count", s.slots.quarter?.length === base.quarters.length && counted === base.elements.filter((e) => e.kind === base.rim.stoneKind).length);
+    check("raising offers only the rim's realm", s.slots.realm.filter((c) => c.ok).every((c) => c.value === base.rim.realm));
+    const withRealm = slotsFor(base, { op: "addElement", kind: base.rim.stoneKind, realm: base.rim.realm, quarter: base.quarters[0].id });
+    check("a stone being raised is offered the cords that could hold it", (withRealm.cords ?? []).some((c) => c.ok));
+    const r = room(base, { realm: base.rim.realm });
+    check("room = capacity less used and pending", r.free === Math.max(0, r.capacity - r.used - r.pending));
+  }
+  const turn = slotsFor(base, { op: "turn" }).slots.condition;
+  check("turning offers only the condition not sealed", turn.filter((c) => c.ok).every((c) => c.value !== base.condition) && turn.some((c) => !c.ok && c.why));
+  const unseen = slotsFor(base, { op: "assignVision", visionId: base.visions[0]?.id }).slots.elementId ?? [];
+  check("no vision is offered to what takes none", base.roles.unseen.every((id) => unseen.find((c) => c.value === id)?.ok === false));
+}
+
 /* words */
 const e0 = locked[0].id;
 const said = (value, field = "explanation") => [{ op: "setText", target: { type: "element", id: e0 }, field, value }];
@@ -522,6 +561,54 @@ try {
   check("something that is not a picture → refused", notPic.status === 415);
   const heavy = await fetch(`${B}/sanctum-api/visions`, { method: "POST", headers: { cookie, "X-Sanctum": "1", "Content-Type": "image/png", "Content-Length": String(31 * 1024 * 1024) }, body: Buffer.alloc(16) }).catch(() => ({ status: 413 }));
   check("a picture heavier than the measure → 413", heavy.status === 413);
+
+  /* the client store's draft, against this server */
+  {
+    const realFetch = globalThis.fetch;
+    let jar = "";
+    globalThis.fetch = async (url, init = {}) => {
+      const res = await realFetch(String(url).startsWith("/") ? B + url : url, { ...init, headers: { ...(init.headers ?? {}), ...(jar ? { cookie: jar } : {}) } });
+      const sc = res.headers.get("set-cookie");
+      if (sc) jar = sc.split(";")[0];
+      return res;
+    };
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    try {
+      const st = createSanctumStore();
+      await st.enter(word);
+      check("store: entered and gathered", st.get().status === "open" && Boolean(st.get().state));
+      const v = st.get().state.meta.version;
+      const words = (text) => ({ op: "setText", target: { type: "element", id: e0 }, field: "explanation", value: text });
+      st.setDraft({ ops: [words("Drafted by the check.")] });
+      check("store: a draft is judged at once, locally", st.get().draft.verdict.state === "checking" && Boolean(st.get().draft.previewState) && st.get().draft.open);
+      await sleep(900);
+      const d = st.get().draft;
+      check("store: …then confirmed by the server's dry run", d.verdict.state === "accepted" && d.verdict.confirmed && d.verdict.summary.length > 0 && d.diff.elements.changed.includes(e0));
+      st.setDraft({ ops: [{ op: "removeElement", id: e0 }] });
+      check("store: a refused draft is refused at once, in words", st.get().draft.verdict.state === "refused" && st.get().draft.verdict.refusals[0]?.message.length > 0);
+      st.setDraft({ ops: [words("First thought.")] });
+      st.setDraft({ ops: [words("Second thought.")] });
+      await sleep(900);
+      const late = st.get().draft.previewState.elements.find((e) => e.id === e0).explanation;
+      check("store: a late dry run never overwrites a newer draft", late === "Second thought." && st.get().draft.verdict.confirmed);
+      const sealedOk = await st.seal();
+      check("store: seal → a new version, the draft cleared", sealedOk && st.get().state.meta.version === v + 1 && st.get().draft.ops.length === 0 && !st.get().draft.open);
+      const rec = await st.loadRecord();
+      check("record: a sealed change carries its op names", JSON.stringify(rec[0].opNames) === JSON.stringify(["setText"]));
+      const previewed = await st.restore(v);
+      check("store: a restore previewed as a draft", previewed && st.get().draft.restoring === v && st.get().draft.verdict.state === "accepted");
+      const restoredOk = await st.seal();
+      check("store: the restore sealed", restoredOk && st.get().state.meta.version === v + 2 && (await st.loadRecord())[0].restoredFrom === v);
+      st.setDraft({ ops: [words("Withdrawn.")] });
+      st.closeDraft();
+      await sleep(600);
+      check("store: a withdrawn draft leaves nothing behind", st.get().draft.ops.length === 0 && st.get().draft.verdict.state === "empty");
+      await st.leave();
+      check("store: leaving returns to the gate", st.get().status === "gate" && !st.get().state);
+    } finally {
+      globalThis.fetch = realFetch;
+    }
+  }
 
   /* leaving */
   check("leaving → the entry is revoked", (await req("/sanctum-api/session", { method: "DELETE", headers: CW })).status === 200 && (await req("/sanctum-api/map", { headers: C })).status === 401);

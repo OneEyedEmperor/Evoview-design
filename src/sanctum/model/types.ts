@@ -481,6 +481,10 @@ export interface RecordEntry {
   restoredFrom?: number;
   /** Number of ops in the change (0 for the seed and restores). */
   ops: number;
+  /** The kinds of op sealed, in order (changes sealed through the endpoint). */
+  opNames?: OpName[];
+  /** Canon entries written by the trusted tools (seed, explanations, rules, rulings). */
+  trusted?: "seed" | "merge" | "rules" | "amend";
 }
 
 export interface SessionResponse {

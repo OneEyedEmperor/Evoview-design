@@ -2,8 +2,8 @@
    cord when its kind is listed and both ends are lit. A layer end counts as
    lit when that layer or any element standing in it is lit. */
 
-import { isLayerRef, refId } from "../model/rules";
-import type { Id, Reading, SanctumState } from "../model/types";
+import { isLayerRef, refId } from "../model/rules.ts";
+import type { Id, Reading, SanctumState } from "../model/types.ts";
 
 export interface Lit {
   /** Realm ids (layer ids and/or BEYOND). */

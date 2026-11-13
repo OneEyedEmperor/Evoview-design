@@ -53,7 +53,7 @@ if (mode === "seed") {
   }
   writeAtomic(path.join(dir, "seed", "vault.json"), JSON.stringify(vault, null, 2));
   store.writeCanon(canon);
-  store.seal(state, { version: 1, at: state.meta.updatedAt, summary: state.meta.summary, ops: 0 });
+  store.seal(state, { version: 1, at: state.meta.updatedAt, summary: state.meta.summary, ops: 0, trusted: "seed" });
   console.log(`seeded v1: ${state.elements.length} elements, ${state.threads.length} cords, ${state.ties.length} ties, ${state.visions.length} visions`);
 } else if (mode === "merge") {
   const file = rest.find((a) => !a.startsWith("--")) ?? manifest?.explanations;
@@ -81,7 +81,7 @@ if (mode === "seed") {
     process.exit(1);
   }
   store.writeCanon(canon);
-  store.seal(state, { version, at: state.meta.updatedAt, summary, ops: applied.length });
+  store.seal(state, { version, at: state.meta.updatedAt, summary, ops: applied.length, trusted: "merge" });
   const d = diffStates(base, state);
   console.log(`merged into v${version}: ${applied.length} applied, ${refused.length} refused; readings +${d.readings.added.length} ~${d.readings.changed.length}`);
 } else if (mode === "rules") {
@@ -107,7 +107,7 @@ if (mode === "seed") {
     process.exit(0);
   }
   store.writeCanon(canon);
-  store.seal(state, { version, at: state.meta.updatedAt, summary, ops: 0 });
+  store.seal(state, { version, at: state.meta.updatedAt, summary, ops: 0, trusted: "rules" });
   console.log(`sealed v${version}`);
 } else if (mode === "amend") {
   const file = rest.find((a) => !a.startsWith("--"));
@@ -134,7 +134,7 @@ if (mode === "seed") {
   if (!rest.includes("--dry")) {
     for (const { entry, state: s, canon } of results) {
       store.writeCanon(canon);
-      store.seal(s, { version: s.meta.version, at: s.meta.updatedAt, summary: entry.summary, ops: entry.edits.length });
+      store.seal(s, { version: s.meta.version, at: s.meta.updatedAt, summary: entry.summary, ops: entry.edits.length, trusted: "amend" });
     }
   }
   console.log(`${rest.includes("--dry") ? "dry, would seal" : "sealed"}: ${results.map((r) => `v${r.state.meta.version}`).join(", ")}`);

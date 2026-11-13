@@ -1,7 +1,7 @@
 /* Op builders, so callers never hand-write op objects. */
 
-import { SLUG_MAX } from "../model/rules";
-import type { Emphasis, Id, NewElement, NewReading, NewThread, Op, Reading, Sight, TextField, TextTarget } from "../model/types";
+import { SLUG_MAX } from "../model/rules.ts";
+import type { Emphasis, Id, NewElement, NewReading, NewThread, Op, Reading, Sight, TextField, TextTarget } from "../model/types.ts";
 
 export const ops = {
   setText: (target: TextTarget, field: TextField, value: string | string[]): Op => ({ op: "setText", target, field, value }),
@@ -20,6 +20,8 @@ export const ops = {
   addReading: (reading: NewReading): Op => ({ op: "addReading", reading }),
   removeReading: (id: Id): Op => ({ op: "removeReading", id }),
   setReadingLights: (id: Id, lights: Reading["lights"]): Op => ({ op: "setReadingLights", id, lights }),
+  turn: (condition: Id): Op => ({ op: "turn", condition }),
+  firstBinding: (id: Id): Op => ({ op: "firstBinding", id }),
 };
 
 /** A fresh mark for a new element or reading, from its title. */

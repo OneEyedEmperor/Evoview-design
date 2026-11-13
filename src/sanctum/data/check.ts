@@ -1,9 +1,9 @@
 /* Instant feedback: the same engine the server runs. The server stays the
    authority (it checks against the sealed canon, not the locked flags). */
 
-import { applyOps, diffStates } from "../model/ops";
-import type { Diff, Id, Op, Refusal, SanctumState, VisionFiles } from "../model/types";
-import { canonOf, validate } from "../model/validate";
+import { applyOps, diffStates } from "../model/ops.ts";
+import type { Diff, Id, Op, Refusal, SanctumState, VisionFiles } from "../model/types.ts";
+import { canonOf, validate } from "../model/validate.ts";
 
 export interface LocalCheck {
   state: SanctumState;

@@ -1,6 +1,6 @@
 /* Thin calls to the sanctum endpoints. A 401 anywhere means "not entered". */
 
-import type { ChangeRequest, ChangeResponse, RecordEntry, SanctumState, SessionResponse, VisionFiles, VisionFormat } from "../model/types";
+import type { ChangeRequest, ChangeResponse, RecordEntry, SanctumState, SessionResponse, VisionFiles, VisionFormat } from "../model/types.ts";
 
 const BASE = "/sanctum-api";
 

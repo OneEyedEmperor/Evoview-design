@@ -13,7 +13,20 @@ endpoints below, after entry.
 
 - Roles: `state.roles.core` (the element at the core; every element in a
   layer reaches it), `.apex` (the element the inward cords meet short of the
-  core), `.unseen` (elements that take no vision: never show a vision slot).
+  core), `.unseen` (elements that take no vision: never show a vision slot),
+  `.turner` (the element whose office turns the sealed condition).
+- Sealed condition: `state.condition`, changed only by the `turn` op; its
+  record words are `conditions[].turn`. `sight.condition` is the condition
+  viewed (a foresight when it differs). `isQuiet(state, thread, condition?)`:
+  a cord carrying another condition is quiet.
+- Quarters: `state.quarters[]` (ordered around the rim); `element.quarter`.
+  Stations: `state.stations[]` (`between: [layerId, layerId]`, drawn on that
+  boundary); `element.station` is a placement hint the layout honours.
+- Rim (`state.rim`): the ring of `ringKind` cords between rim neighbours is
+  derived (`rimOrder`, `ringPairs`: by quarter, then order); each quarter holds
+  exactly one `crossingKind` cord, from its canonical stone (a raised stone
+  never carries one). `element.awaiting`: come to rest, not yet bound (held by
+  a tie, outside the ring, no cords) until `firstBinding`.
 - Layer order: `layers[].order` (0 = rim, last = core). `BEYOND` is the realm
   outside the layers (`state.beyond`).
 - Cord semantics: `threadKinds[].directed`, `.flow` (`along` = signs travel
@@ -22,8 +35,8 @@ endpoints below, after entry.
   `.grammar.irreversible`, `.grammar.bidirectional`.
 - An element with states: elements whose `parent` is it and whose kind is
   `conditional`; each carries `condition`. Cords touching a state carry the
-  same `condition`. Cords whose `condition` is unset or equals
-  `sight.condition` are present; the others belong to the other condition.
+  same `condition`. Cords whose `condition` is unset or equals the condition
+  shown are active; the others are quiet.
 - Children: elements sharing a `parent`, joined by the tie named in
   `elementKinds[].parent.tie`.
 - Element colour = its realm's colour; cord colour = its kind's colour.
@@ -82,8 +95,8 @@ expires; the gate rests with growing backoff after refusals.
 | Op | Fields | Notes |
 | --- | --- | --- |
 | `setText` | `target {type, id?}`, `field`, `value` | see matrix below; `nature` takes `string[]` |
-| `addElement` | `element: NewElement` | kind must be `addable`; order appended; parent tie and kind ties made |
-| `removeElement` | `id` | unlocked only, no children; its unlocked cords, ties and vision subjects go with it |
+| `addElement` | `element: NewElement` | kind must be `addable`; `quarter` where the kind asks; only in `raisedIn.condition`; order appended; parent tie and kind ties made; a rim stone re-derives the ring (needs no cord) |
+| `removeElement` | `id` | unlocked only, no children; its unlocked cords, ties and vision subjects go with it; the ring re-derives |
 | `addThread` | `thread: NewThread` | `bidirectional` / `irreversible` from the grammar; `condition` from the grammar or a state end; id `<kind>-<n>` when omitted |
 | `removeThread` | `id` | unlocked and not irreversible |
 | `addVision` | `visionId`, `title` | files from `POST /visions` enter the map |
@@ -97,6 +110,8 @@ expires; the gate rests with growing backoff after refusals.
 | `addReading` | `reading: NewReading` | unlocked; at most four beside the canonical ones |
 | `removeReading` | `id` | unlocked only |
 | `setReadingLights` | `id`, `lights` | unlocked only |
+| `turn` | `condition` | the turner's office; seals `state.condition` (and `sight.condition`); on the turn into `becomes.on`, unlocked elements of that kind come to rest: new kind and realm, `awaiting`, cords dropped, held by `becomes.tie` |
+| `firstBinding` | `id` | an awaiting element joins the ring between its quarter neighbours |
 
 `setText` matrix (locked = canonical):
 
@@ -111,10 +126,18 @@ expires; the gate rests with growing backoff after refusals.
 
 ## Invariants (server authority; the client mirror runs the same engine)
 
-- Layers, beyond, conditions and every kind table equal the seed: nothing
-  added, removed, reordered or renamed. `roles` fixed.
-- Canonical (locked) elements, cords and ties equal the seed except their
+- Layers, beyond, conditions, quarters, stations, rim and every kind table
+  equal the canon: nothing added, removed, reordered or renamed. `roles` fixed.
+  The canon changes only through the trusted tools (merge, rules, amend), each
+  a record entry.
+- Canonical (locked) elements, cords and ties equal the canon except their
   `explanation`, `nature`, `visions`, `emphasis`, `order`.
+- Sealed condition is one of `conditions`; kinds with `raisedIn` hold no
+  unlocked element outside it; what `becomes` keeps its room in advance.
+- Rim: exactly one closed ring of `ringKind` cords through every bound rim
+  element in rim order (no other binding between rim elements); exactly one
+  `crossingKind` cord per quarter; quarters where kinds ask; awaiting elements
+  touch no cord and hold by a tie.
 - Every cord follows a course of its kind's grammar; condition, both-ways and
   irreversible flags agree with it; no twin cords; each kind within
   `grammar.min..max`.
@@ -137,14 +160,50 @@ expires; the gate rests with growing backoff after refusals.
 ## Client data layer (`src/sanctum/data`)
 
 `createSanctumStore()` / `useSanctum(store, select)`: status
-(`unknown | gate | gathering | open`), `state`, `preview` (dry-run result
-with `ops`, `diff`, would-be `state`), `refusals`, `record`, `brought`
+(`unknown | gate | gathering | open`), `state`, `draft`, `record`, `brought`
 (visions brought, not yet in the map), `busy`, `word` (last outcome in pure
-words); actions `enter`, `leave`, `gather`, `preview(ops, summary?)`,
-`seal(ops?, summary?)` (no ops = seal the preview), `clearPreview`,
-`restore(version, dryRun = true)`, `loadRecord`, `recordAt(version)`,
-`bringVision(blob)`. `select` must return a field, not a fresh object.
+words); actions `enter`, `leave`, `gather`, `loadRecord`, `recordAt(version)`,
+`bringVision(blob)`, and the draft's. `select` must return a field, not a
+fresh object.
 
+### The draft (console writes, sight renders)
+
+`draft`: `open`, `subject`, `ops`, `baseVersion`, `previewState` (would-be
+map: local at once, the server's once confirmed), `diff`, `verdict
+{state: empty|checking|accepted|refused, confirmed, refusals, summary}`,
+`awaiting {slot, choices: AwaitChoice[]}` (what a tap may answer; a choice is
+`{value: ThreadEnd}` or `{socket: {realm, order}}`, with `ok`, `why`),
+`hover` (the end the console points at), `picked {slot, value, at}`,
+`restoring` (version whose restore is previewed).
+
+`openDraft(subject?)`, `closeDraft()` (withdraw), `setDraft({ops|subject|awaiting|hover})`
+(new ops: local verdict at once, server dry run after a pause; a late answer
+never overwrites a newer draft), `pick(value)` (the sight, on a tap while
+`awaiting`), `seal(summary?)` (seals the ops or the restore; on `moved` the map
+is gathered and the draft recomposed), `restore(version)`.
+
+### Affordances (judged by the engine; pass `draft.previewState` when composing on pending ops)
+
+- `slotsFor(state, partial, brought?)` → `{op, slots: Record<slot, Choice[]>,
+  cords?, budgets?, bounds?}`; `Choice {value, title, ok, why?, count?}`. A
+  slot appears once the slots it depends on are chosen. Covers every op,
+  including `quarter` (with counts), `turn`, `firstBinding`.
+- `cordEnds(state, kind, from?)`: departures, or destinations from `from`.
+- `cordsFor(state, elementId)`: every cord that could touch it now.
+- `room(state, {realm} | {elementKind} | {cordKind} | {readings: true})` →
+  `{used, pending, capacity, free}`.
+- `rimOrder`, `ringPairs`, `isQuiet`.
+
+### Also
+
+- Record entries: `opNames` (sealed changes), `restoredFrom` (restores),
+  `trusted` (`seed | merge | rules | amend`: canon entries). Moments sealed
+  before schema 2 stay readable and cannot be restored.
+- Testing seals: `node scripts/sanctum-trial.mjs [--fresh]` makes a throwaway
+  copy (`/root/.evoview-sanctum-trial`, its own test watchword in
+  `trial-watchword`); serve it with `EVOVIEW_SANCTUM_DIR=/root/.evoview-sanctum-trial
+  pnpm exec vite --port 37512 --strictPort --host 127.0.0.1`. Never seal tests on
+  the real dir.
 - `checkLocally(state, ops, brought)`: the same engine, for instant feedback.
 - `litBy(state, reading)` → `{ layers, elements, threads }` (sets of ids): a
   cord lights when its kind is listed and both ends are lit; a layer end is lit
@@ -154,7 +213,7 @@ words); actions `enter`, `leave`, `gather`, `preview(ops, summary?)`,
   vision only once decoded (`files.placeholder` and `files.tone` veil it until then).
 - The keeper (voice of refusals and acceptances, BRIEF §10): the element with
   a tie whose `to` is `lexicon`. Read its title from the state; never name it
-  in code.
+  in code. The turner (voice of the turn): `roles.turner`.
 
 ## Route entry and mounts
 

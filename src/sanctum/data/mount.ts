@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { SanctumStore } from "./store";
+import type { SanctumStore } from "./store.ts";
 
 /** Props of `src/sanctum/sight/index.tsx` (default export). */
 export interface SightProps {

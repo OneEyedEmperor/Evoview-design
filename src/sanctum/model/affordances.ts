@@ -16,6 +16,8 @@ export interface Choice {
   ok: boolean;
   /** Why it cannot be chosen, in the map's tongue. */
   why?: string;
+  /** For quarters: elements already standing in it. */
+  count?: number;
 }
 
 export interface CordChoice {
@@ -28,6 +30,8 @@ export interface CordChoice {
 
 export interface Room {
   used: number;
+  /** Room already kept for what will come to rest here on a turn. */
+  pending: number;
   capacity: number;
   free: number;
 }
@@ -118,13 +122,19 @@ export function cordsFor(state: SanctumState, elementId: Id): CordChoice[] {
 
 /** Free sockets against capacity. */
 export function room(state: SanctumState, of: RoomOf): Room {
-  const make = (used: number, capacity: number): Room => ({ used, capacity, free: Math.max(0, capacity - used) });
+  const make = (used: number, capacity: number, pending = 0): Room => ({ used, pending, capacity, free: Math.max(0, capacity - used - pending) });
+  const pendingWhere = (match: (b: NonNullable<SanctumState["elementKinds"][number]["becomes"]>) => boolean) =>
+    state.elementKinds.filter((k) => k.becomes && match(k.becomes)).reduce((n, k) => n + state.elements.filter((e) => e.kind === k.id && !e.locked).length, 0);
   if ("realm" in of) {
     const cap = of.realm === BEYOND ? state.beyond.capacity : state.layers.find((l) => l.id === of.realm)?.capacity ?? 0;
-    return make(state.elements.filter((e) => e.realm === of.realm).length, cap);
+    return make(state.elements.filter((e) => e.realm === of.realm).length, cap, pendingWhere((b) => b.realm === of.realm));
   }
   if ("elementKind" in of) {
-    return make(state.elements.filter((e) => e.kind === of.elementKind).length, state.elementKinds.find((k) => k.id === of.elementKind)?.capacity ?? 0);
+    return make(
+      state.elements.filter((e) => e.kind === of.elementKind).length,
+      state.elementKinds.find((k) => k.id === of.elementKind)?.capacity ?? 0,
+      pendingWhere((b) => b.kind === of.elementKind),
+    );
   }
   if ("cordKind" in of) {
     return make(state.threads.filter((t) => t.kind === of.cordKind).length, state.threadKinds.find((k) => k.id === of.cordKind)?.grammar.max ?? 0);
@@ -224,11 +234,18 @@ export function slotsFor(state: SanctumState, partial: PartialOp, brought: Recor
       const condition = s(partial.condition);
       out.slots.kind = state.elementKinds.map((k) => {
         if (!k.addable) return { value: k.id, title: k.title, ok: false, why: `No ${k.title.toLowerCase()} may be added to the map.` };
+        if (k.raisedIn && k.raisedIn.condition !== state.condition) return { value: k.id, title: k.title, ok: false, why: k.raisedIn.refusal };
+        if (k.becomes && (!room(state, { realm: k.becomes.realm }).free || !room(state, { elementKind: k.becomes.kind }).free)) return { value: k.id, title: k.title, ok: false, why: k.becomes.refusal };
         const r = room(state, { elementKind: k.id });
         return { value: k.id, title: k.title, ok: r.free > 0, ...(r.free ? {} : { why: `The map holds at most ${numberWord(r.capacity)} of the kind ${k.title.toLowerCase()}.` }) };
       });
       const kind = state.elementKinds.find((k) => k.id === kindId);
       if (!kind) break;
+      if (kind.quarter || kind.becomes) {
+        out.slots.quarter = [...state.quarters]
+          .sort((a, b) => a.order - b.order)
+          .map((q) => ({ value: q.id, title: q.title, ok: true, count: state.elements.filter((e) => e.quarter === q.id && e.kind === (kind.becomes?.kind ?? kind.id)).length }));
+      }
       if (kind.parent) {
         out.slots.parent = state.elements.map((e) =>
           matchesElement(e, kind.parent!.select, ctx.layerIds) ? el(e) : { value: e.id, title: e.title, ok: false, why: `Nothing of this kind may belong to ${e.title}.` },
@@ -246,15 +263,29 @@ export function slotsFor(state: SanctumState, partial: PartialOp, brought: Recor
         return { value: id, title, ok: r.free > 0, ...(r.free ? {} : { why: `${title} holds at most ${numberWord(r.capacity)}.` }) };
       });
       out.budgets = { title: BUDGET.title, purpose: BUDGET.purpose, explanation: BUDGET.explanation, nature: BUDGET.natureLine, natureLines: BUDGET.natureLines };
+      const quarter = s(partial.quarter);
       if (realm && (!kind.parent || parent)) {
         const id = "composing-element";
         const { state: virtual } = applyOps(state, [
-          { op: "addElement", element: { id, title: "A new element", kind: kind.id, realm, ...(parent ? { parent: parent.id } : {}), ...(condition ? { condition } : {}), purpose: "A new element." } },
+          {
+            op: "addElement",
+            element: { id, title: "A new element", kind: kind.id, realm, ...(parent ? { parent: parent.id } : {}), ...(condition ? { condition } : {}), ...(quarter ? { quarter } : {}), purpose: "A new element." },
+          },
         ]);
         out.cords = cordsFor(virtual, id);
       }
       break;
     }
+
+    case "turn":
+      out.slots.condition = state.conditions.map((c) =>
+        c.id === state.condition ? { value: c.id, title: c.title, ok: false, why: `The map already stands in ${c.title.toLowerCase()}.` } : { value: c.id, title: c.title, ok: true },
+      );
+      break;
+
+    case "firstBinding":
+      out.slots.id = state.elements.filter((e) => e.awaiting).map((e) => el(e, refusalsOf(ctx, [{ op: "firstBinding", id: e.id }])));
+      break;
 
     case "removeElement":
       out.slots.id = state.elements.map((e) =>

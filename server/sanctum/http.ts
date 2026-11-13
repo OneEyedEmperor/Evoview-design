@@ -136,7 +136,13 @@ export function createSanctumHandler(options: SanctumHandlerOptions = {}) {
     const version = base.meta.version + 1;
     next.meta = { schemaVersion: SCHEMA_VERSION, version, updatedAt: new Date().toISOString(), summary };
     try {
-      store.seal(next, { version, at: next.meta.updatedAt, summary, ops: ops.length, ...(restoredFrom ? { restoredFrom } : {}) });
+      store.seal(next, {
+        version,
+        at: next.meta.updatedAt,
+        summary,
+        ops: ops.length,
+        ...(restoredFrom ? { restoredFrom } : { opNames: ops.map((o) => o.op) }),
+      });
     } catch (err) {
       if (err instanceof MovedError) refused([{ rule: "moved", message: "The map has moved since it was gathered: gather the sight again." }], base.meta.version, 409);
       throw err;
@@ -211,6 +217,7 @@ export function createSanctumHandler(options: SanctumHandlerOptions = {}) {
       const version = Number(body.version);
       const held = store.at(version);
       if (!held || version === base.meta.version) refused([{ rule: "op", message: "The record holds no such moment to restore." }], base.meta.version);
+      if (held!.state.meta.schemaVersion !== SCHEMA_VERSION) refused([{ rule: "op", message: "That moment was sealed under older rules and cannot be restored." }], base.meta.version);
       const next = clone(held!.state);
       const result = change(base, next, [], body, version);
       return send(res, 200, result);

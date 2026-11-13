@@ -1,23 +1,57 @@
 /* The sanctum's client store: one snapshot, replaced (never mutated) on
-   every change, read through useSanctum. */
+   every change, read through useSanctum. The draft is the seam between the
+   console (writes it) and the sight (renders it ghosted, answers taps). */
 
 import { useSyncExternalStore } from "react";
-import type { ChangeResponse, Id, Op, RecordEntry, Refusal, SanctumState, VisionFiles } from "../model/types";
-import { checkLocally } from "./check";
-import { NotEntered, Refused, api } from "./client";
+import type { Diff, Id, Op, RecordEntry, Refusal, SanctumState, ThreadEnd, VisionFiles } from "../model/types.ts";
+import { checkLocally } from "./check.ts";
+import { NotEntered, Refused, api } from "./client.ts";
 
 export type Status = "unknown" | "gate" | "gathering" | "open";
 
-export type Preview = Extract<ChangeResponse, { accepted: true }> & { ops: Op[]; restoring?: number };
+export interface DraftSubject {
+  type: "element" | "thread" | "layer" | "reading" | "vision";
+  id?: Id;
+}
+
+export type Socket = { socket: { realm: Id; order: number } };
+export type AwaitChoice = ({ value: ThreadEnd } | Socket) & { ok: boolean; why?: string };
+
+export interface Verdict {
+  state: "empty" | "checking" | "accepted" | "refused";
+  /** Confirmed by the server's dry run (the authority). */
+  confirmed: boolean;
+  refusals: Refusal[];
+  /** The record's words for the change, when accepted. */
+  summary: string;
+}
+
+export interface Draft {
+  open: boolean;
+  subject: DraftSubject | null;
+  ops: Op[];
+  /** `state.meta.version` the ops were composed on. */
+  baseVersion: number;
+  /** The would-be map: local at once, the server's once confirmed. */
+  previewState: SanctumState | null;
+  diff: Diff | null;
+  verdict: Verdict;
+  /** What a tap on the eye may answer (the console writes it). */
+  awaiting: { slot: string; choices: AwaitChoice[] } | null;
+  /** The end named by the slot under the pointer or focus (the sight pulses it). */
+  hover: ThreadEnd | null;
+  /** The sight's answer to `awaiting`. */
+  picked: { slot: string; value: ThreadEnd | Socket; at: number } | null;
+  /** Set when the draft previews a restore of that version. */
+  restoring: number | null;
+}
 
 export interface SanctumSnapshot {
   status: Status;
   state: SanctumState | null;
-  /** A dry run awaiting the seal (the sight shows it ghosted). */
-  preview: Preview | null;
-  refusals: Refusal[];
+  draft: Draft;
   record: RecordEntry[] | null;
-  /** Visions brought but not yet set into the map. */
+  /** Visions brought, not yet in the map. */
   brought: Record<Id, VisionFiles>;
   busy: boolean;
   /** Pure-language words for the last outcome, ready to show. */
@@ -31,26 +65,51 @@ export interface SanctumStore {
   enter(watchword: string): Promise<{ entered: boolean; rest?: number }>;
   leave(): Promise<void>;
   gather(): Promise<void>;
-  /** Checks locally, then asks the server for a dry run. */
-  preview(ops: Op[], summary?: string): Promise<boolean>;
-  /** Seals the ops (or the current preview's ops) as a new entry of the record. */
-  seal(ops?: Op[], summary?: string): Promise<boolean>;
-  clearPreview(): void;
-  restore(version: number, dryRun?: boolean): Promise<boolean>;
+  openDraft(subject?: DraftSubject | null): void;
+  /** Withdraws: clears ops, preview, awaiting. */
+  closeDraft(): void;
+  /** New ops are judged at once (local engine), then confirmed by a debounced server dry run. */
+  setDraft(patch: Partial<Pick<Draft, "subject" | "ops" | "awaiting" | "hover">>): void;
+  pick(value: ThreadEnd | Socket): void;
+  /** Seals the draft (its ops, or its restore). Clears the draft when accepted. */
+  seal(summary?: string): Promise<boolean>;
+  /** Opens a draft previewing the restore of `version`; seal() confirms it. */
+  restore(version: number): Promise<boolean>;
   loadRecord(): Promise<RecordEntry[]>;
   recordAt(version: number): Promise<SanctumState>;
   bringVision(picture: Blob): Promise<VisionFiles | null>;
 }
 
-const INITIAL: SanctumSnapshot = { status: "unknown", state: null, preview: null, refusals: [], record: null, brought: {}, busy: false, word: "" };
+const EMPTY_VERDICT: Verdict = { state: "empty", confirmed: false, refusals: [], summary: "" };
+const DRY_RUN_DELAY = 260;
+
+const emptyDraft = (baseVersion = 0): Draft => ({
+  open: false,
+  subject: null,
+  ops: [],
+  baseVersion,
+  previewState: null,
+  diff: null,
+  verdict: EMPTY_VERDICT,
+  awaiting: null,
+  hover: null,
+  picked: null,
+  restoring: null,
+});
+
+const INITIAL: SanctumSnapshot = { status: "unknown", state: null, draft: emptyDraft(), record: null, brought: {}, busy: false, word: "" };
 
 export function createSanctumStore(): SanctumStore {
   let snap = INITIAL;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  /** Bumped on every draft change, so a late dry run never overwrites a newer draft. */
+  let token = 0;
   const listeners = new Set<() => void>();
   const set = (patch: Partial<SanctumSnapshot>) => {
     snap = { ...snap, ...patch };
     listeners.forEach((l) => l());
   };
+  const setDraftState = (patch: Partial<Draft>) => set({ draft: { ...snap.draft, ...patch } });
 
   /** Runs a call; a lost entry returns to the gate, other refusals become words. */
   async function guarded<T>(fn: () => Promise<T>): Promise<T | undefined> {
@@ -58,7 +117,7 @@ export function createSanctumStore(): SanctumStore {
     try {
       return await fn();
     } catch (err) {
-      if (err instanceof NotEntered) set({ status: "gate", state: null, preview: null, record: null });
+      if (err instanceof NotEntered) set({ status: "gate", state: null, draft: emptyDraft(), record: null });
       else set({ word: err instanceof Refused ? err.message : "The sanctum could not answer." });
       return undefined;
     } finally {
@@ -66,16 +125,41 @@ export function createSanctumStore(): SanctumStore {
     }
   }
 
-  const answer = (res: ChangeResponse, ops: Op[], dryRun: boolean, restoring?: number): boolean => {
-    if (!res.accepted) {
-      set({ refusals: res.refusals, preview: null, word: res.refusals[0]?.message ?? "" });
-      if (res.refusals.some((r) => r.rule === "moved")) void store.gather();
-      return false;
+  /** Judges the draft's ops: locally at once, then by the server after a pause. */
+  function judge() {
+    const state = snap.state;
+    const ops = snap.draft.ops;
+    clearTimeout(timer);
+    const mine = ++token;
+    if (!state || !ops.length) {
+      setDraftState({ previewState: null, diff: null, verdict: EMPTY_VERDICT, baseVersion: state?.meta.version ?? 0 });
+      return;
     }
-    if (dryRun) set({ preview: { ...res, ops, ...(restoring ? { restoring } : {}) }, refusals: [], word: "" });
-    else set({ state: res.state, preview: null, refusals: [], record: null, word: "The change is sealed." });
-    return true;
-  };
+    const local = checkLocally(state, ops, snap.brought);
+    const refused = local.refusals.length > 0;
+    setDraftState({
+      baseVersion: state.meta.version,
+      previewState: local.state,
+      diff: local.diff,
+      verdict: { state: refused ? "refused" : "checking", confirmed: false, refusals: local.refusals, summary: "" },
+    });
+    if (refused) return;
+    timer = setTimeout(async () => {
+      try {
+        const res = await api.change({ ops, dryRun: true, baseVersion: state.meta.version });
+        if (mine !== token) return;
+        if (res.accepted) setDraftState({ previewState: res.state, diff: res.diff, verdict: { state: "accepted", confirmed: true, refusals: [], summary: res.summary } });
+        else {
+          setDraftState({ verdict: { state: "refused", confirmed: true, refusals: res.refusals, summary: "" } });
+          if (res.refusals.some((r) => r.rule === "moved")) void store.gather();
+        }
+      } catch (err) {
+        if (mine !== token) return;
+        if (err instanceof NotEntered) set({ status: "gate", state: null, draft: emptyDraft(), record: null });
+        else set({ word: err instanceof Refused ? err.message : "The sanctum could not answer." });
+      }
+    }, DRY_RUN_DELAY);
+  }
 
   const store: SanctumStore = {
     get: () => snap,
@@ -99,6 +183,8 @@ export function createSanctumStore(): SanctumStore {
     },
 
     async leave() {
+      clearTimeout(timer);
+      token++;
       await guarded(() => api.leave());
       snap = INITIAL;
       set({ status: "gate" });
@@ -107,39 +193,68 @@ export function createSanctumStore(): SanctumStore {
     async gather() {
       if (!snap.state) set({ status: "gathering" });
       const state = await guarded(() => api.map());
-      if (state) set({ status: "open", state, preview: null });
+      if (!state) return;
+      set({ status: "open", state });
+      /* A pending draft is recomposed upon the map as it now stands. */
+      if (snap.draft.ops.length && !snap.draft.restoring) judge();
+      else if (!snap.draft.restoring) setDraftState({ baseVersion: state.meta.version });
     },
 
-    async preview(ops, summary) {
+    openDraft(subject = null) {
+      setDraftState({ open: true, subject });
+    },
+
+    closeDraft() {
+      clearTimeout(timer);
+      token++;
+      set({ draft: emptyDraft(snap.state?.meta.version ?? 0) });
+    },
+
+    setDraft(patch) {
+      const opsChanged = patch.ops !== undefined && patch.ops !== snap.draft.ops;
+      setDraftState({ ...patch, open: true, ...(opsChanged ? { restoring: null } : {}) });
+      if (opsChanged) judge();
+    },
+
+    pick(value) {
+      const slot = snap.draft.awaiting?.slot;
+      if (!slot) return;
+      setDraftState({ picked: { slot, value, at: Date.now() } });
+    },
+
+    async seal(summary) {
       const state = snap.state;
+      const draft = snap.draft;
       if (!state) return false;
-      const local = checkLocally(state, ops, snap.brought);
-      if (local.refusals.length) {
-        set({ refusals: local.refusals, preview: null, word: local.refusals[0].message });
-        return false;
+      if (!draft.restoring && !draft.ops.length) return false;
+      clearTimeout(timer);
+      token++;
+      const res = await guarded(() =>
+        draft.restoring
+          ? api.restore(draft.restoring, state.meta.version, false)
+          : api.change({ ops: draft.ops, baseVersion: draft.baseVersion, ...(summary ? { summary } : {}) }),
+      );
+      if (!res) return false;
+      if (res.accepted) {
+        set({ state: res.state, draft: emptyDraft(res.state.meta.version), record: null, word: res.summary });
+        return true;
       }
-      const res = await guarded(() => api.change({ ops, dryRun: true, baseVersion: state.meta.version, summary }));
-      return res ? answer(res, ops, true) : false;
+      setDraftState({ verdict: { state: "refused", confirmed: true, refusals: res.refusals, summary: "" } });
+      if (res.refusals.some((r) => r.rule === "moved")) await store.gather();
+      return false;
     },
 
-    async seal(ops, summary) {
-      const state = snap.state;
-      const chosen = ops ?? snap.preview?.ops;
-      if (!state || !chosen) return false;
-      if (!ops && snap.preview?.restoring) return store.restore(snap.preview.restoring, false);
-      const res = await guarded(() => api.change({ ops: chosen, baseVersion: state.meta.version, summary: summary ?? snap.preview?.summary }));
-      return res ? answer(res, chosen, false) : false;
-    },
-
-    clearPreview() {
-      set({ preview: null, refusals: [], word: "" });
-    },
-
-    async restore(version, dryRun = true) {
+    async restore(version) {
       const state = snap.state;
       if (!state) return false;
-      const res = await guarded(() => api.restore(version, state.meta.version, dryRun));
-      return res ? answer(res, [], dryRun, version) : false;
+      clearTimeout(timer);
+      const mine = ++token;
+      setDraftState({ open: true, ops: [], restoring: version, baseVersion: state.meta.version, previewState: null, diff: null, verdict: { ...EMPTY_VERDICT, state: "checking" } });
+      const res = await guarded(() => api.restore(version, state.meta.version, true));
+      if (!res || mine !== token) return false;
+      if (res.accepted) setDraftState({ previewState: res.state, diff: res.diff, verdict: { state: "accepted", confirmed: true, refusals: [], summary: res.summary } });
+      else setDraftState({ verdict: { state: "refused", confirmed: true, refusals: res.refusals, summary: "" } });
+      return res.accepted;
     },
 
     async loadRecord() {
@@ -156,6 +271,7 @@ export function createSanctumStore(): SanctumStore {
       const files = await guarded(() => api.bringVision(picture));
       if (!files) return null;
       set({ brought: { ...snap.brought, [files.id]: files } });
+      if (snap.draft.ops.length) judge();
       return files;
     },
   };
