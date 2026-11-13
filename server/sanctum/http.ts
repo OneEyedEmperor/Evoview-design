@@ -26,6 +26,7 @@ import {
   strongEnough,
   takeSetup,
   hashWatchword,
+  normaliseWatchword,
   verifyWatchword,
   type AuthFile,
 } from "./auth.ts";
@@ -219,7 +220,7 @@ export function createSanctumHandler(options: SanctumHandlerOptions = {}) {
         try {
           const body = await readJsonBody(req);
           const word = typeof body.watchword === "string" ? body.watchword : "";
-          if (a && word && word.length <= 256) {
+          if (a && word.length <= 1024 && normaliseWatchword(word) && normaliseWatchword(word).length <= 256) {
             release = await gate.slot(lane, reserved.fails);
             if (release) received = await verifyWatchword(word, a);
             else full = true;
@@ -285,7 +286,7 @@ export function createSanctumHandler(options: SanctumHandlerOptions = {}) {
       const release = await gate.slot("device", 0);
       let fresh: AuthFile;
       try {
-        fresh = await hashWatchword(word.trim());
+        fresh = await hashWatchword(word);
       } finally {
         release?.();
       }

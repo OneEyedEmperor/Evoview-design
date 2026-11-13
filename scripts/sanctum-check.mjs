@@ -23,10 +23,10 @@ import { applyOps, summarize } from "../src/sanctum/model/ops.ts";
 import { BUDGET, clone, isQuiet, pairKey, rimOrder, ringPairs } from "../src/sanctum/model/rules.ts";
 import { BEYOND } from "../src/sanctum/model/types.ts";
 import { canonOf, validate } from "../src/sanctum/model/validate.ts";
-import { hashWatchword, readDevice, signEntry, summon } from "../server/sanctum/auth.ts";
+import { hashWatchword, isRealDir, readDevice, signEntry, summon } from "../server/sanctum/auth.ts";
 import { alludesToName, impureWords } from "../server/sanctum/purity.ts";
 import { createSanctumHandler } from "../server/sanctum/http.ts";
-import { Store, dataDir, readJson } from "../server/sanctum/store.ts";
+import { DEFAULT_DIR, Store, dataDir, readJson } from "../server/sanctum/store.ts";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2);
@@ -807,6 +807,27 @@ try {
       const c = (r.headers.getSetCookie?.() ?? []).find((x) => x.startsWith("sanctum="))?.split(";")[0];
       if (c) await req("/sanctum-api/session", { method: "DELETE", headers: { ...W, cookie: c } });
     }
+
+    /* review r3 · M1: one normalisation for choosing and entering */
+    const spaced = "  four quiet words chosen here  ";
+    const sealedSpaced = await answer(await summon(tmp), spaced, { "cf-connecting-ip": "192.0.2.70" });
+    check("a watchword chosen with outer spaces is sealed", sealedSpaced.status === 200);
+    const typed = await knockEntry(spaced, { "cf-connecting-ip": "192.0.2.71" });
+    const trimmed = await knockEntry("four quiet words chosen here", { "cf-connecting-ip": "192.0.2.72" });
+    const doubled = await knockEntry("four  quiet words  chosen   here", { "cf-connecting-ip": "192.0.2.73" });
+    check(`…and enters as typed, trimmed, and with doubled inner spaces (${typed.status}, ${trimmed.status}, ${doubled.status})`, typed.status === 200 && trimmed.status === 200 && doubled.status === 200);
+    check("…but not as other words", (await knockEntry("four quiet words chosen", { "cf-connecting-ip": "192.0.2.74" })).status === 401);
+    for (const c of [(sealedSpaced.headers.getSetCookie?.() ?? []).find((x) => x.startsWith("sanctum="))?.split(";")[0], typed.cookie, trimmed.cookie, doubled.cookie]) {
+      if (c) await req("/sanctum-api/session", { method: "DELETE", headers: { ...W, cookie: c } });
+    }
+
+    /* review r3 · --void and the real-dir guard, through the scripts themselves (on the throwaway dir) */
+    const script = (...a) => execFileSync("node", [path.join(ROOT, "scripts", "sanctum-watchword.mjs"), ...a], { env: { ...process.env, EVOVIEW_SANCTUM_DIR: tmp } }).toString().trim();
+    const voidOut = script("--void");
+    check("--void prints nothing secret", !/setup=|[A-Za-z0-9_-]{32,}/.test(voidOut) && /closed to everyone/.test(voidOut));
+    check("after --void the last watchword is refused", (await knockEntry(spaced, { "cf-connecting-ip": "192.0.2.75" })).status === 401);
+    check("--status after --void: watchword voided, no summons pending", /watchword voided, no summons pending$/.test(script("--status")));
+    check("the real-dir guard knows the real dir from a trial", isRealDir(DEFAULT_DIR) && !isRealDir(tmp));
     for (const c of [newEntry, again.cookie]) if (c) await req("/sanctum-api/session", { method: "DELETE", headers: { ...W, cookie: c } });
   }
 } catch (err) {

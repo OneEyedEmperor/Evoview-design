@@ -4,7 +4,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { readJson, writeAtomic } from "./store.ts";
+import { DEFAULT_DIR as REAL_DIR, readJson, writeAtomic } from "./store.ts";
 
 export interface AuthFile {
   scrypt: { N: number; r: number; p: number; keylen: number; salt: string; hash: string };
@@ -19,9 +19,15 @@ export const ENTRY_TTL_MS = 72 * 60 * 60 * 1000;
 const SCRYPT = { N: 1 << 15, r: 8, p: 1, keylen: 32 };
 const MAXMEM = 128 * 1024 * 1024;
 
+/** The watchword as it is weighed, on every path (choosing, entering, strength):
+    composed, outer spaces trimmed, inner runs of space made one. */
+export function normaliseWatchword(word: string): string {
+  return word.normalize("NFC").trim().replace(/\s+/gu, " ");
+}
+
 function scrypt(word: string, salt: Buffer, params: { N: number; r: number; p: number; keylen: number }): Promise<Buffer> {
   return new Promise((resolve, reject) =>
-    crypto.scrypt(word.normalize("NFC"), salt, params.keylen, { N: params.N, r: params.r, p: params.p, maxmem: MAXMEM }, (err, key) =>
+    crypto.scrypt(normaliseWatchword(word), salt, params.keylen, { N: params.N, r: params.r, p: params.p, maxmem: MAXMEM }, (err, key) =>
       err ? reject(err) : resolve(key),
     ),
   );
@@ -145,10 +151,21 @@ export function issueSetup(dir: string, ttlMs = SETUP_TTL_MS): string {
     knows and a new signing secret (every entry and device mark dies), entries
     cleared. Until the summons is sealed the gate is closed to everyone. */
 export async function summon(dir: string, ttlMs = SETUP_TTL_MS): Promise<string> {
+  await voidWatchword(dir);
+  return issueSetup(dir, ttlMs);
+}
+
+/** Closes the gate to everyone: a hash of bytes nobody knows, a new signing secret, entries cleared, no summons. */
+export async function voidWatchword(dir: string): Promise<void> {
   const voided = await hashWatchword(crypto.randomBytes(32).toString("base64url"));
   writeAtomic(path.join(dir, "auth.json"), JSON.stringify({ ...voided, voided: true } satisfies AuthFile, null, 2));
   writeAtomic(path.join(dir, "entries.json"), "{}");
-  return issueSetup(dir, ttlMs);
+  fs.rmSync(path.join(dir, "setup.json"), { force: true });
+}
+
+/** True when `dir` is the real data dir (not a trial copy). */
+export function isRealDir(dir: string): boolean {
+  return path.resolve(dir) === path.resolve(REAL_DIR);
 }
 
 export function pendingSetup(dir: string): SetupFile | undefined {
@@ -167,9 +184,9 @@ export function takeSetup(dir: string, token: string): boolean {
   return true;
 }
 
-/** At least twenty letters, or four words of three letters and sixteen in all; at most 256. */
+/** At least twenty letters, or four words of three letters and sixteen in all; at most 256 (as normalised). */
 export function strongEnough(word: string): boolean {
-  const w = word.trim();
+  const w = normaliseWatchword(word);
   const length = [...w].length;
   const words = w.split(/[\s\-_.,]+/u).filter((x) => [...x].filter((c) => /\p{L}/u.test(c)).length >= 3).length;
   return length <= 256 && (length >= 20 || (words >= 4 && length >= 16));

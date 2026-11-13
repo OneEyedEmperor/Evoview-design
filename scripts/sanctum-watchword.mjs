@@ -7,21 +7,32 @@
    Answering it stores the scrypt hash of the chosen watchword and enters.
    The data dir keeps only the token's hash; it expires and serves once.
 
-   node scripts/sanctum-watchword.mjs --setup [--base=https://evoview-library.said.bet] [--minutes=60]
+   node scripts/sanctum-watchword.mjs --setup [--base=https://evoview-library.said.bet] [--minutes=60] [--real]
+   node scripts/sanctum-watchword.mjs --void [--real]     close the gate: no watchword opens it, no summons
    node scripts/sanctum-watchword.mjs --status
 
-   EVOVIEW_SANCTUM_DIR selects the data dir (default /root/.evoview-sanctum). */
+   EVOVIEW_SANCTUM_DIR selects the data dir (default /root/.evoview-sanctum).
+   --setup and --void refuse to act on the real dir unless --real is given. */
 
 import fs from "node:fs";
 import path from "node:path";
-import { SETUP_TTL_MS, pendingSetup, summon } from "../server/sanctum/auth.ts";
+import { SETUP_TTL_MS, isRealDir, pendingSetup, summon, voidWatchword } from "../server/sanctum/auth.ts";
 import { dataDir, ensureDir, readJson } from "../server/sanctum/store.ts";
 
 const args = process.argv.slice(2);
 const opt = (name) => args.find((a) => a.startsWith(`--${name}=`))?.split("=").slice(1).join("=");
 const dir = dataDir();
 
-if (args.includes("--setup")) {
+if ((args.includes("--setup") || args.includes("--void")) && isRealDir(dir) && !args.includes("--real")) {
+  console.error(`refusing: ${dir} is the real data dir; pass --real to act on it (trial dirs: set EVOVIEW_SANCTUM_DIR)`);
+  process.exit(3);
+}
+
+if (args.includes("--void")) {
+  ensureDir(dir);
+  await voidWatchword(dir);
+  console.log(`${dir}: the watchword, entries and device marks are void; no summons is pending; the gate is closed to everyone`);
+} else if (args.includes("--setup")) {
   ensureDir(dir);
   const minutes = Number(opt("minutes") ?? SETUP_TTL_MS / 60000);
   if (!(minutes > 0 && minutes <= 24 * 60)) {
@@ -38,9 +49,14 @@ if (args.includes("--setup")) {
   const auth = readJson(path.join(dir, "auth.json"));
   const until = (t) => new Date(t).toISOString().slice(11, 16) + " UTC";
   const watchword = !fs.existsSync(path.join(dir, "auth.json")) ? "no watchword" : auth?.voided ? "watchword voided" : "watchword set";
-  const summons = pending ? `summons pending, expires ${until(pending.expires)}` : auth?.voided ? "summons lapsed: the gate is closed until a new summons is sealed" : "no summons pending";
+  const lapsed = !pending && fs.existsSync(path.join(dir, "setup.json"));
+  const summons = pending
+    ? `summons pending, expires ${until(pending.expires)}`
+    : lapsed
+      ? "summons lapsed: the gate is closed until a new summons is sealed"
+      : "no summons pending";
   console.log(`${dir}: ${watchword}, ${summons}`);
 } else {
-  console.error("usage: --setup [--base=URL] [--minutes=N] | --status");
+  console.error("usage: --setup [--base=URL] [--minutes=N] [--real] | --void [--real] | --status");
   process.exit(2);
 }
