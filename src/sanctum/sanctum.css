@@ -9,7 +9,7 @@
   --sx-tile-2: #141821;
   --sx-tile-3: #1a1f29;
   --sx-tile-lit: #1d222c;
-  --sx-ivory: #f3efe6;
+  --sx-light: #f3efe6;
   --sx-ink: #0b0c0f;
   --sx-fg-90: rgba(243, 239, 230, 0.9);
   --sx-fg-65: rgba(243, 239, 230, 0.66);
@@ -34,7 +34,7 @@
   --sx-pour: cubic-bezier(0.65, 0, 0.35, 1);
   --sx-out: cubic-bezier(0.23, 1, 0.32, 1);
 
-  color: var(--sx-ivory);
+  color: var(--sx-light);
   font-family: var(--sx-body);
   -webkit-font-smoothing: antialiased;
   background: var(--sx-night);
@@ -57,7 +57,7 @@
 }
 
 .sanctum-root :focus-visible {
-  outline: 2px solid var(--sx-ivory);
+  outline: 2px solid var(--sx-light);
   outline-offset: 3px;
 }
 
@@ -83,7 +83,7 @@
 
 /* ---------- commands ---------- */
 .sx-plate, .sx-ghost { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 46px; padding: 0 20px; border-radius: var(--sx-r-control); font-family: var(--sx-body); font-weight: 700; font-size: 14px; white-space: nowrap; }
-.sx-plate { background: var(--sx-ivory); color: var(--sx-ink); }
+.sx-plate { background: var(--sx-light); color: var(--sx-ink); }
 .sx-ghost { background: var(--sx-tile-2); color: var(--sx-fg-90); font-weight: 600; }
 .sx-plate:disabled, .sx-ghost:disabled { background: var(--sx-tile-3); color: var(--sx-fg-35); cursor: default; }
 .sx-orb-button { position: relative; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--sx-glass); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07); }
@@ -100,10 +100,10 @@
 /* ---------- fields ---------- */
 .sx-field { display: grid; gap: 8px; }
 .sx-field > label, .sx-field__label { font-family: var(--sx-body); font-weight: 600; font-size: 13px; color: var(--sx-fg-65); }
-.sx-input { width: 100%; min-height: 46px; padding: 12px 14px; border: 0; border-radius: var(--sx-r-control); background: var(--sx-tile-2); color: var(--sx-ivory); font-family: var(--sx-body); font-size: 15px; line-height: 1.5; }
+.sx-input { width: 100%; min-height: 46px; padding: 12px 14px; border: 0; border-radius: var(--sx-r-control); background: var(--sx-tile-2); color: var(--sx-light); font-family: var(--sx-body); font-size: 15px; line-height: 1.5; }
 .sx-input::placeholder { color: var(--sx-fg-35); }
 
-/* ---------- words of refusal and examination ---------- */
+/* ---------- words of refusal ---------- */
 .sx-refuse { display: grid; gap: 6px; padding: 16px 18px; border-radius: var(--sx-r-surface); background: var(--sx-refuse); }
 .sx-refuse .sx-head { color: var(--sx-refuse-ink); font-size: 16px; }
 

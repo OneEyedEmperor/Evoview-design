@@ -101,7 +101,7 @@ const endEl = (end: string) => (isLayerRef(end) || end.startsWith("cord:") || en
 /** `beyondRay`: where the beyond realm opens (lower right on a wide screen, downward on a tall one). */
 export function computeLayout(state: SanctumState, opts: { beyondRay?: number } = {}): Layout {
   const BEYOND_RAY = opts.beyondRay ?? 40;
-  /* the core's name stands on the crest axis; the core's ring keeps that side clear */
+  /* the core's name stands on the apex axis; the core's ring keeps that side clear */
   const CORE_NAME = 270;
   const layers = [...state.layers].sort((a, b) => a.order - b.order);
   const { core, apex } = state.roles;
@@ -182,7 +182,7 @@ export function computeLayout(state: SanctumState, opts: { beyondRay?: number } 
     pos.set(e.id, { r: (rimRing?.r1 ?? RIM) + 0.06, th: deg(th) });
   });
 
-  /* the apex stands at the crest */
+  /* the apex stands at the top */
   const apexEl = state.elements.find((e) => e.id === apex);
   if (apexEl) pos.set(apex, { r: ringOf.get(apexEl.realm)?.mid ?? 0.6, th: 270 });
 
@@ -249,7 +249,7 @@ export function computeLayout(state: SanctumState, opts: { beyondRay?: number } 
       }
     } else if (units.length === 1 && units[0].length === 1) {
       const id = units[0][0].id;
-      /* a lone element faces what it serves, clear of the crest, the beyond ray and its neighbours */
+      /* a lone element faces what it is tied to, clear of the apex axis, the beyond ray and its neighbours */
       const start = circMean(placedAnglesOf(id)) ?? 250;
       const near = [...pos.entries()].filter(([pid, p]) => pid !== core && Math.abs(p.r - r) < 0.2 && Math.abs(p.r - r) > 0.01).map(([, p]) => p.th);
       let a = start;
@@ -273,7 +273,7 @@ export function computeLayout(state: SanctumState, opts: { beyondRay?: number } 
   /* the core's ring first (it decides the beyond ray), then rim inward */
   if (coreRing) placeRing(coreRing);
   for (const ring of rings.slice(1)) if (ring !== coreRing) placeRing(ring);
-  /* stations: on their boundary, facing what they serve, clear of the beyond ray and the crest */
+  /* stations: on their boundary, facing what they are tied to, clear of the beyond ray and the apex axis */
   state.elements.filter((e) => stationOf(e) && !pos.has(e.id)).forEach((e, i) => {
     const s = stationOf(e)!;
     const r = boundary(s.between[0], s.between[1]) ?? threshold;
@@ -287,7 +287,7 @@ export function computeLayout(state: SanctumState, opts: { beyondRay?: number } 
     pos.set(e.id, { r, th });
   });
 
-  /* beyond: states on the ray, the ground they take further out, others fanned */
+  /* beyond: states on the ray, other elements further out, fanned */
   const beyond = (byRealm.get(BEYOND) ?? []).filter((e) => !pos.has(e.id));
   let reach = RIM;
   const states = beyond.filter((e) => e.condition);

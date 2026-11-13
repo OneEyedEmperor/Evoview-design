@@ -54,6 +54,10 @@ export default function Sight({ store, console }: SightProps) {
   const marks = useRef<HTMLDivElement>(null);
   const engine = useRef<SightEngine | null>(null);
   const sealedCondition = useRef<Id | null>(null);
+  const pill = useRef<HTMLButtonElement>(null);
+  const chip = useRef<HTMLParagraphElement>(null);
+  const card = useRef<HTMLElement>(null);
+  const refocus = useRef<{ to: "pill" } | { to: "mark"; id: Id } | null>(null);
 
   useEffect(() => { if (state && !local) setLocal(fromSight(state)); }, [state, local]);
 
@@ -140,19 +144,42 @@ export default function Sight({ store, console }: SightProps) {
   useEffect(() => { engine.current?.setFrame(frame); }, [frame]);
   useEffect(() => { engine.current?.setActive(!(focus && !wide)); }, [focus, wide]);
 
+  /* names keep clear of the chrome laid over the eye */
+  useLayoutEffect(() => {
+    const e = engine.current, h = host.current;
+    if (!e || !h) return;
+    const o = h.getBoundingClientRect();
+    e.setObstacles([chip.current, card.current].flatMap((n) => {
+      if (!n) return [];
+      const r = n.getBoundingClientRect();
+      return [{ x: r.left - o.left, y: r.top - o.top, w: r.width, h: r.height }];
+    }));
+  });
+
+  /* keyboard focus comes back to what opened the closed layer */
+  const closePanel = useCallback(() => { refocus.current = { to: "pill" }; setPanel(false); }, []);
+  const closeFocus = useCallback(() => { setFocus((f) => { if (f) refocus.current = { to: "mark", id: f }; return null; }); }, []);
+  useEffect(() => {
+    const r = refocus.current;
+    if (!r) return;
+    refocus.current = null;
+    if (r.to === "pill") pill.current?.focus({ preventScroll: true });
+    else engine.current?.focusMark(r.id);
+  }, [panel, focus]);
+
   /* Esc closes the topmost thing */
   useEffect(() => {
     const onKey = (ev: KeyboardEvent) => {
       if (ev.key !== "Escape") return;
       if (shaping) store.closeDraft();
-      else if (focus) setFocus(null);
-      else if (panel) setPanel(false);
+      else if (focus) closeFocus();
+      else if (panel) closePanel();
       else if (local?.reading) setLocal({ ...local, reading: null });
       else if (local?.foresee) setLocal({ ...local, foresee: false });
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [shaping, focus, panel, local, store]);
+  }, [shaping, focus, panel, local, store, closeFocus, closePanel]);
 
   if (!state || !local) return null;
   const reading = local.reading ? state.readings.find((r) => r.id === local.reading) : undefined;
@@ -166,10 +193,10 @@ export default function Sight({ store, console }: SightProps) {
         <div ref={marks} className="sx-marks" data-mode={frame.mode} />
       </div>
 
-      {foreseen && <p className="sx-chip-note sx-glass" role="status" style={{ left: frame.x + frame.w / 2 }}>Foreseen, not sealed.</p>}
+      {foreseen && <p ref={chip} className="sx-chip-note sx-glass" role="status" style={{ left: frame.x + frame.w / 2 }}>Foreseen, not sealed.</p>}
 
       {reading && !focus && !panel && (
-        <section className="sx-reading sx-glass" aria-live="polite">
+        <section ref={card} className="sx-reading sx-glass" aria-live="polite">
           <h2 className="sx-title" style={{ fontSize: wide ? 30 : 22 }}>{reading.title}</h2>
           <button type="button" className="sx-small sx-reading__text" data-open={readingOpen || undefined} aria-expanded={readingOpen} onClick={() => setReadingOpen(!readingOpen)}>{reading.text}</button>
           <button type="button" className="sx-orb-button sx-orb-button--tile" data-jelly="" aria-label="Close" onClick={() => patch({ reading: null })}>
@@ -179,9 +206,9 @@ export default function Sight({ store, console }: SightProps) {
       )}
 
       {!panel && !shaping && !focus && (
-        <button type="button" className="sx-pill" data-jelly="" onClick={() => setPanel(true)} aria-expanded={panel}>
+        <button ref={pill} type="button" className="sx-pill" data-jelly="" onClick={() => setPanel(true)} aria-expanded={panel}>
           <span className="sx-pill__glyph" aria-hidden="true">
-            <svg width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="11" r="9.5" fill="none" stroke="rgba(243,239,230,.35)" strokeWidth="1" /><circle cx="11" cy="11" r="6.2" fill="none" stroke="rgba(243,239,230,.55)" strokeWidth="1" /><circle cx="11" cy="11" r="2.6" fill="var(--sx-ivory)" /></svg>
+            <svg width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="11" r="9.5" fill="none" stroke="rgba(243,239,230,.35)" strokeWidth="1" /><circle cx="11" cy="11" r="6.2" fill="none" stroke="rgba(243,239,230,.55)" strokeWidth="1" /><circle cx="11" cy="11" r="2.6" fill="var(--sx-light)" /></svg>
           </span>
           <span className="sx-label">The sight</span>
         </button>
@@ -198,7 +225,7 @@ export default function Sight({ store, console }: SightProps) {
           onChange={patch}
           onShape={openShape}
           onLeave={() => void store.leave()}
-          onClose={() => setPanel(false)}
+          onClose={closePanel}
         />
       )}
 
@@ -210,7 +237,7 @@ export default function Sight({ store, console }: SightProps) {
           foresee={local.foresee}
           infos={infos}
           layout={wide ? "side" : "stack"}
-          onClose={() => setFocus(null)}
+          onClose={closeFocus}
           onShape={() => { setFocus(null); store.openDraft({ type: "element", id: focus }); }}
           onForesee={() => patch({ foresee: !local.foresee })}
           onPick={(id) => setFocus(id)}

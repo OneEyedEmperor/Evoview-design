@@ -34,8 +34,8 @@ export interface Frame { x: number; y: number; w: number; h: number; mode: Frame
 export interface Affordance {
   /** An element id or `layer:<id>` that may answer the console's question. */
   end?: string;
-  /** A place where an element may stand. */
-  socket?: { realm: Id; order: number };
+  /** A place where an element may stand (in a quarter of its realm, when the map gives one). */
+  socket?: { realm: Id; order: number; quarter?: Id };
   ok: boolean;
 }
 
@@ -193,7 +193,6 @@ export class SightEngine {
     host.addEventListener("pointercancel", this.onPointerUp);
     canvas.addEventListener("click", this.onCanvasClick);
     this.resize();
-    (window as unknown as { __sanctumPerf?: () => number[] }).__sanctumPerf = () => this.perf.slice();
   }
 
   destroy() {
@@ -265,7 +264,7 @@ export class SightEngine {
     this.refused = refused;
     if (first) this.startWake(3.2);
     else if (this.restoring && !wasRestoring) this.startWake(2.6);
-    /* the sealed act: the turner's gesture, then the passage, even if it was foreseen a moment ago */
+    /* a sealed change of condition plays its gesture, then the passage, even if it was foreseen a moment ago */
     if (opts.turned) this.startPassage(opts.turned.from, opts.turned.to, true);
     this.texture.key = "";
     this.labelsDirty = true;
@@ -279,7 +278,12 @@ export class SightEngine {
     if (state) {
       for (const a of list) {
         if (!a.socket) continue;
-        const phantom: Element = { id: "\u0000socket", title: "", kind: state.elements.find((e) => e.realm === a.socket!.realm)?.kind ?? "", realm: a.socket.realm, purpose: "", nature: [], explanation: "", visions: [], emphasis: 1, order: a.socket.order - 0.5, locked: false };
+        /* a quartered place stands at the end of its quarter; others at their order in the realm */
+        const quarter = a.socket.quarter;
+        const inRealmNow = state.elements.filter((e) => e.realm === a.socket!.realm);
+        const order = quarter !== undefined ? inRealmNow.reduce((mx, e) => Math.max(mx, e.order), -1) + 0.5 : a.socket.order - 0.5;
+        const kind = (quarter !== undefined ? inRealmNow.find((e) => e.quarter !== undefined) : inRealmNow[0])?.kind ?? "";
+        const phantom: Element = { id: "\u0000socket", title: "", kind, realm: a.socket.realm, purpose: "", nature: [], explanation: "", visions: [], emphasis: 1, order, locked: false, ...(quarter !== undefined ? { quarter } : {}) };
         const trial = { ...state, elements: [...state.elements, phantom].map((e) => (e.realm === phantom.realm ? { ...e } : e)) };
         const inRealm = trial.elements.filter((e) => e.realm === phantom.realm).sort((x, y) => x.order - y.order);
         inRealm.forEach((e, i) => { e.order = i; });
@@ -342,7 +346,7 @@ export class SightEngine {
 
     const old = this.marks;
     const next = new Map<Id, Mark>();
-    /* taken ground arriving at the rim: a beyond element gone, a rim element new */
+    /* an element of the outer realm that now stands on the rim travels from where it stood */
     const vanished = prior ? prior.elements.filter((e) => e.realm === BEYOND && !state.elements.some((x) => x.id === e.id)) : [];
     for (const e of state.elements) {
       const target = lay.pos.get(e.id)!;
@@ -547,7 +551,7 @@ export class SightEngine {
     p.gestureFrom = "";
     p.gestureTo = "";
     if (sealedTurn) {
-      /* the turner's gesture travels to the element whose states turn, then the passage plays */
+      /* the gesture travels from the role that seals the condition to the element whose states change */
       const parent = state.elements.find((e) => e.condition && e.parent)?.parent;
       const turner = state.roles.turner;
       if (turner && parent && this.marks.has(turner)) { p.gestureFrom = turner; p.gestureTo = parent; p.gesture = 0.0001; }
@@ -611,7 +615,7 @@ export class SightEngine {
     if (ps.gesture > 0 && ps.gesture < 1) { ps.gesture = Math.min(1, ps.gesture + dt / 0.9); }
     else if (ps.p < 1) { ps.p = Math.min(1, ps.p + dt / 2.4); if (ps.p === 1) this.labelsDirty = true; }
 
-    /* element motion (a stone makes room, ground comes home) */
+    /* element motion (others make room; an element changing realm travels) */
     let anyMove = false;
     for (const m of this.marks.values()) {
       if (m.moveT < 1 && m.from) {
@@ -762,7 +766,7 @@ export class SightEngine {
           this.particles.push({ cord: c, u: 0, dur: 2.2, grade: 3, colour: c.colour, examined: true });
         }
       } else if (c.role === "steer" && c.t.from !== core) {
-        /* an own offering (counsel into the core's realm): its own slow rhythm */
+        /* a cord from a state into the core's realm keeps its own slow rhythm */
         const toRealm = this.marks.get(c.t.to)?.el.realm;
         const coreRealm = this.marks.get(core)?.el.realm;
         if (toRealm === coreRealm && sealedNow >= c.next[1]) {
@@ -896,7 +900,7 @@ export class SightEngine {
       const dens = Math.min(1.35, Math.max(0.5, R / 300));
       const marksHere = [...this.marks.values()].filter((m) => m.el.realm === ring.id && !m.isCore);
       if (idx === 0) {
-        /* the rim: cold tufts around each stone, dead space between */
+        /* the outermost ring: tufts around each element, empty between */
         for (const m of marksHere) for (let i = 0; i < 150 * dens; i++) {
           const th = m.target.th + gauss() * 18; const ra = ring.r0 + rnd() * (ring.r1 - ring.r0) * 0.5; const rb = ra + 0.025 + rnd() * 0.07;
           line(ra, th, rb, th + gauss() * 1.2, (0.05 + rnd() * 0.14) * (1 - Math.min(1, Math.abs(th - m.target.th) / 32)));
@@ -908,11 +912,11 @@ export class SightEngine {
           line(ra, th, rb, th + gauss() * 2.5, 0.03 + rnd() * 0.1, 0.65);
         }
       } else if (ring.id === apexRealm) {
-        /* the crest: one thin bright ring */
+        /* the apex's ring: one thin bright line */
         g.strokeStyle = rgba(col, 0.42); g.lineWidth = 1.1 * lw; g.beginPath(); g.arc(0, 0, ring.mid * R, 0, TAU); g.stroke();
         g.strokeStyle = rgba(col, 0.06); g.lineWidth = 9 * lw; g.stroke();
       } else if (coreRing && ring.order === coreRing.order - 1) {
-        /* the feeling surface around the center: a continuous weave */
+        /* the ring just outside the core's: a continuous woven band */
         for (let i = 0; i < 1400 * dens; i++) {
           const th = rnd() * 360; const r = ring.r0 + rnd() * (ring.r1 - ring.r0 - 0.03); const s = rnd() < 0.5 ? 1 : -1;
           line(r, th, r + 0.032, th + s * 4.2, 0.035 + rnd() * 0.085, 0.75);
@@ -1167,6 +1171,7 @@ export class SightEngine {
         const k = c.role === "bond" || c.role === "cross" ? 0.8 : 1;
         if (c.role !== "oath") { ctx.strokeStyle = rgba(c.colour, 0.085 * a * k); ctx.lineWidth = w * 6; ctx.stroke(); }
         ctx.strokeStyle = rgba(c.colour, (c.role === "oath" ? 0.6 : 0.86) * a * k); ctx.lineWidth = w; ctx.stroke();
+        if (c.role === "oath" && c.ring) this.drawReach(c, w, a);
       }
       if (c.ghost > 0 && c.ghost < 1) { this.tracePath(c, sweep); ctx.strokeStyle = rgba("#ffffff", 0.25 * a * (0.5 + 0.5 * Math.sin(this.t * 3))); ctx.lineWidth = w * 0.8; ctx.stroke(); }
       if (ghost) ctx.setLineDash([]);
@@ -1178,6 +1183,46 @@ export class SightEngine {
       }
     }
     ctx.restore();
+  }
+
+  /** Where a still cord owed to a whole layer must reach: the state of its origin that stands outside
+      that layer (shown or foreseen), or the travelling light while the passage plays. */
+  private reachEnd(c: Cord): { x: number; y: number; th: number } | null {
+    const state = this.state!;
+    const kids = state.elements.filter((e) => e.parent === c.t.from && e.condition);
+    if (!kids.length) return null;
+    const home = this.marks.get(c.t.from)?.el.realm;
+    const ps = this.passage;
+    const fromK = kids.find((k) => k.condition === ps.from), toK = kids.find((k) => k.condition === ps.to);
+    if (ps.p < 1 && fromK && toK && (fromK.realm !== home || toK.realm !== home)) {
+      const a = this.marks.get(fromK.id), b = this.marks.get(toK.id);
+      if (a && b) {
+        const u = inOut(clamp01((ps.p - 0.08) / 0.62));
+        const r = a.pos.r + (b.pos.r - a.pos.r) * u;
+        const th = a.pos.th + shortest(a.pos.th, b.pos.th) * u;
+        const p = this.toXY(r, th, { x: 0, y: 0 });
+        return { ...p, th };
+      }
+    }
+    const shown = kids.find((k) => k.condition === this.view.condition);
+    if (!shown || shown.realm === home) return null;
+    const m = this.marks.get(shown.id);
+    return m ? { x: m.sx, y: m.sy, th: m.pos.th } : null;
+  }
+
+  /** The reach: taut and still from the ring to that state, lengthening as it goes out; it never flows. */
+  private drawReach(c: Cord, w: number, a: number) {
+    const end = this.reachEnd(c);
+    if (!end) return;
+    const ringR = c.unit[2];
+    const start = this.toXY(ringR, end.th, { x: 0, y: 0 });
+    if (Math.hypot(end.x - start.x, end.y - start.y) < 2) return;
+    const ctx = this.ctx;
+    ctx.beginPath(); ctx.moveTo(start.x, start.y); ctx.lineTo(end.x, end.y);
+    ctx.strokeStyle = rgba(c.colour, 0.07 * a); ctx.lineWidth = w * 5; ctx.stroke();
+    ctx.strokeStyle = rgba(c.colour, 0.72 * a); ctx.lineWidth = w * 1.1; ctx.stroke();
+    ctx.fillStyle = rgba(c.colour, 0.85 * a);
+    ctx.beginPath(); ctx.arc(start.x, start.y, 1.8 * w, 0, TAU); ctx.fill();
   }
 
   /** The passage: the in-layer state's light goes out along its ray, the rim parts where it crosses. */
@@ -1273,7 +1318,7 @@ export class SightEngine {
       ctx.fillStyle = `rgba(255,252,240,${(0.95 * a).toFixed(3)})`; ctx.beginPath(); ctx.arc(h.x, h.y, head * 0.62 * lw, 0, TAU); ctx.fill();
       if (p.grade === 1) { ctx.strokeStyle = rgba("#fff1c8", 0.55 * a); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(h.x, h.y, 5.2 * lw, 0, TAU); ctx.stroke(); }
     }
-    /* reception flares and the keeper's examination at the threshold */
+    /* arrival flares, and a mark where signs cross a station's boundary */
     for (const f of this.flares) {
       const k = (this.t - f.t) / 1.4;
       const a = (1 - k) ** 2;
@@ -1472,6 +1517,16 @@ export class SightEngine {
       this.touch(m.id);
       this.hooks.onPick(m.id, "tap");
     });
+    /* a mark reached by keyboard outside the view glides in (the pan's own inertia travels vx / 5) */
+    b.addEventListener("focus", () => {
+      if (this.pan.max <= 0 && this.pan.min >= 0) return;
+      const f = this.frame, edge = 120;
+      const d = m.sx < f.x + edge ? f.x + edge - m.sx : m.sx > f.x + f.w - edge ? f.x + f.w - edge - m.sx : 0;
+      if (!d) return;
+      const to = Math.max(this.pan.min, Math.min(this.pan.max, this.pan.x + d));
+      this.pan.vx = (to - this.pan.x) * 5;
+      this.kick();
+    });
     b.addEventListener("pointerenter", () => this.hooks.onPick(m.id, "hover-in"));
     b.addEventListener("pointerleave", () => this.hooks.onPick(m.id, "hover-out"));
     this.layer.appendChild(b);
@@ -1488,6 +1543,45 @@ export class SightEngine {
     }
   }
 
+  /** Tab follows the sight, not the data: the core first, then ring by ring outward, clockwise from the top; beyond last. */
+  private orderButtons() {
+    const lay = this.layout;
+    if (!lay) return;
+    const ringIndex = new Map(lay.rings.map((r, i) => [r.id, i]));
+    const n = lay.rings.length;
+    const rank = (m: Mark) => (m.isCore ? -1 : m.el.realm === BEYOND ? n + 1 : m.el.awaiting ? n : n - 1 - (ringIndex.get(m.el.realm) ?? 0));
+    const clock = (m: Mark) => ((m.target.th + 90) % 360 + 360) % 360;
+    const all = [...this.marks.values()].filter((m) => m.button);
+    /* a state in its element's own realm follows that element */
+    const follows = (m: Mark) => { const p = m.el.parent ? this.marks.get(m.el.parent) : undefined; return p?.button && p.el.realm === m.el.realm ? p : null; };
+    const sorted = all.filter((m) => !follows(m)).sort((a, b) => rank(a) - rank(b) || a.target.r - b.target.r || clock(a) - clock(b))
+      .flatMap((m) => [m, ...all.filter((k) => follows(k) === m).sort((a, b) => clock(a) - clock(b))]);
+    const current = [...this.layer.children];
+    if (sorted.every((m, i) => current[i] === m.button)) return;
+    for (const m of sorted) this.layer.appendChild(m.button!);
+  }
+
+  private obstacles: { x: number; y: number; w: number; h: number }[] = [];
+  /** Chrome laid over the eye; names keep clear of it. */
+  setObstacles(rects: { x: number; y: number; w: number; h: number }[]) {
+    const same = rects.length === this.obstacles.length && rects.every((r, i) => Math.abs(r.x - this.obstacles[i].x) < 1 && Math.abs(r.y - this.obstacles[i].y) < 1 && Math.abs(r.w - this.obstacles[i].w) < 1 && Math.abs(r.h - this.obstacles[i].h) < 1);
+    if (same) return;
+    this.obstacles = rects;
+    this.labelsDirty = true;
+    this.kick();
+  }
+
+  /** A hidden name waits beside its own mark, so a hover or focus reveal never shows it elsewhere. */
+  private hideLabel(label: HTMLElement) {
+    label.dataset.hidden = "true";
+    label.style.transform = "translate(33px, 15px)";
+  }
+
+  /** Return keyboard focus to an element's own mark (after its view closes). */
+  focusMark(id: Id) {
+    this.marks.get(id)?.button?.focus({ preventScroll: true });
+  }
+
   /** One deterministic pass, by structure: the core's name first and alone on its line, then every
       element's name in a free spot around its mark, then each ring's name where no mark, name or
       cord crosses it, then (when asked) the cords' functions. A name that cannot fit hides; its
@@ -1495,6 +1589,7 @@ export class SightEngine {
   private placeLabels() {
     this.labelsDirty = false;
     this.moveButtons();
+    this.orderButtons();
     const ctx = this.ctx;
     const { cx, cy, R } = this.cam;
     const f = this.frame;
@@ -1504,7 +1599,10 @@ export class SightEngine {
     const hits = (a: Box, b: Box) => !(a[2] < b[0] || a[0] > b[2] || a[3] < b[1] || a[1] > b[3]);
     const lens = Math.max(11, Math.min(27, R * 0.0625));
     const marks: Box[] = [...this.marks.values()].filter((m) => !m.isCore && !m.removed).map((m) => { const k = m.vision?.img ? lens + 2 : 8; return [m.sx - k, m.sy - k, m.sx + k, m.sy + k]; });
+    /* chrome laid over the eye (notes, cards) is an obstacle like a mark */
+    for (const o of this.obstacles) marks.push([o.x - 6, o.y - 6, o.x + o.w + 6, o.y + o.h + 6]);
     const placed: Box[] = [];
+    const markInFrame = (m: Mark) => m.sx >= f.x + 2 && m.sx <= f.x + f.w - 2 && m.sy >= f.y + 2 && m.sy <= f.y + f.h - 2;
     const pupilR = PUPIL * R * 1.45;
     const inFrame = (b: Box) => b[0] >= f.x + 6 && b[2] <= f.x + f.w - 6 && b[1] >= f.y + 6 && b[3] <= f.y + f.h - 6;
     const onPupil = (b: Box) => Math.hypot(Math.max(b[0] - cx, 0, cx - b[2]), Math.max(b[1] - cy, 0, cy - b[3])) < pupilR;
@@ -1530,8 +1628,9 @@ export class SightEngine {
     for (const m of order) {
       this.ensureButton(m);
       const label = m.labelEl!;
-      const show = !index && (!focus || focus.has(m.id)) && m.alpha > 0.15;
-      if (!show) { label.dataset.hidden = "true"; continue; }
+      /* a name stays with its mark: none for a mark out of view; dimmed names dim, they never vanish */
+      const show = !index && (!focus || focus.has(m.id)) && m.alpha > 0.02 && markInFrame(m);
+      if (!show) { this.hideLabel(label); continue; }
       const w = ctx.measureText(m.el.title.toUpperCase()).width + 2;
       if (m.isCore) {
         const off = pupilR + 6;
@@ -1561,7 +1660,7 @@ export class SightEngine {
         }
         if (done) break;
       }
-      if (!done) label.dataset.hidden = "true";
+      if (!done) this.hideLabel(label);
     }
 
     /* ring names: all six, quiet, where nothing crosses them */
@@ -1577,39 +1676,41 @@ export class SightEngine {
         const text = layer.title.toUpperCase();
         const widths = [...text].map((ch) => ctx.measureText(ch).width + track);
         const total = widths.reduce((s, x) => s + x, 0);
-        const r = ring.r1 - ring.r0 > 0.07 ? ring.r1 - 0.03 : ring.r1 + 0.009;
-        const rr = r * R;
-        const span = (total / rr) * (180 / Math.PI);
-        let best: { th: number; cost: number; glyphs: Box[] } | null = null;
-        for (let th = 24; th <= 336; th += 3) {
-          if (th > 156 && th < 204) continue;
-          const up = th > 180;
-          const glyphs: Box[] = [];
-          let s = -total / 2;
-          for (const gw of widths) {
-            const mid = th + ((s + gw / 2) / rr) * (180 / Math.PI) * (up ? 1 : -1);
-            const p = this.toXY(r, mid, { x: 0, y: 0 });
-            glyphs.push([p.x - size * 0.55, p.y - size * 0.55, p.x + size * 0.55, p.y + size * 0.55]);
-            s += gw;
-          }
-          if (glyphs.some((g) => !inFrame(g) || marks.some((x) => hits(g, x)) || placed.some((x) => hits(g, x)) || nearCore(g))) continue;
-          let crossings = 0;
-          const a0 = th - span / 2 - 1, a1 = th + span / 2 + 1;
-          for (const c of this.cords) {
-            if (c.alpha < 0.1) continue;
-            for (let i = 0; i < c.xy.length; i += 4) {
-              const dx = c.xy[i] - cx, dy = c.xy[i + 1] - cy;
-              if (Math.abs(Math.hypot(dx, dy) - rr) > 9) continue;
-              const ang = ((Math.atan2(dy, dx) * 180) / Math.PI + 360) % 360;
-              if (ang >= a0 && ang <= a1) { crossings++; break; }
+        const r0 = ring.r1 - ring.r0 > 0.07 ? ring.r1 - 0.03 : ring.r1 + 0.009;
+        let best: { th: number; r: number; cost: number; glyphs: Box[] } | null = null;
+        for (const [r, rCost] of [[r0, 0], [r0 - 0.022, 1], [r0 + 0.018, 1.5]] as [number, number][]) {
+          const rr = r * R;
+          const span = (total / rr) * (180 / Math.PI);
+          for (let th = 0; th < 360; th += 3) {
+            /* the top of the eye reads poorly as an arc: names stay below unless nothing else is free */
+            const up = th > 180 && th < 360;
+            const glyphs: Box[] = [];
+            let s = -total / 2;
+            for (const gw of widths) {
+              const mid = th + ((s + gw / 2) / rr) * (180 / Math.PI) * (up ? 1 : -1);
+              const p = this.toXY(r, mid, { x: 0, y: 0 });
+              glyphs.push([p.x - size * 0.45, p.y - size * 0.45, p.x + size * 0.45, p.y + size * 0.45]);
+              s += gw;
             }
+            if (glyphs.some((g) => !inFrame(g) || onPupil(g) || marks.some((x) => hits(g, x)) || placed.some((x) => hits(g, x)) || nearCore(g))) continue;
+            let crossings = 0;
+            const a0 = th - span / 2 - 1, a1 = th + span / 2 + 1;
+            for (const c of this.cords) {
+              if (c.alpha < 0.1) continue;
+              for (let i = 0; i < c.xy.length; i += 4) {
+                const dx = c.xy[i] - cx, dy = c.xy[i + 1] - cy;
+                if (Math.abs(Math.hypot(dx, dy) - rr) > 9) continue;
+                const ang = ((Math.atan2(dy, dx) * 180) / Math.PI + 360) % 360;
+                if (ang >= a0 && ang <= a1) { crossings++; break; }
+              }
+            }
+            const cost = crossings * 3 + Math.abs(shortest(th, 140)) / 45 + (up ? 2.5 : 0) + rCost + (Math.abs(shortest(th, lay.beyondRay)) < 26 ? 4 : 0);
+            if (!best || cost < best.cost) best = { th, r, cost, glyphs };
           }
-          const cost = crossings * 3 + Math.abs(shortest(th, 140)) / 45 + (up ? 1.5 : 0) + (Math.abs(shortest(th, lay.beyondRay)) < 26 ? 4 : 0);
-          if (!best || cost < best.cost) best = { th, cost, glyphs };
         }
         if (!best) continue;
         placed.push(...best.glyphs);
-        this.ringNames.push({ text, r, th: best.th, up: best.th > 180, widths, colour: lift(layer.colour.hex, 0.7), id: ring.id });
+        this.ringNames.push({ text, r: best.r, th: best.th, up: best.th > 180 && best.th < 360, widths, colour: lift(layer.colour.hex, 0.7), id: ring.id });
       }
     }
     this.ringNameKey = this.ringNames.map((n) => `${n.id}@${n.th}`).join(",");

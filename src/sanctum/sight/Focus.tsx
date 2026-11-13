@@ -108,7 +108,7 @@ export function visionOf(state: SanctumState, id: Id, condition: Id): { vision: 
 export function Focus({ state, id, condition, foresee, infos, layout, onClose, onShape, onForesee, onPick }: FocusProps) {
   const el = state.elements.find((e) => e.id === id);
   const sheet = useRef<HTMLDivElement>(null);
-  useEffect(() => { sheet.current?.scrollTo({ top: 0 }); }, [id]);
+  useEffect(() => { sheet.current?.scrollTo({ top: 0 }); sheet.current?.focus({ preventScroll: true }); }, [id]);
   if (!el) return null;
   const shown = stateShown(state, id, condition) ?? el;
   const realms = [...state.layers].sort((a, b) => a.order - b.order);
@@ -127,7 +127,7 @@ export function Focus({ state, id, condition, foresee, infos, layout, onClose, o
           <Lancet vision={v.vision} subject={v.subject} tone={tone} />
         </div>
       )}
-      <div ref={sheet} className="sx-focus__sheet" role="dialog" aria-labelledby="sx-focus-title">
+      <div ref={sheet} className="sx-focus__sheet" role="dialog" aria-labelledby="sx-focus-title" tabIndex={-1}>
         <div className="sx-focus__inner">
           <div className="sx-focus__titles">
             <h2 id="sx-focus-title" className="sx-title" style={{ fontSize: layout === "stack" ? 34 : 44 }}>{el.condition ? state.elements.find((e) => e.id === el.parent)?.title ?? el.title : el.title}</h2>
