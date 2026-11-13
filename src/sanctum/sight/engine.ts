@@ -39,10 +39,12 @@ export interface Affordance {
   ok: boolean;
 }
 
+type SocketSpot = { pos: Placed; ok: boolean; socket: NonNullable<Affordance["socket"]> };
+
 export interface EngineHooks {
   onPick(id: Id, how: "tap" | "hover-in" | "hover-out"): void;
   onRingPick?(layerRef: string): void;
-  onSocketPick?(socket: { realm: Id; order: number }): void;
+  onSocketPick?(socket: { realm: Id; order: number; quarter?: Id }): void;
 }
 
 interface Mark {
@@ -149,7 +151,7 @@ export class SightEngine {
   private passage = { from: "", to: "", p: 1, gesture: 0, gestureFrom: "" as Id, gestureTo: "" as Id };
   private restoring = false;
   private affordances: Affordance[] = [];
-  private sockets: { pos: Placed; ok: boolean; socket: { realm: Id; order: number } }[] = [];
+  private sockets: SocketSpot[] = [];
   private hoverEnd: string | null = null;
   private refused = new Set<Id>();
   /** Where the beyond realm opens: lower right on a wide screen, downward on a tall one. */
@@ -1512,8 +1514,15 @@ export class SightEngine {
     label.textContent = m.el.title;
     label.setAttribute("aria-hidden", "true");
     b.appendChild(label);
-    b.addEventListener("click", () => {
+    b.addEventListener("click", (e) => {
       if (performance.now() < this.suppressTap) return;
+      /* while sockets are asked for, a pointer tap nearer a socket than this mark is the socket's */
+      if (this.sockets.length && e.detail > 0) {
+        const r = this.host.getBoundingClientRect();
+        const px = e.clientX - r.left, py = e.clientY - r.top;
+        const hit = this.socketAt(px, py);
+        if (hit && hit.d < Math.hypot(m.sx - px, m.sy - py)) { if (hit.s.ok) this.hooks.onSocketPick?.(hit.s.socket); return; }
+      }
       this.touch(m.id);
       this.hooks.onPick(m.id, "tap");
     });
@@ -1843,14 +1852,23 @@ export class SightEngine {
 
   private onPointerLeave = () => { this.pointer.inside = false; };
 
+  /** The socket under a point (host coordinates), nearest first, within a fingertip. */
+  private socketAt(px: number, py: number) {
+    let best: { s: SocketSpot; d: number } | null = null;
+    for (const s of this.sockets) {
+      const p = this.toXY(s.pos.r, s.pos.th, { x: 0, y: 0 });
+      const d = Math.hypot(p.x - px, p.y - py);
+      if (d < 24 && (!best || d < best.d)) best = { s, d };
+    }
+    return best;
+  }
+
   private onCanvasClick = (e: MouseEvent) => {
     if (!this.layout) return;
     const r = this.host.getBoundingClientRect();
     const px = e.clientX - r.left, py = e.clientY - r.top;
-    for (const s of this.sockets) {
-      const p = this.toXY(s.pos.r, s.pos.th, { x: 0, y: 0 });
-      if (Math.hypot(p.x - px, p.y - py) < 24) { if (s.ok) this.hooks.onSocketPick?.(s.socket); return; }
-    }
+    const hit = this.socketAt(px, py);
+    if (hit) { if (hit.s.ok) this.hooks.onSocketPick?.(hit.s.socket); return; }
     if (!this.hooks.onRingPick) return;
     const d = Math.hypot(px - this.cam.cx, py - this.cam.cy) / this.cam.R;
     const ring = this.layout.rings.find((x) => d >= x.r0 - 0.01 && d <= x.r1 + 0.01);
