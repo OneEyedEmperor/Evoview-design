@@ -3,7 +3,7 @@
    element slots may also be answered by a touch on the eye. */
 
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
-import type { Choice, SanctumStore } from "../data";
+import type { AwaitChoice, Choice, SanctumStore } from "../data";
 import { SurfaceFill } from "../motion";
 import { patchDraft } from "./draft";
 import type { ThreadEnd } from "../model/types";
@@ -18,7 +18,20 @@ export interface ChoicePart {
   onChoose: (value: string) => void;
   /** The choices name ends of the map: the eye may answer, and hovering pulses them. */
   onEye?: boolean;
+  /** The choices are places: where an element would stand for each (drawn as sockets on the eye). */
+  placeOf?: (value: string) => Place | null;
+  /** A tapped element answers a place slot through this (e.g. the quarter it stands in). */
+  fromEnd?: (end: string) => string | null;
 }
+
+/** A would-be place (CONTRACT): the end of the realm, or the end of `quarter` when given. */
+export interface Place {
+  realm: string;
+  order: number;
+  quarter?: string;
+}
+
+const samePlace = (a: Place, b: Place) => a.realm === b.realm && a.order === b.order && (a.quarter ?? "") === (b.quarter ?? "");
 
 export interface TextPart {
   slot: "text";
@@ -64,11 +77,18 @@ export function Sentence({ store, parts, openKey, onOpened }: Props) {
      what is offered (the choices array itself is rebuilt on every render). */
   const latest = useRef(current);
   latest.current = current;
-  const offered = current?.onEye ? `${current.key}|${current.choices.map((c) => `${c.value}:${c.ok ? 1 : 0}`).join(",")}` : "";
+  const answerable = current?.onEye || current?.placeOf;
+  const offered = answerable ? `${current.key}|${current.choices.map((c) => `${c.value}:${c.ok ? 1 : 0}:${JSON.stringify(current.placeOf?.(c.value) ?? "")}`).join(",")}` : "";
   useEffect(() => {
     const c = latest.current;
     if (!offered || !c) return;
-    patchDraft(store, { awaiting: { slot: c.key, choices: c.choices.map((x) => ({ value: x.value as ThreadEnd, ok: x.ok, ...(x.why ? { why: x.why } : {}) })) } });
+    const choices: AwaitChoice[] = c.choices.flatMap((x): AwaitChoice[] => {
+      const why = x.why ? { why: x.why } : {};
+      if (!c.placeOf) return [{ value: x.value as ThreadEnd, ok: x.ok, ...why }];
+      const place = c.placeOf(x.value);
+      return place ? [{ socket: place, ok: x.ok, ...why }] : [];
+    });
+    patchDraft(store, { awaiting: { slot: c.key, choices } });
     const key = c.key;
     return () => {
       if (store.get().draft.awaiting?.slot === key) patchDraft(store, { awaiting: null });
@@ -81,9 +101,11 @@ export function Sentence({ store, parts, openKey, onOpened }: Props) {
     return store.subscribe(() => {
       const picked = store.get().draft.picked;
       const c = latest.current;
-      if (!c || !picked || picked.at === seen || picked.slot !== c.key || typeof picked.value !== "string") return;
+      if (!c || !picked || picked.at === seen || picked.slot !== c.key) return;
       seen = picked.at;
-      const choice = c.choices.find((x) => x.value === picked.value);
+      const v = picked.value;
+      const asValue = typeof v === "string" ? (c.placeOf && c.fromEnd ? c.fromEnd(v) : v) : null;
+      const choice = typeof v === "string" ? c.choices.find((x) => x.value === asValue) : c.choices.find((x) => { const p = c.placeOf?.(x.value); return Boolean(p && samePlace(p, v.socket as Place)); });
       if (choice?.ok) {
         c.onChoose(choice.value);
         setOpen(null);
@@ -151,7 +173,8 @@ function Chooser({ store, part, onClose }: { store: SanctumStore; part: ChoicePa
 
   useEffect(() => {
     const first = list.current?.querySelector<HTMLElement>('[role="option"]');
-    first?.focus();
+    /* The console scrolls the whole chooser into view; focus must not fight it. */
+    first?.focus({ preventScroll: true });
   }, [part.key]);
 
   const move = (dir: 1 | -1) => {
@@ -177,7 +200,7 @@ function Chooser({ store, part, onClose }: { store: SanctumStore; part: ChoicePa
       }}
     >
       <p className="sx-small" id={headId}>
-        {open.length ? `Choose ${part.placeholder}${part.onEye ? ", here or on the eye" : ""}.` : `Nothing can be chosen as ${part.placeholder} now.`}
+        {open.length ? `Choose ${part.placeholder}${part.onEye || part.placeOf ? ", here or on the eye" : ""}.` : `Nothing can be chosen as ${part.placeOf ? "a place" : part.placeholder} now.`}
       </p>
       <div ref={list} role="listbox" aria-labelledby={headId} className="sx-tiles">
         {open.map((c) => (
@@ -329,7 +352,7 @@ export function Many({ label, choices, chosen, onChange }: { label: string; choi
           >
             <span className="sanctum-console__dot" aria-hidden="true" />
             {c.title}
-            <SurfaceFill on={set.has(c.value)} lit="var(--sx-ivory)" litInk="var(--sx-ink)">
+            <SurfaceFill on={set.has(c.value)} lit="var(--sx-light)" litInk="var(--sx-ink)">
               <span className="sanctum-console__dot" style={{ background: "currentColor" }} />
               {c.title}
             </SurfaceFill>

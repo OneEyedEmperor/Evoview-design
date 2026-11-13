@@ -9,7 +9,7 @@ import { BUDGET, endTitle, isQuiet } from "../model/rules";
 import { BEYOND, type Id, type Op, type Reading, type SanctumState, type TextField, type TextTargetType, type ThreadEnd, type VisionFiles } from "../model/types";
 import { SurfaceFill } from "../motion";
 import { patchDraft } from "./draft";
-import { Field, Lines, Many, Sentence, Sockets, type Part } from "./Sentence";
+import { Field, Lines, Many, Sentence, Sockets, type Part, type Place } from "./Sentence";
 import { aOrAn, lower, realmName, titleOf } from "./voice";
 
 export interface Fix {
@@ -51,7 +51,7 @@ function useCompose(compose: VerbProps["compose"], c: Composed, deps: unknown[])
   }, deps);
 }
 
-/** Neighbours an element would stand between on the rim, in a would-be state. */
+/** The element's neighbours along `rimOrder` in a would-be state. */
 function rimNeighbours(state: SanctumState | null, id: Id): [Id, Id] | null {
   if (!state) return null;
   const order = rimOrder(state).map((e) => e.id);
@@ -99,7 +99,7 @@ export function Raise({ store, state, subject, verdict, previewState, compose }:
   );
   const id = markFrom(title || "new", base.elements.map((e) => e.id));
 
-  /* Does it need a cord to hold it? (A quartered stone is held by the ring.) */
+  /* Does it need a cord to hold it? The engine answers (some kinds are held by derived cords). */
   const element = k && realmChoice && title.trim() && purpose.trim()
     ? { id, title: title.trim(), kind, realm: realmChoice, ...(parentChoice ? { parent: parentChoice } : {}), ...(condition ? { condition } : {}), ...(quarter ? { quarter } : {}), purpose: purpose.trim() }
     : null;
@@ -136,7 +136,16 @@ export function Raise({ store, state, subject, verdict, previewState, compose }:
 
   const neighbours = quarter && k && base.rim?.stoneKind === kind ? rimNeighbours(previewState, id) : null;
 
-  /* Fixes: a kind raised only in another condition may be raised after the turn. */
+  /* Sockets for the eye while a place slot is open (CONTRACT): the end of the
+     realm, or the end of a quarter when one is given. */
+  const endOf = (realmId: string) => base.elements.filter((e) => e.realm === realmId).length;
+  const quarterPlace = (q: string): Place | null => {
+    const at = realmChoice || base.rim?.realm || "";
+    return at ? { realm: at, order: endOf(at), quarter: q } : null;
+  };
+  const realmPlace = (v: string): Place => ({ realm: v, order: endOf(v) });
+
+  /* Fixes: a kind raised only in another sealed condition may follow a `turn` op in the same draft. */
   const fixes: Fix[] = [];
   const turnable = state.elementKinds.find((x) => x.raisedIn && x.raisedIn.condition !== state.condition && x.addable);
   const turnWords = turnable && state.conditions.find((c) => c.id === turnable.raisedIn!.condition)?.turn;
@@ -155,10 +164,10 @@ export function Raise({ store, state, subject, verdict, previewState, compose }:
     turnSentence ? `First, ${lower(turnSentence.replace(/\.$/, ""))}. Then raise ` : "Raise ",
     { slot: "choice", key: "kind", placeholder: "a kind", value: kind, choices: slots.slots.kind ?? [], onChoose: (v) => { setKind(v); setQuarter(""); setRealm(""); setHold(""); } },
     slots.slots.quarter && " into the quarter of ",
-    slots.slots.quarter && { slot: "choice", key: "quarter", placeholder: "a direction", value: quarter, choices: slots.slots.quarter, onChoose: setQuarter },
+    slots.slots.quarter && { slot: "choice", key: "quarter", placeholder: "a direction", value: quarter, choices: slots.slots.quarter, onChoose: setQuarter, placeOf: quarterPlace, fromEnd: (end) => base.elements.find((e) => e.id === end)?.quarter ?? null },
     kind && (ok(slots.slots.realm).length > 1 ? " in " : realmChoice ? " in " : ""),
     kind && (ok(slots.slots.realm).length > 1
-      ? { slot: "choice", key: "realm", placeholder: "a realm", value: realmChoice, choices: slots.slots.realm ?? [], onChoose: setRealm }
+      ? { slot: "choice", key: "realm", placeholder: "a realm", value: realmChoice, choices: slots.slots.realm ?? [], onChoose: setRealm, placeOf: realmPlace }
       : realmChoice ? { slot: "name", title: realmName(base, realmChoice), end: realmChoice === BEYOND ? undefined : (`layer:${realmChoice}` as ThreadEnd) } : ""),
     slots.slots.parent && ", belonging to ",
     slots.slots.parent && { slot: "choice", key: "parent", placeholder: "what it belongs to", value: parentChoice, choices: slots.slots.parent, onChoose: setParent, onEye: true },
@@ -182,22 +191,28 @@ export function Raise({ store, state, subject, verdict, previewState, compose }:
   return (
     <>
       <Sentence store={store} parts={parts} openKey={openKey} onOpened={() => setOpenKey(null)} />
+      {slots.slots.quarter && (
+        <div className="sanctum-console__quarters" role="group" aria-label="Its quarter">
+          {slots.slots.quarter.map((q) => (
+            <button
+              key={q.value}
+              type="button"
+              className={`sanctum-console__quarter${q.value === quarter ? " is-chosen" : ""}`}
+              aria-pressed={q.value === quarter}
+              disabled={!q.ok}
+              title={q.why}
+              onClick={() => setQuarter(q.value)}
+            >
+              <span className="sanctum-console__choice-title">{q.title}</span>
+              <Sockets used={q.count ?? 0} ghost={q.value === quarter ? 1 : 0} />
+            </button>
+          ))}
+        </div>
+      )}
       {kind && <Field label="Its purpose, in one sentence" value={purpose} budget={BUDGET.purpose} onChange={setPurpose} rows={2} />}
-      {(kindRoom || realmRoom) && (
+      {(kindRoom || realmRoom) && realmRoom && realmChoice && (
         <div className="sanctum-console__room">
-          {realmRoom && realmChoice && (
-            <RoomLine label={`Room in ${realmName(base, realmChoice)}`} used={realmRoom.used} capacity={realmRoom.capacity} pending={realmRoom.pending} ghost={element ? 1 : 0} />
-          )}
-          {slots.slots.quarter && (
-            <div className="sanctum-console__quarters">
-              {slots.slots.quarter.map((q) => (
-                <span key={q.value} className={`sanctum-console__quarter${q.value === quarter ? " is-chosen" : ""}`}>
-                  <span className="sx-small">{q.title}</span>
-                  <Sockets used={q.count ?? 0} ghost={q.value === quarter && element ? 1 : 0} />
-                </span>
-              ))}
-            </div>
-          )}
+          <RoomLine label={`Room in ${realmName(base, realmChoice)}`} used={realmRoom.used} capacity={realmRoom.capacity} pending={realmRoom.pending} ghost={element ? 1 : 0} />
         </div>
       )}
     </>
@@ -551,7 +566,7 @@ function Switch({ label, on, onChange }: { label: string; on: boolean; onChange:
     <button type="button" className="sx-tile sanctum-console__switchrow" role="switch" aria-checked={on} onClick={() => onChange(!on)}>
       <span className="sanctum-console__choice-title">{label}</span>
       <span className="sx-switch" aria-checked={on} data-jelly="">
-        <SurfaceFill on={on} lit="var(--sx-ivory)" />
+        <SurfaceFill on={on} lit="var(--sx-light)" />
         <span className="sx-switch__knob" />
       </span>
     </button>

@@ -17,7 +17,7 @@ const KNOT_WORD: Record<KnotKind, string> = {
   sight: "The sight",
   reading: "A reading",
   turn: "The turn",
-  bind: "Bound into the ring",
+  bind: "Joined to the ring",
   restore: "Restored",
   canon: "The canon",
 };
@@ -40,8 +40,10 @@ export function Record({ store }: { store: SanctumStore }) {
         const kind = knotKind(e.opNames, Boolean(e.restoredFrom), e.trusted);
         const current = i === 0;
         const foreseen = restoring === e.version;
+        /* The record knows which moments may still be returned to; the others say why. */
+        const closed = !current && e.restorable === false;
         return (
-          <li key={e.version} className={`sanctum-console__knot is-${kind}${current ? " is-current" : ""}${foreseen ? " is-foreseen" : ""}`}>
+          <li key={e.version} className={`sanctum-console__knot is-${kind}${current ? " is-current" : ""}${foreseen ? " is-foreseen" : ""}${closed ? " is-closed" : ""}`}>
             <Knot kind={kind} label={KNOT_WORD[kind]} />
             <div className="sanctum-console__knot-words">
               <span className="sanctum-console__knot-summary">{e.summary}</span>
@@ -49,8 +51,9 @@ export function Record({ store }: { store: SanctumStore }) {
                 {current ? `The map as it stands, sealed ${lower(whenInWords(e.at))}` : whenInWords(e.at)}
                 {e.restoredFrom && pointed(e) ? `. A return to the knot tied ${lower(whenInWords(pointed(e)!.at))}` : ""}
               </span>
+              {closed && <span className="sx-small sanctum-console__knot-why">{e.unrestorable ?? "This moment predates the canon as it now stands."}</span>}
             </div>
-            {!current && (
+            {!current && !closed && (
               <button
                 type="button"
                 className={`sx-chip sanctum-console__foresee${foreseen ? " is-on" : ""}`}
@@ -59,7 +62,7 @@ export function Record({ store }: { store: SanctumStore }) {
                 onClick={() => (foreseen ? store.closeDraft() : void store.restore(e.version))}
               >
                 {foreseen ? "Stop foreseeing" : "Foresee"}
-                <SurfaceFill on={foreseen} lit="var(--sx-ivory)" litInk="var(--sx-ink)">{foreseen ? "Stop foreseeing" : "Foresee"}</SurfaceFill>
+                <SurfaceFill on={foreseen} lit="var(--sx-light)" litInk="var(--sx-ink)">{foreseen ? "Stop foreseeing" : "Foresee"}</SurfaceFill>
               </button>
             )}
           </li>

@@ -5,6 +5,7 @@
   --c-gap: 18px;
   --c-accept: color-mix(in oklab, #dccb96 10%, var(--sx-tile));
   --c-accept-ink: #e8dcb4;
+  --c-bar: #0b0d11;
   display: flex;
   flex-direction: column;
   gap: var(--c-gap);
@@ -50,7 +51,7 @@
   padding: 0 12px;
   border-radius: var(--sx-r-tag);
   background: var(--sx-tile-3);
-  color: var(--sx-ivory);
+  color: var(--sx-light);
   font-weight: 600;
   line-height: 1.2;
   text-align: left;
@@ -65,7 +66,7 @@
   padding: 3px 8px;
   border-radius: 6px;
   background: var(--sx-tile-2);
-  color: var(--sx-ivory);
+  color: var(--sx-light);
   font-weight: 600;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
@@ -87,7 +88,7 @@
   border: 0;
   padding: 0;
   background: none;
-  color: var(--sx-ivory);
+  color: var(--sx-light);
   font: 600 17px/1.2 var(--sx-body);
 }
 .sanctum-console__inline input::placeholder { color: var(--sx-fg-55); }
@@ -133,7 +134,7 @@
 .sanctum-console__area textarea { display: block; resize: vertical; padding-right: 36px; }
 .sanctum-console__area .sanctum-console__measure { position: absolute; right: 12px; bottom: 14px; }
 .sanctum-console__line { padding: 6px 8px 6px 14px; }
-.sanctum-console__line-input { flex: 1; min-width: 0; min-height: 36px; border: 0; background: none; color: var(--sx-ivory); font: 400 14px/1.5 var(--sx-body); }
+.sanctum-console__line-input { flex: 1; min-width: 0; min-height: 36px; border: 0; background: none; color: var(--sx-light); font: 400 14px/1.5 var(--sx-body); }
 .sanctum-console__line-input:focus { outline: none; }
 .sanctum-console__line:focus-within { box-shadow: inset 0 0 0 1.5px var(--sx-fg-35); }
 .sanctum-console__line-out, .sanctum-console__move {
@@ -146,7 +147,7 @@
   border-radius: 50%;
   color: var(--sx-fg-65);
 }
-.sanctum-console__line-out:hover, .sanctum-console__move:hover:not(:disabled) { color: var(--sx-ivory); background: var(--sx-tile-3); }
+.sanctum-console__line-out:hover, .sanctum-console__move:hover:not(:disabled) { color: var(--sx-light); background: var(--sx-tile-3); }
 .sanctum-console__move:disabled { color: var(--sx-fg-12); cursor: default; }
 .sanctum-console__add { justify-self: start; }
 .sanctum-console__toggle { overflow: hidden; }
@@ -162,10 +163,13 @@
 .sanctum-console__sockets i { width: 11px; height: 11px; border-radius: 3px; background: var(--sx-fg-12); }
 .sanctum-console__sockets i.is-on { background: var(--sx-fg-65); }
 .sanctum-console__sockets i.is-kept { background: var(--sx-fg-35); }
-.sanctum-console__sockets i.is-ghost { background: var(--sx-ivory); box-shadow: 0 0 10px rgba(243, 239, 230, 0.45); animation: sanctum-console-breathe 2.4s var(--sx-pour) infinite alternate; }
+.sanctum-console__sockets i.is-ghost { background: var(--sx-light); box-shadow: 0 0 10px rgba(243, 239, 230, 0.45); animation: sanctum-console-breathe 2.4s var(--sx-pour) infinite alternate; }
 .sanctum-console__quarters { display: grid; grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); gap: 6px; }
-.sanctum-console__quarter { display: grid; gap: 6px; padding: 10px 12px; border-radius: var(--sx-r-control); background: var(--sx-tile); }
-.sanctum-console__quarter.is-chosen { background: var(--sx-tile-lit); }
+.sanctum-console__quarter { display: grid; gap: 6px; min-height: 56px; padding: 10px 12px; border-radius: var(--sx-r-control); background: var(--sx-tile); text-align: left; transition: background var(--sx-control) var(--sx-standard); }
+.sanctum-console__quarter:hover:not(:disabled) { background: var(--sx-tile-2); }
+.sanctum-console__quarter:active:not(:disabled) { transform: scale(0.98); }
+.sanctum-console__quarter.is-chosen { background: var(--sx-tile-lit); box-shadow: inset 0 0 0 1.5px var(--sx-fg-35); }
+.sanctum-console__quarter:disabled { opacity: 0.5; cursor: default; }
 @keyframes sanctum-console-breathe { from { opacity: 0.55; } to { opacity: 1; } }
 
 /* ---------- order ---------- */
@@ -182,7 +186,7 @@
   letter-spacing: -0.015em;
   font-size: 26px;
   line-height: 1;
-  color: var(--sx-ivory);
+  color: var(--sx-light);
   text-wrap: balance;
 }
 
@@ -205,9 +209,9 @@
 .sanctum-console__picture img { width: 100%; height: 100%; }
 .sanctum-console__picture img.is-shown, .sanctum-console__lancet img.is-shown { opacity: 1; }
 .sanctum-console__view { position: absolute; border-radius: 6px; box-shadow: 0 0 0 999px rgba(6, 8, 11, 0.55); pointer-events: none; }
-.sanctum-console__focal { position: absolute; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; box-shadow: 0 0 0 2px var(--sx-ivory), 0 0 0 4px rgba(6, 8, 11, 0.45); pointer-events: none; }
+.sanctum-console__focal { position: absolute; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; box-shadow: 0 0 0 2px var(--sx-light), 0 0 0 4px rgba(6, 8, 11, 0.45); pointer-events: none; }
 .sanctum-console__near { display: grid; gap: 6px; }
-.sanctum-console__near input { width: 100%; min-height: 32px; accent-color: var(--sx-ivory); }
+.sanctum-console__near input { width: 100%; min-height: 32px; accent-color: var(--sx-light); }
 .sanctum-console__lancet { position: relative; flex: none; border-radius: var(--sx-r-surface); overflow: hidden; margin-top: 24px; }
 .sanctum-console__veil { position: absolute; inset: -10px; background-size: cover; background-position: center; filter: blur(10px); }
 
@@ -220,7 +224,7 @@
 .sanctum-console__exam.is-accept .sanctum-console__exam-head, .sanctum-console__exam.is-sealed .sanctum-console__exam-head { color: var(--c-accept-ink); }
 .sanctum-console__exam.is-refuse .sanctum-console__exam-head { color: var(--sx-refuse-ink); }
 .sanctum-console__why { color: var(--sx-fg-90); }
-.sanctum-console__summary { color: var(--sx-ivory); }
+.sanctum-console__summary { color: var(--sx-light); }
 .sanctum-console__seal-mark { width: 20px; height: 20px; margin-top: 1px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--sx-fg-35); }
 .sanctum-console__exam.is-weigh .sanctum-console__seal-mark { animation: sanctum-console-breathe 0.9s var(--sx-pour) infinite alternate; box-shadow: inset 0 0 0 1.5px var(--sx-fg-65); }
 .sanctum-console__exam.is-accept .sanctum-console__seal-mark, .sanctum-console__exam.is-sealed .sanctum-console__seal-mark { background: var(--c-accept-ink); box-shadow: none; }
@@ -238,7 +242,8 @@
   gap: 12px;
   margin: auto -24px 0;
   padding: 26px 24px 22px;
-  background: linear-gradient(to bottom, rgba(9, 11, 15, 0), rgba(9, 11, 15, 0.96) 22px);
+  /* Opaque under its contents, with a short fade above so nothing reads through it. */
+  background: linear-gradient(to bottom, rgba(11, 13, 17, 0) 0, var(--c-bar) 18px);
 }
 .sanctum-console__acts { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; }
 .sanctum-console__more { color: var(--sx-fg-55); }
@@ -252,14 +257,23 @@
 .sanctum-console__knot:nth-child(even) { background: var(--sx-tile-2); }
 .sanctum-console__knot.is-foreseen { background: var(--sx-tile-lit); }
 .sanctum-console__knot-mark { position: relative; z-index: 1; color: var(--sx-fg-65); background: inherit; border-radius: 50%; }
-.sanctum-console__knot.is-current .sanctum-console__knot-mark, .sanctum-console__knot.is-foreseen .sanctum-console__knot-mark { color: var(--sx-ivory); }
+.sanctum-console__knot.is-current .sanctum-console__knot-mark, .sanctum-console__knot.is-foreseen .sanctum-console__knot-mark { color: var(--sx-light); }
 .sanctum-console__knot.is-canon .sanctum-console__knot-mark { color: #dccb96; }
 .sanctum-console__knot-words { display: grid; gap: 3px; min-width: 0; }
 .sanctum-console__knot-summary { font-family: var(--sx-body); font-weight: 600; font-size: 14px; line-height: 1.4; color: var(--sx-fg-90); }
 .sanctum-console__knot .sx-state { color: var(--sx-fg-55); }
-.sanctum-console__knot.is-current .sx-state { color: var(--sx-ivory); }
+.sanctum-console__knot.is-current .sx-state { color: var(--sx-light); }
+.sanctum-console__knot.is-closed .sanctum-console__knot-mark, .sanctum-console__knot.is-closed .sanctum-console__knot-summary { opacity: 0.6; }
+.sanctum-console__knot-why { color: var(--sx-fg-65); font-style: italic; }
 .sanctum-console__foresee { overflow: hidden; }
 .sanctum-console__foresee[aria-pressed="true"] { color: var(--sx-ink); }
+
+.sanctum-console__exam[data-place="flow"], .sanctum-console__status { display: none; }
+.sanctum-console__status { overflow: hidden; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-family: var(--sx-body); font-weight: 600; font-size: 13px; line-height: 1.4; color: var(--sx-fg-65); }
+.sanctum-console__status.is-accept, .sanctum-console__status.is-sealed { color: var(--c-accept-ink); }
+.sanctum-console__status.is-refuse { color: var(--sx-refuse-ink); }
+/* Anything brought into view (focus, a fix, an awaited choice) clears the pinned strip: its height is measured. */
+.sanctum-console__field, .sanctum-console__inline, .sanctum-console__slot, .sanctum-console__chooser, .sanctum-console__quarters, .sanctum-console__exam { scroll-margin-bottom: calc(var(--c-bar-h, 150px) + 12px); scroll-margin-top: 16px; }
 
 @media (pointer: coarse) {
   .sanctum-console .sx-chip, .sanctum-console .sx-opt, .sanctum-console__slot, .sanctum-console__inline { min-height: 44px; }
@@ -271,7 +285,7 @@
   .sanctum-console__office { font-size: 22px; }
   .sanctum-console__head { flex-wrap: nowrap; }
   .sanctum-console__title { font-size: 19px; flex: 1; min-width: 0; }
-  .sanctum-console__head .sx-opt { min-height: 36px; padding: 0 12px; font-size: 11px; }
+  .sanctum-console__head .sx-opt { min-height: 44px; padding: 0 12px; font-size: 11px; }
   .sanctum-console__verbs { flex-wrap: nowrap; overflow-x: auto; margin: 0 -24px; padding: 0 24px 2px; scrollbar-width: none; }
   .sanctum-console__verbs::-webkit-scrollbar { display: none; }
   .sanctum-console__verb, .sanctum-console__more { flex: none; min-height: 44px; }
@@ -279,9 +293,14 @@
   .sanctum-console__exam { padding: 12px 14px; gap: 10px; grid-template-columns: 18px 1fr; }
   .sanctum-console__seal-mark { width: 16px; height: 16px; }
   .sanctum-console__exam-head { font-size: 12.5px; }
-  .sanctum-console__exam .sx-body { font-size: 13px; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .sanctum-console__exam .sx-body { font-size: 13px; line-height: 1.45; }
   .sanctum-console__acts .sx-ghost, .sanctum-console__acts .sx-plate { min-height: 44px; }
   .sanctum-console__how { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  /* The full verdict reads in the flow under the sentence; the pinned strip keeps one line. */
+  .sanctum-console__exam[data-place="flow"] { display: grid; }
+  .sanctum-console__exam[data-place="bar"] { display: none; }
+  .sanctum-console__status { display: -webkit-box; }
+  .sanctum-console__bar { padding-top: 22px; }
 }
 @container (max-width: 300px) {
   .sanctum-console__gaze { grid-template-columns: 1fr; }

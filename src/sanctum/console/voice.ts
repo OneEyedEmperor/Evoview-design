@@ -4,7 +4,7 @@
 import { BEYOND, LEXICON, type Element, type Id, type OpName, type SanctumState } from "../model/types";
 import { numberWord, realmTitle } from "../model/rules";
 
-/** The keeper: the element tied to the lexicon. He examines every change. */
+/** The element tied to the lexicon: the voice of refusals and acceptances (CONTRACT). */
 export function keeperOf(state: SanctumState): Element | undefined {
   const tie = state.ties.find((t) => t.to === LEXICON);
   return tie ? state.elements.find((e) => e.id === tie.from) : undefined;
@@ -25,12 +25,12 @@ export const realmName = (state: SanctumState, realm: Id) => (realm === BEYOND ?
 export const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 export const upper = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-/** "a stone" / "an arch": the article for a kind title. */
+/** "a word" / "an echo": the article for a kind title. */
 export function aOrAn(word: string): string {
   return /^[aeiou]/i.test(word) ? `an ${word}` : `a ${word}`;
 }
 
-/** Possessive of a title: "Stone's", "Stones'". */
+/** Possessive of a title: "Name's", "Names'". */
 export function possessive(title: string): string {
   return /s$/i.test(title) ? `${title}'` : `${title}'s`;
 }

@@ -78,6 +78,34 @@ export default function Console({ store }: ConsoleProps) {
     return () => window.clearTimeout(id);
   }, [draft.open]);
 
+  /* The pinned strip's height, so whatever is scrolled into view clears it. */
+  const bar = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = bar.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => root.current?.style.setProperty("--c-bar-h", `${Math.ceil(el.getBoundingClientRect().height)}px`));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [face, Boolean(draft.restoring)]);
+
+  /* The awaited choice comes into view whenever it changes: an open chooser,
+     else an unanswered group of places, else the first empty slot. */
+  const awaitedKey = `${draft.awaiting?.slot ?? ""}|${composed.waiting ?? ""}|${face}`;
+  useEffect(() => {
+    if (!draft.open) return;
+    const id = requestAnimationFrame(() => {
+      const r = root.current;
+      if (!r) return;
+      const places = r.querySelector<HTMLElement>(".sanctum-console__quarters");
+      const target =
+        r.querySelector<HTMLElement>(".sanctum-console__chooser") ??
+        (places && !places.querySelector('[aria-pressed="true"]') ? places : null) ??
+        r.querySelector<HTMLElement>(".sanctum-console__slot.is-empty");
+      if (target) bringIntoView(target, bar.current);
+    });
+    return () => cancelAnimationFrame(id);
+  }, [awaitedKey, draft.open]);
+
   /* While a seal is in flight the state is replaced under the verb: whatever
      it recomposes then belongs to the map that is going away. */
   const sealing = useRef(false);
@@ -129,6 +157,9 @@ export default function Console({ store }: ConsoleProps) {
   const restoring = draft.restoring;
   const v = draft.verdict;
   const ready = v.state === "accepted" && v.confirmed && !busy;
+  const words = verdictWords(keeper, v, composed, Boolean(restoring), sealed);
+  /* The phone's pinned line carries the reason itself when the keeper refuses. */
+  const status = words.tone === "refuse" && v.refusals[0] ? { ...words, head: `${keeper} refuses: ${lower(v.refusals[0].message)}` } : words;
 
   return (
     <section ref={root} className="sanctum-console" aria-labelledby="sanctum-console-title">
@@ -138,7 +169,7 @@ export default function Console({ store }: ConsoleProps) {
           {(["shape", "record"] as const).map((f) => (
             <button key={f} type="button" role="tab" aria-selected={face === f} className="sx-opt" data-jelly="" onClick={() => setFace(f)}>
               {f === "shape" ? "Shape" : "The record"}
-              <SurfaceFill on={face === f} lit="var(--sx-ivory)" litInk="var(--sx-ink)">{f === "shape" ? "Shape" : "The record"}</SurfaceFill>
+              <SurfaceFill on={face === f} lit="var(--sx-light)" litInk="var(--sx-ink)">{f === "shape" ? "Shape" : "The record"}</SurfaceFill>
             </button>
           ))}
         </div>
@@ -162,7 +193,7 @@ export default function Console({ store }: ConsoleProps) {
                 }}
               >
                 {x.label}
-                <SurfaceFill on={x.id === current.id} lit="var(--sx-ivory)" litInk="var(--sx-ink)">{x.label}</SurfaceFill>
+                <SurfaceFill on={x.id === current.id} lit="var(--sx-light)" litInk="var(--sx-ink)">{x.label}</SurfaceFill>
               </button>
             ))}
             {verbs.some((x) => !primary.has(x.id)) && (
@@ -186,14 +217,17 @@ export default function Console({ store }: ConsoleProps) {
               </div>
             )}
           </div>
+          {!restoring && <Examination keeper={keeper} verdict={v} composed={composed} restoring={false} sealed={sealed} place="flow" />}
         </>
       )}
 
       {(face === "record" || restoring) && <Record store={store} />}
+      {restoring && <Examination keeper={keeper} verdict={v} composed={composed} restoring sealed={sealed} place="flow" />}
 
       {(face === "shape" || restoring) && (
-      <div className="sanctum-console__bar">
-        <Examination keeper={keeper} verdict={v} composed={composed} restoring={Boolean(restoring)} sealed={sealed} />
+      <div ref={bar} className="sanctum-console__bar">
+        <Examination keeper={keeper} verdict={v} composed={composed} restoring={Boolean(restoring)} sealed={sealed} place="bar" />
+        <span className={`sanctum-console__status is-${status.tone}`} aria-hidden="true">{status.head}</span>
         <div className="sanctum-console__acts">
         <button type="button" className="sx-ghost" data-jelly="" disabled={!draft.ops.length && !restoring} onClick={() => (restoring ? store.closeDraft() : withdraw())}>
           Withdraw
@@ -209,26 +243,38 @@ export default function Console({ store }: ConsoleProps) {
   );
 }
 
-function Examination({ keeper, verdict, composed, restoring, sealed }: { keeper: string; verdict: VerbProps["verdict"]; composed: Composed; restoring: boolean; sealed: string }) {
+/** Scrolls the nearest scrollable ancestor so `el` stands clear of the pinned strip
+    (scrollIntoView ignores the strip inside a transformed shell). */
+function bringIntoView(el: HTMLElement, strip: HTMLElement | null) {
+  let box: HTMLElement | null = el.parentElement;
+  while (box && !/(auto|scroll)/.test(getComputedStyle(box).overflowY)) box = box.parentElement;
+  if (!box) return;
+  const b = box.getBoundingClientRect();
+  const r = el.getBoundingClientRect();
+  const floor = (strip ? strip.getBoundingClientRect().top : b.bottom) - 12;
+  const visible = floor - (b.top + 16);
+  if (r.bottom > floor) box.scrollTop += Math.min(r.bottom - floor, Math.max(0, r.top - (b.top + 16)));
+  else if (r.top < b.top + 16 && r.height <= visible) box.scrollTop -= b.top + 16 - r.top;
+}
+
+type Tone = "wait" | "weigh" | "accept" | "refuse" | "sealed";
+
+/** The keeper's words for the draft as it stands. */
+function verdictWords(keeper: string, verdict: VerbProps["verdict"], composed: Composed, restoring: boolean, sealed: string): { tone: Tone; head: string } {
+  if (sealed && verdict.state === "empty") return { tone: "sealed", head: "Sealed. A knot is tied in the record." };
+  if (verdict.state === "refused") return { tone: "refuse", head: restoring ? `${keeper} refuses the return to this knot.` : `${keeper} refuses the change.` };
+  if (verdict.state === "accepted" && verdict.confirmed) return { tone: "accept", head: restoring ? `${keeper} accepts the return to this knot.` : `${keeper} accepts the change.` };
+  if (verdict.state === "checking" || verdict.state === "accepted") return { tone: "weigh", head: restoring ? `${keeper} weighs the return to this knot.` : `${keeper} examines the change.` };
+  return { tone: "wait", head: composed.waiting ? `${keeper} waits for ${composed.waiting}.` : `${keeper} listens as the sentence forms.` };
+}
+
+/** Pinned with the seal on a wide panel; in the flow, under the sentence, on a phone. */
+function Examination({ keeper, verdict, composed, restoring, sealed, place }: { keeper: string; verdict: VerbProps["verdict"]; composed: Composed; restoring: boolean; sealed: string; place: "bar" | "flow" }) {
   const unique = [...new Set(verdict.refusals.map((r) => r.message))].slice(0, 3);
-  let tone: "wait" | "weigh" | "accept" | "refuse" | "sealed" = "wait";
-  let head: string;
-  if (sealed && verdict.state === "empty") {
-    tone = "sealed";
-    head = "Sealed. A knot is tied in the record.";
-  } else if (verdict.state === "refused") {
-    tone = "refuse";
-    head = restoring ? `${keeper} refuses the return to this knot.` : `${keeper} refuses the change.`;
-  } else if (verdict.state === "accepted" && verdict.confirmed) {
-    tone = "accept";
-    head = restoring ? `${keeper} accepts the return to this knot.` : `${keeper} accepts the change.`;
-  } else if (verdict.state === "checking" || verdict.state === "accepted") {
-    tone = "weigh";
-    head = restoring ? `${keeper} weighs the return to this knot.` : `${keeper} examines the change.`;
-  } else head = composed.waiting ? `${keeper} waits for ${composed.waiting}.` : `${keeper} listens as the sentence forms.`;
+  const { tone, head } = verdictWords(keeper, verdict, composed, restoring, sealed);
 
   return (
-    <div className={`sanctum-console__exam is-${tone}`} role="status" aria-live="polite">
+    <div className={`sanctum-console__exam is-${tone}`} data-place={place} role="status" aria-live="polite">
       <span className="sanctum-console__seal-mark" aria-hidden="true" />
       <div className="sanctum-console__exam-words">
         <p className="sx-head sanctum-console__exam-head">{head}</p>
