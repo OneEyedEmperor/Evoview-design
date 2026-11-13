@@ -338,6 +338,27 @@ if (taker && base.rim) {
     const r = room(base, { realm: base.rim.realm });
     check("room = capacity less used and pending", r.free === Math.max(0, r.capacity - r.used - r.pending));
   }
+  let wordless = 0;
+  for (const k of base.threadKinds) {
+    for (const c of slotsFor(base, { op: "addThread", kind: k.id }).slots.from) {
+      const departs = k.grammar.courses.some((course) => selEnd(c.value, course.from));
+      if (!departs && c.why !== k.grammar.refusal) wordless++;
+    }
+  }
+  check("a departure no course admits speaks the kind's own rule", wordless === 0, `${wordless} departures with other words`);
+  const takerKind = base.elementKinds.find((k) => k.becomes && k.raisedIn);
+  if (takerKind) {
+    const pre = takerKind.raisedIn.condition !== base.condition ? [{ op: "turn", condition: takerKind.raisedIn.condition }] : [];
+    const { state: atWar } = applyOps(base, pre);
+    const realm = takerKind.realms.find((r) => r.realms)?.realms[0];
+    const offered = (slotsFor(atWar, { op: "addElement", kind: takerKind.id, realm, quarter: base.quarters[0].id }).cords ?? []).filter((c) => c.ok);
+    const kindsOf = new Set(offered.map((c) => c.kind));
+    check(
+      "what is taken is offered only cords of its own condition",
+      offered.length > 0 && [...kindsOf].every((id) => base.threadKinds.find((k) => k.id === id)?.grammar.condition === takerKind.raisedIn.condition),
+      [...kindsOf].join(", "),
+    );
+  }
   const turn = slotsFor(base, { op: "turn" }).slots.condition;
   check("turning offers only the condition not sealed", turn.filter((c) => c.ok).every((c) => c.value !== base.condition) && turn.some((c) => !c.ok && c.why));
   const unseen = slotsFor(base, { op: "assignVision", visionId: base.visions[0]?.id }).slots.elementId ?? [];

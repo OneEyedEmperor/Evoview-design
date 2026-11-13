@@ -93,7 +93,7 @@ if (mode === "seed") {
     process.exit(0);
   }
   const version = base.meta.version + 1;
-  const summary = "The rules of the cords were amended.";
+  const summary = rest.find((a) => a.startsWith("--summary="))?.slice(10) || "The rules of the cords were amended.";
   state.meta = { schemaVersion: SCHEMA_VERSION, version, updatedAt: new Date().toISOString(), summary };
   const refusals = validate(state, canon);
   console.log(`changed: ${changed.join(", ")}`);

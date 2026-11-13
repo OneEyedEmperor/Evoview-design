@@ -94,8 +94,13 @@ function endsFor(ctx: Ctx, kind: Id, from?: ThreadEnd): Choice[] {
       return { value: to, title: endTitle(state, to, byId), ok: c.ok, ...(c.why ? { why: c.why } : {}) };
     });
   }
-  const kindTitle = state.threadKinds.find((k) => k.id === kind)?.title.toLowerCase() ?? "";
+  const k = state.threadKinds.find((x) => x.id === kind);
+  const kindTitle = k?.title.toLowerCase() ?? "";
   return ends.map((f) => {
+    /* No course departs from here at all: the rule itself is the reason. */
+    if (k && !k.grammar.courses.some((c) => matchesEnd(f, c.from, byId, ctx.layerIds))) {
+      return { value: f, title: endTitle(state, f, byId), ok: false, why: k.grammar.refusal };
+    }
     const ok = ends.some((to) => to !== f && !grammarWhy(ctx, kind, f, to) && cordChoice(ctx, kind, f, to).ok);
     return { value: f, title: endTitle(state, f, byId), ok, ...(ok ? {} : { why: `No cord of ${kindTitle} may depart from ${endTitle(state, f, byId)} now.` }) };
   });
